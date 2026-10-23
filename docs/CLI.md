@@ -96,4 +96,3 @@ are separate facts: a readable report can still describe a failed run.
 See [the reference pipeline contract](PIPELINE.md) for fixed grids, original
 capture replay and safe export limits. This command does not publish an artifact,
 install or boot a VM/ISO, or grant production eligibility.
-
