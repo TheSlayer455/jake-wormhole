@@ -1,0 +1,137 @@
+"""Fixed offline DNF resolution only; no package download or transaction call."""
+import gzip
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import sys
+import xml.etree.ElementTree as ET
+
+ROOT = Path('/metadata')
+LOCK = Path('/recipe/lock.json')
+REQUEST = Path('/request/resolve.json')
+BASE = 'sha256:9be18d9ba921714e79e390694315e3341047fe758ac79b62e671d92d4217c3fb'
+MAX_JSON = 262144
+
+
+def require(value):
+    if not value: raise ValueError('Offline RPM resolution refused')
+
+
+def canonical(value): return json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False).encode()
+def sha(raw): return hashlib.sha256(raw).hexdigest()
+
+
+def unique(pairs):
+    result={}
+    for key,value in pairs:
+        require(key not in result);result[key]=value
+    return result
+
+
+def read(path, maximum=MAX_JSON):
+    require(path.is_file() and not path.is_symlink() and path.stat().st_nlink==1 and 0<path.stat().st_size<=maximum)
+    with path.open('rb') as stream:raw=stream.read(maximum+1)
+    require(0<len(raw)<=maximum)
+    return raw
+
+
+def record(package):
+    return {'name':str(package.name),'epoch':int(package.epoch or 0),'version':str(package.version),
+        'release':str(package.release),'arch':str(package.arch)}
+
+
+def metadata(lock):
+    sources=lock['sources'];require(sources['base_url']=='https://cdn-ubi.redhat.com/content/public/ubi/dist/ubi9/9/x86_64/baseos/os/' and sources['repository_id']=='wormhole-ubi9-baseos')
+    items=[sources['repomd'],*sources['metadata']];require(len(items)==9)
+    for item in items:
+        path=item['path'];require(type(path) is str and re.fullmatch(r'repodata/[A-Za-z0-9._-]+',path) and '..' not in path)
+        raw=read(ROOT/path,16*1024*1024);require(len(raw)==item['bytes'] and sha(raw)==item['sha256'])
+    primary=next(x for x in sources['metadata'] if x['kind']=='primary')
+    with gzip.open(ROOT/primary['path'],'rb') as stream:raw=stream.read(32*1024*1024+1)
+    require(len(raw)==primary['open_bytes'] and len(raw)<=32*1024*1024 and sha(raw)==primary['open_sha256'] and b'<!DOCTYPE' not in raw.upper() and b'<!ENTITY' not in raw.upper())
+    ns={'c':'http://linux.duke.edu/metadata/common'};catalog={}
+    nodes=ET.fromstring(raw).findall('c:package',ns);require(0<len(nodes)<=8192)
+    for node in nodes:
+        arch=node.findtext('c:arch',namespaces=ns)
+        if arch not in ('x86_64','noarch'):continue
+        version=node.find('c:version',ns);checksum=node.find('c:checksum',ns)
+        row={'name':node.findtext('c:name',namespaces=ns),'epoch':int(version.get('epoch')),'version':version.get('ver'),
+            'release':version.get('rel'),'arch':arch,'path':node.find('c:location',ns).get('href'),
+            'bytes':int(node.find('c:size',ns).get('package')),'sha256':checksum.text,'repo_id':sources['repository_id']}
+        require(checksum.get('type')=='sha256' and re.fullmatch(r'Packages/[a-z0-9]/[A-Za-z0-9+_.~:-]+\.rpm',row['path']) and
+            re.fullmatch('[a-f0-9]{64}',row['sha256']) and 0<row['bytes']<=64*1024*1024)
+        key=canonical({k:row[k] for k in ('name','epoch','version','release','arch')});require(key not in catalog);catalog[key]=row
+    return catalog
+
+
+def installed_packages(rpm_module):
+    values=[];transaction=rpm_module.TransactionSet('/')
+    try:
+        for header in transaction.dbMatch():
+            require(len(values)<1024)
+            row={'name':header['name'],'epoch':0 if header['epoch'] is None else header['epoch'],
+                'version':header['version'],'release':header['release'],'arch':header['arch']}
+            require(type(row['epoch']) is int and 0<=row['epoch']<=2**31 and
+                all(type(row[k]) is str and 0<len(row[k])<=240 and not any(ord(c)<32 or ord(c)==127 for c in row[k]) for k in ('name','version','release')) and
+                (type(row['arch']) is str and 0<len(row['arch'])<=40 or row['name']=='gpg-pubkey' and row['arch'] is None))
+            values.append(row)
+    finally:transaction.closeDB()
+    require(values and len({canonical(x) for x in values})==len(values))
+    return sorted(values,key=canonical)
+
+
+def resolve(request, lock, dnf_module, rpm_module):
+    sources=lock['sources'];require(request['operation']=='ubi-offline-resolution-request-v1' and request['base_image_id']==BASE and
+        request['sources_sha256']==sha(canonical(sources)) and canonical(request['requested_packages'])==canonical(sources['requested_packages']) and
+        sources['policy']['allow_erasing'] is False and sources['policy']['plugins'] is False and sources['policy']['install_weak_deps'] is False)
+    catalog=metadata(lock)
+    with dnf_module.Base() as base:
+        # Do not read ambient config/repository files or initialize plugins.
+        base.conf.plugins=False;base.conf.install_weak_deps=False;base.conf.best=True;base.conf.strict=True
+        base.conf.cachedir='/tmp/wormhole-rpm-resolver/cache';base.conf.persistdir='/tmp/wormhole-rpm-resolver/persist';base.conf.logdir='/tmp/wormhole-rpm-resolver/log'
+        base.conf.substitutions['releasever']='9';base.conf.substitutions['basearch']='x86_64'
+        require(not list(base.repos.iter_enabled()))
+        repo=base.repos.add_new_repo(sources['repository_id'],base.conf,baseurl=['file:///metadata'])
+        repo.skip_if_unavailable=False;repo.metadata_expire=-1
+        base.fill_sack(load_system_repo=True,load_available_repos=True)
+        # Match the same RPM DB source as the public base probe, including key
+        # pseudo-packages which DNF's @System view can omit.
+        installed=installed_packages(rpm_module)
+        require(canonical(installed)==canonical(request['installed_packages']) and sha(canonical(installed))==request['base_packages_sha256'])
+        for expected in request['requested_packages']:
+            matches=[x for x in base.sack.query().filter(name=expected['name']) if canonical(record(x))==canonical(expected)]
+            require(matches)
+            available=[x for x in matches if not x.installed and x.reponame==sources['repository_id']]
+            if available:require(len(available)==1);base.package_install(available[0],strict=True)
+            else:require(any(x.installed for x in matches))
+        base.resolve(allow_erasing=False)
+        require(base.transaction is not None and not list(base.transaction.remove_set))
+        packages=[]
+        for package in base.transaction.install_set:
+            key=canonical(record(package));require(package.reponame==sources['repository_id'] and key in catalog)
+            row=catalog[key];require(int(package.downloadsize)==row['bytes'])
+            packages.append(row)
+        packages.sort(key=canonical)
+        require(len(packages)<=128 and len({p['path'] for p in packages})==len(packages) and sum(p['bytes'] for p in packages)<=512*1024*1024)
+    return {'operation':'ubi-offline-resolution-v1','status':'passed','base_image_id':BASE,'request_sha256':sha(canonical(request)),
+        'base_packages_sha256':request['base_packages_sha256'],'sources_sha256':request['sources_sha256'],
+        'requested_packages':request['requested_packages'],'packages':packages,'remove_packages':[]}
+
+
+def main():
+    require(len(sys.argv)==1 and Path('/.dockerenv').is_file() and os.geteuid()==0 and
+        not any(Path(p).exists() for p in ('/var/run/docker.sock','/run/docker.sock')))
+    lock_raw=read(LOCK,65536);request_raw=read(REQUEST);lock=json.loads(lock_raw,object_pairs_hook=unique);request=json.loads(request_raw,object_pairs_hook=unique)
+    require(request['lock_sha256']==sha(lock_raw) and request['run_id']==os.environ.get('WORMHOLE_RUN_ID') and
+        lock['base']['image_id']==BASE and lock['target_family']=='ubi9-rpm' and lock['platform']=='linux/amd64')
+    import dnf,rpm
+    result=resolve(request,lock,dnf,rpm)
+    raw=canonical(result);require(len(raw)<=MAX_JSON);print(raw.decode())
+
+
+if __name__=='__main__':
+    try:main()
+    except Exception:
+        print(json.dumps({'operation':'ubi-offline-resolution-v1','status':'failed','code':'rpm_resolution_refused'}));raise SystemExit(2)
