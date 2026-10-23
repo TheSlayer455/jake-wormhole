@@ -246,6 +246,13 @@ class Cleanup(unittest.TestCase):
         self.assertFalse(any(call[:2] == ('docker', 'rm') for call in self.f.calls))
         self.assertTrue(self.session.state.exists())
 
+    def test_nested_exact_network_inspection_can_obey_coordinator_remaining_deadline(self):
+        with self.f.patches():
+            self.session.provision()
+            with patch.object(images, 'inspect', side_effect=self.f.inspect) as inspect:
+                self.session.verify_target(self.f.container(fixture.CID), inspection_timeout=.25)
+                inspect.assert_called_once_with('network', fixture.NET, timeout=.25)
+
     def test_normal_recover_resumes_partly_acknowledged_known_teardown_with_historical_ids(self):
         with self.f.patches(): self.session.provision()
         original_ids = deepcopy(self.session.owned)
