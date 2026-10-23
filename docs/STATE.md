@@ -1,5 +1,32 @@
 # Engineering checkpoint
 
+## WORM-006 complete; WORM-007/008 in progress, October23
+
+Minx confirms WORM-006 Done at version22, approved revision2, claim released.
+WORM-002 through006 are Done;007 and008 are approved at revision2 and claimed
+in separate sessions. Fourteen tickets, including parent001, remain Draft.
+These are owner-directed automated decisions under Jake's explicit delegation,
+not independent human examination. Each completed child has criterion evidence
+and solution comments. No GitHub PR is merged.
+
+Final006 source c58c1a179381d46ad01375c5b3d3d564033e781b is pushed to private
+PR5. Both exact-source hosted checks passed: push39978416986 and PR39978424524.
+Its actual three-case runtime source is06c19f16. All owned qualification containers
+and networks were reconciled; qualified images/private state remain retained.
+
+Root007 branch contains the reviewed create_stopped/start_and_inventory split
+at a54c3be5261f1d1a8f04de926d278ba471a5d5bc, including refusal to start a target
+after its retained controller expires. Actual Linux149 tests:147pass,two
+Windows-only skips,6.645s. The root's separate008 CLI adapter d548b783e840a9ccf540ede65dce15b922ac55f3
+has four passing dispatch fixtures and source review; full integration awaits the
+recovery module. Neither007 nor008 has acceptance/completion evidence yet.
+
+One writer owns each worktree. UI agent owns007 readiness source/tests; contracts
+agent owns008 recovery source/schema/tests and provisioning destroy/resume changes.
+Root owns orchestration and CLI integration. Shared provisioning edits are now
+with the008 writer; do not overwrite or reset either worktree. Retrieve Minx claims
+and current Git state before continuing. Historical checkpoints follow.
+
 ## WORM-006 qualification passed, October23 at15:25UTC
 
 Exact clean controller06c19f16d45fe66cd0ebde0432372b2d060f7226 passed the full

@@ -1,4 +1,40 @@
-# Current continuation point, October23 at15:25UTC
+# Current continuation point, October23: WORM-007/008
+
+Minx: WORM-002 through006 Done;007 and008 revision2 approved and claimed under
+distinct sessions. Parent001 remains Draft. Jake delegated normal Owner workflow
+clicks in this chat; preserve the explicit automated decision record and never
+claim independent human examination. No further per-ticket click request is needed
+while the existing authorized Owner session is available.
+
+- Root worktree jake-wormhole-cli: codex/WORM-007-integration. Reviewed thin
+  provisioning split f17a9eb+a54c3be passed actual Linux149 tests (147pass,two
+  Windows-only skips). Root owns orchestration and source integration.
+- UI worktree jake-wormhole-tools: codex/WORM-007-readiness. Owns readiness module,
+  fixed helper runtime, focused tests and documentation. Genuine SSH/Ansible
+  acceptance, strict trust and accurate failure categories remain required.
+- Contracts worktree jake-wormhole-provisioner: codex/WORM-008-recovery. Owns recovery
+  module/schema/tests/docs and provisioning destroy/resume idempotence. It has
+  received the root's thin split before editing the shared file.
+- Root auxiliary jake-wormhole-recovery-cli: codex/WORM-008-cli, commitd548b78.
+  CLI dispatch fixtures pass; the actual recovery module is still required for
+  integrated operation. Cancellation requests take no coordinator Run lock;
+  normal cleanup/recovery owns its exact locks and preserves primary outcomes.
+
+Retrieve the actual claim/version through the scoped API before mutation. Claim
+sessions are codex-WORM-007-20261023-readiness and codex-WORM-008-20261023-recovery.
+Renew/checkpoint explicitly. Do not read Owner credentials, configure new hooks,
+reset another worktree, silently clear daemon uncertainty, or allocate outside
+the canonical bounded plan. No007/008 acceptance or complete pipeline is claimed.
+
+Completed006: private PR5 at c58c1a17; both hosted checks39978416986/39978424524
+passed. Actual three-case qualification source06c19f16, criterion evidence and
+solution comments are in Minx. [Evidence](evidence/WORM-006.json) and
+[review](reviews/WORM-006.md) separate actual runtime from fixture tests and
+historical failures. Images/private cache/state remain intentionally retained;
+all owned006 qualification containers/networks were reconciled. Continue the
+dependency graph through every remaining child and then parent001.
+
+## Historical continuation point, October23 at15:25UTC
 
 WORM-006 actual qualification passed at exact clean source
 06c19f16d45fe66cd0ebde0432372b2d060f7226. See [evidence](evidence/WORM-006.json),
