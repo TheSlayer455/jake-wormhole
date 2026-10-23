@@ -71,8 +71,19 @@ def build_reference(identifier, role, revision):
     return value['image_id']
 
 
+def owned_runtime(identifier, role, image, run, *, missing=False):
+    value = inspect('container', identifier, missing=missing)
+    if value is None:
+        return None
+    require(value['Id'] == identifier and value['Image'] == image
+            and value['Config']['Labels'].get(LABEL + '.run_id') == run.id
+            and value['Config']['Labels'].get(LABEL + '.role') == role,
+            'ownership_mismatch', 'Runtime exact identity/image/labels changed.')
+    return value
+
+
 def runtime_inspection(identifier, role, image, network, run, limits):
-    value = inspect('container', identifier)
+    value = owned_runtime(identifier, role, image, run)
     host, config = value['HostConfig'], value['Config']
     expected = limits['docker_create']
     require(value['Id'] == identifier and value['Image'] == image
@@ -111,6 +122,54 @@ def runtime_inspection(identifier, role, image, network, run, limits):
     require(host['Tmpfs'] == tmpfs,
             'unsafe_runtime', 'Expected bounded private runtime tmpfs mounts.')
     return value
+
+
+def cleanup_known_resources(lease, resources, network, run, *, unknown):
+    """Attempt every exact-owned cleanup independently; never hide uncertainty."""
+    failures = []
+    def failed(kind, error):
+        failures.append({'resource': kind, 'code': getattr(error, 'code', 'cleanup_interrupted')})
+    try:
+        lease.set_phase('reconciling')
+    except BaseException as error:
+        failed('lease', error)
+        return failures  # No unguarded cleanup after losing ownership of the lease.
+    for identifier, role, image in reversed(resources):
+        try:
+            value = owned_runtime(identifier, role, image, run, missing=True)
+            if value is not None:
+                # Limits may be damaged; exact ownership is sufficient to stop
+                # this resource. Do not let one damaged helper strand its target.
+                if value['State']['Running']:
+                    docker(('stop', '--time', '3', identifier), timeout=10)
+                docker(('rm', identifier))
+                require(inspect('container', identifier, missing=True) is None,
+                        'cleanup_unverified', 'Owned container absence is unverified.')
+            lease.reconcile_resource('container', identifier)
+        except BaseException as error:
+            failed(role, error)
+    if network is not None:
+        try:
+            actual = inspect('network', network, missing=True)
+            if actual is not None:
+                require(actual['Id'] == network and actual['Labels'].get(LABEL + '.run_id') == run.id
+                        and not actual['Containers'], 'ownership_mismatch', 'Network cleanup ownership changed.')
+                docker(('network', 'rm', network))
+                require(inspect('network', network, missing=True) is None, 'cleanup_unverified', 'Network absence unverified.')
+            lease.reconcile_resource('network', network)
+        except BaseException as error:
+            failed('network', error)
+    for kind, args in (('container', ('ps', '-a')), ('network', ('network', 'ls')), ('volume', ('volume', 'ls'))):
+        try:
+            sweep = docker((*args, '--filter', 'label=' + LABEL + '.run_id=' + run.id,
+                            '--format', '{{.ID}}' if kind != 'volume' else '{{.Name}}'))
+            require(not sweep['log'].strip() and not sweep['log_truncated'], 'cleanup_unverified',
+                    'Run-labeled resources remain after exact-ID cleanup.')
+        except BaseException as error:
+            failed(kind + '-sweep', error)
+    if unknown:
+        failures.append({'resource': 'allocation-intent', 'code': 'unknown_allocation'})
+    return failures
 
 
 def copied_public_key(container):
@@ -275,26 +334,9 @@ def qualify(target_build, helper_build):
                 raise
             finally:
                 try:
-                    lease.set_phase('reconciling')
-                    for identifier, role, image in reversed(resources):
-                        runtime_inspection(identifier, role, image, network, run, lease.plan['limits'][role])
-                        docker(('stop', '--time', '3', identifier), timeout=10)
-                        docker(('rm', identifier))
-                        require(inspect('container', identifier, missing=True) is None,
-                                'cleanup_unverified', 'Owned container absence is unverified.')
-                        lease.reconcile_resource('container', identifier)
-                    if network is not None:
-                        actual = inspect('network', network)
-                        require(actual['Id'] == network and actual['Labels'].get(LABEL + '.run_id') == run.id
-                                and not actual['Containers'], 'ownership_mismatch', 'Network cleanup ownership changed.')
-                        docker(('network', 'rm', network))
-                        require(inspect('network', network, missing=True) is None, 'cleanup_unverified', 'Network absence unverified.')
-                        lease.reconcile_resource('network', network)
-                    for kind, args in (('container', ('ps', '-a')), ('network', ('network', 'ls')), ('volume', ('volume', 'ls'))):
-                        sweep = docker((*args, '--filter', 'label=' + LABEL + '.run_id=' + run.id, '--format', '{{.ID}}' if kind != 'volume' else '{{.Name}}'))
-                        require(not sweep['log'].strip() and not sweep['log_truncated'], 'cleanup_unverified',
-                                'Run-labeled resources remain after exact-ID cleanup.')
-                    require(not unknown, 'unknown_allocation', 'An uncertain allocation cannot be cleared automatically.')
+                    cleanup_failures = cleanup_known_resources(lease, resources, network, run, unknown=unknown)
+                    receipt['cleanup_failures'] = cleanup_failures
+                    require(not cleanup_failures, 'cleanup_unverified', 'Known resources remain unresolved; preserve admission.')
                     lease.finish(reconciliation_complete=True)
                     receipt['resources_reconciled'] = True
                     manifest = run.manifest()

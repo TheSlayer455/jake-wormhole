@@ -102,6 +102,33 @@ class RuntimeBoundary(unittest.TestCase):
         compile(argv[2], '<reviewed-ssh-probe>', 'exec')
         self.assertNotIn('environ', argv[2])
 
+    def test_helper_cleanup_failure_does_not_strand_owned_target(self):
+        target, helper = 'a' * 64, 'd' * 64
+        resources = [(target, 'target', self.image), (helper, 'helper', self.image)]
+        calls, reconciled = [], []
+        class Lease:
+            def set_phase(self, phase): calls.append(('phase', phase))
+            def reconcile_resource(self, kind, identifier): reconciled.append((kind, identifier))
+        def owned(identifier, *_args, **_kwargs):
+            if identifier == helper: raise ImageError('ownership_mismatch', 'Changed helper owner')
+            return {'State': {'Running': True}}
+        def inspect(kind, _identifier, **_kwargs):
+            if kind == 'container': return None
+            return {'Id': self.network, 'Labels': {LABEL + '.run_id': self.run.id},
+                    'Containers': {helper: {}}}
+        def command(argv, **_kwargs):
+            calls.append(tuple(argv))
+            return {'log': b'', 'log_truncated': False}
+        with patch.object(qualification, 'owned_runtime', side_effect=owned), \
+             patch.object(qualification, 'inspect', side_effect=inspect), \
+             patch.object(qualification, 'docker', side_effect=command):
+            failures = qualification.cleanup_known_resources(Lease(), resources, self.network, self.run, unknown=False)
+        self.assertIn(('stop', '--time', '3', target), calls)
+        self.assertIn(('rm', target), calls)
+        self.assertIn(('container', target), reconciled)
+        self.assertNotIn(('stop', '--time', '3', helper), calls)
+        self.assertEqual({f['resource'] for f in failures}, {'helper', 'network'})
+
     def test_preallocation_refusal_receipt_is_terminal_without_hiding_primary_error(self):
         path = Path(self.folder.name) / 'receipt.json'
         receipt = {'status': 'pending', 'run_id': self.run.id}
