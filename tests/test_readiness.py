@@ -295,6 +295,52 @@ class ReadinessPolicy(unittest.TestCase):
         with self.assertRaises(r.ReadinessError): self.session.validate_source_copy()
         with self.assertRaises(r.ReadinessError): r.ReadinessSession.resume_cleanup(self.run, self.lease)
 
+    def test_validation_opt_in_binds_only_the_second_fixed_readonly_source_and_recovers_its_identity(self):
+        original = self.run.file('private/synthetic-validation.py')
+        atomic_bytes(original, b'print("synthetic reviewed validation code")\n')
+        ordinary_helper = self.helper
+        def validation_helper():
+            value = ordinary_helper()
+            value['Mounts'].append({'Type': 'bind', 'Source': str(self.session.validation_bind_path),
+                'Destination': r.VALIDATION_MOUNT, 'RW': False})
+            return value
+        with patch.object(r, 'VALIDATION_RUNTIME', original), patch.object(self, 'helper', side_effect=validation_helper):
+            self.session = r.ReadinessSession(self.provisioning, validation=True)
+            self.session.start_helper()
+            self.assertEqual(self.session.validation_bind_path.read_bytes(), original.read_bytes())
+            self.assertEqual({x.name for x in self.session.bind_path.parent.iterdir()}, {'runtime.py', 'validation.py'})
+            self.assertEqual(len(self.helper()['Mounts']), 2)
+            self.lease._reconciliation_only = True
+            resumed = r.ReadinessSession.resume_cleanup(self.run, self.lease)
+            self.assertTrue(resumed.validation_enabled)
+            self.assertEqual(resumed.validation_source_sha256, self.session.validation_source_sha256)
+            bad = self.helper(); bad['Mounts'][1]['RW'] = True
+            with self.assertRaises(r.ReadinessError): resumed.verify_helper(bad)
+            copy = self.session.validation_bind_path
+            copy.chmod(0o600); copy.write_bytes(b'changed validation executable'); copy.chmod(0o444)
+            with self.assertRaises(r.ReadinessError): self.session.validate_source_copy()
+            with self.assertRaises(r.ReadinessError): r.ReadinessSession.resume_cleanup(self.run, self.lease)
+
+    def test_validation_selection_rejects_paths_and_boolean_aliases_without_docker(self):
+        before = len(self.calls)
+        for choice in ('../unreviewed.py', 1, None):
+            with self.subTest(choice=choice), self.assertRaises(r.ReadinessError):
+                r.ReadinessSession(self.provisioning, validation=choice)
+        self.assertEqual(self.calls[before:], [])
+
+    def test_validation_source_cannot_traverse_a_symlink_parent(self):
+        folder = self.run.file('private/public-code-origin'); folder.mkdir(mode=0o700)
+        atomic_bytes(folder / 'runtime.py', b'print("synthetic code")\n')
+        alias = self.run.file('private/code-alias')
+        try:
+            alias.symlink_to(folder, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            self.skipTest('Creating a symlink requires OS support/permission')
+        before = len(self.calls)
+        with patch.object(r, 'VALIDATION_RUNTIME', alias / 'runtime.py'), self.assertRaises(r.ReadinessError):
+            r.ReadinessSession(self.provisioning, validation=True)
+        self.assertEqual(self.calls[before:], [])
+
     def test_late_inspect_receiver_and_final_probe_cannot_declare_new_readiness(self):
         self.session.start_helper()
         self.session.deadline = time.monotonic() + .04
@@ -427,6 +473,9 @@ class PublicSourcePermissions(unittest.TestCase):
             run = create_run(root / 'runs', fixture=False, identity=(SHA, False))
             session = r.ReadinessSession.__new__(r.ReadinessSession)
             session.run, session.bind_path, session.bind_identity = run, run.file('private/helper-source/runtime.py'), None
+            session.validation_enabled = False
+            session.validation_source_sha256 = session.validation_bind_identity = None
+            session.validation_bind_path = run.file('private/helper-source/validation.py')
             with patch.object(r, 'RUNTIME', original):
                 session.source_sha256 = r.runtime_hash()
                 session.prepare_source_copy()

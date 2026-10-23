@@ -144,6 +144,19 @@ Run scoped fixtures without infrastructure:
 python -m unittest discover -s tests -p test_readiness.py -v
 ```
 
+WORM-009 may explicitly construct `ReadinessSession(provisioning, validation=True)`
+to add the fixed repository file `validation/runtime.py` at helper creation.
+The default remains one readiness code file. The opt-in adds exactly one more
+hash/inode/owner-bound public copy under the same private parent and one readonly
+file bind at `/opt/validation/runtime.py`. It accepts no executable path or
+imported code. Both copies are rechecked before helper use and recovery; extra
+files/mounts, writable binds, symlink ancestry and altered bytes are refused.
+Private controller layout2 records the opt-in and both identities. Earlier runs
+retain their original immutable source and layout for recovery; no state migration
+or reinterpretation occurs. The same helper and existing lifetime/resource caps
+apply. Functional validation is a separate partial stage and does not imply a
+complete pipeline or production eligibility.
+
 Primary evidence: [pinned wait action](https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/plugins/action/wait_for_connection.py),
 [ping](https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/modules/ping.py),
 [ad-hoc CLI](https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/cli/adhoc.py),

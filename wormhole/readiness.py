@@ -24,6 +24,8 @@ HELPER_BUILD = '9e864d00-ea9f-4a85-bdb5-f5873166e4d7'
 HELPER_IMAGE = 'sha256:4f7f306ecd431b4b48169777966d88c1f09f2139506176a6b85203f5bae69a71'
 RUNTIME = SOURCE_ROOT / 'readiness/runtime.py'
 SOURCE_MOUNT = '/opt/readiness/runtime.py'
+VALIDATION_RUNTIME = SOURCE_ROOT / 'validation/runtime.py'
+VALIDATION_MOUNT = '/opt/validation/runtime.py'
 SCENARIOS = ('healthy', 'wrong-key', 'wrong-user', 'configured-interpreter-unavailable')
 EXPECTED = ('created', 'started', 'endpoint-discovered', 'tcp-reachable', 'ssh-identity-accepted',
             'python-usable', 'ansible-usable', 'required-test-complete')
@@ -44,12 +46,17 @@ def require(value, code):
         raise ReadinessError(code, 'Readiness failed; inspect bounded private evidence and preserve resource accounting.')
 
 
-def runtime_hash():
-    require(RUNTIME.is_file() and not RUNTIME.is_symlink() and RUNTIME.stat().st_nlink == 1, 'source_changed')
-    with RUNTIME.open('rb') as stream:
+def code_hash(path):
+    require(path.is_file() and not any(item.is_symlink() for item in (path, *path.parents)) and
+            path.stat().st_nlink == 1, 'source_changed')
+    with path.open('rb') as stream:
         raw = stream.read(65537)
     require(1 <= len(raw) <= 65536, 'source_changed')
     return hashlib.sha256(raw).hexdigest()
+
+
+def runtime_hash():
+    return code_hash(RUNTIME)
 
 
 def readiness_status(run):
@@ -81,12 +88,13 @@ class ReadinessSession:
     on_poll is a trusted in-process coordinator callback, never imported text,
     ticket code, an executable argument or a second admission lease.
     """
-    def __init__(self, provisioning, *, scenario='healthy', helper_build_run=HELPER_BUILD):
+    def __init__(self, provisioning, *, scenario='healthy', helper_build_run=HELPER_BUILD, validation=False):
         self.provisioning, self.run, self.lease = provisioning, provisioning.run, provisioning.lease
         self.lease._active()
         manifest = self.run.manifest()
         revision, dirty = source_identity()
-        require(scenario in SCENARIOS and helper_build_run == HELPER_BUILD, 'unsupported_readiness_scenario')
+        require(scenario in SCENARIOS and helper_build_run == HELPER_BUILD and type(validation) is bool,
+                'unsupported_readiness_scenario')
         require(revision == manifest['source_revision'] and dirty is False and manifest['source_dirty'] is False and
             manifest['mode'] == 'container-reference' and self.lease.run_id == self.run.id and
             self.lease.source_revision == revision and self.lease.plan['synthetic'] is False and
@@ -108,6 +116,10 @@ class ReadinessSession:
         self.source_sha256 = runtime_hash()
         self.bind_path = self.run.file('private/helper-source/runtime.py')
         self.bind_identity = None
+        self.validation_enabled = validation
+        self.validation_source_sha256 = code_hash(VALIDATION_RUNTIME) if validation else None
+        self.validation_bind_path = self.run.file('private/helper-source/validation.py')
+        self.validation_bind_identity = None
         self.receipt = {**common(manifest), 'operation': 'ssh-ansible-readiness', 'scenario': scenario,
             'status': 'pending', 'target_id': 'target-001', 'target_resource_id': self.target,
             'helper_id': None, 'helper_image': HELPER_IMAGE, 'helper_build_run': HELPER_BUILD,
@@ -151,53 +163,77 @@ class ReadinessSession:
             'helper_image_mismatch')
         return image['Config'].get('Labels') or {}
 
+    def source_bindings(self):
+        """Fixed reviewed files only; callers cannot supply executable paths."""
+        require(type(self.validation_enabled) is bool and
+            self.bind_path == self.run.file('private/helper-source/runtime.py') and
+            self.validation_bind_path == self.run.file('private/helper-source/validation.py'), 'helper_source_invalid')
+        bindings = [(RUNTIME, self.bind_path, self.source_sha256, 'bind_identity', SOURCE_MOUNT)]
+        if self.validation_enabled:
+            require(type(self.validation_source_sha256) is str and
+                    re.fullmatch('[a-f0-9]{64}', self.validation_source_sha256), 'helper_source_invalid')
+            bindings.append((VALIDATION_RUNTIME, self.validation_bind_path, self.validation_source_sha256,
+                             'validation_bind_identity', VALIDATION_MOUNT))
+        else:
+            require(self.validation_source_sha256 is None and self.validation_bind_identity is None,
+                    'helper_source_invalid')
+        return bindings
+
     def prepare_source_copy(self):
         """Expose only public reviewed code, never the private checkout ancestry."""
-        require(self.bind_identity is None and not self.bind_path.parent.exists(), 'helper_source_reused')
-        require(runtime_hash() == self.source_sha256, 'source_changed')
-        with RUNTIME.open('rb') as stream:
-            raw = stream.read(65537)
-        require(1 <= len(raw) <= 65536 and hashlib.sha256(raw).hexdigest() == self.source_sha256, 'source_changed')
+        bindings = self.source_bindings()
+        require(all(getattr(self, item[3]) is None for item in bindings) and
+                not self.bind_path.parent.exists(), 'helper_source_reused')
         self.bind_path.parent.mkdir(mode=0o700)
-        descriptor = os.open(self.bind_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, 'O_NOFOLLOW', 0), 0o600)
-        with os.fdopen(descriptor, 'wb') as stream:
-            stream.write(raw)
-            stream.flush()
-            os.fsync(stream.fileno())
-            if hasattr(os, 'fchmod'):
-                os.fchmod(stream.fileno(), 0o444)
-            else:  # Test-only Windows source work; real admission is Linux-only.
-                os.chmod(self.bind_path, 0o444)
-            info = os.fstat(stream.fileno())
-        self.bind_identity = {key: getattr(info, 'st_' + field) for key, field in
-            (('device', 'dev'), ('inode', 'ino'), ('uid', 'uid'), ('gid', 'gid'), ('size', 'size'))}
+        identities = {}
+        for original, destination, digest, identity_name, _ in bindings:
+            require(code_hash(original) == digest, 'source_changed')
+            with original.open('rb') as stream:
+                raw = stream.read(65537)
+            require(1 <= len(raw) <= 65536 and hashlib.sha256(raw).hexdigest() == digest, 'source_changed')
+            descriptor = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, 'O_NOFOLLOW', 0), 0o600)
+            with os.fdopen(descriptor, 'wb') as stream:
+                stream.write(raw)
+                stream.flush()
+                os.fsync(stream.fileno())
+                if hasattr(os, 'fchmod'):
+                    os.fchmod(stream.fileno(), 0o444)
+                else:  # Test-only Windows work; real admission is Linux-only.
+                    os.chmod(destination, 0o444)
+                info = os.fstat(stream.fileno())
+            identities[identity_name] = {key: getattr(info, 'st_' + field) for key, field in
+                (('device', 'dev'), ('inode', 'ino'), ('uid', 'uid'), ('gid', 'gid'), ('size', 'size'))}
+        for name, identity in identities.items():
+            setattr(self, name, identity)
         self.validate_source_copy()
 
     def validate_source_copy(self):
-        require(self.bind_path == self.run.file('private/helper-source/runtime.py') and type(self.bind_identity) is dict and
-                set(self.bind_identity) == {'device', 'inode', 'uid', 'gid', 'size'} and
-                all(type(value) is int and value >= 0 for value in self.bind_identity.values()) and
-                self.bind_identity['inode'] > 0 and 1 <= self.bind_identity['size'] <= 65536, 'helper_source_invalid')
+        bindings = self.source_bindings()
         folder = self.bind_path.parent.lstat()
         require(stat.S_ISDIR(folder.st_mode) and not self.bind_path.parent.is_symlink() and
-            set(os.listdir(self.bind_path.parent)) == {'runtime.py'} and
+            set(os.listdir(self.bind_path.parent)) == {item[1].name for item in bindings} and
             (os.name != 'posix' or folder.st_uid == os.getuid() and stat.S_IMODE(folder.st_mode) == 0o700), 'helper_source_invalid')
-        before = self.bind_path.lstat()
-        require(stat.S_ISREG(before.st_mode) and before.st_nlink == 1 and
-            (os.name != 'posix' or before.st_uid == os.getuid() and before.st_gid == os.getgid() and stat.S_IMODE(before.st_mode) == 0o444) and
-            all(getattr(before, 'st_' + field) == self.bind_identity[key] for key, field in
-                (('device', 'dev'), ('inode', 'ino'), ('uid', 'uid'), ('gid', 'gid'), ('size', 'size'))), 'helper_source_invalid')
-        descriptor = os.open(self.bind_path, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0))
-        with os.fdopen(descriptor, 'rb') as stream:
-            current = os.fstat(stream.fileno())
-            require((current.st_dev, current.st_ino) == (before.st_dev, before.st_ino), 'helper_source_invalid')
-            raw = stream.read(65537)
-        after = self.bind_path.lstat()
-        require((after.st_dev, after.st_ino, after.st_size) == (before.st_dev, before.st_ino, before.st_size) and
-            after.st_uid == before.st_uid and after.st_gid == before.st_gid and after.st_nlink == 1 and
-            stat.S_IMODE(after.st_mode) == stat.S_IMODE(before.st_mode) and
-            1 <= len(raw) <= 65536 and hashlib.sha256(raw).hexdigest() == self.source_sha256 and
-            runtime_hash() == self.source_sha256, 'helper_source_invalid')
+        for original, destination, digest, identity_name, _ in bindings:
+            identity = getattr(self, identity_name)
+            require(type(identity) is dict and set(identity) == {'device', 'inode', 'uid', 'gid', 'size'} and
+                all(type(value) is int and value >= 0 for value in identity.values()) and
+                identity['inode'] > 0 and 1 <= identity['size'] <= 65536, 'helper_source_invalid')
+            before = destination.lstat()
+            require(stat.S_ISREG(before.st_mode) and before.st_nlink == 1 and
+                (os.name != 'posix' or before.st_uid == os.getuid() and before.st_gid == os.getgid() and stat.S_IMODE(before.st_mode) == 0o444) and
+                all(getattr(before, 'st_' + field) == identity[key] for key, field in
+                    (('device', 'dev'), ('inode', 'ino'), ('uid', 'uid'), ('gid', 'gid'), ('size', 'size'))), 'helper_source_invalid')
+            descriptor = os.open(destination, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0))
+            with os.fdopen(descriptor, 'rb') as stream:
+                current = os.fstat(stream.fileno())
+                require((current.st_dev, current.st_ino) == (before.st_dev, before.st_ino), 'helper_source_invalid')
+                raw = stream.read(65537)
+            after = destination.lstat()
+            require((after.st_dev, after.st_ino, after.st_size) == (before.st_dev, before.st_ino, before.st_size) and
+                after.st_uid == before.st_uid and after.st_gid == before.st_gid and after.st_nlink == 1 and
+                stat.S_IMODE(after.st_mode) == stat.S_IMODE(before.st_mode) and
+                1 <= len(raw) <= 65536 and hashlib.sha256(raw).hexdigest() == digest and code_hash(original) == digest,
+                'helper_source_invalid')
 
     def save(self):
         self.receipt['updated_at'] = now()
@@ -208,6 +244,9 @@ class ReadinessSession:
             'network_id': self.network, 'target_resource_id': self.target, 'image_labels': self.image_labels,
             'source_path': str(RUNTIME), 'source_sha256': self.source_sha256,
             'bind_path': str(self.bind_path), 'bind_identity': self.bind_identity,
+            'layout_version': 2, 'validation_enabled': self.validation_enabled,
+            'validation_source_sha256': self.validation_source_sha256,
+            'validation_bind_identity': self.validation_bind_identity,
             'unknown_outcome': self.receipt['unknown_outcome'], 'cleanup': self.receipt['cleanup']})
 
     def failure(self, error):
@@ -254,8 +293,10 @@ class ReadinessSession:
         require(host.get('NetworkMode') == self.network and type(endpoints) is dict and len(endpoints) == 1 and
             next(iter(endpoints.values())).get('NetworkID') in ({'', self.network} if stopped else {self.network}), 'helper_network_mismatch')
         binds = [x for x in value.get('Mounts', []) if x['Type'] != 'tmpfs']
-        require(len(binds) == 1 and binds[0]['Type'] == 'bind' and binds[0]['Source'] == str(self.bind_path) and
-            binds[0]['Destination'] == SOURCE_MOUNT and binds[0]['RW'] is False and
+        expected_binds = {(str(item[1]), item[4]) for item in self.source_bindings()}
+        require(len(binds) == len(expected_binds) and
+            all(x['Type'] == 'bind' and x['RW'] is False for x in binds) and
+            {(x['Source'], x['Destination']) for x in binds} == expected_binds and
             host.get('Tmpfs') == {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=10001,gid=10001',
                 '/tmp': 'rw,nosuid,nodev,noexec,size=16m,mode=1777',
                 '/run/input': 'rw,nosuid,nodev,noexec,size=64k,mode=0700,uid=10001,gid=10001'}, 'unsafe_helper_mounts')
@@ -274,8 +315,10 @@ class ReadinessSession:
             self.prepare_source_copy()
             arguments = images.runtime_arguments(self.run, 'helper', HELPER_IMAGE, self.network,
                                                 self.lease.plan['limits']['helper'], helper_wait=180)
-            arguments[-3:-3] = ['--mount', 'type=bind,source=' + str(images.safe_bind(self.bind_path)) + ',target=' + SOURCE_MOUNT + ',readonly',
-                               '--label', images.LABEL + '.source_revision=' + self.run.manifest()['source_revision']]
+            additions = []
+            for _, destination, _, _, mount in self.source_bindings():
+                additions += ['--mount', 'type=bind,source=' + str(images.safe_bind(destination)) + ',target=' + mount + ',readonly']
+            arguments[-3:-3] = additions + ['--label', images.LABEL + '.source_revision=' + self.run.manifest()['source_revision']]
             self.lease.set_phase('provisioning')  # Fresh capacity under the same canonical flock.
             self.timeout()
             self.receipt['unknown_outcome'] = True
@@ -603,9 +646,11 @@ class ReadinessSession:
             lease.plan['synthetic'] is False, 'helper_recovery_scope')
         context = read_json(run.file('private/readiness-controller.json'))
         fields = set(common(manifest)) | {'operation', 'helper_id', 'helper_image', 'network_id', 'target_resource_id', 'image_labels',
-                                       'source_path', 'source_sha256', 'bind_path', 'bind_identity', 'unknown_outcome', 'cleanup'}
+            'source_path', 'source_sha256', 'bind_path', 'bind_identity', 'unknown_outcome', 'cleanup',
+            'layout_version', 'validation_enabled', 'validation_source_sha256', 'validation_bind_identity'}
         require(type(context) is dict and set(context) == fields and common(context) == common(manifest) and
-            context['operation'] == 'readiness-helper' and context['helper_image'] == HELPER_IMAGE and
+            context['operation'] == 'readiness-helper' and type(context['layout_version']) is int and context['layout_version'] == 2 and
+            type(context['validation_enabled']) is bool and context['helper_image'] == HELPER_IMAGE and
             (context['helper_id'] is None or type(context['helper_id']) is str and ID.fullmatch(context['helper_id'])) and
             type(context['network_id']) is str and ID.fullmatch(context['network_id']) and
             type(context['target_resource_id']) is str and ID.fullmatch(context['target_resource_id']) and
@@ -613,6 +658,11 @@ class ReadinessSession:
             context['bind_path'] == str(run.file('private/helper-source/runtime.py')) and
             (context['image_labels'] is None or type(context['image_labels']) is dict) and
             context['unknown_outcome'] is False, 'helper_recovery_scope')
+        if context['validation_enabled']:
+            require(context['validation_source_sha256'] == code_hash(VALIDATION_RUNTIME), 'helper_recovery_scope')
+        else:
+            require(context['validation_source_sha256'] is None and context['validation_bind_identity'] is None,
+                    'helper_recovery_scope')
         if context['helper_id'] is not None:
             require(images.inspect('image', HELPER_IMAGE)['Config'].get('Labels') == context['image_labels'], 'helper_recovery_scope')
         receipt = read_json(run.file('evidence/readiness.json'))
@@ -637,6 +687,10 @@ class ReadinessSession:
         session.helper, session.network, session.target = context['helper_id'], context['network_id'], context['target_resource_id']
         session.image_labels, session.source_sha256 = context['image_labels'], context['source_sha256']
         session.bind_path, session.bind_identity = run.file('private/helper-source/runtime.py'), context['bind_identity']
+        session.validation_enabled = context['validation_enabled']
+        session.validation_source_sha256 = context['validation_source_sha256']
+        session.validation_bind_identity = context['validation_bind_identity']
+        session.validation_bind_path = run.file('private/helper-source/validation.py')
         session.receipt, session.reconciliation_only = receipt, True
         if session.bind_identity is not None or session.helper is not None:
             session.validate_source_copy()
