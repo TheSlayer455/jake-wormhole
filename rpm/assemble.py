@@ -15,6 +15,7 @@ PACKAGES=Path('/packages')
 INPUT=Path('/candidate-input')
 KEY=Path('/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release')
 MAX_CAPTURE=65536
+SIGNATURE_OUTPUT_BYTES=4096
 BASE='sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1'
 
 
@@ -67,7 +68,7 @@ def nevra(package):
 
 
 def signature_output(raw):
-    require(type(raw) is bytes and 0<len(raw)<=MAX_CAPTURE,'rpm_signature_unverified')
+    require(type(raw) is bytes and 0<len(raw)<=SIGNATURE_OUTPUT_BYTES,'rpm_signature_unverified')
     text=raw.decode('utf-8')
     require(re.search(r'Signature[^\n]*: OK(?:\r?\n|$)',text) and
         not any(word in text.upper() for word in ('NOKEY','NOT OK','BAD SIGNATURE','NOTTRUSTED')),'rpm_signature_unverified')
@@ -89,9 +90,10 @@ def checked_signatures(request):
         require(re.fullmatch(r'[A-Za-z0-9+_.~:-]+\.rpm',name))
         path=PACKAGES/name;raw=read(path,64*1024*1024)
         require(len(raw)==package['bytes'] and sha(raw)==package['sha256'])
-        output,_=command(['/usr/bin/rpmkeys','--dbpath',str(database),'--checksig','--verbose',str(path)])
+        output,returncode=command(['/usr/bin/rpmkeys','--dbpath',str(database),'--checksig','--verbose',str(path)])
         digest=signature_output(output)
-        verified.append({'filename':name,'sha256':package['sha256'],'signature':'verified','verification_output_sha256':digest})
+        verified.append({'filename':name,'sha256':package['sha256'],'signature':'verified','verification_output_sha256':digest,
+            'verification_output':output.decode('utf-8'),'verification_returncode':returncode})
     # DNF's own local-package signature checks use the same now-proven trust file.
     for key_file in key_files:command(['/usr/bin/rpm','--import',str(key_file)])
     return verified,records

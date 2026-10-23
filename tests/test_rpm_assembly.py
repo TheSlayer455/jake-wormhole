@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -18,6 +19,12 @@ from test_admission import observed
 REVISION='a'*40
 BUILDER='b'*64
 DERIVED='sha256:'+'c'*64
+SIGNATURE_OUTPUT=b'/packages/synthetic.rpm:\n Header V4 RSA/SHA256 Signature, key ID fd431d51: OK\n Payload SHA256 digest: OK\n'
+
+
+def signature_record():
+    return {'filename':'synthetic.rpm','sha256':c.sha(b'Synthetic package bytes; no RPM tool executed.'),'signature':'verified',
+        'verification_output_sha256':c.sha(SIGNATURE_OUTPUT),'verification_output':SIGNATURE_OUTPUT.decode(), 'verification_returncode':0}
 
 
 class AssemblyPure(unittest.TestCase):
@@ -35,6 +42,42 @@ class AssemblyPure(unittest.TestCase):
         self.assertEqual(module.signature_output(positive),c.sha(positive))
         for output in (b'Payload SHA256 digest: OK\n',positive+b'Header V6 Signature: NOKEY\n',positive.replace(b': OK',b': NOT OK'),b'x'*65537):
             with self.assertRaises(module.AssemblyError):module.signature_output(output)
+
+    def test_commit_instructions_preserve_inherited_whitespace_without_reinterpreting_it(self):
+        inherited=t.load_lock()['base']['labels'];self.assertTrue(any(' ' in value for value in inherited.values()))
+        labels={**inherited,**{images.LABEL+'.'+suffix:'a'*64 for suffix in
+            ('run_id','source_revision','role','rpm_recipe_sha256','candidate_sha256','candidate_content_sha256')}}
+        changes=a.commit_changes(labels);instructions=[value for value in changes if value.startswith('LABEL ')]
+        self.assertEqual(len(instructions),6)
+        self.assertTrue(all(value.startswith('LABEL '+images.LABEL+'.') for value in instructions))
+        self.assertFalse(any(key+'=' in value for key in inherited for value in instructions))
+        self.assertEqual({key:labels[key] for key in inherited},inherited)
+        for unsafe in ('target extra=value','target$HOME','target\nUSER root','target"'):
+            with self.subTest(unsafe=unsafe),self.assertRaises(t.RpmError):
+                a.commit_changes({**labels,images.LABEL+'.role':unsafe})
+        with self.assertRaises(t.RpmError):a.commit_changes({**labels,images.LABEL+'.unexpected':'target'})
+
+    def test_original_signature_capture_is_retained_and_revalidated_not_only_its_digest(self):
+        spec=importlib.util.spec_from_file_location('fixed_rpm_signature_capture_fixture',rc.CONTEXT/'assemble.py')
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        package=b'Synthetic package bytes; no RPM tool executed.'
+        request={'key_file':{'sha256':c.sha(b'fixed synthetic public keys'),'primary_fingerprints':a.KEY_FINGERPRINTS},
+            'resolution':{'packages':[{'path':'Packages/synthetic.rpm','bytes':len(package),'sha256':c.sha(package)}]}}
+        def source(path,*args):
+            if path==Path('/recipe/assembly.json'):return c.canonical({'trusted_primary_fingerprints':a.KEY_FINGERPRINTS})
+            if path==module.KEY:return b'fixed synthetic public keys'
+            return package
+        def command(arguments,*args,**kwargs):return (SIGNATURE_OUTPUT,0) if arguments[0]=='/usr/bin/rpmkeys' else (b'',0)
+        with patch.object(module,'read',side_effect=source),patch.object(module,'module',return_value=SimpleNamespace(fingerprints=lambda raw:a.KEY_FINGERPRINTS)),\
+            patch.object(module,'command',side_effect=command),patch.object(Path,'mkdir'):
+            result,_=module.checked_signatures(request)
+        self.assertEqual(result,[signature_record()]);self.assertEqual(a.validate_signature_record(result[0]),result[0])
+        for changed in ({'verification_output':SIGNATURE_OUTPUT.decode()+'changed'}, {'verification_returncode':False},
+            {'verification_output':'Payload SHA256 digest: OK\n','verification_output_sha256':c.sha(b'Payload SHA256 digest: OK\n')},
+            {'verification_output':'x'*4097,'verification_output_sha256':c.sha(b'x'*4097)},
+            {'verification_output':SIGNATURE_OUTPUT.decode()+'Signature: NOKEY\n',
+                'verification_output_sha256':c.sha(SIGNATURE_OUTPUT+b'Signature: NOKEY\n')}):
+            with self.subTest(changed=list(changed)),self.assertRaises(t.RpmError):a.validate_signature_record({**result[0],**changed})
 
     @unittest.skipUnless(os.name=='posix','POSIX process bound fixture')
     def test_actual_fixed_capture_kills_oversize_or_deadline_child(self):
@@ -73,7 +116,7 @@ class Builder(unittest.TestCase):
         base={'os_release':{'ID':'rhel','VERSION_ID':'9.8'},'key_files':[{'path':t.KEY_PATHS[0],'sha256':a.KEY_SHA,
             'primary_fingerprints':a.KEY_FINGERPRINTS,'signature_verification':'not-performed','bytes':3682}]}
         for owner,name,value in ((images,'RUNS_ROOT',self.run.workspace),(t,'read_base_observation',lambda run:base),
-            (rpm_resolution,'resolve_packages',lambda *args,**kwargs:{'packages':[]}),(sources,'prepare_packages',lambda *args:self.packages),
+            (rpm_resolution,'resolve_packages',lambda *args,**kwargs:{'packages':[{'path':'Packages/synthetic.rpm','sha256':signature_record()['sha256']}]}),(sources,'prepare_packages',lambda *args:self.packages),
             (sources,'validate_packages',lambda *args:self.packages),(sources,'prepare_eula',lambda *args:self.eula),(sources,'validate_eula',lambda *args:self.eula),
             (images,'inspect',self.inspect),(images,'docker',self.docker),(images,'cgroup_limits',self.cgroups),
             (images,'assembly_storage_guard',self.storage),(a,'installed_record',self.record)):
@@ -136,7 +179,7 @@ class Builder(unittest.TestCase):
         self.assertEqual(identifier,BUILDER);bundle=rc.validate_bundle(self.run);_,files=rc.recipe_identity()
         result={'status':'installed','base_image_id':t.BASE_ID,'candidate_sha256':bundle['candidate_sha256'],'content_sha256':bundle['manifest']['content_sha256'],
             'source_candidate_sha256':bundle['manifest']['source_candidate_sha256'],'installed_packages':[{'name':name,**version} for name,version in rc.PACKAGE_VERSIONS.items()],
-            'signature_results':[],'key_files':[{'path':t.KEY_PATHS[0],'sha256':a.KEY_SHA,'primary_fingerprints':a.KEY_FINGERPRINTS}],
+            'signature_results':[signature_record()],'key_files':[{'path':t.KEY_PATHS[0],'sha256':a.KEY_SHA,'primary_fingerprints':a.KEY_FINGERPRINTS}],
             'key_records':[],'os_release':{'ID':'rhel','VERSION_ID':'9.8'},'license_files':[{'path':'/licenses/ubi9-container/UBI-EULA-20190422.pdf',
                 'bytes':sources.EULA_BYTES,'sha256':sources.EULA_SHA256}],'dependency_check':'passed','hostkeys_absent':True,
             'runtime_sha256':files['images/runtime.py'],'sshd_config_sha256':files['images/sshd_config'],'runtime_pipeline_complete':False,'production_iso_eligible':False}
@@ -151,6 +194,13 @@ class Builder(unittest.TestCase):
         self.assertTrue(all(row['outcome']!='pending' for row in self.lease.record['resources']))
         self.assertTrue(any(row[:3]==('storage',True,True) for row in self.calls))
         self.assertFalse(read_json(self.run.file('evidence/rpm-candidate-build.json'))['daemon_materialization_cgroup_capped'])
+        committed=next(call for call in self.calls if call[:2]==('docker','commit'))
+        label_changes=[committed[index+1] for index,value in enumerate(committed[:-1]) if value=='--change' and committed[index+1].startswith('LABEL ')]
+        self.assertEqual(len(label_changes),6);self.assertTrue(all(value.startswith('LABEL '+images.LABEL+'.') for value in label_changes))
+        configured=self.container()['Config']['Labels']
+        self.assertEqual({key:configured[key] for key in t.load_lock()['base']['labels']},t.load_lock()['base']['labels'])
+        saved=read_json(self.run.file('evidence/rpm-candidate-build.json'))
+        self.assertEqual(saved['installed']['signature_results'][0]['verification_output'],SIGNATURE_OUTPUT.decode())
 
     def test_unknown_commit_preserves_container_and_never_cleans_by_empty_sweep(self):
         self.unknown_commit=True

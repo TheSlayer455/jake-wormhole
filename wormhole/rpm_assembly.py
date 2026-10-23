@@ -22,6 +22,30 @@ TMPFS = {'/run':'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0',
          '/tmp':'rw,nosuid,nodev,noexec,size=128m,mode=1777,uid=0,gid=0'}
 KEY_SHA = '0db3dc1b6228f29d60f37c5ad91d9f4cd3547895e8ebedb242469b1c0a0cdf08'
 KEY_FINGERPRINTS = ['567E347AD0044ADE55BA8A5F199E2F91FD431D51','7E4624258C406535D56D6F135054E4A45A6340B3']
+SIGNATURE_OUTPUT_BYTES = 4096
+
+
+def commit_changes(labels):
+    # The inherited UBI strings are already container Config labels. Do not
+    # reinterpret descriptions/maintainers as Dockerfile instructions.
+    keys={images.LABEL+'.'+suffix for suffix in ('run_id','source_revision','role','rpm_recipe_sha256','candidate_sha256','candidate_content_sha256')}
+    t.require(type(labels) is dict and {key for key in labels if type(key) is str and key.startswith(images.LABEL+'.')}==keys and
+        all(type(labels[key]) is str and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._:-]{0,127}',labels[key]) for key in keys),'rpm_commit_labels_invalid')
+    return ['USER 0:0','WORKDIR /home/wormhole','ENTRYPOINT ["/usr/bin/python3","/opt/wormhole/runtime.py","target"]','CMD []']+[
+        'LABEL '+key+'='+labels[key] for key in sorted(keys)]
+
+
+def validate_signature_record(row):
+    fields={'filename','sha256','signature','verification_output_sha256','verification_output','verification_returncode'}
+    t.require(type(row) is dict and set(row)==fields and row['signature']=='verified' and
+        type(row['verification_output']) is str and 0<len(row['verification_output'].encode('utf-8'))<=SIGNATURE_OUTPUT_BYTES and
+        type(row['verification_returncode']) is int and row['verification_returncode']==0 and
+        type(row['verification_output_sha256']) is str and t.SHA.fullmatch(row['verification_output_sha256']) and
+        c.sha(row['verification_output'].encode('utf-8'))==row['verification_output_sha256'],'rpm_signature_unverified')
+    output=row['verification_output']
+    t.require(re.search(r'Signature[^\n]*: OK(?:\r?\n|$)',output) and
+        not any(word in output.upper() for word in ('NOKEY','NOT OK','BAD SIGNATURE','NOTTRUSTED')),'rpm_signature_unverified')
+    return row
 
 
 def config():
@@ -121,10 +145,9 @@ def validate_installed(value,request,source_files):
         t.require(len(selected)==1 and c.canonical({key:selected[0][key] for key in version})==c.canonical(version),'rpm_installed_package_mismatch')
     expected=[{'filename':Path(row['path']).name,'sha256':row['sha256']} for row in request['resolution']['packages']]
     signatures=value['signature_results']
-    t.require(type(signatures) is list and len(signatures)==len(expected) and all(type(row) is dict and
-        set(row)=={'filename','sha256','signature','verification_output_sha256'} and row['signature']=='verified' and
-        type(row['verification_output_sha256']) is str and t.SHA.fullmatch(row['verification_output_sha256']) for row in signatures) and
-        [{key:row[key] for key in ('filename','sha256')} for row in signatures]==expected,'rpm_signature_unverified')
+    t.require(type(signatures) is list and len(signatures)==len(expected),'rpm_signature_unverified')
+    for row in signatures:validate_signature_record(row)
+    t.require([{key:row[key] for key in ('filename','sha256')} for row in signatures]==expected,'rpm_signature_unverified')
     t.require(type(value['key_files']) is list and len(value['key_files'])==1 and value['key_files'][0]=={
         'path':t.KEY_PATHS[0],'sha256':KEY_SHA,'primary_fingerprints':KEY_FINGERPRINTS},'rpm_signature_unverified')
     for row in value['key_files']:
@@ -232,7 +255,7 @@ def build(run,lease,*,base_run):
         images.assembly_storage_guard(lease.plan,storage,sized);check_source();lease.set_phase('materializing')
         tag='jake-wormhole-ubi-candidate:run-'+run.id;t.require(images.inspect('image',tag,missing=True) is None,'rpm_candidate_tag_exists')
         labels=rc.binding_labels(run,manifest,recipe);args=['commit','--no-pause']
-        for change in ['USER 0:0','WORKDIR /home/wormhole','ENTRYPOINT ["/usr/bin/python3","/opt/wormhole/runtime.py","target"]','CMD []']+['LABEL '+key+'='+value for key,value in labels.items()]:args.extend(('--change',change))
+        for change in commit_changes(labels):args.extend(('--change',change))
         args.extend((identifier,tag));committed=mutation(run,receipt,tuple(args),timeout=lease.plan['materialization']['client_timeout_seconds'])
         t.require(not committed['log_truncated'],'rpm_candidate_commit_unknown');image=images.inspect('image',tag)
         binding={**common(run.manifest()),'operation':'ubi9-candidate-image-binding','status':'built','candidate_sha256':bundle['candidate_sha256'],

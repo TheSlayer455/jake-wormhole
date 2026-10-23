@@ -97,6 +97,10 @@ using a dedicated container-local RPM database and only the two primary keys
 observed in the actual base's exact ordinary key file. Digests alone, missing keys,
 bad signatures or unsupported verification fail. It does not preemptively import
 other signing keys or suppress signature errors.
+The installed record retains each original signature-check output (at most4096
+UTF8 bytes), its SHA256 and the strict integer return code. The controller checks
+that capture again before accepting the installed record; a digest alone is not
+the reviewable signature evidence.
 
 The builder applies the exact same closed transaction from local files with
 local-package GPG checks, runs a real dependency check, observes installed full
@@ -122,6 +126,9 @@ lifetime. Writable-layer size and shared storage headroom are sampled before
 start, during execution and before commit; these are not a quota or reservation.
 Commit uses a fresh owned tag plus inspected immutable image/configuration proof,
 not a hash guessed from mixed CLI output. Unknown mutations retain admission.
+Commit overrides only fixed project labels with bounded identifier values.
+Inherited UBI labels, including descriptions with spaces, stay in container
+configuration and the resulting image must preserve their exact values.
 The base and derived image remain retained; the exact builder is reconciled.
 
 The fixed binding operation `ubi9-candidate-image-binding` uses private controller
