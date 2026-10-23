@@ -25,6 +25,27 @@ def require(value, code):
         raise RunError(code, 'Functional acceptance failed; retain primary evidence and resource accounting.')
 
 
+def retain_failure(session, error):
+    prior = session.receipt.get('primary_failure')
+    if prior is None or prior.get('code') != getattr(error, 'code', None):
+        session.failure(error)
+
+
+def cleanup_with_observations(run, value, session, lease, readiness, *, prior_error=None, failed=False):
+    """A known diagnostic failure cannot skip the normal scoped cleanup policy."""
+    try:
+        value['checks']['credential_scan_before_cleanup'] = scan_private_material(run)
+        value['disk_sample'] = disk_sample(run, 'before-functional-cleanup')
+    except BaseException as error:
+        retain_failure(session, error)
+        value['checks']['pre_cleanup_observation_error'] = {'code': getattr(error, 'code', 'diagnostic_failed')}
+        if prior_error is None:
+            prior_error = error
+    receipt = cleanup_session(session, lease,
+        reason='failure' if prior_error is not None or failed else 'success', helper=readiness)
+    return receipt, prior_error
+
+
 def stop_owned_target(session):
     """One fixed owned-target stop after successful readiness, before SSH validation."""
     session.held()
@@ -126,12 +147,10 @@ def qualify_case(scenario, sentinel):
                     'readable_structured_agreement': True, 'attempts': deepcopy(receipt['attempts'])}
             except BaseException as error:
                 unexpected = error
-                provisioning.failure(error)
+                retain_failure(provisioning, error)
 
-            value['checks']['credential_scan_before_cleanup'] = scan_private_material(run)
-            value['disk_sample'] = disk_sample(run, 'before-functional-cleanup')
-            cleanup = cleanup_session(provisioning, lease,
-                reason='failure' if unexpected is not None or observed is not None else 'success', helper=readiness)
+            cleanup, unexpected = cleanup_with_observations(run, value, provisioning, lease, readiness,
+                prior_error=unexpected, failed=observed is not None)
             value['checks']['cleanup'] = {'status': cleanup['status'],
                 'primary_failure': deepcopy(cleanup['primary_failure']),
                 'secondary_failures': deepcopy(cleanup['secondary_failures']),

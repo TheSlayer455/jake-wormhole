@@ -9,6 +9,28 @@ from wormhole.runs import RunError
 
 
 class FunctionalOperatorBoundaries(unittest.TestCase):
+    def test_pre_cleanup_scan_failure_retains_primary_and_still_uses_exact_cleanup_policy(self):
+        error = RunError('controlled_scan_failure', 'Synthetic diagnostic refusal.')
+        events = []
+        session = SimpleNamespace(receipt={'primary_failure': None},
+            failure=lambda value: events.append(('failure', value.code)))
+        lease, readiness, run = object(), object(), object()
+        cleanup = {'status': 'completed'}
+        with patch.object(operator, 'scan_private_material', side_effect=error), \
+                patch.object(operator, 'disk_sample') as sample, patch.object(operator, 'cleanup_session',
+                    side_effect=lambda *args, **kwargs: events.append(('cleanup', args, kwargs)) or cleanup) as clean:
+            receipt, primary = operator.cleanup_with_observations(run, {'checks': {}}, session, lease, readiness)
+        self.assertIs(primary, error)
+        self.assertIs(receipt, cleanup)
+        self.assertEqual(events[0], ('failure', 'controlled_scan_failure'))
+        clean.assert_called_once_with(session, lease, reason='failure', helper=readiness)
+        sample.assert_not_called()
+
+    def test_existing_same_primary_is_not_duplicated_as_a_cleanup_secondary(self):
+        session = SimpleNamespace(receipt={'primary_failure': {'code': 'required_check_mismatch'}}, failure=Mock())
+        operator.retain_failure(session, RunError('required_check_mismatch', 'Already recorded.'))
+        session.failure.assert_not_called()
+
     def test_invalid_inputs_refuse_before_allocation_or_optional_module_import(self):
         with patch.object(operator, 'create_run') as allocate:
             for case, sentinel, expected in (('ticket-command', 'a' * 64, 'unsupported_acceptance_case'),
