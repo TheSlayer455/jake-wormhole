@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+.env
+/.wormhole/
+/runs/
+/state/
+/private/
+/artifacts/private/
+*.pem
