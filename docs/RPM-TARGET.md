@@ -130,6 +130,21 @@ Commit overrides only fixed project labels with bounded identifier values.
 Inherited UBI labels, including descriptions with spaces, stay in container
 configuration and the resulting image must preserve their exact values.
 The base and derived image remain retained; the exact builder is reconciled.
+Builder identity is passed only to the fixed PID1 process with `/usr/bin/env`
+and a validated canonical Run UUID, so it is absent from Docker `Config.Env`.
+Both stopped-builder and final-image checks require the fixed clean environment.
+The final runtime uses the same two-element Python entrypoint and `target` command
+as the unchanged strict Terraform target policy.
+
+The first actual candidate case at71878d1 built the image and passed the two
+signature checks, dependency check and exact EULA retention. It then failed
+`unsafe_target` before SSH/Ansible qualification and completed known scoped
+cleanup. The inspected image retained builder-only `WORMHOLE_ROLE` and Run
+environment variables; those conflict with the target's strict environment gate.
+Its three-element entrypoint/empty command also disagreed with that policy, though
+Terraform already overrides those values. The correction removes the inherited
+builder environment and aligns image layout; a fresh actual run is still required.
+The original failed Run and signature captures remain historical evidence.
 
 The fixed binding operation `ubi9-candidate-image-binding` uses private controller
 layout version2. The existing Ubuntu binding remains version1 and stock defaults

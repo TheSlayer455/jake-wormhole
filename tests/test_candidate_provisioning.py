@@ -1,12 +1,13 @@
 """Candidate target/stock controller separation; all Docker/Terraform mocked."""
 from copy import deepcopy
+import json
 import os
 import unittest
 from unittest.mock import patch
 
 import test_provisioning as base
 from test_candidate import DERIVED
-from wormhole import candidate as c, rpm_candidate as rc, provisioning as p, images
+from wormhole import candidate as c, rpm_candidate as rc, rpm_assembly as assembly, rpm_target, provisioning as p, images
 from wormhole.runs import read_json
 
 
@@ -72,6 +73,35 @@ class RpmCandidateProvisioning(CandidateProvisioning):
     policy = rc
     operation_name = 'ubi9-candidate-image-binding'
     expected_binding_version = 2
+
+    def test_real_commit_layout_matches_unchanged_strict_provisioning_guard(self):
+        # Parse the authored Dockerfile change instructions, rather than giving
+        # the RPM image and Terraform container unrelated hardcoded mock layouts.
+        labels=rc.binding_labels(self.run,{'content_sha256':'f'*64},'e'*64)
+        changes=assembly.commit_changes(labels)
+        runtime={name:json.loads(next(value[len(prefix):] for value in changes if value.startswith(prefix)))
+            for name,prefix in (('Entrypoint','ENTRYPOINT '),('Cmd','CMD '))}
+        with self.patches():
+            self.session.provision()
+            target=self.container(base.CID);target['Config'].update(runtime)
+            # Docker inherits image environment in addition to Terraform's two
+            # explicit runtime variables. Neither layer may smuggle builder role.
+            target['Config']['Env']=list(rc.IMAGE_ENV)+target['Config']['Env']
+            image={'Id':DERIVED,'Parent':rpm_target.BASE_ID,'Os':'linux','Architecture':'amd64',
+                'Config':{**target['Config'],'Labels':self.binding['image_labels'],'WorkingDir':'/home/wormhole','Env':list(rc.IMAGE_ENV)}}
+            rc.verify_image(image,self.binding)
+            self.session.verify_target(target)
+            old=deepcopy(target);old['Config'].update(Entrypoint=['/usr/bin/python3','/opt/wormhole/runtime.py','target'],Cmd=[])
+            with self.assertRaises(p.ProvisioningError) as error:self.session.verify_target(old)
+            self.assertEqual(error.exception.code,'unsafe_target')
+            old_image=deepcopy(image);old_image['Config'].update(Entrypoint=old['Config']['Entrypoint'],Cmd=[])
+            with self.assertRaises(rpm_target.RpmError):rc.verify_image(old_image,self.binding)
+            leaked=deepcopy(target);leaked['Config']['Env'].append('WORMHOLE_ROLE=rpm-builder')
+            with self.assertRaises(p.ProvisioningError) as error:self.session.verify_target(leaked)
+            self.assertEqual(error.exception.code,'unsafe_target')
+            leaked_image=deepcopy(image);leaked_image['Config']['Env'].append('WORMHOLE_ROLE=rpm-builder')
+            with self.assertRaises(rpm_target.RpmError):rc.verify_image(leaked_image,self.binding)
+            self.session.destroy()
 
 
 if __name__ == '__main__': unittest.main()

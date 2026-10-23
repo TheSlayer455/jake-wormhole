@@ -16,7 +16,7 @@ import time
 from . import candidate as c, images, rpm_candidate as rc, rpm_target as t, rpm_source as sources
 from .runs import SOURCE_ROOT, _owned, atomic_bytes, atomic_json, common, now, read_json, source_identity
 
-SELECT = 'exec /usr/bin/python3 -I -B /recipe/assemble.py'
+SELECT = 'exec /usr/bin/env WORMHOLE_ROLE=rpm-builder WORMHOLE_RUN_ID={run_id} /usr/bin/python3 -I -B /recipe/assemble.py'
 RELEASE = 'umask 077; printf "1\\n" > /run/.wormhole-rpm-build.start.tmp && /usr/bin/mv -T /run/.wormhole-rpm-build.start.tmp /run/wormhole-rpm-build.start'
 TMPFS = {'/run':'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0',
          '/tmp':'rw,nosuid,nodev,noexec,size=128m,mode=1777,uid=0,gid=0'}
@@ -25,13 +25,20 @@ KEY_FINGERPRINTS = ['567E347AD0044ADE55BA8A5F199E2F91FD431D51','7E4624258C406535
 SIGNATURE_OUTPUT_BYTES = 4096
 
 
+def builder_command(run):
+    # Only the canonical UUID enters this fixed shell instruction. Process-only
+    # identity cannot leak from Docker Config.Env into the committed target.
+    t.require(type(run.id) is str and re.fullmatch(r'[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}',run.id),'rpm_builder_run_invalid')
+    return SELECT.format(run_id=run.id)
+
+
 def commit_changes(labels):
     # The inherited UBI strings are already container Config labels. Do not
     # reinterpret descriptions/maintainers as Dockerfile instructions.
     keys={images.LABEL+'.'+suffix for suffix in ('run_id','source_revision','role','rpm_recipe_sha256','candidate_sha256','candidate_content_sha256')}
     t.require(type(labels) is dict and {key for key in labels if type(key) is str and key.startswith(images.LABEL+'.')}==keys and
         all(type(labels[key]) is str and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._:-]{0,127}',labels[key]) for key in keys),'rpm_commit_labels_invalid')
-    return ['USER 0:0','WORKDIR /home/wormhole','ENTRYPOINT ["/usr/bin/python3","/opt/wormhole/runtime.py","target"]','CMD []']+[
+    return ['USER 0:0','WORKDIR /home/wormhole','ENTRYPOINT ["/usr/bin/python3","/opt/wormhole/runtime.py"]','CMD ["target"]']+[
         'LABEL '+key+'='+labels[key] for key in sorted(keys)]
 
 
@@ -97,8 +104,8 @@ def verify_builder(run,receipt,value,limits,*,stopped=False):
     host,cfg=value['HostConfig'],value['Config'];expected=limits['docker_create']
     t.require(value.get('Id')==receipt['builder_id'] and value.get('Image')==t.BASE_ID and
         value.get('Name')=='/wormhole-'+run.id+'-rpm-build' and cfg.get('Labels')==receipt['labels'] and cfg.get('User')=='0:0' and
-        cfg.get('WorkingDir')=='/' and cfg.get('Entrypoint')==['/bin/sh'] and cfg.get('Cmd')==['-c',SELECT] and
-        {item for item in cfg.get('Env',[]) if item.startswith('WORMHOLE_')}=={'WORMHOLE_ROLE=rpm-builder','WORMHOLE_RUN_ID='+run.id} and
+        cfg.get('WorkingDir')=='/' and cfg.get('Entrypoint')==['/bin/sh'] and cfg.get('Cmd')==['-c',builder_command(run)] and
+        rc.clean_image_environment(cfg.get('Env')) and
         not cfg.get('Volumes') and not cfg.get('Tty') and not cfg.get('OpenStdin'),'rpm_builder_identity')
     t.require(host.get('Privileged') is False and host.get('ReadonlyRootfs') is False and host.get('NetworkMode')=='none' and
         images.capability_names(host.get('CapDrop'))=={'ALL'} and images.capability_names(host.get('CapAdd'))==set(images.BUILD_CAPS) and
@@ -223,10 +230,10 @@ def build(run,lease,*,base_run):
         args=['create','--name','wormhole-'+run.id+'-rpm-build','--network','none','--user','0:0','--workdir','/','--entrypoint','/bin/sh',*images.limits_arguments(limits)]
         for capability in images.BUILD_CAPS:args.extend(('--cap-add',capability))
         for key,value in TMPFS.items():args.extend(('--tmpfs',key+':'+value))
-        for item in ('HOME=/tmp','PATH=/usr/sbin:/usr/bin:/sbin:/bin','LANG=C','WORMHOLE_ROLE=rpm-builder','WORMHOLE_RUN_ID='+run.id):args.extend(('--env',item))
+        for item in ('HOME=/tmp','PATH=/usr/sbin:/usr/bin:/sbin:/bin','LANG=C'):args.extend(('--env',item))
         for key,value in receipt['labels'].items():args.extend(('--label',key+'='+value))
         for destination,path in mounts.items():args.extend(('--mount','type=bind,source='+path+',target='+destination+',readonly,bind-propagation=rprivate'))
-        args.extend((t.BASE_ID,'-c',SELECT));created=mutation(run,receipt,tuple(args));identifier=created['log'].decode('ascii').strip()
+        args.extend((t.BASE_ID,'-c',builder_command(run)));created=mutation(run,receipt,tuple(args));identifier=created['log'].decode('ascii').strip()
         t.require(not created['log_truncated'] and t.ID.fullmatch(identifier),'rpm_builder_create_unknown')
         lease.register_resource('container',identifier);receipt.update(builder_id=identifier,unknown_outcome=False);_save(run,receipt)
         verify_builder(run,receipt,images.inspect('container',identifier),limits,stopped=True);check_source()

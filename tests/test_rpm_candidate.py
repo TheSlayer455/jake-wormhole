@@ -54,14 +54,17 @@ class RpmCandidate(RpmFixture,unittest.TestCase):
     def test_exact_image_binding_and_explicit_policy_version_do_not_replace_stock(self):
         binding=binding_for(self)
         image={'Id':DERIVED,'Parent':t.BASE_ID,'Os':'linux','Architecture':'amd64','Config':{'Labels':binding['image_labels'],
-            'User':'0:0','WorkingDir':'/home/wormhole','Entrypoint':['/usr/bin/python3','/opt/wormhole/runtime.py','target'],'Cmd':[]}}
+            'User':'0:0','WorkingDir':'/home/wormhole','Entrypoint':['/usr/bin/python3','/opt/wormhole/runtime.py'],'Cmd':['target'],'Env':list(rc.IMAGE_ENV)}}
         rc.verify_image(image,binding)
         self.assertEqual(p.target_binding_policy(binding)[1],2)
         self.assertEqual(p.target_binding_policy({'operation':'candidate-image-binding'})[1],1)
         for version in (1,True,'2'):
             with self.assertRaises(p.ProvisioningError):p.target_binding_policy(binding,version=version)
         for alter in (lambda x:x.update(Id=p.TARGET_IMAGE),lambda x:x.update(Parent=p.TARGET_IMAGE),
-            lambda x:x['Config']['Labels'].update(extra='foreign'),lambda x:x['Config'].update(Volumes={'/state':{}})):
+            lambda x:x['Config']['Labels'].update(extra='foreign'),lambda x:x['Config'].update(Volumes={'/state':{}}),
+            lambda x:x['Config']['Env'].append('WORMHOLE_ROLE=rpm-builder'),lambda x:x['Config']['Env'].append('WORMHOLE_ROLE='),
+            lambda x:x['Config']['Env'].append('WORMHOLE_RUN_ID='+self.run.id),lambda x:x['Config']['Env'].append('WORMHOLE_RUN_ID='),
+            lambda x:x['Config'].update(Entrypoint=['/usr/bin/python3','/opt/wormhole/runtime.py','target'],Cmd=[])):
             changed=deepcopy(image);alter(changed)
             with self.assertRaises(t.RpmError):rc.verify_image(changed,binding)
         self.assertNotEqual(p.TARGET_IMAGE,t.BASE_ID)

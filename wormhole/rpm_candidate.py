@@ -149,12 +149,20 @@ def validate_binding(run, value=None, *, artifacts=True):
     return saved
 
 
+IMAGE_ENV=('HOME=/tmp','PATH=/usr/sbin:/usr/bin:/sbin:/bin','LANG=C','container=oci')
+
+
+def clean_image_environment(value):
+    return type(value) is list and len(value)==len(IMAGE_ENV) and all(type(item) is str for item in value) and set(value)==set(IMAGE_ENV)
+
+
 def verify_image(actual,binding):
     t.require(actual.get('Id')==binding['image_id'] and actual.get('Parent')==t.BASE_ID and actual.get('Os')=='linux' and
         actual.get('Architecture')=='amd64' and actual.get('Config',{}).get('Labels')==binding['image_labels'] and
         actual['Config'].get('User')=='0:0' and actual['Config'].get('WorkingDir')=='/home/wormhole' and
-        actual['Config'].get('Entrypoint')==['/usr/bin/python3','/opt/wormhole/runtime.py','target'] and
-        actual['Config'].get('Cmd') in ([],None) and not actual['Config'].get('Volumes'),'rpm_candidate_image_mismatch')
+        actual['Config'].get('Entrypoint')==['/usr/bin/python3','/opt/wormhole/runtime.py'] and
+        actual['Config'].get('Cmd')==['target'] and clean_image_environment(actual['Config'].get('Env')) and
+        not actual['Config'].get('Volumes'),'rpm_candidate_image_mismatch')
 
 
 def build_rpm_candidate(run,lease,*,base_run):

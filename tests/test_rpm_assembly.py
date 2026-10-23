@@ -4,9 +4,11 @@ The process-bound tests run only authored local Python, never an upstream tool.
 """
 from copy import deepcopy
 import importlib.util
+import json
 import os
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -79,6 +81,22 @@ class AssemblyPure(unittest.TestCase):
                 'verification_output_sha256':c.sha(SIGNATURE_OUTPUT+b'Signature: NOKEY\n')}):
             with self.subTest(changed=list(changed)),self.assertRaises(t.RpmError):a.validate_signature_record({**result[0],**changed})
 
+    @unittest.skipUnless(sys.platform.startswith('linux'),'Actual authored local shell/environment fixture, no Docker')
+    def test_builder_identity_is_process_only_and_malformed_run_never_enters_shell(self):
+        run=SimpleNamespace(id='12345678-1234-1234-1234-123456789abc')
+        command=a.builder_command(run)
+        with tempfile.TemporaryDirectory(prefix='wormhole-rpm-environment-synthetic-') as temporary:
+            probe=Path(temporary)/'probe.py'
+            probe.write_text('import json,os; print(json.dumps({k:v for k,v in os.environ.items() if k.startswith("WORMHOLE_")}))')
+            # Replace only the fixed program path for this actual local fixture.
+            fixed=command.replace('/usr/bin/python3 -I -B /recipe/assemble.py',sys.executable+' -I -B '+str(probe))
+            environment={item.split('=',1)[0]:item.split('=',1)[1] for item in rc.IMAGE_ENV}
+            result=subprocess.run(['/bin/sh','-c',fixed],env=environment,check=True,capture_output=True,timeout=3)
+            self.assertEqual(json.loads(result.stdout),{'WORMHOLE_ROLE':'rpm-builder','WORMHOLE_RUN_ID':run.id})
+            self.assertFalse(any(key.startswith('WORMHOLE_') for key in environment))
+        for identifier in ('12345678-1234-1234-1234-123456789abc;id','12345678-1234-1234-1234-123456789abC','x\nUSER root',None):
+            with self.subTest(identifier=identifier),self.assertRaises(t.RpmError):a.builder_command(SimpleNamespace(id=identifier))
+
     @unittest.skipUnless(os.name=='posix','POSIX process bound fixture')
     def test_actual_fixed_capture_kills_oversize_or_deadline_child(self):
         spec=importlib.util.spec_from_file_location('fixed_rpm_assemble_fixture',rc.CONTEXT/'assemble.py')
@@ -135,7 +153,7 @@ class Builder(unittest.TestCase):
         labels=dict(item.split('=',1) for item in values('--label'));expected=self.lease.plan['limits']['build']['docker_create']
         receipt=read_json(self.run.file('evidence/rpm-candidate-build.json'))
         return {'Id':BUILDER,'Image':t.BASE_ID,'Name':'/wormhole-'+self.run.id+'-rpm-build','Config':{'Labels':labels,'User':'0:0','WorkingDir':'/',
-            'Entrypoint':['/bin/sh'],'Cmd':['-c',a.SELECT],'Env':values('--env'),'Tty':False,'OpenStdin':False},
+            'Entrypoint':['/bin/sh'],'Cmd':['-c',a.builder_command(self.run)],'Env':values('--env')+['container=oci'],'Tty':False,'OpenStdin':False},
             'HostConfig':{'Memory':expected['memory_bytes'],'MemorySwap':expected['memory_swap_bytes'],'NanoCpus':expected['nano_cpus'],
                 'PidsLimit':expected['pids_limit'],'LogConfig':{'Type':expected['log_driver'],'Config':expected['log_opts']},'Tmpfs':a.TMPFS,
                 'NetworkMode':'none','Privileged':False,'ReadonlyRootfs':False,'CapDrop':['ALL'],'CapAdd':list(images.BUILD_CAPS),
@@ -158,7 +176,7 @@ class Builder(unittest.TestCase):
         binding=rc.validate_bundle(self.run);recipe,_=rc.recipe_identity()
         return {'Id':DERIVED,'Parent':t.BASE_ID,'Os':'linux','Architecture':'amd64','Size':250000000,'Config':{
             'Labels':rc.binding_labels(self.run,binding['manifest'],recipe),'User':'0:0','WorkingDir':'/home/wormhole',
-            'Entrypoint':['/usr/bin/python3','/opt/wormhole/runtime.py','target'],'Cmd':[]}}
+            'Entrypoint':['/usr/bin/python3','/opt/wormhole/runtime.py'],'Cmd':['target'],'Env':list(rc.IMAGE_ENV)}}
 
     def docker(self,args,**options):
         self.calls.append(('docker',*args));raw=b''
@@ -199,6 +217,7 @@ class Builder(unittest.TestCase):
         self.assertEqual(len(label_changes),6);self.assertTrue(all(value.startswith('LABEL '+images.LABEL+'.') for value in label_changes))
         configured=self.container()['Config']['Labels']
         self.assertEqual({key:configured[key] for key in t.load_lock()['base']['labels']},t.load_lock()['base']['labels'])
+        self.assertFalse(any(self.args[index+1].startswith('WORMHOLE_') for index,value in enumerate(self.args[:-1]) if value=='--env'))
         saved=read_json(self.run.file('evidence/rpm-candidate-build.json'))
         self.assertEqual(saved['installed']['signature_results'][0]['verification_output'],SIGNATURE_OUTPUT.decode())
 
