@@ -23,3 +23,5 @@ See also [candidate source/image/test binding and exact-source recovery](WORM-01
 See [native RPM reference and same-candidate qualification](WORM-014.md).
 
 See [observed native software inventory](WORM-015.md).
+
+See [limited reference pipeline review](WORM-017.md).

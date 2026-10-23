@@ -1,0 +1,3607 @@
+{
+  "criteria": {
+    "AC-01": "Three fresh actual candidate pipelines preserve the complete fixed 43/46-row grid and matching original JSON/TXT/JUnit bytes; healthy full native SVD projections retain all packages and provenance.",
+    "AC-02": "The actual wrong expected version remains failed/ineligible with blocked SVD; strict source fixtures reject missing/duplicate/malformed/wrong-identity/applicability evidence and separate cleanup from primary failure.",
+    "AC-03": "Fixed safe exports/checksums bind tested candidate files and report/native SVD bytes. Private state, keys, raw captures and host paths remain outside portable projections."
+  },
+  "history": "WORM-017-initial-attempts.json",
+  "independent_review": {
+    "material_findings_open": 0,
+    "reviewer": "Codex subagent /root/ui",
+    "source_revision": "753b67d7e550218f28e2f765d3e3abf254c31656"
+  },
+  "input_proofs": [
+    {
+      "bytes": 1146,
+      "name": "WORM-017-delivery-source.json",
+      "sha256": "b2e2b8be52045c946a12ae05fe5f8b6e5f6b2702bdbd6da6f49e26802c801659"
+    },
+    {
+      "bytes": 248877,
+      "name": "WORM-017-reference-suite-753b67d.json",
+      "sha256": "faf7290041a92dc36ad634dee15ccd2ac611f8f23f843c5b6bbc0f22cc21cdfd"
+    },
+    {
+      "bytes": 131114,
+      "name": "WORM-017-homelab-source-qualification.json",
+      "sha256": "6823596dcfbbf299f8852ca572f7206fdb8553e7022ec81e20d4f65823823839"
+    },
+    {
+      "bytes": 503,
+      "name": "WORM-017-windows-tests.json",
+      "sha256": "e761b5f9b2056dd0a66a55a72be1110e012db7a200cb09ff62515e2471412fc1"
+    },
+    {
+      "bytes": 990,
+      "name": "WORM-017-753b67d-linux-fixtures.json",
+      "sha256": "aae42b3774bca35e03851bb53692c9fc1588c17ace209d81164392939bcc6021"
+    },
+    {
+      "bytes": 224368,
+      "name": "WORM-017-753b67d-ubuntu-healthy-final-readback.json",
+      "sha256": "cfc39906327cc8f00f153544a5891ff58b2d138c864c885388b6f9a351542679"
+    },
+    {
+      "bytes": 374573,
+      "name": "WORM-017-753b67d-ubi-healthy-final-readback.json",
+      "sha256": "e875c3da0451e7ec5eaff8704b6ccf79db68b67be86b79290ddc1061e4804907"
+    },
+    {
+      "bytes": 137011,
+      "name": "WORM-017-753b67d-ubuntu-version-expectation-mismatch-final-readback.json",
+      "sha256": "077a80a2133c65d8b936ec63d3b0aa1d2f782a801f863395e7ea3255e99de403"
+    }
+  ],
+  "limitations": [
+    "Reference scope is one Ubuntu or UBI candidate-bound container per Run with generated source and a synthetic assessment.",
+    "Original captures/private runtime inputs remain private and are replayed by the reviewed domain; this delivery rechecks original receipt bindings and exact pure report/projection hashes.",
+    "A negative harness pass preserves its failed underlying pipeline. Controlled wrong expectation does not damage the payload.",
+    "Finished original admission archive hashes and exact owned-resource dispositions are retained; host measurement details are omitted.",
+    "Helper/provisioner tools are execution provenance, and the target kernel is shared. UBI retains its limited authentication AUDIT_WRITE side effect.",
+    "Storage figures are samples, not hard quotas; scoped scans are not comprehensive. Optional PowerShell is excluded.",
+    "No twenty-target candidate qualification, VM/ISO boot, scanner/STIG acceptance, publication or Owner acceptance follows."
+  ],
+  "production_iso_eligible": false,
+  "pure_source_files": {
+    "wormhole/contracts.py": "b8d8e71577c1109de8d023900acc74bc8bc3ae36fad4d17a31803d14c3a722fb",
+    "wormhole/observed_svd.py": "564666042607834f70eeee2bf0852345ed53e9ba3ae5bf51b9515538a1e7e457",
+    "wormhole/pipeline_records.py": "f234f585194b2668fce4b39b1af0fc11ca5786b9f69b658d1ce0269734703a5e"
+  },
+  "qualification": {
+    "cases": [
+      {
+        "archive": {
+          "bytes": 9374,
+          "known_resource_count": 6,
+          "pending_resources": 0,
+          "resources": [
+            {
+              "id": "c6194d43b1b57147fae4d81853f8ed4edab1bbaf1d3de709e36ee312bbeee452",
+              "kind": "container",
+              "outcome": "absent",
+              "size_bytes": 0
+            },
+            {
+              "id": "sha256:c1c82d1e7462622d1ec61ebbb671c6477cdb91636613ff3a0dc80a111b2bac19",
+              "kind": "image",
+              "outcome": "retained",
+              "size_bytes": 46925785
+            },
+            {
+              "id": "64b884fc9020ad2138ae5235a3a8a8098a0b80d177368d3e78495bbac887bb60",
+              "kind": "container",
+              "outcome": "absent",
+              "size_bytes": 0
+            },
+            {
+              "id": "04bc1038bd4b27c0e2dd892e24c13053d3772b70be6d73db597c26c202a2db80",
+              "kind": "container",
+              "outcome": "absent",
+              "size_bytes": 0
+            },
+            {
+              "id": "567eab2ff0450c18c59c0aff34102067b423568adf47d8f6129a5581a1b48813",
+              "kind": "network",
+              "outcome": "absent",
+              "size_bytes": 0
+            },
+            {
+              "id": "4584feba43a3fdaab2b9b7a4cf1044ae991744e94304fc757d75a79c99a905ff",
+              "kind": "container",
+              "outcome": "absent",
+              "size_bytes": 0
+            }
+          ],
+          "scope": "Original raw archive hash and independently saved exact resource graph/retained image sizes agree; private host measurements are omitted.",
+          "scoped_cleanup": {
+            "primary_failure": null,
+            "private_state_removed": false,
+            "resources": [
+              {
+                "disposition": "absent",
+                "id": "c6194d43b1b57147fae4d81853f8ed4edab1bbaf1d3de709e36ee312bbeee452",
+                "kind": "container",
+                "role": "other-owned"
+              },
+              {
+                "disposition": "retained",
+                "id": "sha256:c1c82d1e7462622d1ec61ebbb671c6477cdb91636613ff3a0dc80a111b2bac19",
+                "kind": "image",
+                "role": "retained-image"
+              },
+              {
+                "disposition": "absent",
+                "id": "64b884fc9020ad2138ae5235a3a8a8098a0b80d177368d3e78495bbac887bb60",
+                "kind": "container",
+                "role": "provisioner"
+              },
+              {
+                "disposition": "absent",
+                "id": "04bc1038bd4b27c0e2dd892e24c13053d3772b70be6d73db597c26c202a2db80",
+                "kind": "container",
+                "role": "terraform-target"
+              },
+              {
+                "disposition": "absent",
+                "id": "567eab2ff0450c18c59c0aff34102067b423568adf47d8f6129a5581a1b48813",
+                "kind": "network",
+                "role": "terraform-network"
+              },
+              {
+                "disposition": "absent",
+                "id": "4584feba43a3fdaab2b9b7a4cf1044ae991744e94304fc757d75a79c99a905ff",
+                "kind": "container",
+                "role": "helper"
+              }
+            ],
+            "secondary_failures": [],
+            "status": "completed",
+            "terraform_state_retained": true,
+            "unknown_outcome": false
+          },
+          "sha256": "fd71da8905c9eb6887aa73d0c2bca2f6190391802c5de684cddd2f917def085e",
+          "state": "finished"
+        },
+        "candidate_files": [
+          {
+            "bytes": 262181,
+            "path": "source.synthetic.bin",
+            "sha256": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2"
+          },
+          {
+            "bytes": 535,
+            "path": "payload.py",
+            "sha256": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193"
+          },
+          {
+            "bytes": 16,
+            "path": "version.txt",
+            "sha256": "26c5590f073239bf0c190f79334ee92244b72b3b5bad93db8a713287e3b3d466"
+          },
+          {
+            "bytes": 63,
+            "path": "config.json",
+            "sha256": "4a3204999ada4f9dee4681076d1dafbfbfaafa85626e2219273e629898534119"
+          }
+        ],
+        "checksums": {
+          "files": {
+            "cleanup.json": {
+              "sha256": "c081e762975d0e28eb9d2dc9939ec46e6c82b3886bc74c34644a277831e22475",
+              "size_bytes": 439
+            },
+            "manifest.json": {
+              "sha256": "b0b62b06d859a09c06e23eef5ed34817f557120d6e08877b6d6204f0d908797e",
+              "size_bytes": 1495
+            },
+            "plan.json": {
+              "sha256": "de582d5a18d97a15fcd24193fba4cd8988d43fc9ae5ca1d8d4974b3c0dbe9681",
+              "size_bytes": 7839
+            },
+            "report.json": {
+              "sha256": "258a756ab53e0e36a5e931cce2f7f7f80167c102f2d2415b8b5043149f15610e",
+              "size_bytes": 21350
+            },
+            "report.junit.xml": {
+              "sha256": "a938a53d835d4eb61d478f9366d5ca9467590cb2830bedab391c869bc6b383be",
+              "size_bytes": 25457
+            },
+            "report.txt": {
+              "sha256": "d2e14b9707e267f230f43a83d02a399edf5699d29b73085b8918b2d4ece7c3c7",
+              "size_bytes": 15614
+            },
+            "summary.json": {
+              "sha256": "956b822f91226acd5ed82df1b50942e1c50b4b76a408e1544e4830d523a63468",
+              "size_bytes": 502
+            },
+            "targets/target-001/assessment.json": {
+              "sha256": "c8d0e93d80e2c25e7659a11f7d6abe0f27163e08df20b0a2ba862185cbfa3a44",
+              "size_bytes": 1989
+            },
+            "targets/target-001/logs.json": {
+              "sha256": "19ff5f74bc4a5a0f757970e96519fd1cbc9814aa966d588547b503bb10de0683",
+              "size_bytes": 4022
+            },
+            "targets/target-001/observed-svd.json": {
+              "sha256": "e18fcb2aeea9770eedf282d05e9bf9dbf4ca4bd260b2aa207d04c3af7bdda046",
+              "size_bytes": 16860
+            },
+            "targets/target-001/observed-svd.txt": {
+              "sha256": "6a78432cc4dbade4828f81428d8b38869bf8cbeb10074b77b2531c0250f6bac8",
+              "size_bytes": 26227
+            },
+            "targets/target-001/readiness.json": {
+              "sha256": "caf57a46b945c741408a422d43e06afc678da4bf29ea0096ba9e43e9f83c6986",
+              "size_bytes": 3076
+            },
+            "targets/target-001/svd.json": {
+              "sha256": "2636de32b1b70dc2edf58453baa1ddd550a84b43a73c111a033f04fb975ff247",
+              "size_bytes": 6294
+            },
+            "targets/target-001/tests.json": {
+              "sha256": "7d04c6447cc34c3689b5bc0e78c4dacc4bf83b9cbdf9f04c75487de3027535ef",
+              "size_bytes": 3758
+            }
+          },
+          "run_id": "149b4276-7f53-443c-b841-e93bbbadce5a",
+          "schema_version": "1.0"
+        },
+        "cli_gate": {
+          "duration_seconds": 0.4375821640715003,
+          "entrypoint": "python -B -m wormhole reference-gate",
+          "output_sha256": "6df470b48c1c883189054fcb4560f92f28a7bf7771be2d89eebff426d433ba5e",
+          "returncode": 0
+        },
+        "counts": {
+          "blocked": 0,
+          "error": 0,
+          "fail": 0,
+          "pass": 43,
+          "skipped": 0,
+          "unreachable": 0,
+          "unverified": 0
+        },
+        "created_at": "2026-10-23T20:28:04.074Z",
+        "credential_scan": {
+          "bytes_scanned": 543880,
+          "files_scanned": 85,
+          "public_provider_cache_excluded": true,
+          "secret_contents_exported": false,
+          "status": "pass"
+        },
+        "decision": {
+          "checksums_sha256": "0584c8905b67e356b7718e0366c8385480ef01adafb609ebd3ff54d76ea1b2d8",
+          "mode": "container-reference",
+          "operation": "reference-pipeline-decision-v1",
+          "policy": "reference-smoke-v1",
+          "production_iso_eligible": false,
+          "reasons": [],
+          "record_sha256": "258a756ab53e0e36a5e931cce2f7f7f80167c102f2d2415b8b5043149f15610e",
+          "reference_eligible": true,
+          "reference_scope_complete": true,
+          "run_id": "149b4276-7f53-443c-b841-e93bbbadce5a",
+          "schema_version": "1.0",
+          "source_dirty": false,
+          "source_revision": "753b67d7e550218f28e2f765d3e3abf254c31656"
+        },
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 267714065,
+          "ordinary_files": 134,
+          "phase": "reference-cleaned",
+          "sampled_at": "2026-10-23T20:28:56.915Z",
+          "unfollowed_links": 1
+        },
+        "failure_code": null,
+        "finished_at": "2026-10-23T20:28:56.915Z",
+        "operation_status": "passed",
+        "plan_sha256": "4849d76f26e560d7920f9a6031c7ea2f4aabd62f50e4001c5415ef0605a32493",
+        "platform": "ubuntu",
+        "record": {
+          "artifacts": [
+            {
+              "artifact_id": "request",
+              "kind": "plan",
+              "sha256": "883068bbbf4ce40e6fee9d449200b0c0ce54cdd7d518d93b337f33dbf1245652",
+              "size_bytes": 673
+            },
+            {
+              "artifact_id": "execution-plan",
+              "kind": "plan",
+              "sha256": "560ff041fce66ed938e94ed9ed50b792e48563995e9625910d3c744fb28c172d",
+              "size_bytes": 10428
+            },
+            {
+              "artifact_id": "chunks-record",
+              "kind": "component",
+              "sha256": "8765966d940c22ac007877ed1673687b6e51ac63a718e9081167736976ce811b",
+              "size_bytes": 1553
+            },
+            {
+              "artifact_id": "assessment-record",
+              "kind": "component",
+              "sha256": "c47d9752364668b671f14b9b7b2bbdc60ac629baae2e033e14eb7598208539f6",
+              "size_bytes": 3027
+            },
+            {
+              "artifact_id": "candidate-record",
+              "kind": "component",
+              "sha256": "075e7e8753d74e175b5425df5d01b5680dfc1359a74ba1b57ca936451f610257",
+              "size_bytes": 3003
+            },
+            {
+              "artifact_id": "admission-archive",
+              "kind": "admission",
+              "sha256": "fd71da8905c9eb6887aa73d0c2bca2f6190391802c5de684cddd2f917def085e",
+              "size_bytes": 9374
+            },
+            {
+              "artifact_id": "provisioning-record",
+              "kind": "component",
+              "sha256": "41b87c9bb61699ba0cc9291814699082c6616a5a2a318cc9f29442bc9d766c2c",
+              "size_bytes": 20398
+            },
+            {
+              "artifact_id": "readiness-record",
+              "kind": "component",
+              "sha256": "a25872265020750949afb36042b1f7344cdb3ccd4902df05b41f8463d063d851",
+              "size_bytes": 7024
+            },
+            {
+              "artifact_id": "functional-record",
+              "kind": "component",
+              "sha256": "bc03f18aeaffea46cd8ba3edcef8e74393be506e0dbe0c565efd63dd4cd2fe8f",
+              "size_bytes": 4254
+            },
+            {
+              "artifact_id": "svd-record",
+              "kind": "component",
+              "sha256": "952cbf2a0be549cc3e0a2fcb85a0a48b7ac857b3e13a7830aa9d1d5b158c2adf",
+              "size_bytes": 24328
+            },
+            {
+              "artifact_id": "svd-original",
+              "kind": "log-capture",
+              "sha256": "547ded3df2c217e46bfb895bfce4f1d9fec496cf1d7c075a96c39ada639fe882",
+              "size_bytes": 14245
+            },
+            {
+              "artifact_id": "readiness-log-0",
+              "kind": "log-capture",
+              "sha256": "c4c2cd42019e01705d639edecb650138a91266798000c7a46d83c35f61e372a0",
+              "size_bytes": 400
+            },
+            {
+              "artifact_id": "readiness-log-1",
+              "kind": "log-capture",
+              "sha256": "3877b8bf89b23627116920ec0cf38965771047578da166f2373310402f85bb14",
+              "size_bytes": 99
+            },
+            {
+              "artifact_id": "readiness-log-2",
+              "kind": "log-capture",
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size_bytes": 0
+            },
+            {
+              "artifact_id": "readiness-log-3",
+              "kind": "log-capture",
+              "sha256": "7fd882ea17a30f937247de71b05bd88a0d51e8ca8c3c8cea18d5462ce956fcfe",
+              "size_bytes": 438
+            },
+            {
+              "artifact_id": "readiness-log-4",
+              "kind": "log-capture",
+              "sha256": "8936db7924137c74b8df0c53e09ffbef79c36c25ca9cf5b57a8eac76869a8313",
+              "size_bytes": 431
+            },
+            {
+              "artifact_id": "readiness-log-5",
+              "kind": "log-capture",
+              "sha256": "8e645c317e2301f22ba2987f75a832feb7e3cd417bc5a7b9ff2ac3f1fc6b1989",
+              "size_bytes": 1025
+            },
+            {
+              "artifact_id": "readiness-log-6",
+              "kind": "log-capture",
+              "sha256": "5bafd0414079cf183b31fce86f5e1833295c4224cf7908993327983ccd70a9b4",
+              "size_bytes": 1030
+            },
+            {
+              "artifact_id": "functional-log-0",
+              "kind": "log-capture",
+              "sha256": "cbac9c4e563d069127446bb57a36d58f9c1fb27bcda0fc49e91e1f237b9a6653",
+              "size_bytes": 1795
+            },
+            {
+              "artifact_id": "terraform-log-0",
+              "kind": "log-capture",
+              "sha256": "afa6547f52ab2ab4f3491e3dcd890951c26612f437b10513b8f19049583960b5",
+              "size_bytes": 211
+            },
+            {
+              "artifact_id": "terraform-log-1",
+              "kind": "log-capture",
+              "sha256": "8ef419682bce17b53c7e823b0b28bfdb9bd01354532bd1998f093ef4d2c5ad19",
+              "size_bytes": 416
+            },
+            {
+              "artifact_id": "terraform-log-2",
+              "kind": "log-capture",
+              "sha256": "89da2fa4efefa8c32d337e43743d067fe7a7b08702261512b2fc02499d34298e",
+              "size_bytes": 119436
+            },
+            {
+              "artifact_id": "terraform-log-3",
+              "kind": "log-capture",
+              "sha256": "67740f3e3bf310d8df30939e046657d0daaade29a80d0f0f09e6c008baab604c",
+              "size_bytes": 6441
+            },
+            {
+              "artifact_id": "terraform-log-4",
+              "kind": "log-capture",
+              "sha256": "00a2e343015f127479308e4e1b1344c985c18caeddec5486332ed643e8f359ca",
+              "size_bytes": 12676
+            },
+            {
+              "artifact_id": "terraform-log-5",
+              "kind": "log-capture",
+              "sha256": "5ae0b293379081860a7a8a785e19890657cdd57e5616bc1fd3e70a3190359269",
+              "size_bytes": 1172
+            },
+            {
+              "artifact_id": "terraform-log-6",
+              "kind": "log-capture",
+              "sha256": "bc6e709a0793e6f93f7c447213d7a7adee2d63cec1c71693b64781774171a417",
+              "size_bytes": 5630
+            },
+            {
+              "artifact_id": "terraform-log-7",
+              "kind": "log-capture",
+              "sha256": "c0b5956623576cff149e4239e3c48f090814b75d60acb48956ebd356fe9bcf64",
+              "size_bytes": 4127
+            },
+            {
+              "artifact_id": "terraform-log-8",
+              "kind": "log-capture",
+              "sha256": "d1e6e23b105e2a320714170855be2844854e45bd0a3de0d1d6ef4b31903ab074",
+              "size_bytes": 20794
+            },
+            {
+              "artifact_id": "terraform-log-9",
+              "kind": "log-capture",
+              "sha256": "8d232e47fa50aca5d68886452f2c746e90d67e6e811242454456b045dbd95033",
+              "size_bytes": 867
+            },
+            {
+              "artifact_id": "terraform-log-10",
+              "kind": "log-capture",
+              "sha256": "4c2b9cee18c60f306644f1490ede91bd22d3c18da34b08e6aaf49319edcd120d",
+              "size_bytes": 1875
+            },
+            {
+              "artifact_id": "terraform-log-11",
+              "kind": "log-capture",
+              "sha256": "703ad833465f2b64ac1863c3fe4855c96d1e9cea2b20d28f1d9bee6a4b6c6d69",
+              "size_bytes": 5828
+            },
+            {
+              "artifact_id": "terraform-log-12",
+              "kind": "log-capture",
+              "sha256": "7ef7771651795af1bf3d4052cec3a67d802fa7a34b30e56690f1d6b313ff44b1",
+              "size_bytes": 9023
+            },
+            {
+              "artifact_id": "terraform-log-13",
+              "kind": "log-capture",
+              "sha256": "a294763f69a08e8ce46b886cf6cfa5e408d01b62ddc1ab536a293b71da66cfc5",
+              "size_bytes": 15138
+            },
+            {
+              "artifact_id": "terraform-log-14",
+              "kind": "log-capture",
+              "sha256": "295780e718acaf2426bad8b154102abe994b007d039bf7ce7de654db9c6c1844",
+              "size_bytes": 407
+            },
+            {
+              "artifact_id": "terraform-log-15",
+              "kind": "log-capture",
+              "sha256": "66082969f6dd7b41eb2ad3dc839b912e7ba334082d0b9cc187d5117bb9c5ecea",
+              "size_bytes": 25
+            },
+            {
+              "artifact_id": "cleanup-record",
+              "kind": "cleanup",
+              "sha256": "3a25c90c51392516cb95341f301c9b836a17714317875450cf2691c98458e889",
+              "size_bytes": 1764
+            }
+          ],
+          "candidate": {
+            "content_sha256": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+            "image_digest": "sha256:c1c82d1e7462622d1ec61ebbb671c6477cdb91636613ff3a0dc80a111b2bac19",
+            "manifest_sha256": "97ac3fb49ec9df1862a73c8cfce375905fad27ad4ceb1613f0798030eb823ad7",
+            "source_candidate_sha256": "97ac3fb49ec9df1862a73c8cfce375905fad27ad4ceb1613f0798030eb823ad7",
+            "source_sha256": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2"
+          },
+          "cleanup": {
+            "admission_finished": true,
+            "archive_sha256": "fd71da8905c9eb6887aa73d0c2bca2f6190391802c5de684cddd2f917def085e",
+            "pending_resources": 0,
+            "status": "completed"
+          },
+          "mode": "container-reference",
+          "operation": "reference-pipeline-result-v1",
+          "plan_sha256": "4849d76f26e560d7920f9a6031c7ea2f4aabd62f50e4001c5415ef0605a32493",
+          "policy": "reference-smoke-v1",
+          "primary_failure": null,
+          "production_iso_eligible": false,
+          "reference_eligible": true,
+          "reference_scope_complete": true,
+          "rows": [
+            {
+              "check_id": "clean-source",
+              "component": "preflight",
+              "evidence": [
+                "request"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "source-integrity",
+              "component": "chunks",
+              "evidence": [
+                "chunks-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "candidate-binding",
+              "component": "candidate",
+              "evidence": [
+                "candidate-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "measured-capacity",
+              "component": "admission",
+              "evidence": [
+                "admission-archive"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "terraform-lifecycle",
+              "component": "provisioning",
+              "evidence": [
+                "provisioning-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "owned-network",
+              "component": "provisioning",
+              "evidence": [
+                "provisioning-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "target-confinement",
+              "component": "provisioning",
+              "evidence": [
+                "provisioning-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "created",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "started",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "endpoint-discovered",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "tcp-reachable",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "ssh-identity-accepted",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "python-usable",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "ansible-usable",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "required-test-complete",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-userland",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-source-sha256",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+              "message": "Original source-bound evidence verified.",
+              "observed": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-manifest-sha256",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "97ac3fb49ec9df1862a73c8cfce375905fad27ad4ceb1613f0798030eb823ad7",
+              "message": "Original source-bound evidence verified.",
+              "observed": "97ac3fb49ec9df1862a73c8cfce375905fad27ad4ceb1613f0798030eb823ad7",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-payload-sha256",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+              "message": "Original source-bound evidence verified.",
+              "observed": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-version",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "1.0.0-reference",
+              "message": "Original source-bound evidence verified.",
+              "observed": "1.0.0-reference",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-configuration",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-function",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "target-identity",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "exact-owned-target-001",
+              "message": "Original source-bound evidence verified.",
+              "observed": "exact-owned-target-001",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "userland",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-inventory",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "complete installed native package database",
+              "message": "Original source-bound evidence verified.",
+              "observed": "complete installed native package database",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "payload-version",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "1.0.0-reference",
+              "message": "Original source-bound evidence verified.",
+              "observed": "1.0.0-reference",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "payload-sha256",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+              "message": "Original source-bound evidence verified.",
+              "observed": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-manifest-sha256",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "97ac3fb49ec9df1862a73c8cfce375905fad27ad4ceb1613f0798030eb823ad7",
+              "message": "Original source-bound evidence verified.",
+              "observed": "97ac3fb49ec9df1862a73c8cfce375905fad27ad4ceb1613f0798030eb823ad7",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-content-sha256",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+              "message": "Original source-bound evidence verified.",
+              "observed": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-source-sha256",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+              "message": "Original source-bound evidence verified.",
+              "observed": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-ca-certificates",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "{\"architecture\":\"all\",\"name\":\"ca-certificates\",\"version\":\"20260816ubuntu0.24.04.1\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"architecture\":\"all\",\"name\":\"ca-certificates\",\"version\":\"20260816ubuntu0.24.04.1\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-openssh-client",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "{\"architecture\":\"amd64\",\"name\":\"openssh-client\",\"version\":\"1:9.6p1-3ubuntu13.20\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"architecture\":\"amd64\",\"name\":\"openssh-client\",\"version\":\"1:9.6p1-3ubuntu13.20\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-openssh-server",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "{\"architecture\":\"amd64\",\"name\":\"openssh-server\",\"version\":\"1:9.6p1-3ubuntu13.20\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"architecture\":\"amd64\",\"name\":\"openssh-server\",\"version\":\"1:9.6p1-3ubuntu13.20\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-openssh-sftp-server",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "{\"architecture\":\"amd64\",\"name\":\"openssh-sftp-server\",\"version\":\"1:9.6p1-3ubuntu13.20\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"architecture\":\"amd64\",\"name\":\"openssh-sftp-server\",\"version\":\"1:9.6p1-3ubuntu13.20\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-python3",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "{\"architecture\":\"amd64\",\"name\":\"python3\",\"version\":\"3.12.3-0ubuntu2.1\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"architecture\":\"amd64\",\"name\":\"python3\",\"version\":\"3.12.3-0ubuntu2.1\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-python3-12",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "{\"architecture\":\"amd64\",\"name\":\"python3.12\",\"version\":\"3.12.3-1ubuntu0.17\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"architecture\":\"amd64\",\"name\":\"python3.12\",\"version\":\"3.12.3-1ubuntu0.17\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "fixture-alpha",
+              "component": "assessment",
+              "evidence": [
+                "assessment-record"
+              ],
+              "expected": "Not a Finding",
+              "message": "Original source-bound evidence verified.",
+              "observed": "Not a Finding",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "fixture-beta",
+              "component": "assessment",
+              "evidence": [
+                "assessment-record"
+              ],
+              "expected": "Not a Finding",
+              "message": "Original source-bound evidence verified.",
+              "observed": "Not a Finding",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "fixture-gamma",
+              "component": "assessment",
+              "evidence": [
+                "assessment-record"
+              ],
+              "expected": "Not a Finding",
+              "message": "Original source-bound evidence verified.",
+              "observed": "Not a Finding",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "fixture-delta",
+              "component": "assessment",
+              "evidence": [
+                "assessment-record"
+              ],
+              "expected": "Not Applicable",
+              "message": "Original source-bound evidence verified.",
+              "observed": "Not Applicable",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "original-replay",
+              "component": "evidence",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "owned-teardown",
+              "component": "cleanup",
+              "evidence": [
+                "admission-archive"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "admission-finalized",
+              "component": "cleanup",
+              "evidence": [
+                "admission-archive"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            }
+          ],
+          "run_id": "149b4276-7f53-443c-b841-e93bbbadce5a",
+          "schema_version": "1.0",
+          "secondary_failures": [],
+          "source_dirty": false,
+          "source_revision": "753b67d7e550218f28e2f765d3e3abf254c31656",
+          "status": "passed",
+          "targets": [
+            {
+              "image_digest": "sha256:c1c82d1e7462622d1ec61ebbb671c6477cdb91636613ff3a0dc80a111b2bac19",
+              "resource_id": "04bc1038bd4b27c0e2dd892e24c13053d3772b70be6d73db597c26c202a2db80",
+              "target_id": "target-001"
+            }
+          ],
+          "unknown_outcome": false,
+          "updated_at": "2026-10-23T20:28:55.140Z"
+        },
+        "report_sha256": {
+          "json": "258a756ab53e0e36a5e931cce2f7f7f80167c102f2d2415b8b5043149f15610e",
+          "junit": "a938a53d835d4eb61d478f9366d5ca9467590cb2830bedab391c869bc6b383be",
+          "text": "d2e14b9707e267f230f43a83d02a399edf5699d29b73085b8918b2d4ece7c3c7"
+        },
+        "request_sha256": "182be7ae1253da0e7f91bea96aba55afc32ec5120312d6c83947f341d006a70b",
+        "run_id": "149b4276-7f53-443c-b841-e93bbbadce5a",
+        "scenario": "healthy",
+        "status": "passed",
+        "unrelated_sentinel_unchanged": true
+      },
+      {
+        "archive": {
+          "bytes": 9711,
+          "known_resource_count": 8,
+          "pending_resources": 0,
+          "resources": [
+            {
+              "id": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+              "kind": "image",
+              "outcome": "retained",
+              "size_bytes": 80416938
+            },
+            {
+              "id": "805b806ff5ce4310d0f05f1d6f1f11a531e3f2e8de1f6dd9f5d647c4bd3fff89",
+              "kind": "container",
+              "outcome": "absent",
+              "size_bytes": 0
+            },
+            {
+              "id": "f554ac43187b17d570dad250073ca82c6c31586cc616138463830a78b0669888",
+              "kind": "container",
+              "outcome": "absent",
+              "size_bytes": 0
+            },
+            {
+              "id": "sha256:109a04cb7c49fac63cc150dfd1d655264b7a4450e7aeb53648402842492366d5",
+              "kind": "image",
+              "outcome": "retained",
+              "size_bytes": 85305571
+            },
+            {
+              "id": "b4de277a86ca9cab43d0fa736cd435e81414de34e11de19b29d2b3fe576cef7a",
+              "kind": "container",
+              "outcome": "absent",
+              "size_bytes": 0
+            },
+            {
+              "id": "43404fd3c48930bcceb7892b4a55d176c7c5cd9b09a0aa1f1fca8575dadf2dd4",
+              "kind": "container",
+              "outcome": "absent",
+              "size_bytes": 0
+            },
+            {
+              "id": "d8bcf09d91fff85f701fcc28789f32bd99026b9b7725e373460415c0a9830608",
+              "kind": "network",
+              "outcome": "absent",
+              "size_bytes": 0
+            },
+            {
+              "id": "de3dff678ff37c690817d1583a9228d621be585c922977bf10e4520767e0e2a4",
+              "kind": "container",
+              "outcome": "absent",
+              "size_bytes": 0
+            }
+          ],
+          "scope": "Original raw archive hash and independently saved exact resource graph/retained image sizes agree; private host measurements are omitted.",
+          "scoped_cleanup": {
+            "primary_failure": null,
+            "private_state_removed": false,
+            "resources": [
+              {
+                "disposition": "retained",
+                "id": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+                "kind": "image",
+                "role": "retained-image"
+              },
+              {
+                "disposition": "absent",
+                "id": "805b806ff5ce4310d0f05f1d6f1f11a531e3f2e8de1f6dd9f5d647c4bd3fff89",
+                "kind": "container",
+                "role": "other-owned"
+              },
+              {
+                "disposition": "absent",
+                "id": "f554ac43187b17d570dad250073ca82c6c31586cc616138463830a78b0669888",
+                "kind": "container",
+                "role": "other-owned"
+              },
+              {
+                "disposition": "retained",
+                "id": "sha256:109a04cb7c49fac63cc150dfd1d655264b7a4450e7aeb53648402842492366d5",
+                "kind": "image",
+                "role": "retained-image"
+              },
+              {
+                "disposition": "absent",
+                "id": "b4de277a86ca9cab43d0fa736cd435e81414de34e11de19b29d2b3fe576cef7a",
+                "kind": "container",
+                "role": "provisioner"
+              },
+              {
+                "disposition": "absent",
+                "id": "43404fd3c48930bcceb7892b4a55d176c7c5cd9b09a0aa1f1fca8575dadf2dd4",
+                "kind": "container",
+                "role": "terraform-target"
+              },
+              {
+                "disposition": "absent",
+                "id": "d8bcf09d91fff85f701fcc28789f32bd99026b9b7725e373460415c0a9830608",
+                "kind": "network",
+                "role": "terraform-network"
+              },
+              {
+                "disposition": "absent",
+                "id": "de3dff678ff37c690817d1583a9228d621be585c922977bf10e4520767e0e2a4",
+                "kind": "container",
+                "role": "helper"
+              }
+            ],
+            "secondary_failures": [],
+            "status": "completed",
+            "terraform_state_retained": true,
+            "unknown_outcome": false
+          },
+          "sha256": "2a4c343affe37d6cad0e3b8ed01256897e7e6957611e2e1564cce6b2ad1872b0",
+          "state": "finished"
+        },
+        "candidate_files": [
+          {
+            "bytes": 262181,
+            "path": "source.synthetic.bin",
+            "sha256": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2"
+          },
+          {
+            "bytes": 535,
+            "path": "payload.py",
+            "sha256": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193"
+          },
+          {
+            "bytes": 16,
+            "path": "version.txt",
+            "sha256": "26c5590f073239bf0c190f79334ee92244b72b3b5bad93db8a713287e3b3d466"
+          },
+          {
+            "bytes": 63,
+            "path": "config.json",
+            "sha256": "4a3204999ada4f9dee4681076d1dafbfbfaafa85626e2219273e629898534119"
+          }
+        ],
+        "checksums": {
+          "files": {
+            "cleanup.json": {
+              "sha256": "159383f9925f471a764f50676c06f369ca1e6aff465628f26b2c97bc0338e6a7",
+              "size_bytes": 439
+            },
+            "manifest.json": {
+              "sha256": "cc866f7e3ff768c2e2b2bcf47183c9a8e390668941fcdc7a55cc253893d07df0",
+              "size_bytes": 1492
+            },
+            "plan.json": {
+              "sha256": "6aafe93df3c6688c5985f572d597dddbbe12893d97442db8d52a50051186a5bc",
+              "size_bytes": 8547
+            },
+            "report.json": {
+              "sha256": "6a6bf0189d98d51b332c171278f230c2785bdb003ebea792214e58b113c8c792",
+              "size_bytes": 22837
+            },
+            "report.junit.xml": {
+              "sha256": "abe7e3d58055d681ef8a820d84023683f6286ab5e2567a8e51fb0e7be6038da1",
+              "size_bytes": 28144
+            },
+            "report.txt": {
+              "sha256": "ba0d79ac25d0c8f4b9b52195ad425085b5cf33854ad6dcfd3e3c04991bbb87fb",
+              "size_bytes": 16642
+            },
+            "summary.json": {
+              "sha256": "7c9959680b83f1ab7ff0ae253eb642a1a487563520964b6ff503c19bc95a9ace",
+              "size_bytes": 502
+            },
+            "targets/target-001/assessment.json": {
+              "sha256": "dce16d675242f8bb8198edba98d7a501c173cc2c00aadd330cd3365e633e8d70",
+              "size_bytes": 1989
+            },
+            "targets/target-001/logs.json": {
+              "sha256": "2df6b1c96d7c818555dac2b79863345db3392dbabe648e0b43437bdcbb16d429",
+              "size_bytes": 4022
+            },
+            "targets/target-001/observed-svd.json": {
+              "sha256": "3958c80977b18c753b94eaaf4b59a95ec6ca835628e4dc63fcf015fb5b050afe",
+              "size_bytes": 23562
+            },
+            "targets/target-001/observed-svd.txt": {
+              "sha256": "b343171a4744df7150b4a71c1da6dcc019da46cd4474576a74e0b7b8f5bb42da",
+              "size_bytes": 40906
+            },
+            "targets/target-001/readiness.json": {
+              "sha256": "08e9112cbd07ede18a2615581136a9b9e542ad800f3f90a34f86c761bb0a9086",
+              "size_bytes": 3076
+            },
+            "targets/target-001/svd.json": {
+              "sha256": "be1484031b67b9aff9b4e79cef683e00b972baac01299f0842934f1fcfd97fe0",
+              "size_bytes": 5481
+            },
+            "targets/target-001/tests.json": {
+              "sha256": "12f492c3b8964c8d94d7f935b3486d503dee24f78e560d89dfc6257350b5adb7",
+              "size_bytes": 6058
+            }
+          },
+          "run_id": "5cf78cb0-5082-403f-9e23-fe933544ceb7",
+          "schema_version": "1.0"
+        },
+        "cli_gate": {
+          "duration_seconds": 0.7550403440836817,
+          "entrypoint": "python -B -m wormhole reference-gate",
+          "output_sha256": "2674b61b28f9a225fcad7eafbeee168aa44ba63bcea60c407c8f5a6effa597ec",
+          "returncode": 0
+        },
+        "counts": {
+          "blocked": 0,
+          "error": 0,
+          "fail": 0,
+          "pass": 46,
+          "skipped": 0,
+          "unreachable": 0,
+          "unverified": 0
+        },
+        "created_at": "2026-10-23T20:28:56.948Z",
+        "credential_scan": {
+          "bytes_scanned": 700852,
+          "files_scanned": 87,
+          "public_provider_cache_excluded": true,
+          "secret_contents_exported": false,
+          "status": "pass"
+        },
+        "decision": {
+          "checksums_sha256": "3416cbfcb15a0aed3fb5f250c6d47a7bbd591bb2e48675e584d67378edd5d1eb",
+          "mode": "container-reference",
+          "operation": "reference-pipeline-decision-v1",
+          "policy": "reference-smoke-v1",
+          "production_iso_eligible": false,
+          "reasons": [],
+          "record_sha256": "6a6bf0189d98d51b332c171278f230c2785bdb003ebea792214e58b113c8c792",
+          "reference_eligible": true,
+          "reference_scope_complete": true,
+          "run_id": "5cf78cb0-5082-403f-9e23-fe933544ceb7",
+          "schema_version": "1.0",
+          "source_dirty": false,
+          "source_revision": "753b67d7e550218f28e2f765d3e3abf254c31656"
+        },
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 271528748,
+          "ordinary_files": 170,
+          "phase": "reference-cleaned",
+          "sampled_at": "2026-10-23T20:30:01.594Z",
+          "unfollowed_links": 1
+        },
+        "failure_code": null,
+        "finished_at": "2026-10-23T20:30:01.594Z",
+        "operation_status": "passed",
+        "plan_sha256": "f1ad715539f56b9ea4b674e568bfd66dcfbfb3073eedc4dc77510c8dae49ba86",
+        "platform": "ubi",
+        "record": {
+          "artifacts": [
+            {
+              "artifact_id": "request",
+              "kind": "plan",
+              "sha256": "eda6ce26ad90e44d76c48921690100ac45bd0e9a370948eac0ebc48df4c662ef",
+              "size_bytes": 704
+            },
+            {
+              "artifact_id": "execution-plan",
+              "kind": "plan",
+              "sha256": "2e3143aef591739144a7f148b2ffa7700e7cb43250c2e3456862fe61be28eead",
+              "size_bytes": 11310
+            },
+            {
+              "artifact_id": "chunks-record",
+              "kind": "component",
+              "sha256": "73cf8bd030f094f900e426d0c11b07bcc3e4e4a08a24e6d9733b1995360fd5e3",
+              "size_bytes": 1554
+            },
+            {
+              "artifact_id": "assessment-record",
+              "kind": "component",
+              "sha256": "783646913c2226dd331d355926d225f40bfff5981ea1e181ab16263feb4fbade",
+              "size_bytes": 3028
+            },
+            {
+              "artifact_id": "candidate-record",
+              "kind": "component",
+              "sha256": "963ee428e3f2e19c97c8e37edd48f1cd70c68e77e847caaa1ea781ef8bf62a5f",
+              "size_bytes": 8466
+            },
+            {
+              "artifact_id": "admission-archive",
+              "kind": "admission",
+              "sha256": "2a4c343affe37d6cad0e3b8ed01256897e7e6957611e2e1564cce6b2ad1872b0",
+              "size_bytes": 9711
+            },
+            {
+              "artifact_id": "provisioning-record",
+              "kind": "component",
+              "sha256": "cace04e9a44458153cf23fab4dc0a3cd145f8449714cd9c4301dd8d00d81580d",
+              "size_bytes": 26115
+            },
+            {
+              "artifact_id": "readiness-record",
+              "kind": "component",
+              "sha256": "8b4e615896368ab5f5c26065283426228c01b92a8257f64db7bd8b0a2796fc74",
+              "size_bytes": 7027
+            },
+            {
+              "artifact_id": "functional-record",
+              "kind": "component",
+              "sha256": "3f6440ed0e6509855b5027ed324dc9e71e7263bde2e14d4a4563dd77ccfdca15",
+              "size_bytes": 6551
+            },
+            {
+              "artifact_id": "svd-record",
+              "kind": "component",
+              "sha256": "b2a6a7af49c9ec3fffec0f31ee059525d5ccd6927b9d02ef2619f9a0ecc4dbd9",
+              "size_bytes": 37513
+            },
+            {
+              "artifact_id": "svd-original",
+              "kind": "log-capture",
+              "sha256": "a4f28e6efb61d5d87d2c6cc0960cb4c8e5f00547ccddfc270464e276c25350d5",
+              "size_bytes": 24008
+            },
+            {
+              "artifact_id": "readiness-log-0",
+              "kind": "log-capture",
+              "sha256": "cf7ef6d3fcde08edbc82e6b2a2d012a013525729588ad0a47ab02e160339f090",
+              "size_bytes": 401
+            },
+            {
+              "artifact_id": "readiness-log-1",
+              "kind": "log-capture",
+              "sha256": "6518025b813abe297f9878f09085e04b6dfd0c7b151a3c65f7f771864962aca8",
+              "size_bytes": 99
+            },
+            {
+              "artifact_id": "readiness-log-2",
+              "kind": "log-capture",
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size_bytes": 0
+            },
+            {
+              "artifact_id": "readiness-log-3",
+              "kind": "log-capture",
+              "sha256": "0ee8b9b32de99044e409c6ee30ee0df34eb1d35c4f6c6652e39df21640e08ebb",
+              "size_bytes": 437
+            },
+            {
+              "artifact_id": "readiness-log-4",
+              "kind": "log-capture",
+              "sha256": "24f91b2c4520cefa8521c7a5a4af54ad8b0c577c1040c1af51a08aeffed9a259",
+              "size_bytes": 431
+            },
+            {
+              "artifact_id": "readiness-log-5",
+              "kind": "log-capture",
+              "sha256": "3c8f6d0ab791d8b645fa152764e9bdcb29391674ab974806dabac5f8e7d55fef",
+              "size_bytes": 1024
+            },
+            {
+              "artifact_id": "readiness-log-6",
+              "kind": "log-capture",
+              "sha256": "f910fd723f2b38170f816629fc5cd0d243b43dc017e1e138515ef820cbc4206f",
+              "size_bytes": 1031
+            },
+            {
+              "artifact_id": "functional-log-0",
+              "kind": "log-capture",
+              "sha256": "925d49d4ae4205cf8bc00c8e3bdda9f02e33764063ce6273108cd14972aed2de",
+              "size_bytes": 2913
+            },
+            {
+              "artifact_id": "terraform-log-0",
+              "kind": "log-capture",
+              "sha256": "afa6547f52ab2ab4f3491e3dcd890951c26612f437b10513b8f19049583960b5",
+              "size_bytes": 211
+            },
+            {
+              "artifact_id": "terraform-log-1",
+              "kind": "log-capture",
+              "sha256": "8ef419682bce17b53c7e823b0b28bfdb9bd01354532bd1998f093ef4d2c5ad19",
+              "size_bytes": 416
+            },
+            {
+              "artifact_id": "terraform-log-2",
+              "kind": "log-capture",
+              "sha256": "89da2fa4efefa8c32d337e43743d067fe7a7b08702261512b2fc02499d34298e",
+              "size_bytes": 119436
+            },
+            {
+              "artifact_id": "terraform-log-3",
+              "kind": "log-capture",
+              "sha256": "2a050ea96fe13f16b087ddd6123c021a2d67c78914b15daf151af3913db0bf4f",
+              "size_bytes": 6472
+            },
+            {
+              "artifact_id": "terraform-log-4",
+              "kind": "log-capture",
+              "sha256": "b6ced3b9809eb5801db3c23cf2de0f727422fd33fed4101f259a919c55e20d1b",
+              "size_bytes": 12736
+            },
+            {
+              "artifact_id": "terraform-log-5",
+              "kind": "log-capture",
+              "sha256": "baf6a65a32a7aaaf2da73e036369ee13d858a019f5699b8611d9449cd650c5aa",
+              "size_bytes": 1172
+            },
+            {
+              "artifact_id": "terraform-log-6",
+              "kind": "log-capture",
+              "sha256": "f7807aad873fec41942d239c9c9f61f4352456feae6753cda69ea5bf621ebe02",
+              "size_bytes": 5650
+            },
+            {
+              "artifact_id": "terraform-log-7",
+              "kind": "log-capture",
+              "sha256": "a7cf036962f4110bb64fd437a12b88927edad5c4ce2c7c8a06ecb560e66e2ae0",
+              "size_bytes": 4193
+            },
+            {
+              "artifact_id": "terraform-log-8",
+              "kind": "log-capture",
+              "sha256": "469ea728f83dad49d1b8782718c6277a2747bae4a0cca561692346f6e2145077",
+              "size_bytes": 20876
+            },
+            {
+              "artifact_id": "terraform-log-9",
+              "kind": "log-capture",
+              "sha256": "67267d3be71ac611720d3af967c7cdc9165c4d3cdde4127afd094a21bd14451d",
+              "size_bytes": 867
+            },
+            {
+              "artifact_id": "terraform-log-10",
+              "kind": "log-capture",
+              "sha256": "7d27fa15e3d7853053419038742e187329c4cd9defb33e6f59cb46fa1c3baef1",
+              "size_bytes": 1875
+            },
+            {
+              "artifact_id": "terraform-log-11",
+              "kind": "log-capture",
+              "sha256": "65826eab7e3a16373db97e605600dae1d7f153c13cde6a907577c5f1e34590d6",
+              "size_bytes": 5852
+            },
+            {
+              "artifact_id": "terraform-log-12",
+              "kind": "log-capture",
+              "sha256": "38e99c39c4db28b5f1a6d9ef6de1fb2f5a2de7f5dbe1841f105c8f0de552c297",
+              "size_bytes": 9058
+            },
+            {
+              "artifact_id": "terraform-log-13",
+              "kind": "log-capture",
+              "sha256": "d969074255a03b3d83311914f48afddf8ded4751fdc4a152529ef6a70869b9b9",
+              "size_bytes": 15200
+            },
+            {
+              "artifact_id": "terraform-log-14",
+              "kind": "log-capture",
+              "sha256": "9a1e388f9d7e0182f36290ae4ffec01fe707dcd60667b5ab32a56b8ac7e0c4ff",
+              "size_bytes": 407
+            },
+            {
+              "artifact_id": "terraform-log-15",
+              "kind": "log-capture",
+              "sha256": "66082969f6dd7b41eb2ad3dc839b912e7ba334082d0b9cc187d5117bb9c5ecea",
+              "size_bytes": 25
+            },
+            {
+              "artifact_id": "cleanup-record",
+              "kind": "cleanup",
+              "sha256": "85a7524cdc18e3ded9a3f6eec2cd9470bf1d541b38b6152b90531df532068116",
+              "size_bytes": 2130
+            }
+          ],
+          "candidate": {
+            "content_sha256": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+            "image_digest": "sha256:109a04cb7c49fac63cc150dfd1d655264b7a4450e7aeb53648402842492366d5",
+            "manifest_sha256": "35eee372389007abe589bd5e1a14203e25350e984e9ff50c733da27551918ab5",
+            "source_candidate_sha256": "589a27914aad7629173ba9d378cb9a106ae7d23c7d62dafbc7d6fd53a88c450f",
+            "source_sha256": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2"
+          },
+          "cleanup": {
+            "admission_finished": true,
+            "archive_sha256": "2a4c343affe37d6cad0e3b8ed01256897e7e6957611e2e1564cce6b2ad1872b0",
+            "pending_resources": 0,
+            "status": "completed"
+          },
+          "mode": "container-reference",
+          "operation": "reference-pipeline-result-v1",
+          "plan_sha256": "f1ad715539f56b9ea4b674e568bfd66dcfbfb3073eedc4dc77510c8dae49ba86",
+          "policy": "reference-smoke-v1",
+          "primary_failure": null,
+          "production_iso_eligible": false,
+          "reference_eligible": true,
+          "reference_scope_complete": true,
+          "rows": [
+            {
+              "check_id": "clean-source",
+              "component": "preflight",
+              "evidence": [
+                "request"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "source-integrity",
+              "component": "chunks",
+              "evidence": [
+                "chunks-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "candidate-binding",
+              "component": "candidate",
+              "evidence": [
+                "candidate-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "measured-capacity",
+              "component": "admission",
+              "evidence": [
+                "admission-archive"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "terraform-lifecycle",
+              "component": "provisioning",
+              "evidence": [
+                "provisioning-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "owned-network",
+              "component": "provisioning",
+              "evidence": [
+                "provisioning-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "target-confinement",
+              "component": "provisioning",
+              "evidence": [
+                "provisioning-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "created",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "started",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "endpoint-discovered",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "tcp-reachable",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "ssh-identity-accepted",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "python-usable",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "ansible-usable",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "required-test-complete",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "rpm-userland",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "{\"id\":\"rhel\",\"version_id\":\"9.8\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"id\":\"rhel\",\"version_id\":\"9.8\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "rpm-python3",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"7.el9_8.3\",\"status\":\"installed\",\"version\":\"3.9.25\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"7.el9_8.3\",\"status\":\"installed\",\"version\":\"3.9.25\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "rpm-openssh",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "rpm-openssh-server",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "rpm-shadow-utils",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "{\"arch\":\"x86_64\",\"epoch\":2,\"release\":\"16.el9\",\"status\":\"installed\",\"version\":\"4.9\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"arch\":\"x86_64\",\"epoch\":2,\"release\":\"16.el9\",\"status\":\"installed\",\"version\":\"4.9\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-source-sha256",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+              "message": "Original source-bound evidence verified.",
+              "observed": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-manifest-sha256",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "35eee372389007abe589bd5e1a14203e25350e984e9ff50c733da27551918ab5",
+              "message": "Original source-bound evidence verified.",
+              "observed": "35eee372389007abe589bd5e1a14203e25350e984e9ff50c733da27551918ab5",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-content-sha256",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+              "message": "Original source-bound evidence verified.",
+              "observed": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-payload-sha256",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+              "message": "Original source-bound evidence verified.",
+              "observed": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-version",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "1.0.0-reference",
+              "message": "Original source-bound evidence verified.",
+              "observed": "1.0.0-reference",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-configuration",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-function",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "target-identity",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "exact-owned-target-001",
+              "message": "Original source-bound evidence verified.",
+              "observed": "exact-owned-target-001",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "userland",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "{\"id\":\"rhel\",\"version_id\":\"9.8\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"id\":\"rhel\",\"version_id\":\"9.8\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-inventory",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "complete installed native package database",
+              "message": "Original source-bound evidence verified.",
+              "observed": "complete installed native package database",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "payload-version",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "1.0.0-reference",
+              "message": "Original source-bound evidence verified.",
+              "observed": "1.0.0-reference",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "payload-sha256",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+              "message": "Original source-bound evidence verified.",
+              "observed": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-manifest-sha256",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "35eee372389007abe589bd5e1a14203e25350e984e9ff50c733da27551918ab5",
+              "message": "Original source-bound evidence verified.",
+              "observed": "35eee372389007abe589bd5e1a14203e25350e984e9ff50c733da27551918ab5",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-content-sha256",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+              "message": "Original source-bound evidence verified.",
+              "observed": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-source-sha256",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+              "message": "Original source-bound evidence verified.",
+              "observed": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-openssh",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"name\":\"openssh\",\"release\":\"13.el9_8\",\"version\":\"9.9p1\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"name\":\"openssh\",\"release\":\"13.el9_8\",\"version\":\"9.9p1\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-openssh-server",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"name\":\"openssh-server\",\"release\":\"13.el9_8\",\"version\":\"9.9p1\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"name\":\"openssh-server\",\"release\":\"13.el9_8\",\"version\":\"9.9p1\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-python3",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"name\":\"python3\",\"release\":\"7.el9_8.3\",\"version\":\"3.9.25\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"name\":\"python3\",\"release\":\"7.el9_8.3\",\"version\":\"3.9.25\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-shadow-utils",
+              "component": "svd",
+              "evidence": [
+                "svd-record"
+              ],
+              "expected": "{\"arch\":\"x86_64\",\"epoch\":2,\"name\":\"shadow-utils\",\"release\":\"16.el9\",\"version\":\"4.9\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"arch\":\"x86_64\",\"epoch\":2,\"name\":\"shadow-utils\",\"release\":\"16.el9\",\"version\":\"4.9\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "fixture-alpha",
+              "component": "assessment",
+              "evidence": [
+                "assessment-record"
+              ],
+              "expected": "Not a Finding",
+              "message": "Original source-bound evidence verified.",
+              "observed": "Not a Finding",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "fixture-beta",
+              "component": "assessment",
+              "evidence": [
+                "assessment-record"
+              ],
+              "expected": "Not a Finding",
+              "message": "Original source-bound evidence verified.",
+              "observed": "Not a Finding",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "fixture-gamma",
+              "component": "assessment",
+              "evidence": [
+                "assessment-record"
+              ],
+              "expected": "Not a Finding",
+              "message": "Original source-bound evidence verified.",
+              "observed": "Not a Finding",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "fixture-delta",
+              "component": "assessment",
+              "evidence": [
+                "assessment-record"
+              ],
+              "expected": "Not Applicable",
+              "message": "Original source-bound evidence verified.",
+              "observed": "Not Applicable",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "original-replay",
+              "component": "evidence",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "owned-teardown",
+              "component": "cleanup",
+              "evidence": [
+                "admission-archive"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "admission-finalized",
+              "component": "cleanup",
+              "evidence": [
+                "admission-archive"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            }
+          ],
+          "run_id": "5cf78cb0-5082-403f-9e23-fe933544ceb7",
+          "schema_version": "1.0",
+          "secondary_failures": [],
+          "source_dirty": false,
+          "source_revision": "753b67d7e550218f28e2f765d3e3abf254c31656",
+          "status": "passed",
+          "targets": [
+            {
+              "image_digest": "sha256:109a04cb7c49fac63cc150dfd1d655264b7a4450e7aeb53648402842492366d5",
+              "resource_id": "43404fd3c48930bcceb7892b4a55d176c7c5cd9b09a0aa1f1fca8575dadf2dd4",
+              "target_id": "target-001"
+            }
+          ],
+          "unknown_outcome": false,
+          "updated_at": "2026-10-23T20:29:58.172Z"
+        },
+        "report_sha256": {
+          "json": "6a6bf0189d98d51b332c171278f230c2785bdb003ebea792214e58b113c8c792",
+          "junit": "abe7e3d58055d681ef8a820d84023683f6286ab5e2567a8e51fb0e7be6038da1",
+          "text": "ba0d79ac25d0c8f4b9b52195ad425085b5cf33854ad6dcfd3e3c04991bbb87fb"
+        },
+        "request_sha256": "3792999b93c59ddcb3028dbc05166813f5386c151d0223889ac5cb40ad6623ee",
+        "run_id": "5cf78cb0-5082-403f-9e23-fe933544ceb7",
+        "scenario": "healthy",
+        "status": "passed",
+        "unrelated_sentinel_unchanged": true
+      },
+      {
+        "archive": {
+          "bytes": 9360,
+          "known_resource_count": 6,
+          "pending_resources": 0,
+          "resources": [
+            {
+              "id": "4f4e88c3bc01a861d7cadc0fa1050e9583062ede3c709f7bf188592aa0b4e94e",
+              "kind": "container",
+              "outcome": "absent",
+              "size_bytes": 0
+            },
+            {
+              "id": "sha256:cc35bfe1a928b0b9fb5d51a2b41c5c3ce4f0cf56aa2c4ae18c4a853bfb89db62",
+              "kind": "image",
+              "outcome": "retained",
+              "size_bytes": 46925787
+            },
+            {
+              "id": "e292bcb454af482a84c0f3598bcee15b0a186a09cff1c0c3e552be78bc4ff2c4",
+              "kind": "container",
+              "outcome": "absent",
+              "size_bytes": 0
+            },
+            {
+              "id": "e91494e6697cfe731538df0a37acd99aa58c7587f24bb6cc8311f68268587ddf",
+              "kind": "container",
+              "outcome": "absent",
+              "size_bytes": 0
+            },
+            {
+              "id": "434027629bd84792a16ff546012a059072fc138a2d70a294962d373076298324",
+              "kind": "network",
+              "outcome": "absent",
+              "size_bytes": 0
+            },
+            {
+              "id": "727d456330130e50e688c277724d06f121729a47b5007bb5aeedd3004744a8db",
+              "kind": "container",
+              "outcome": "absent",
+              "size_bytes": 0
+            }
+          ],
+          "scope": "Original raw archive hash and independently saved exact resource graph/retained image sizes agree; private host measurements are omitted.",
+          "scoped_cleanup": {
+            "primary_failure": {
+              "code": "candidate_required_check_mismatch",
+              "recorded_at": "2026-10-23T20:30:42.497Z"
+            },
+            "private_state_removed": false,
+            "resources": [
+              {
+                "disposition": "absent",
+                "id": "4f4e88c3bc01a861d7cadc0fa1050e9583062ede3c709f7bf188592aa0b4e94e",
+                "kind": "container",
+                "role": "other-owned"
+              },
+              {
+                "disposition": "retained",
+                "id": "sha256:cc35bfe1a928b0b9fb5d51a2b41c5c3ce4f0cf56aa2c4ae18c4a853bfb89db62",
+                "kind": "image",
+                "role": "retained-image"
+              },
+              {
+                "disposition": "absent",
+                "id": "e292bcb454af482a84c0f3598bcee15b0a186a09cff1c0c3e552be78bc4ff2c4",
+                "kind": "container",
+                "role": "provisioner"
+              },
+              {
+                "disposition": "absent",
+                "id": "e91494e6697cfe731538df0a37acd99aa58c7587f24bb6cc8311f68268587ddf",
+                "kind": "container",
+                "role": "terraform-target"
+              },
+              {
+                "disposition": "absent",
+                "id": "434027629bd84792a16ff546012a059072fc138a2d70a294962d373076298324",
+                "kind": "network",
+                "role": "terraform-network"
+              },
+              {
+                "disposition": "absent",
+                "id": "727d456330130e50e688c277724d06f121729a47b5007bb5aeedd3004744a8db",
+                "kind": "container",
+                "role": "helper"
+              }
+            ],
+            "secondary_failures": [],
+            "status": "completed",
+            "terraform_state_retained": true,
+            "unknown_outcome": false
+          },
+          "sha256": "3139a0bce65c6d01ddb3609809f4d49dccc6d4949bd538f2fd0572e9fd2eca17",
+          "state": "finished"
+        },
+        "candidate_files": [
+          {
+            "bytes": 262181,
+            "path": "source.synthetic.bin",
+            "sha256": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2"
+          },
+          {
+            "bytes": 535,
+            "path": "payload.py",
+            "sha256": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193"
+          },
+          {
+            "bytes": 16,
+            "path": "version.txt",
+            "sha256": "26c5590f073239bf0c190f79334ee92244b72b3b5bad93db8a713287e3b3d466"
+          },
+          {
+            "bytes": 63,
+            "path": "config.json",
+            "sha256": "4a3204999ada4f9dee4681076d1dafbfbfaafa85626e2219273e629898534119"
+          }
+        ],
+        "checksums": {
+          "files": {
+            "cleanup.json": {
+              "sha256": "8970334740dd710ae1b9e2a6ac8988fae4495f004789baf05c4d9e7e63242c3e",
+              "size_bytes": 520
+            },
+            "manifest.json": {
+              "sha256": "f8b99b5e17111c5452cc5d2ae62e80effddc736194fbdf10ac307e19271e09bb",
+              "size_bytes": 1495
+            },
+            "plan.json": {
+              "sha256": "44dc4dd5682a604b39b0345a011703869da25d32c789398ad69cec3b5f4d65aa",
+              "size_bytes": 7859
+            },
+            "report.json": {
+              "sha256": "a026257087d0a1bc6264d3792c377b3b430b8f195f5b369ca31976208032f289",
+              "size_bytes": 20722
+            },
+            "report.junit.xml": {
+              "sha256": "fcdb3f3b4b8258cdfbd2a68f6c61401eec671149dd779685e37c99dd7d343940",
+              "size_bytes": 27686
+            },
+            "report.txt": {
+              "sha256": "8aa83ccedfc48fe0b7fdb6e690354ae3bd1b834845e37167a4fdf2806c539f53",
+              "size_bytes": 15051
+            },
+            "summary.json": {
+              "sha256": "689a6999d01f55cadabbda1c0575327ae06a56a1039d41076a60ff94961c5b96",
+              "size_bytes": 586
+            },
+            "targets/target-001/assessment.json": {
+              "sha256": "3c3b42047a099a77ab4f6b1bbaa7ccb52b89396bfed036570a82c2cde7164935",
+              "size_bytes": 1989
+            },
+            "targets/target-001/logs.json": {
+              "sha256": "cfa14cb63ce30c57de70caae86f9296b91008ac04dcf6a54b4e910612830417c",
+              "size_bytes": 3875
+            },
+            "targets/target-001/observed-svd.json": {
+              "sha256": "c2930d403e2dffc374435e51b4f1ca2c4b5b0d863e8220366de508bcc4b321b2",
+              "size_bytes": 350
+            },
+            "targets/target-001/observed-svd.txt": {
+              "sha256": "15f2d55fd8dd4367b2f51dced01d685f1d5ddcb7ac845d7cff1e510e61a0ffcf",
+              "size_bytes": 138
+            },
+            "targets/target-001/readiness.json": {
+              "sha256": "e5b662c8b0a4903c9522998d72badabceef80c6eb489e028315fb9d838a847ad",
+              "size_bytes": 3076
+            },
+            "targets/target-001/svd.json": {
+              "sha256": "3351dd372f528450881c902720f3fc3eee7d9c773aec86dc29455400902d3b41",
+              "size_bytes": 5842
+            },
+            "targets/target-001/tests.json": {
+              "sha256": "c043d8122af5f9c212aa6e60dcb181569e2580100410b67b949d0cd632edd81a",
+              "size_bytes": 3789
+            }
+          },
+          "run_id": "91f80cc0-bba9-4fd9-ac0e-a01778f905f0",
+          "schema_version": "1.0"
+        },
+        "cli_gate": {
+          "duration_seconds": 0.3574692038819194,
+          "entrypoint": "python -B -m wormhole reference-gate",
+          "output_sha256": "08ae510bbede16848e6a04e81f11e515f6b532645067ccbda289f78265951ddd",
+          "returncode": 1
+        },
+        "counts": {
+          "blocked": 14,
+          "error": 0,
+          "fail": 1,
+          "pass": 28,
+          "skipped": 0,
+          "unreachable": 0,
+          "unverified": 0
+        },
+        "created_at": "2026-10-23T20:30:01.629Z",
+        "credential_scan": {
+          "bytes_scanned": 440051,
+          "files_scanned": 79,
+          "public_provider_cache_excluded": true,
+          "secret_contents_exported": false,
+          "status": "pass"
+        },
+        "decision": {
+          "checksums_sha256": "b0e831f06cc9669a20b2554e21649a562af0a44f3dcad498147289aa5a409504",
+          "mode": "container-reference",
+          "operation": "reference-pipeline-decision-v1",
+          "policy": "reference-smoke-v1",
+          "production_iso_eligible": false,
+          "reasons": [
+            "candidate_required_check_mismatch",
+            "not_executed",
+            "verified"
+          ],
+          "record_sha256": "a026257087d0a1bc6264d3792c377b3b430b8f195f5b369ca31976208032f289",
+          "reference_eligible": false,
+          "reference_scope_complete": false,
+          "run_id": "91f80cc0-bba9-4fd9-ac0e-a01778f905f0",
+          "schema_version": "1.0",
+          "source_dirty": false,
+          "source_revision": "753b67d7e550218f28e2f765d3e3abf254c31656"
+        },
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 267596172,
+          "ordinary_files": 127,
+          "phase": "reference-cleaned",
+          "sampled_at": "2026-10-23T20:30:51.510Z",
+          "unfollowed_links": 1
+        },
+        "failure_code": "candidate_required_check_mismatch",
+        "finished_at": "2026-10-23T20:30:51.510Z",
+        "operation_status": "failed",
+        "plan_sha256": "86b0157273e3ec3b98ab3ed1f07fb51861f9f280b5ecd68c40c351865ae22d22",
+        "platform": "ubuntu",
+        "record": {
+          "artifacts": [
+            {
+              "artifact_id": "request",
+              "kind": "plan",
+              "sha256": "e3a94518ae898c21cce10a35983edfb566e5dad013a2ea5fbd4a9cb08eb8cbb3",
+              "size_bytes": 694
+            },
+            {
+              "artifact_id": "execution-plan",
+              "kind": "plan",
+              "sha256": "619afa6065ca05514a73a00560ab3936ce94b1328438d7a314edce52286d6385",
+              "size_bytes": 10448
+            },
+            {
+              "artifact_id": "chunks-record",
+              "kind": "component",
+              "sha256": "fb4dade9ee4f2ff6d03374d11f744f712f5fe312fe3ca59c2fe7079efc49392e",
+              "size_bytes": 1553
+            },
+            {
+              "artifact_id": "assessment-record",
+              "kind": "component",
+              "sha256": "a8ef49c3f345689f3a08e4a145aa93e08662be8e3bfeab28b9ae12730c8a24e9",
+              "size_bytes": 3028
+            },
+            {
+              "artifact_id": "candidate-record",
+              "kind": "component",
+              "sha256": "209d6c214c2e5c808f492ec64465f3bc97fcbb4ce14aa176c826399b0b00ce16",
+              "size_bytes": 3003
+            },
+            {
+              "artifact_id": "admission-archive",
+              "kind": "admission",
+              "sha256": "3139a0bce65c6d01ddb3609809f4d49dccc6d4949bd538f2fd0572e9fd2eca17",
+              "size_bytes": 9360
+            },
+            {
+              "artifact_id": "provisioning-record",
+              "kind": "component",
+              "sha256": "0230e9519a9b8a4c171b032300e3922f796f47b9a88ee28b4b896f42279481b4",
+              "size_bytes": 20490
+            },
+            {
+              "artifact_id": "readiness-record",
+              "kind": "component",
+              "sha256": "09b64394162cb7c9793360c299fcb0491084307ac893c079b075f6b0dccbf4c5",
+              "size_bytes": 7029
+            },
+            {
+              "artifact_id": "functional-record",
+              "kind": "component",
+              "sha256": "b68f27cbdafd7e05592e79aa791c90a1a6b5e51101e20b96f26245fd3bf51f77",
+              "size_bytes": 4369
+            },
+            {
+              "artifact_id": "readiness-log-0",
+              "kind": "log-capture",
+              "sha256": "a361f20c887c8fe9637955885f6ece99993afc31e96489d32fdd4a7f3ae6284c",
+              "size_bytes": 401
+            },
+            {
+              "artifact_id": "readiness-log-1",
+              "kind": "log-capture",
+              "sha256": "929acd609c65ca3bc80102ec7dadbdb32a2a56055f0c93eb42a5c404f5f725d2",
+              "size_bytes": 99
+            },
+            {
+              "artifact_id": "readiness-log-2",
+              "kind": "log-capture",
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size_bytes": 0
+            },
+            {
+              "artifact_id": "readiness-log-3",
+              "kind": "log-capture",
+              "sha256": "99b1a6402aade86ca7206ce7d851250c592d48ae8eaee01064c00e80c873b2fe",
+              "size_bytes": 438
+            },
+            {
+              "artifact_id": "readiness-log-4",
+              "kind": "log-capture",
+              "sha256": "7dbb6330a0460e5f1e93cbcae692dce001f8a3bf9be6d714345cb104e5dbbc48",
+              "size_bytes": 432
+            },
+            {
+              "artifact_id": "readiness-log-5",
+              "kind": "log-capture",
+              "sha256": "71861e39256103f389da5b1d5594d54615146dfe6763164811f12255c90ee6c7",
+              "size_bytes": 1025
+            },
+            {
+              "artifact_id": "readiness-log-6",
+              "kind": "log-capture",
+              "sha256": "ae94cf30ab049ea11ef9d637d03c21d051ad672be4ad055f67eeabe5dfb6fea1",
+              "size_bytes": 1031
+            },
+            {
+              "artifact_id": "functional-log-0",
+              "kind": "log-capture",
+              "sha256": "99ce7ba06c3024b0d31e233d8e5bca70e35bf60afaa4ed9014a1afa462a6d663",
+              "size_bytes": 1795
+            },
+            {
+              "artifact_id": "terraform-log-0",
+              "kind": "log-capture",
+              "sha256": "afa6547f52ab2ab4f3491e3dcd890951c26612f437b10513b8f19049583960b5",
+              "size_bytes": 211
+            },
+            {
+              "artifact_id": "terraform-log-1",
+              "kind": "log-capture",
+              "sha256": "8ef419682bce17b53c7e823b0b28bfdb9bd01354532bd1998f093ef4d2c5ad19",
+              "size_bytes": 416
+            },
+            {
+              "artifact_id": "terraform-log-2",
+              "kind": "log-capture",
+              "sha256": "89da2fa4efefa8c32d337e43743d067fe7a7b08702261512b2fc02499d34298e",
+              "size_bytes": 119436
+            },
+            {
+              "artifact_id": "terraform-log-3",
+              "kind": "log-capture",
+              "sha256": "633de0301fe18861aeed61e0272221c344875277460886df862294f5a2ca15be",
+              "size_bytes": 6441
+            },
+            {
+              "artifact_id": "terraform-log-4",
+              "kind": "log-capture",
+              "sha256": "c5151645282aa61c9249a62fa3579c8a792009166ce8a6780e2c6e72337f10ca",
+              "size_bytes": 12676
+            },
+            {
+              "artifact_id": "terraform-log-5",
+              "kind": "log-capture",
+              "sha256": "f93c5f54f981dfdca5f007cd9289f8c315f9069c7ad3ba3bc2dd33ecc145b39d",
+              "size_bytes": 1172
+            },
+            {
+              "artifact_id": "terraform-log-6",
+              "kind": "log-capture",
+              "sha256": "ccfc42db714d9f9561876c3671a3ca74e1d995fb2dbb42246cc331a0bcd37e3c",
+              "size_bytes": 5630
+            },
+            {
+              "artifact_id": "terraform-log-7",
+              "kind": "log-capture",
+              "sha256": "943f545c2333d5ddd57bb2d676c64efa0ced26aafe6a2332eb2578daededa651",
+              "size_bytes": 4127
+            },
+            {
+              "artifact_id": "terraform-log-8",
+              "kind": "log-capture",
+              "sha256": "c8855af2363cf92d6c6a9f669041a678af1056c823ec9e9a286e61cdb0e8bd3c",
+              "size_bytes": 20794
+            },
+            {
+              "artifact_id": "terraform-log-9",
+              "kind": "log-capture",
+              "sha256": "10c2a4b6388e36d263c0327ee2eeff8415b820f76d23f67853e87c65c45600f0",
+              "size_bytes": 867
+            },
+            {
+              "artifact_id": "terraform-log-10",
+              "kind": "log-capture",
+              "sha256": "c665f904a152c9946265776c2a909e4054e0711ede1db998b99070252e7242c3",
+              "size_bytes": 1875
+            },
+            {
+              "artifact_id": "terraform-log-11",
+              "kind": "log-capture",
+              "sha256": "2e36d459c3951e1f3e017d5258f2b10a0d6f19004beb9d291dea081d21dabccb",
+              "size_bytes": 5828
+            },
+            {
+              "artifact_id": "terraform-log-12",
+              "kind": "log-capture",
+              "sha256": "6795692642d8c7cb323005f0342b6bfdd06b6685c387c04435b5083d84886a09",
+              "size_bytes": 9023
+            },
+            {
+              "artifact_id": "terraform-log-13",
+              "kind": "log-capture",
+              "sha256": "673d7a9bc97ff94b207cfa2c833f0fdd7a1d571f64c7c6f8228be0bc69043845",
+              "size_bytes": 15138
+            },
+            {
+              "artifact_id": "terraform-log-14",
+              "kind": "log-capture",
+              "sha256": "e971ec91c83097f658dc073fd234958855757a7f01a17f6d7b4d783e70232d7f",
+              "size_bytes": 407
+            },
+            {
+              "artifact_id": "terraform-log-15",
+              "kind": "log-capture",
+              "sha256": "66082969f6dd7b41eb2ad3dc839b912e7ba334082d0b9cc187d5117bb9c5ecea",
+              "size_bytes": 25
+            },
+            {
+              "artifact_id": "cleanup-record",
+              "kind": "cleanup",
+              "sha256": "a45550a6c0b08a7996e973e696b40699bd4d69da4420582f33b06b116c2e9cbd",
+              "size_bytes": 1860
+            }
+          ],
+          "candidate": {
+            "content_sha256": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+            "image_digest": "sha256:cc35bfe1a928b0b9fb5d51a2b41c5c3ce4f0cf56aa2c4ae18c4a853bfb89db62",
+            "manifest_sha256": "081b35ad36a93cc6d69c16aebb5a69f3051d780332d9685cb09b5bde2b111293",
+            "source_candidate_sha256": "081b35ad36a93cc6d69c16aebb5a69f3051d780332d9685cb09b5bde2b111293",
+            "source_sha256": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2"
+          },
+          "cleanup": {
+            "admission_finished": true,
+            "archive_sha256": "3139a0bce65c6d01ddb3609809f4d49dccc6d4949bd538f2fd0572e9fd2eca17",
+            "pending_resources": 0,
+            "status": "completed"
+          },
+          "mode": "container-reference",
+          "operation": "reference-pipeline-result-v1",
+          "plan_sha256": "86b0157273e3ec3b98ab3ed1f07fb51861f9f280b5ecd68c40c351865ae22d22",
+          "policy": "reference-smoke-v1",
+          "primary_failure": {
+            "code": "candidate_required_check_mismatch",
+            "recorded_at": "2026-10-23T20:30:42.510Z"
+          },
+          "production_iso_eligible": false,
+          "reference_eligible": false,
+          "reference_scope_complete": false,
+          "rows": [
+            {
+              "check_id": "clean-source",
+              "component": "preflight",
+              "evidence": [
+                "request"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "source-integrity",
+              "component": "chunks",
+              "evidence": [
+                "chunks-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "candidate-binding",
+              "component": "candidate",
+              "evidence": [
+                "candidate-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "measured-capacity",
+              "component": "admission",
+              "evidence": [
+                "admission-archive"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "terraform-lifecycle",
+              "component": "provisioning",
+              "evidence": [
+                "provisioning-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "owned-network",
+              "component": "provisioning",
+              "evidence": [
+                "provisioning-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "target-confinement",
+              "component": "provisioning",
+              "evidence": [
+                "provisioning-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "created",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "started",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "endpoint-discovered",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "tcp-reachable",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "ssh-identity-accepted",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "python-usable",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "ansible-usable",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "required-test-complete",
+              "component": "readiness",
+              "evidence": [
+                "readiness-record"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-userland",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-source-sha256",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+              "message": "Original source-bound evidence verified.",
+              "observed": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-manifest-sha256",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "081b35ad36a93cc6d69c16aebb5a69f3051d780332d9685cb09b5bde2b111293",
+              "message": "Original source-bound evidence verified.",
+              "observed": "081b35ad36a93cc6d69c16aebb5a69f3051d780332d9685cb09b5bde2b111293",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-payload-sha256",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+              "message": "Original source-bound evidence verified.",
+              "observed": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-version",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "1.0.0-reference-controlled-mismatch",
+              "message": "Required reference result is unavailable or failed.",
+              "observed": "1.0.0-reference",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "fail",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-configuration",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-function",
+              "component": "functional",
+              "evidence": [
+                "functional-record"
+              ],
+              "expected": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+              "message": "Original source-bound evidence verified.",
+              "observed": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "target-identity",
+              "component": "svd",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "exact-owned-target-001",
+              "message": "Required reference result is unavailable or failed.",
+              "observed": "not-observed",
+              "reason_code": "not_executed",
+              "required": true,
+              "scope": "target",
+              "status": "blocked",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "userland",
+              "component": "svd",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+              "message": "Required reference result is unavailable or failed.",
+              "observed": "not-observed",
+              "reason_code": "not_executed",
+              "required": true,
+              "scope": "target",
+              "status": "blocked",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-inventory",
+              "component": "svd",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "complete installed native package database",
+              "message": "Required reference result is unavailable or failed.",
+              "observed": "not-observed",
+              "reason_code": "not_executed",
+              "required": true,
+              "scope": "target",
+              "status": "blocked",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "payload-version",
+              "component": "svd",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "1.0.0-reference",
+              "message": "Required reference result is unavailable or failed.",
+              "observed": "not-observed",
+              "reason_code": "not_executed",
+              "required": true,
+              "scope": "target",
+              "status": "blocked",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "payload-sha256",
+              "component": "svd",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+              "message": "Required reference result is unavailable or failed.",
+              "observed": "not-observed",
+              "reason_code": "not_executed",
+              "required": true,
+              "scope": "target",
+              "status": "blocked",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-manifest-sha256",
+              "component": "svd",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "081b35ad36a93cc6d69c16aebb5a69f3051d780332d9685cb09b5bde2b111293",
+              "message": "Required reference result is unavailable or failed.",
+              "observed": "not-observed",
+              "reason_code": "not_executed",
+              "required": true,
+              "scope": "target",
+              "status": "blocked",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-content-sha256",
+              "component": "svd",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+              "message": "Required reference result is unavailable or failed.",
+              "observed": "not-observed",
+              "reason_code": "not_executed",
+              "required": true,
+              "scope": "target",
+              "status": "blocked",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "candidate-source-sha256",
+              "component": "svd",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+              "message": "Required reference result is unavailable or failed.",
+              "observed": "not-observed",
+              "reason_code": "not_executed",
+              "required": true,
+              "scope": "target",
+              "status": "blocked",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-ca-certificates",
+              "component": "svd",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "{\"architecture\":\"all\",\"name\":\"ca-certificates\",\"version\":\"20260816ubuntu0.24.04.1\"}",
+              "message": "Required reference result is unavailable or failed.",
+              "observed": "not-observed",
+              "reason_code": "not_executed",
+              "required": true,
+              "scope": "target",
+              "status": "blocked",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-openssh-client",
+              "component": "svd",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "{\"architecture\":\"amd64\",\"name\":\"openssh-client\",\"version\":\"1:9.6p1-3ubuntu13.20\"}",
+              "message": "Required reference result is unavailable or failed.",
+              "observed": "not-observed",
+              "reason_code": "not_executed",
+              "required": true,
+              "scope": "target",
+              "status": "blocked",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-openssh-server",
+              "component": "svd",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "{\"architecture\":\"amd64\",\"name\":\"openssh-server\",\"version\":\"1:9.6p1-3ubuntu13.20\"}",
+              "message": "Required reference result is unavailable or failed.",
+              "observed": "not-observed",
+              "reason_code": "not_executed",
+              "required": true,
+              "scope": "target",
+              "status": "blocked",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-openssh-sftp-server",
+              "component": "svd",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "{\"architecture\":\"amd64\",\"name\":\"openssh-sftp-server\",\"version\":\"1:9.6p1-3ubuntu13.20\"}",
+              "message": "Required reference result is unavailable or failed.",
+              "observed": "not-observed",
+              "reason_code": "not_executed",
+              "required": true,
+              "scope": "target",
+              "status": "blocked",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-python3",
+              "component": "svd",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "{\"architecture\":\"amd64\",\"name\":\"python3\",\"version\":\"3.12.3-0ubuntu2.1\"}",
+              "message": "Required reference result is unavailable or failed.",
+              "observed": "not-observed",
+              "reason_code": "not_executed",
+              "required": true,
+              "scope": "target",
+              "status": "blocked",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "package-python3-12",
+              "component": "svd",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "{\"architecture\":\"amd64\",\"name\":\"python3.12\",\"version\":\"3.12.3-1ubuntu0.17\"}",
+              "message": "Required reference result is unavailable or failed.",
+              "observed": "not-observed",
+              "reason_code": "not_executed",
+              "required": true,
+              "scope": "target",
+              "status": "blocked",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "fixture-alpha",
+              "component": "assessment",
+              "evidence": [
+                "assessment-record"
+              ],
+              "expected": "Not a Finding",
+              "message": "Original source-bound evidence verified.",
+              "observed": "Not a Finding",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "fixture-beta",
+              "component": "assessment",
+              "evidence": [
+                "assessment-record"
+              ],
+              "expected": "Not a Finding",
+              "message": "Original source-bound evidence verified.",
+              "observed": "Not a Finding",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "fixture-gamma",
+              "component": "assessment",
+              "evidence": [
+                "assessment-record"
+              ],
+              "expected": "Not a Finding",
+              "message": "Original source-bound evidence verified.",
+              "observed": "Not a Finding",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "fixture-delta",
+              "component": "assessment",
+              "evidence": [
+                "assessment-record"
+              ],
+              "expected": "Not Applicable",
+              "message": "Original source-bound evidence verified.",
+              "observed": "Not Applicable",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "target",
+              "status": "pass",
+              "target_id": "target-001"
+            },
+            {
+              "check_id": "original-replay",
+              "component": "evidence",
+              "evidence": [
+                "execution-plan"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "owned-teardown",
+              "component": "cleanup",
+              "evidence": [
+                "admission-archive"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            },
+            {
+              "check_id": "admission-finalized",
+              "component": "cleanup",
+              "evidence": [
+                "admission-archive"
+              ],
+              "expected": "verified",
+              "message": "Original source-bound evidence verified.",
+              "observed": "verified",
+              "reason_code": "verified",
+              "required": true,
+              "scope": "run",
+              "status": "pass",
+              "target_id": null
+            }
+          ],
+          "run_id": "91f80cc0-bba9-4fd9-ac0e-a01778f905f0",
+          "schema_version": "1.0",
+          "secondary_failures": [],
+          "source_dirty": false,
+          "source_revision": "753b67d7e550218f28e2f765d3e3abf254c31656",
+          "status": "failed",
+          "targets": [
+            {
+              "image_digest": "sha256:cc35bfe1a928b0b9fb5d51a2b41c5c3ce4f0cf56aa2c4ae18c4a853bfb89db62",
+              "resource_id": "e91494e6697cfe731538df0a37acd99aa58c7587f24bb6cc8311f68268587ddf",
+              "target_id": "target-001"
+            }
+          ],
+          "unknown_outcome": false,
+          "updated_at": "2026-10-23T20:30:50.088Z"
+        },
+        "report_sha256": {
+          "json": "a026257087d0a1bc6264d3792c377b3b430b8f195f5b369ca31976208032f289",
+          "junit": "fcdb3f3b4b8258cdfbd2a68f6c61401eec671149dd779685e37c99dd7d343940",
+          "text": "8aa83ccedfc48fe0b7fdb6e690354ae3bd1b834845e37167a4fdf2806c539f53"
+        },
+        "request_sha256": "839288ab17781f4255c80758769a96b3b31c74b8d639fb60cd0e9e60d59bff5d",
+        "run_id": "91f80cc0-bba9-4fd9-ac0e-a01778f905f0",
+        "scenario": "version-expectation-mismatch",
+        "status": "passed",
+        "unrelated_sentinel_unchanged": true
+      }
+    ],
+    "observed_at": "2026-10-23T20:30:51.544447+00:00",
+    "scope": "One candidate-bound container per Run; synthetic assessment; no production ISO eligibility.",
+    "source_revision": "753b67d7e550218f28e2f765d3e3abf254c31656",
+    "status": "passed",
+    "suite_run_id": "385a8d84-f5f3-4366-9b1c-2610e1e38bdd"
+  },
+  "requirements_revision": 2,
+  "schema_version": "1.0",
+  "source_fixtures": {
+    "homelab_linux": {
+      "docker": "29.6.0",
+      "passed": 534,
+      "python": "Python 3.12.3",
+      "seconds": 42.934,
+      "skipped": 2,
+      "tests": 536
+    },
+    "native_linux": {
+      "passed": 534,
+      "python": "3.12.3",
+      "seconds": 32.393,
+      "skipped": 2,
+      "tests": 536
+    },
+    "repository_baseline": {
+      "local_link_targets_checked": 189,
+      "passed": true,
+      "tracked_files": 225
+    },
+    "scope": "Source fixtures; actual candidate-bound runtime is recorded separately. Skips remain unverified.",
+    "source_revision": "753b67d7e550218f28e2f765d3e3abf254c31656",
+    "windows": {
+      "passed": 347,
+      "python": "3.12.14",
+      "seconds": 58.211,
+      "skipped": 189,
+      "tests": 536
+    }
+  },
+  "tested_source_revision": "753b67d7e550218f28e2f765d3e3abf254c31656",
+  "ticket": "WORM-017"
+}

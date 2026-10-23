@@ -1,3 +1,11 @@
+<!-- WORM-017 actual qualification 753b67d7e550218f28e2f765d3e3abf254c31656 -->
+Current source-bound WORM-017 evidence qualifies the explicit one-container
+Ubuntu/UBI generated/synthetic reference pipeline. The actual wrong expected
+version remains failed/ineligible, while all three cases finished scoped cleanup.
+See [current pipeline evidence](handoff/evidence/WORM-017.json). Earlier status
+descriptions below are historical and may be superseded. Tested-byte publication,
+twenty-target candidate execution and production ISO eligibility remain separate.
+
 # Jake Wormhole
 
 Private, container-only reference automation for source integrity, Terraform-managed targets, SSH/Ansible checks and attributable engineering evidence.
