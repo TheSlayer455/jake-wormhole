@@ -20,6 +20,9 @@ BASE_CONFIG = 'sha256:9be18d9ba921714e79e390694315e3341047fe758ac79b62e671d92d42
 MAX_JSON = 262144
 RESOLVER_SECONDS = 60
 START_MARKER = Path('/run/wormhole-rpm-resolve.start')
+PHASE = 'bootstrap'
+PHASES = ('bootstrap','startup-guard','release-wait','inputs','module-import','metadata','base-create',
+    'repo-config','sack-load','rpmdb-match','request-selection','dependency-solve','transaction-export','result')
 
 
 def require(value):
@@ -28,6 +31,18 @@ def require(value):
 
 def canonical(value): return json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False).encode()
 def sha(raw): return hashlib.sha256(raw).hexdigest()
+
+
+def phase(value):
+    global PHASE
+    require(value in PHASES);PHASE=value
+
+
+def failure(error):
+    name=type(error).__name__
+    if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]{0,63}',name):name='UnknownError'
+    return {'operation':'ubi-offline-resolution-v1','status':'failed','code':'rpm_resolution_refused',
+        'phase':PHASE if PHASE in PHASES else 'bootstrap','exception_class':name}
 
 
 def unique(pairs):
@@ -93,28 +108,32 @@ def resolve(request, lock, dnf_module, rpm_module):
     sources=lock['sources'];require(request['operation']=='ubi-offline-resolution-request-v1' and request['base_image_id']==BASE and
         request['sources_sha256']==sha(canonical(sources)) and canonical(request['requested_packages'])==canonical(sources['requested_packages']) and
         sources['policy']['allow_erasing'] is False and sources['policy']['plugins'] is False and sources['policy']['install_weak_deps'] is False)
-    catalog=metadata(lock)
+    phase('metadata');catalog=metadata(lock)
+    phase('base-create')
     with dnf_module.Base() as base:
         # Do not read ambient config/repository files or initialize plugins.
+        phase('repo-config')
         base.conf.plugins=False;base.conf.install_weak_deps=False;base.conf.best=True;base.conf.strict=True
         base.conf.cachedir='/tmp/wormhole-rpm-resolver/cache';base.conf.persistdir='/tmp/wormhole-rpm-resolver/persist';base.conf.logdir='/tmp/wormhole-rpm-resolver/log'
         base.conf.substitutions['releasever']='9';base.conf.substitutions['basearch']='x86_64'
         require(not list(base.repos.iter_enabled()))
         repo=base.repos.add_new_repo(sources['repository_id'],base.conf,baseurl=['file:///metadata'])
         repo.skip_if_unavailable=False;repo.metadata_expire=-1
-        base.fill_sack(load_system_repo=True,load_available_repos=True)
+        phase('sack-load');base.fill_sack(load_system_repo=True,load_available_repos=True)
         # Match the same RPM DB source as the public base probe, including key
         # pseudo-packages which DNF's @System view can omit.
-        installed=installed_packages(rpm_module)
+        phase('rpmdb-match');installed=installed_packages(rpm_module)
         require(canonical(installed)==canonical(request['installed_packages']) and sha(canonical(installed))==request['base_packages_sha256'])
+        phase('request-selection')
         for expected in request['requested_packages']:
             matches=[x for x in base.sack.query().filter(name=expected['name']) if canonical(record(x))==canonical(expected)]
             require(matches)
             available=[x for x in matches if not x.installed and x.reponame==sources['repository_id']]
             if available:require(len(available)==1);base.package_install(available[0],strict=True)
             else:require(any(x.installed for x in matches))
-        base.resolve(allow_erasing=False)
+        phase('dependency-solve');base.resolve(allow_erasing=False)
         require(base.transaction is not None and not list(base.transaction.remove_set))
+        phase('transaction-export')
         packages=[]
         for package in base.transaction.install_set:
             key=canonical(record(package));require(package.reponame==sources['repository_id'] and key in catalog)
@@ -140,8 +159,8 @@ def supervise(action, seconds=RESOLVER_SECONDS, *, grace_seconds=.2):
         try:
             os.setsid();signal.signal(signal.SIGTERM,signal.SIG_DFL)
             code=action()
-        except BaseException:
-            print('{"operation":"ubi-offline-resolution-v1","status":"failed","code":"rpm_resolution_refused"}',flush=True);code=2
+        except BaseException as error:
+            print(canonical(failure(error)).decode(),flush=True);code=2
         sys.stdout.flush();sys.stderr.flush();os._exit(code if type(code) is int and 0<=code<=255 else 2)
     os.close(writer);os.set_blocking(reader,False)
     previous=signal.signal(signal.SIGTERM,lambda *_:interrupted.__setitem__(0,True))
@@ -181,15 +200,17 @@ def supervise(action, seconds=RESOLVER_SECONDS, *, grace_seconds=.2):
 
 
 def solver_main():
+    phase('startup-guard')
     require(len(sys.argv)==1 and Path('/.dockerenv').is_file() and os.geteuid()==0 and
         not any(Path(p).exists() for p in ('/var/run/docker.sock','/run/docker.sock')))
-    wait_for_start()
+    phase('release-wait');wait_for_start();phase('inputs')
     lock_raw=read(LOCK,65536);request_raw=read(REQUEST);lock=json.loads(lock_raw,object_pairs_hook=unique);request=json.loads(request_raw,object_pairs_hook=unique)
     require(request['lock_sha256']==sha(lock_raw) and request['run_id']==os.environ.get('WORMHOLE_RUN_ID') and
         lock['base']['image_id']==BASE and lock['base']['config_digest']==BASE_CONFIG and
         lock['target_family']=='ubi9-rpm' and lock['platform']=='linux/amd64')
-    import dnf,rpm
+    phase('module-import');import dnf,rpm
     result=resolve(request,lock,dnf,rpm)
+    phase('result')
     raw=canonical(result);require(len(raw)<=MAX_JSON);print(raw.decode())
     return 0
 

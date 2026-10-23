@@ -197,6 +197,16 @@ class PublicSources(unittest.TestCase):
 
 
 class OfflineResolution(unittest.TestCase):
+    @unittest.skipUnless(os.name=='posix','Isolated solver exception fixture requires POSIX')
+    def test_failed_solver_records_only_fixed_phase_and_exception_class(self):
+        def child():
+            resolver.phase('sack-load');raise RuntimeError('Synthetic credential-like text must not escape')
+        with patch.object(resolver,'emit_output') as emit:code=resolver.supervise(child,1)
+        self.assertEqual(code,2);value=s.parse(emit.call_args.args[0])
+        self.assertEqual(value,{'operation':'ubi-offline-resolution-v1','status':'failed','code':'rpm_resolution_refused',
+            'phase':'sack-load','exception_class':'RuntimeError'})
+        self.assertNotIn(b'credential',emit.call_args.args[0])
+
     @unittest.skipUnless(os.name=='posix','Resolver release marker permission fixture requires POSIX')
     def test_fixed_release_marker_is_exact_private_bounded_and_required(self):
         with tempfile.TemporaryDirectory() as folder:

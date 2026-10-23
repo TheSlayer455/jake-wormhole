@@ -103,6 +103,10 @@ its finite PID1 and 70-second controller observation deadline. The receipt at
 request, complete private capture, selected NEVRAs and cleanup. It preserves
 primary failures; an uncertain daemon operation retains admission and refuses
 cleanup. It never claims RPM signature verification or full pipeline success.
+Failed solver captures include only a fixed implementation phase and a bounded
+exception class name. Exception messages, ambient environment and arbitrary
+traceback content are excluded; these diagnostics cannot turn a failure into
+a validated dependency selection.
 
 ## Verification limits
 
