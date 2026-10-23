@@ -1,16 +1,32 @@
 # Architecture
 
-WORM-002 establishes a repository baseline. There is currently no application
-CLI, Terraform configuration, target image, Ansible playbook or working pipeline.
-The design below is planned, not an execution result or a version selection.
-Minx owns requirements, assignment and review; repository checkpoints describe
-source and evidence without granting approval.
+WORM-002 establishes the repository baseline. WORM-003 adds a standard-library
+Python CLI and isolated local fixture runs, bounded fixed stage adapters and six
+versioned artifact contracts. There is no Terraform configuration, target image,
+Ansible playbook or complete runtime pipeline yet. Minx owns requirements,
+assignment and review. The [owner-delegated workflow decision](decisions/0002-owner-delegated-workflow.md)
+describes authorized browser operations without changing Minx permissions.
 
 Start with [README](../README.md), [agent instructions](../AGENTS.md) and the
 [current handoff](../handoff/CURRENT.md). See [discovery](DISCOVERY.md),
 [fidelity](FIDELITY.md) and [decision 0001](decisions/0001-container-reference.md).
 
-## Planned components
+## Implemented local foundation
+
+The `wormhole` package is invoked as `python -m wormhole`. Its CLI calls the same
+run, contract and stage library exercised by tests. Run directories use UUIDs,
+explicit ownership markers and separate private/runtime and portable-evidence
+locations outside Git and vault paths. Atomic bounded JSON writes, symlink and
+junction refusal, per-run locks and fixed subprocess adapters protect this local
+path. They are not a Docker admission mechanism; shared resource admission is
+WORM-004.
+
+The synthetic fixture runs actual fixed local subprocesses for preflight and
+SHA256 checking. Declared real pipeline stages remain unsupported. Reports and
+verification cannot convert that subset into runtime or publication eligibility.
+See [CLI behavior](CLI.md) and the selected [dependency lock](../dependencies.lock.json).
+
+## Planned runtime components
 
 | Component | Responsibility | Boundary |
 | --- | --- | --- |
@@ -21,7 +37,7 @@ Start with [README](../README.md), [agent instructions](../AGENTS.md) and the
 | Evidence and gate | Check completeness, identity and reference eligibility | No production ISO approval; no automatic repair during validation |
 | Reference publisher | Publish the already tested bytes after rechecking evidence | Separate operation, unique destination and final completion manifest |
 
-Dependencies and image versions remain unselected. Future implementation must pin
+Runtime dependencies and image versions remain unselected. Future implementation must pin
 mutually compatible versions and check their actual documentation. The observed
 host has no Terraform or Ansible executable in its discovered tool paths; this
 baseline does not install either. No dashboard, Kubernetes deployment, database,
@@ -33,7 +49,7 @@ The intended sequence is preflight, source integrity, candidate build,
 provisioning, readiness, Ansible checks, observed SVD, synthetic assessment,
 evidence, gate, scoped cleanup and finalization. Publication follows separately.
 Each stage declares inputs, timeout, outputs, expected checks and failure category.
-Versioned JSON contracts are planned for:
+Versioned JSON contracts are published under `schemas/` for these record families:
 
 - Run manifest and plan: run identity, source commit, profile, expected targets,
   checks, predeclared applicability and resource/concurrency limits.
@@ -46,11 +62,13 @@ Versioned JSON contracts are planned for:
 - Decision and cleanup: completeness failures, reference eligibility, production
   ineligibility, primary error, owned resources and separate cleanup outcomes.
 
-These descriptions are not yet published schemas. A run must bind the candidate
-hash, derived image, test plan and evidence; validating an unrelated stock image
-cannot validate the candidate. Text, JSON and JUnit reports must share result
-records. Missing checks, unexpected skips, stale/malformed evidence and wrong
-identity must not pass merely because no failures were recorded.
+The initial schemas and validators cover current local records. Runtime candidate,
+image, readiness, SVD, assessment and publication implementations remain separate
+tickets; schema availability is not evidence that those operations ran. A real
+run must bind candidate hash, derived image, test plan and evidence; validating an
+unrelated stock image cannot validate the candidate. Text, JSON and JUnit reports
+must share result records. Missing checks, unexpected skips, stale/malformed
+evidence and wrong identity must not pass merely because no failures were recorded.
 
 ## Planned execution and isolation
 

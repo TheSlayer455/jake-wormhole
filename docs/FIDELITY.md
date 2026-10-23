@@ -8,9 +8,9 @@ installation laboratory. Read [architecture](ARCHITECTURE.md),
 
 | Area | Established now | Not established |
 | --- | --- | --- |
-| Repository | Private GitHub repository and local baseline history | Application functionality, release qualification or independent review |
+| Repository | Private GitHub repository, pushed baseline, passing baseline CI and separately identified Codex engineering review | Release qualification or independent human review |
 | Host discovery | Saved memory, disk, Docker and executable-availability observations | Current admission capacity, enforced limits or absence of impact under load |
-| CLI/stages | Planned architecture and contract responsibilities | An executable Wormhole pipeline |
+| CLI/stages | Local CLI, bounded stage execution and explicitly synthetic fixture subset; six published artifact contracts | A complete Terraform/SSH/Ansible runtime pipeline |
 | Terraform | Docker-provider lifecycle is the planned provisioner | Installed host Terraform, authored infrastructure or a provisioned target |
 | SSH | Host executable availability recorded | Per-run keys, trusted host-key establishment or successful target authentication |
 | Ansible | Required future validation transport | Installed host Ansible, connectivity, checks or observed inventories |

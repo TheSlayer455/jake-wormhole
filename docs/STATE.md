@@ -1,17 +1,49 @@
 # Engineering checkpoint
 
-October 23, 2026. WORM-002's repository baseline is implemented on `codex/WORM-002-baseline`, in the verified private [TheSlayer455/jake-wormhole](https://github.com/TheSlayer455/jake-wormhole) repository. [Draft PR 1](https://github.com/TheSlayer455/jake-wormhole/pull/1) contains the changes; no merge or Owner acceptance is claimed. Minx remains authoritative for live ticket status.
+October 23, 2026. WORM-002 revision 2 is Done in Minx after owner-directed
+browser actions, with passing criterion evidence and a solution comment. Jake
+explicitly delegated the repeated approval/completion clicks; see
+[decision 0002](decisions/0002-owner-delegated-workflow.md). This is automated
+verification under owner instruction, not independent human examination.
 
-The baseline tested and reviewed was `39e86d3a61b6550044308103b8f9b20854617afd`, after initial main `7e715be454d57a4b61129bd42f4b2758d8d7b060`. This checkpoint corrects the earlier parallel-writer notes; final documentation revisions must also pass the repository check.
+WORM-003 revision 2 is approved and being implemented on `codex/WORM-003-cli`.
+The implementation commit checked locally is
+`a0f8381f08d2884532ebe53fd9aa8591ba94d67d`; this documentation follow-up also needs
+verification before publication. Minx is authoritative for the current status,
+lease, evidence and development references.
 
-- Local check: Python 3.12.14 at the actual bundled executable, Git 2.55.0.windows.3, exit 0; 17 tracked files and 34 local link targets checked at that revision.
-- Disposable negative checks: broken local link, tracked runtime state, a synthetic private-key marker and wrong origin each produced the expected nonzero failure. No real credentials or runtime resources were used.
-- Actual [pull-request CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/39954750131) and [push CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/39954750253) passed for that commit.
-- A separate Codex engineering subagent reviewed that exact commit. Its checkpoint-freshness finding is addressed here; see the [review record](../handoff/reviews/2026-10-23-baseline.md). This is not human acceptance or an Opus/Fable review.
-- Required private-branch protection could not be configured: GitHub returned 403 for the account plan. CI is available but is not an enforced branch gate. Privacy and billing were unchanged; see [repository controls](REPOSITORY.md).
+Implemented: local standard-library Python CLI; canonical isolated UUID run
+storage outside Git/vaults; six generated v1 artifact schemas and matching fixed
+validators; bounded fixed-adapter stage execution; report/verify; exact fixture
+private-state cleanup; explicit unsupported real-run and publication results.
+The CLI quick-start commands ran, including the expected nonzero refusals.
 
-Run `python scripts/verify_repository.py` with Python 3.12+ and Git. On the observed Windows machine, `python` resolves to a Store alias, so verification used the installed bundled executable explicitly. Select a real Python executable rather than assuming the alias works. The verifier is read-only and uses no external service.
+Local verification: CPython 3.12.14, Git 2.55.0.windows.3, unittest exit 0;
+31 cases, 26 passed and five explicitly skipped for platform/policy reasons,
+3.237 seconds. Real CLI checks, two simultaneous fixture runs and two spawned
+workspace creators passed. Wrong-source/hash/check/status evidence, malformed
+records, unsafe paths and NTFS junctions reject. POSIX-only output-flood,
+process-group and timeout cases require Linux; the implementation agent exercised
+those in a disposable WSL Git snapshot with Python 3.12.3 (31 cases, two
+Windows-only skips). The final hosted CI must run the selected Python 3.12.14.
 
-No application CLI, Terraform lifecycle, images, SSH/Ansible path, admission controller, assessment or publication pipeline has been implemented by WORM-002. No project runtime resources need cleanup. Production ISO eligibility remains false.
+Review found and corrected scoped IPv6 host parsing and a descendant-held stdout
+pipe that exceeded the stage deadline. Stage execution now uses an absolute
+deadline and POSIX process groups. Windows permits only two immutable reviewed
+leaf adapters and refuses other execution before launch; Windows ACL protection
+is not claimed verified. See [CLI details](CLI.md).
 
-Next: record the final checked source, criterion evidence and solution comment in [WORM-002](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-002), then submit In Review and release the claim. Human acceptance and approval of the next eligible contract remain separate. WORM-003 depends on WORM-002 Done; use the [live ticket index](TASKS.md) and [handoff](../handoff/CURRENT.md).
+CI now selects CPython 3.12.14 with full-SHA official checkout/setup-python pins
+and runs the same unittest command. Exact-source hosted observations belong in
+the ticket/PR after pushing; earlier baseline CI is not evidence for this change.
+Required private branch protection remains unavailable on the account plan.
+
+No Wormhole target images, containers, networks, Terraform state or SSH material
+were created. The fixture run is synthetic and cannot qualify reference
+publication. The runtime pipeline and production ISO eligibility remain false.
+
+Next: finish exact-source review/CI, attach WORM-003 criterion evidence and solution
+comment, submit In Review and release the claim, then apply the delegated normal
+Owner workflow after all criteria pass. WORM-004 and WORM-005 become eligible
+only after WORM-003 is actually Done. Continue with measured resource admission
+and minimal pinned target/helper images; no host tools or daemon settings changes.
