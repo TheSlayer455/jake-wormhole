@@ -83,7 +83,7 @@ def load_profile(name):
             "limits": deepcopy(config["limits"]), "materialization": deepcopy(config["materialization"])}
 
 
-def _validate_observations(value):
+def _validate_observations(value, *, reference_time=None):
     fields = {"schema_version", "synthetic", "observed_at", "boot_id", "memory_total_bytes", "memory_available_bytes",
               "runtime_disk_free_bytes", "docker_disk_free_bytes", "cpu_count", "load1", "docker", "workloads"}
     _require(_keys(value, fields) and value["schema_version"] == "1.0" and type(value["synthetic"]) is bool)
@@ -91,7 +91,7 @@ def _validate_observations(value):
     try:
         stamp = value["observed_at"]
         _require(type(stamp) is str and re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z", stamp) is not None)
-        age = (datetime.now(timezone.utc) - datetime.fromisoformat(stamp.replace("Z", "+00:00"))).total_seconds()
+        age = ((datetime.now(timezone.utc) if reference_time is None else reference_time) - datetime.fromisoformat(stamp.replace("Z", "+00:00"))).total_seconds()
         _require(-2 <= age <= 30, "stale_observation", "Refresh admission observations; they must be no more than 30 seconds old.")
     except (ValueError, TypeError):
         raise AdmissionError("invalid_observation", "The observation timestamp is invalid.") from None
@@ -129,6 +129,27 @@ def _projection(value):
 
 
 def build_plan(profile, observations):
+    """Live pure capacity decision; observations must still be fresh."""
+    return _build_plan(profile, observations)
+
+
+def replay_plan(profile, observations):
+    """Recompute historical proof only; never refresh, reserve or allocate.
+
+    The caller must bind this result to its original finished Run archive. The
+    original observation timestamp is the validation clock and is not rewritten.
+    Active AdmissionLease paths exclusively call build_plan's live clock.
+    """
+    try:
+        stamp = observations['observed_at']
+        reference = datetime.fromisoformat(stamp.replace('Z', '+00:00'))
+        _require(reference.tzinfo is not None and reference.utcoffset().total_seconds() == 0, 'invalid_observation')
+    except (KeyError, TypeError, AttributeError, ValueError):
+        raise AdmissionError('invalid_observation', 'Historical observation time is malformed.') from None
+    return _build_plan(profile, observations, reference_time=reference)
+
+
+def _build_plan(profile, observations, *, reference_time=None):
     """Pure capacity decision; this function reserves or allocates nothing."""
     name = profile if type(profile) is str else profile.get("profile") if type(profile) is dict else None
     selected = load_profile(name)
@@ -137,7 +158,7 @@ def build_plan(profile, observations):
     except (ValueError, TypeError, RecursionError):
         unchanged = False
     _require(unchanged, "invalid_profile", "Use an unchanged reviewed profile.")
-    _validate_observations(observations)
+    _validate_observations(observations, reference_time=reference_time)
     limits, count = selected["limits"], selected["target_count"]
     runtime_counts = {"target": count, "helper": 1, "provisioner": 1, "overhead": 1}
     build_counts = {"build": selected["build_concurrency"], "provisioner": 1, "overhead": 1}

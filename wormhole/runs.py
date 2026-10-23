@@ -9,6 +9,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import threading
 from uuid import UUID, uuid4
 
 from .contracts import ContractError, validate_artifact
@@ -26,6 +27,34 @@ class RunError(Exception):
     def __init__(self, code, message):
         super().__init__(message)
         self.code = code
+
+
+_LOCK_ISSUER = object()
+
+
+class HeldRunGuard:
+    """In-process proof for narrow adapters; never permits nested acquisition."""
+    def __init__(self, run, descriptor, path, *, _issuer=None):
+        if _issuer is not _LOCK_ISSUER:
+            raise RunError('run_lock_required', 'Only an acquired Run lock issues a held adapter guard.')
+        self.run_path, self.run_id = run.path, run.id
+        self.descriptor, self.path = descriptor, path
+        self.pid, self.thread = os.getpid(), threading.get_ident()
+        value = os.fstat(descriptor)
+        self.identity = value.st_dev, value.st_ino
+        self.active = True
+
+    def check(self, run):
+        if not self.active or self.pid != os.getpid() or self.thread != threading.get_ident() or (run.path, run.id) != (self.run_path, self.run_id):
+            raise RunError('run_lock_required', 'This adapter requires the current exact in-process Run lock.')
+        try:
+            _owned(self.path)
+            held, path = os.fstat(self.descriptor), self.path.stat()
+            if (held.st_dev, held.st_ino) != self.identity or (path.st_dev, path.st_ino) != self.identity:
+                raise OSError('lock identity changed')
+        except OSError:
+            raise RunError('run_lock_required', 'The held Run lock descriptor or inode changed.') from None
+        return True
 
 
 def now():
@@ -199,8 +228,8 @@ class Run:
             expected = {"schema_version": "1.0", "run_id": self.id, "kind": "linux-flock"}
             if read_json(policy) != expected or self.manifest()["mode"] != "container-reference":
                 raise RunError("invalid_lock_policy", "The run's immutable lock policy is invalid.")
-            with self._kernel_locked():
-                yield
+            with self._kernel_locked() as guard:
+                yield guard
             return
         # Legacy fixtures/runs retain their original policy. A stale legacy
         # PID file is never deleted or converted merely because its PID died.
@@ -211,11 +240,13 @@ class Run:
             descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         except FileExistsError:
             raise RunError("run_busy", "This exact run is already locked; no stale-lock takeover is automatic.") from None
+        guard = HeldRunGuard(self, descriptor, path, _issuer=_LOCK_ISSUER)
         try:
-            with os.fdopen(descriptor, "w") as stream:
-                stream.write(str(os.getpid()))
-            yield
+            os.write(descriptor, str(os.getpid()).encode('ascii')); os.fsync(descriptor)
+            yield guard
         finally:
+            guard.active = False
+            os.close(descriptor)
             path.unlink()
 
     @contextmanager
@@ -239,7 +270,11 @@ class Run:
                 raise RunError("run_busy", "Another process holds this run's kernel lock.") from None
             if legacy.exists() or (identity.st_dev, identity.st_ino) != (path.stat().st_dev, path.stat().st_ino):
                 raise RunError("unsafe_lock", "Run lock ownership changed during acquisition.")
-            yield
+            guard = HeldRunGuard(self, descriptor, path, _issuer=_LOCK_ISSUER)
+            try:
+                yield guard
+            finally:
+                guard.active = False
         finally:
             os.close(descriptor)  # Persistent inode; kernel releases after crash.
 
