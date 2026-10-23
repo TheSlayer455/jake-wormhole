@@ -2,7 +2,7 @@
 
 Private, container-only reference automation for source integrity, Terraform-managed targets, SSH/Ansible checks and attributable engineering evidence.
 
-Minx tracks work under WORM-001. Completed components cover the CLI, Linux admission, real Terraform lifecycle, strict SSH/Ansible, scoped recovery, functional checks, five-target coordination, verified chunks, candidate binding, optional PowerShell, synthetic assessments, UBI/RPM containers and full observed software inventories. WORM-002 through WORM-016 are Done under Jake’s delegated Owner workflow. WORM-017 is implementing the combined reference evidence/reporting gate. Tested-byte publication and twenty-target execution remain unfinished. Production ISO eligibility remains false.
+Minx tracks work under WORM-001. Completed components cover the CLI, Linux admission, real Terraform lifecycle, strict SSH/Ansible, scoped recovery, functional checks, five-target coordination, verified chunks, candidate binding, optional PowerShell, synthetic assessments, UBI/RPM containers and full observed software inventories. WORM-002 through WORM-016 are Done under Jake's delegated Owner workflow. WORM-017 is implementing the combined reference evidence/reporting gate. Tested-byte publication and twenty-target execution remain unfinished. Production ISO eligibility remains false.
 
 Start with [AGENTS.md](AGENTS.md), [current state](docs/STATE.md) and [handoff](handoff/CURRENT.md). The [fidelity record](docs/FIDELITY.md) separates actual behavior from planned or simulated capabilities. [Repository controls](docs/REPOSITORY.md) records publication and CI observations.
 
