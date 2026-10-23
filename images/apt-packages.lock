@@ -1,0 +1,12 @@
+# Generated from images.lock.json; package versions use the signed frozen snapshot.
+common ca-certificates 20260816ubuntu0.24.04.1
+common python3 3.12.3-0ubuntu2.1
+common python3.12 3.12.3-1ubuntu0.17
+target openssh-server 1:9.6p1-3ubuntu13.20
+target openssh-client 1:9.6p1-3ubuntu13.20
+target openssh-sftp-server 1:9.6p1-3ubuntu13.20
+helper openssh-client 1:9.6p1-3ubuntu13.20
+helper python3-venv 3.12.3-0ubuntu2.1
+helper python3.12-venv 3.12.3-1ubuntu0.17
+helper python3-pip-whl 24.0+dfsg-1ubuntu1.3
+helper python3-setuptools-whl 68.1.2-2ubuntu1.2

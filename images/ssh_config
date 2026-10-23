@@ -1,0 +1,14 @@
+Host *
+    BatchMode yes
+    StrictHostKeyChecking yes
+    UserKnownHostsFile /run/wormhole/known_hosts
+    GlobalKnownHostsFile /dev/null
+    IdentityFile /run/wormhole/id_ed25519
+    IdentitiesOnly yes
+    PreferredAuthentications publickey
+    PasswordAuthentication no
+    KbdInteractiveAuthentication no
+    ForwardAgent no
+    ClearAllForwardings yes
+    ControlMaster no
+    LogLevel ERROR
