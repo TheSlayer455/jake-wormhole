@@ -620,7 +620,13 @@ class ProvisioningSession:
                     'target_not_ready', 'Start requires this complete, confined, never-started target.')
             target = self.owned['docker_container.target']
             self.check_inputs()
-            self.verify_provisioner(images.inspect('container', self.provisioner))
+            controller = images.inspect('container', self.provisioner)
+            self.verify_provisioner(controller)
+            state = controller['State']
+            require(state.get('Running') is True and state.get('Status') == 'running' and
+                    type(state.get('Pid')) is int and state['Pid'] > 0 and
+                    not state.get('Paused', False) and not state.get('Restarting', False),
+                    'provisioner_unavailable', 'The retained provisioner must still be running before target start.')
             self.verify_target(images.inspect('container', target), stopped=True)
             self.lease.refresh()
             images.docker(('start', target))

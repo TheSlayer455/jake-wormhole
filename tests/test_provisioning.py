@@ -422,6 +422,18 @@ class Controller(unittest.TestCase):
             self.assertEqual(error.exception.code, 'target_not_ready')
             self.assertEqual(self.calls.count(('docker', 'start', CID)), 1)
 
+    def test_expired_controller_during_pause_cannot_start_target_or_allocate_replacement(self):
+        with self.patches():
+            self.session.create_stopped()
+            self.running[CONTROLLER] = False
+            with self.assertRaises(p.ProvisioningError) as error:
+                self.session.start_and_inventory()
+            self.assertEqual(error.exception.code, 'provisioner_unavailable')
+            self.assertEqual(self.session.receipt['primary_failure']['code'], 'provisioner_unavailable')
+            self.assertNotIn(('docker', 'start', CID), self.calls)
+            self.assertEqual(self.calls.count(('docker', 'start', CONTROLLER)), 1)
+            self.assertIsNone(self.session.receipt['inventory'])
+
     def test_resumed_start_rechecks_stopped_limits_and_preserves_failure(self):
         with self.patches():
             self.session.create_stopped()
