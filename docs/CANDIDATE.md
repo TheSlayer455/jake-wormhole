@@ -35,6 +35,12 @@ outcomes preserve the journal and prevent further allocation or normal cleanup;
 no generic reviewed boolean clears them. A known installation failure can stop
 and remove only its exact identified builder, preserving its primary failure.
 
+The pinned original stock target inherits `org.opencontainers.image.version=24.04`
+from Ubuntu in addition to its five Wormhole build-provenance labels. The first
+actual013 attempt refused that inherited label before allocation. Its sanitized
+immutable-image observation now defines the complete expected set; changed or
+unexpected labels still refuse. Receipt-supplied extras cannot extend that set.
+
 `ProvisioningSession(..., target_binding=None)` keeps the stock default.
 An explicit candidate binding must match the same Run's saved complete bundle,
 build receipt, retained-image journal and actual immutable image. Only the target
@@ -90,3 +96,16 @@ are recorded. Unexpected failure stops the suite and preserves unresolved
 resources; existing exact-source recovery may safely reconcile known established
 provisioning, while unknown image/daemon work remains blocked. The operator's
 presence and mocked tests are not an actual acceptance result.
+
+`python -m wormhole.candidate_recovery RUN_UUID` is a narrow recovery operation
+for a known failed candidate before any allocation intent. It requires the exact
+clean original source, canonical Run and resumed admission, reserved phase, no
+registered resources, a complete bound failed receipt with null builder/image
+IDs and unknown=false, no Terraform/helper/binding state, and complete empty
+container/network/all-image/volume Run-label sweeps. It performs no Docker
+mutation. It preserves the primary failure and private data, writes recovery
+attempt evidence, and uses normal archive-first admission finish. Retry after an
+interrupted finalization rechecks the same proof; it cannot initialize storage,
+adopt resources, clear uncertainty or reinterpret an older Run with new source.
+The acceptance operator uses this path only when its failed image phase meets
+those exact conditions; other unexpected image failures remain fail-closed.

@@ -34,6 +34,15 @@ class CandidateFixture:
 
 
 class Bundle(CandidateFixture, unittest.TestCase):
+    def test_sanitized_actual_qualified_base_keeps_inherited_ubuntu_label(self):
+        # Actual immutable005 image observation, October23; no runtime action in this fixture.
+        labels = {'org.opencontainers.image.version': '24.04',
+            'io.jake-wormhole.role': 'target', 'io.jake-wormhole.run_id': '759b5541-a077-46ca-97a1-1cdfb782ba15',
+            'io.jake-wormhole.source_revision': '5c4656c683f02b4dca51ee6e24bd9b476a6c781a',
+            'io.jake-wormhole.recipe_sha256': 'f3b03c77e0af5d8c583e1761f236abfd499da9ad935d2f480164a83b2e79a843',
+            'io.jake-wormhole.lock_sha256': '44e7c225a1e13a0b70d0778fb9b3ff12bc99adfaf5083816c90e2b537d26257e'}
+        self.assertEqual(c.qualified_base_labels(), labels)
+
     def test_exact_bundle_source_and_original_payload_hashes_are_rechecked(self):
         value = c.validate_bundle(self.run)
         self.assertEqual(value['manifest']['source_sha256'], chunks.report_chunks(self.run)['result']['verified_output']['sha256'])
@@ -195,6 +204,19 @@ class Build(CandidateFixture, unittest.TestCase):
         with self.patches(), patch.object(images, 'inspect', side_effect=wrong), self.assertRaises(c.CandidateError):
             c.build_candidate(self.run, self.lease)
         self.assertFalse(any(call[:2] == ('docker', 'start') for call in self.calls))
+
+    def test_unexpected_or_changed_inherited_base_label_still_refuses_before_allocation(self):
+        for changes in ({'unexpected.extra': 'unapproved'}, {'org.opencontainers.image.version': '26.04'}):
+            with self.subTest(changes=changes):
+                labels = self.base_labels.copy(); self.base_labels.update(changes)
+                try:
+                    with self.patches(), self.assertRaises(c.CandidateError) as error: c.build_candidate(self.run, self.lease)
+                    self.assertEqual(error.exception.code, 'candidate_base_invalid')
+                    self.assertFalse(any(call[:2] == ('docker', 'create') for call in self.calls))
+                finally: self.base_labels = labels
+                # Each independent real attempt would require a fresh Run; this
+                # local refusal fixture removes only its no-allocation receipt.
+                self.run.file('evidence/candidate-build.json').unlink()
 
     def test_source_drift_during_assembly_cannot_commit_or_write_binding(self):
         original = self.docker

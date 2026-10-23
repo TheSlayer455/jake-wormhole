@@ -129,6 +129,11 @@ def qualify_case(scenario, sentinel):
                 from .recovery import recover_run
                 result['failure_cleanup'] = recover_run(run)
             except Exception: pass
+        elif run.file('evidence/candidate-build.json').exists():
+            try:
+                from .candidate_recovery import recover_preallocation
+                result['failure_cleanup'] = recover_preallocation(run)
+            except Exception: pass  # Nonempty/uncertain image phases remain active; no fallback.
         atomic_json(run.file('evidence/candidate-acceptance.json'), result)
         error.run_id = run.id
         raise

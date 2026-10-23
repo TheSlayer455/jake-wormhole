@@ -155,7 +155,9 @@ def qualified_base_labels():
     # Fixed existing005 provenance, not labels supplied in a candidate receipt.
     from .validation import TARGET_BUILD, TARGET_BUILD_SOURCE
     recipe, files = images.recipe_identity()
-    return {images.LABEL + '.role': 'target', images.LABEL + '.run_id': TARGET_BUILD,
+    # The exact pinned stock image also inherits this observed Ubuntu OCI label.
+    # Extra or changed labels still fail the complete comparison; receipts cannot add them.
+    return {'org.opencontainers.image.version': '24.04', images.LABEL + '.role': 'target', images.LABEL + '.run_id': TARGET_BUILD,
         images.LABEL + '.source_revision': TARGET_BUILD_SOURCE, images.LABEL + '.recipe_sha256': recipe,
         images.LABEL + '.lock_sha256': files['images.lock.json']}
 
