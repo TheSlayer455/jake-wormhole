@@ -103,7 +103,8 @@ def qualify_case(scenario, sentinel, base_run_id):
                 readiness.wait_ready(); readiness.require_ready()
             except BaseException:
                 retain_readiness_failure(run,result,session)
-                save()
+                try: save()
+                except Exception: pass  # A diagnostic write cannot replace the readiness error.
                 raise
             result['phase']='ssh-ansible'; save()
             validator = RPMValidationSession(readiness,binding,scenario=scenario)
