@@ -176,6 +176,8 @@ def cleanup_session(session, lease, *, reason='success', helper=None):
     helper_record = getattr(helper, 'receipt', {}) if helper is not None else {}
     require(type(helper_record) is dict and type(helper_record.get('unknown_outcome', False)) is bool,
             'invalid_cleanup', 'Helper cleanup requires its bounded structured outcome record.')
+    helper_id = getattr(helper, 'helper', None) if helper is not None else None
+    if type(helper_id) is str and re.fullmatch(r'[a-f0-9]{64}', helper_id): session._cleanup_helper_id = helper_id
     if session.receipt['primary_failure'] is None and helper_record.get('primary_failure') is not None:
         session.receipt['primary_failure'] = deepcopy(helper_record['primary_failure'])
         session.receipt['status'] = 'failed'
@@ -248,11 +250,13 @@ def _recover_run(run):
             lease.finish(reconciliation_complete=True)
             return value
         try:
+            helper = None
             if run.file('private/readiness-controller.json').exists():
                 from .readiness import ReadinessSession
                 helper = ReadinessSession.resume_cleanup(run, lease)
                 helper.cleanup()  # Helper must be absent before Terraform's exact pending view is resumed.
             session = ProvisioningSession.resume_destroy(run, lease)
+            if helper is not None: session._cleanup_helper_id = helper.helper
         except Exception as error:
             # Reporting has no execution authority. Keep recovery refusal visible
             # even when a component cannot produce an executable cleanup adapter.

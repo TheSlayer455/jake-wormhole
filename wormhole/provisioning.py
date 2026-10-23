@@ -756,17 +756,19 @@ class ProvisioningSession:
             require(self.receipt['unknown_outcome'] is False, 'daemon_outcome_unknown',
                     'Unknown daemon work must be resolved by a specific reviewed proof before destroy.')
             require(self.provisioner is not None, 'provisioner_missing', 'Retained exact provisioner is required for Terraform destroy.')
-            controller = images.inspect('container', self.provisioner, missing=True)
-            if controller is None:
-                self._final_state_proof()
-                for address, identifier in self.owned.items():
-                    self._reconcile_absent('container' if address.startswith('docker_container.') else 'network', identifier)
-                self._reconcile_absent('container', self.provisioner)
-                return self._cleanup_complete()
-            self.verify_provisioner(controller)
+            controller = None
+            if self.receipt.get('cleanup_progress', {}).get('controller_remove_requested') is True:
+                controller = images.inspect('container', self.provisioner, missing=True)
+                if controller is None:
+                    self._final_state_proof()
+                    for address, identifier in self.owned.items():
+                        self._reconcile_absent('container' if address.startswith('docker_container.') else 'network', identifier)
+                    self._reconcile_absent('container', self.provisioner)
+                    return self._cleanup_complete()
             state = resources(self.operation('show-state'))
             require(set(state) <= set(self.owned) and all(x.get('id') == self.owned[key] for key, x in state.items()),
                     'ownership_mismatch', 'State resources changed; destructive operations are refused.')
+            self.verify_provisioner(controller if controller is not None else images.inspect('container', self.provisioner))
             remaining = {}
             for address, identifier in self.owned.items():
                 role = 'target' if address.startswith('docker_container.') else 'network'

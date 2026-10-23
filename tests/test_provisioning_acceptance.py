@@ -23,6 +23,7 @@ class AcceptancePolicy(unittest.TestCase):
         session.provisioner = CONTROLLER
         session.owned = {'docker_container.target': TARGET, 'docker_network.run': NETWORK}
         session.receipt = {'operations': [], 'unknown_outcome': False, 'primary_failure': None, 'secondary_failures': []}
+        session.held = lambda: None  # Synthetic held-lease fixture; no Docker or Terraform execution.
         session.save = lambda: None
         def operation(name):
             self.assertEqual(name, 'show-state', 'The actual destroy guard must reject before any destructive plan.')
