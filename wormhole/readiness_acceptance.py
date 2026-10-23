@@ -45,7 +45,7 @@ def refresh_inventory(session):
 def restart_for_hostkey_case(session):
     """Fixed owned-fixture restart, preserving the original trusted host-key pin."""
     session.held(allocating=True)
-    target = session.owned['docker_container.target']
+    target = session.target_resources['target-001']
     before = images.inspect('container', target)
     session.verify_target(before)
     require(session.receipt['unknown_outcome'] is False, 'daemon_outcome_unknown')

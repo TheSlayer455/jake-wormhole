@@ -37,12 +37,14 @@ def unique(pairs):
 def request(raw):
     require(type(raw) is bytes and 1 <= len(raw) <= 8192)
     value = json.loads(raw, object_pairs_hook=unique, parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
-    require(type(value) is dict and set(value) == {'schema_version', 'run_id', 'source_revision', 'target_id', 'address',
-        'operation', 'attempt', 'scenario', 'timeout_seconds'})
+    fields = {'schema_version', 'run_id', 'source_revision', 'target_id', 'address', 'operation', 'attempt', 'scenario', 'timeout_seconds'}
+    batch = type(value) is dict and value.get('resource_layout') == 'indexed-targets-v1'
+    require(type(value) is dict and set(value) == fields | ({'resource_layout'} if batch else set()))
     from uuid import UUID
     require(value['schema_version'] == '1.0' and type(value['run_id']) is str and str(UUID(value['run_id'])) == value['run_id'] and
         type(value['source_revision']) is str and re.fullmatch('[a-f0-9]{40}', value['source_revision']) and
-        value['target_id'] == 'target-001' and value['operation'] in OPERATIONS and value['scenario'] in SCENARIOS and
+        value['target_id'] in (tuple('target-' + str(i).zfill(3) for i in range(1, 6)) if batch else ('target-001',)) and
+        value['operation'] in OPERATIONS and value['scenario'] in SCENARIOS and
         type(value['attempt']) is int and 1 <= value['attempt'] <= 64 and
         type(value['timeout_seconds']) in (int, float) and 0.1 <= value['timeout_seconds'] <= 30)
     address = ipaddress.ip_address(value['address'])
@@ -128,9 +130,10 @@ def environment():
         'ANSIBLE_NOCOLOR': '1', 'ANSIBLE_SSH_PASSWORD_MECHANISM': 'disable'}
 
 
-def ssh_options(value):
-    key = ROOT / ('wrong_key' if value['scenario'] == 'wrong-key' else 'id_ed25519')
-    return ['-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'UserKnownHostsFile=' + str(ROOT / 'known_hosts'),
+def ssh_options(value, *, root=None):
+    root = ROOT if root is None else root
+    key = root / ('wrong_key' if value['scenario'] == 'wrong-key' else 'id_ed25519')
+    return ['-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'UserKnownHostsFile=' + str(root / 'known_hosts'),
         '-o', 'GlobalKnownHostsFile=/dev/null', '-o', 'IdentitiesOnly=yes', '-o', 'PreferredAuthentications=publickey',
         '-o', 'PasswordAuthentication=no', '-o', 'KbdInteractiveAuthentication=no', '-o', 'ForwardAgent=no',
         '-o', 'ClearAllForwardings=yes', '-o', 'ControlMaster=no', '-o', 'ControlPersist=no',
@@ -157,6 +160,7 @@ def classify(value, result):
 
 
 def ansible(value, attempt):
+    target_id = value['target_id']
     user = 'wormhole-nonexistent' if value['scenario'] == 'wrong-user' else 'wormhole'
     interpreter = '/run/wormhole/no-such-python' if value['scenario'] == 'configured-interpreter-unavailable' else '/usr/bin/python3'
     # Exact inventory and fixed SSH arguments; no imported vars/plugins/connection overrides.
@@ -169,18 +173,18 @@ def ansible(value, attempt):
         'ansible_ssh_use_tty': False, 'ansible_ssh_transfer_method': 'piped',
         'ansible_remote_tmp': '/tmp/wormhole-ansible'}
     inventory = attempt / 'inventory.json'
-    inventory.write_text(json.dumps({'all': {'hosts': {'target-001': variables}}}))
+    inventory.write_text(json.dumps({'all': {'hosts': {target_id: variables}}}))
     inventory.chmod(0o600)
     module = 'ansible.builtin.wait_for_connection' if value['operation'] == 'ansible-wait' else 'ansible.builtin.ping'
     args = {'timeout': 15, 'connect_timeout': 3, 'sleep': 1} if value['operation'] == 'ansible-wait' else {}
-    arguments = ['/opt/wormhole/venv/bin/ansible', '-i', str(inventory), 'target-001', '-m', module]
+    arguments = ['/opt/wormhole/venv/bin/ansible', '-i', str(inventory), target_id, '-m', module]
     # Pinned adhoc.py falls back from falsey decoded {} to raw-parameter parsing.
     # Ping has no arguments; omit -a instead of submitting the literal "{}".
     if args:
         arguments.extend(['-a', json.dumps(args)])
     arguments.extend(['--tree', str(attempt / 'results'), '--forks', '1', '--timeout', '3'])
     result = capture(arguments, value['timeout_seconds'], environment())
-    path = attempt / 'results/target-001'
+    path = attempt / 'results' / target_id
     observed = None
     if path.exists():
         require(not path.is_symlink() and path.is_file() and path.stat().st_nlink == 1 and path.stat().st_size <= 32768)
@@ -206,9 +210,16 @@ def ansible(value, attempt):
 
 
 def probe(value, module=None):
+    global ROOT
     began = time.monotonic()
     module = qualified_runtime() if module is None else module
     require(module.identity() == value['run_id'])
+    if value.get('resource_layout') == 'indexed-targets-v1':
+        # One fixed probe process, never a global ROOT switch across threads.
+        ROOT.mkdir(mode=0o700, parents=True, exist_ok=True)
+        require(not ROOT.is_symlink() and ROOT.stat().st_uid == 10001 and stat.S_IMODE(ROOT.stat().st_mode) == 0o700)
+        ROOT = ROOT / value['target_id']
+        module.INPUT = module.INPUT / value['target_id']
     if value['operation'] == 'tcp':
         try:
             with socket.create_connection((value['address'], 2222), timeout=min(3, value['timeout_seconds'])):

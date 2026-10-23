@@ -100,11 +100,13 @@ class ReadinessSession:
             self.lease.source_revision == revision and self.lease.plan['synthetic'] is False and
             self.lease.plan['profile'] == 'smoke' and self.lease.plan['target_count'] == 1 and
             not self.lease._reconciliation_only, 'readiness_scope')
-        require(set(provisioning.owned) == {'docker_container.target', 'docker_network.run'} and
+        indexed = getattr(provisioning, 'target_resources', None)
+        require((type(indexed) is dict and set(indexed) == {'target-001'} or
+                set(provisioning.owned) == {'docker_container.target', 'docker_network.run'}) and
                 provisioning.receipt['unknown_outcome'] is False, 'provisioning_not_ready')
         self.scenario, self.reconciliation_only = scenario, False
         self.network = provisioning.owned['docker_network.run']
-        self.target = provisioning.owned['docker_container.target']
+        self.target = indexed['target-001'] if type(indexed) is dict else provisioning.owned['docker_container.target']
         self.helper = None
         self.image_labels = None
         self.began = time.monotonic()
@@ -134,6 +136,9 @@ class ReadinessSession:
         require(self.lease.run_id == self.run.id and self.lease.source_revision == manifest['source_revision'] and
             self.lease.plan['synthetic'] is False and self.lease._reconciliation_only is self.reconciliation_only,
             'readiness_scope')
+
+    def stage_name(self, operation):
+        return operation
 
     def timeout(self, maximum=20):
         remaining = self.deadline - time.monotonic()
@@ -263,7 +268,7 @@ class ReadinessSession:
     def transition(self, check):
         require(check in EXPECTED, 'unexpected_readiness_check')
         if check not in {x['check_id'] for x in self.receipt['transitions']}:
-            self.receipt['transitions'].append({'check_id': check, 'target_id': 'target-001', 'status': 'pass',
+            self.receipt['transitions'].append({'check_id': check, 'target_id': getattr(self, 'selected_target', None) or 'target-001', 'status': 'pass',
                 'observed_at': now(), 'elapsed_seconds': time.monotonic() - self.began})
             self.save()
 
@@ -373,7 +378,7 @@ class ReadinessSession:
             parsed = ipaddress.ip_address(address)
         except (ValueError, TypeError):
             raise ReadinessError('inventory_endpoint_mismatch', 'Provider inventory does not match the exact owned target.') from None
-        require(item.get('target_id') == 'target-001' and item.get('resource_id') == self.target and
+        require(item.get('target_id') == (getattr(self, 'selected_target', None) or 'target-001') and item.get('resource_id') == self.target and
             item.get('ssh_port') == 2222 and item.get('ssh_user') == 'wormhole' and parsed.version == 4 and
             not parsed.is_loopback and not parsed.is_unspecified and len(networks) == 1 and
             next(iter(networks.values())).get('NetworkID') == self.network and
@@ -415,7 +420,7 @@ class ReadinessSession:
         result = _run_process(('docker', '--config', images.docker_configuration(), '--host', images.SOCKET,
             'exec', '--user', '0:0', self.target, '/usr/bin/python3', '-I', '-S', '-c', qualification.PUBLIC_KEY_READER),
             cwd=SOURCE_ROOT, timeout=self.timeout(5))
-        qualification.attempt_record(self.run, self.receipt, 'target', 'public-hostkey', result)
+        qualification.attempt_record(self.run, self.receipt, 'target', self.stage_name('public-hostkey'), result)
         if result['status'] == 'timeout':
             self.receipt['unknown_outcome'] = True; self.save()
             raise ReadinessError('helper_probe_incomplete', 'Public identity reader did not finish before its deadline.')
@@ -451,7 +456,7 @@ class ReadinessSession:
         except subprocess.TimeoutExpired:
             self.receipt['unknown_outcome'] = True; self.save()
             raise ReadinessError('helper_auth_injection_unknown', 'The fixed receiver exceeded the remaining deadline.') from None
-        qualification.attempt_record(self.run, self.receipt, 'helper', 'auth-input', {'status': 'pass' if result.returncode == 0 else 'fail',
+        qualification.attempt_record(self.run, self.receipt, 'helper', self.stage_name('auth-input'), {'status': 'pass' if result.returncode == 0 else 'fail',
             'returncode': result.returncode, 'log': (result.stdout + result.stderr)[:65536],
             'log_truncated': len(result.stdout) + len(result.stderr) > 65536})
         self.timeout()
@@ -481,8 +486,10 @@ class ReadinessSession:
         require(count <= 64, 'readiness_attempt_bound')
         self.counts[operation] = count
         request = {'schema_version': '1.0', 'run_id': self.run.id, 'source_revision': self.run.manifest()['source_revision'],
-            'target_id': 'target-001', 'address': address, 'operation': operation, 'attempt': count,
+            'target_id': getattr(self, 'selected_target', None) or 'target-001', 'address': address, 'operation': operation, 'attempt': count,
             'scenario': self.scenario, 'timeout_seconds': budget}
+        if getattr(self, 'selected_target', None):
+            request['resource_layout'] = 'indexed-targets-v1'
         encoded = base64.b64encode(json.dumps(request).encode()).decode('ascii')
         result = _run_process(('docker', '--config', images.docker_configuration(), '--host', images.SOCKET,
             'exec', '--user', '10001:10001', self.helper, '/opt/wormhole/venv/bin/python', '-I', '-B', SOURCE_MOUNT, encoded),
@@ -491,7 +498,7 @@ class ReadinessSession:
             self.receipt['unknown_outcome'] = True
             self.save()
         prior = len(self.receipt['attempts'])
-        qualification.attempt_record(self.run, self.receipt, 'helper', operation, result)
+        qualification.attempt_record(self.run, self.receipt, 'helper', self.stage_name(operation), result)
         require(len(self.receipt['attempts']) == prior + 1 and not self.receipt['attempts'][-1].get('diagnostic_write_failed'),
                 'readiness_diagnostic_unavailable')
         require(result['status'] == 'pass' and not result['log_truncated'], 'helper_probe_incomplete')
@@ -582,7 +589,7 @@ class ReadinessSession:
                 self.failure(error)
             raise
 
-    def require_ready(self):
+    def require_ready(self, *, inspection_timeout=20):
         self.held()
         require(self.receipt['status'] == 'ready' and self.receipt['primary_failure'] is None and
             not self.receipt['unknown_outcome'] and [x['check_id'] for x in self.receipt['transitions']] == list(EXPECTED),
@@ -590,7 +597,9 @@ class ReadinessSession:
         # Revalidate an existing snapshot later without resetting the original
         # window for establishing new readiness. No checks are added here.
         original_deadline = self.deadline
-        self.deadline = time.monotonic() + 20
+        require(type(inspection_timeout) in (int, float) and math.isfinite(inspection_timeout) and .1 <= inspection_timeout <= 20,
+                'invalid_readiness_timeout')
+        self.deadline = time.monotonic() + inspection_timeout
         try:
             self.verify_helper(self.inspect('container', self.helper))
             self.endpoint()
@@ -636,6 +645,10 @@ class ReadinessSession:
 
     @classmethod
     def resume_cleanup(cls, run, lease):
+        context = read_json(run.file('private/readiness-controller.json'))
+        if type(context) is dict and context.get('resource_layout') == 'indexed-targets-v1':
+            from .fleet_readiness import BatchReadinessSession
+            return BatchReadinessSession.resume_cleanup(run, lease)
         lease._active()
         revision, dirty = source_identity()
         manifest = run.manifest()
