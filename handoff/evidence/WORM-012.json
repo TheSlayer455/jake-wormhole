@@ -1,0 +1,326 @@
+{
+  "schema_version": "1.0",
+  "ticket_key": "WORM-012",
+  "requirements_revision": 2,
+  "tested_source_revision": "72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3",
+  "evidence_kind": "actual generated local/loopback fixture execution, separate from Docker/candidate acceptance",
+  "windows_acceptance": {
+    "cases": [
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.2029999999795109,
+        "failure_code": null,
+        "manifest_sha256": "b902bdf5e1b2b7b30951e955abed99a319452ece142d9b01a588b7e0ef787746",
+        "operation_status": "passed",
+        "run_id": "8f66527a-7179-4873-b200-7a75a4509ecf",
+        "scenario": "healthy",
+        "transport": "local"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.031999999890103936,
+        "failure_code": "chunk_set_mismatch",
+        "manifest_sha256": "44fc54a276cadc4328079c8f4e788a27506ac2e0717bc7f2de95f3aac7b441db",
+        "operation_status": "failed",
+        "run_id": "08fcc51e-4d9b-4b5b-b3c2-d7811eefe4a8",
+        "scenario": "missing",
+        "transport": "local"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.01600000006146729,
+        "failure_code": "chunk_manifest_invalid",
+        "manifest_sha256": "d76513b891c8547fa566f41feb3df7dff279ad1f6ac0f2b4796cdf1b35906e8a",
+        "operation_status": "failed",
+        "run_id": "0782ed21-debf-4b62-b428-f3f86f9a38ed",
+        "scenario": "duplicate",
+        "transport": "local"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.015999999828636646,
+        "failure_code": "chunk_manifest_order",
+        "manifest_sha256": "5517e45e3fb746d82a5d59706658fa4e702cb7b2f50adebb0a744a802e1debb2",
+        "operation_status": "failed",
+        "run_id": "80a9fa90-aa7f-4813-98f6-c044a62c63f9",
+        "scenario": "reordered",
+        "transport": "local"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.030999999959021807,
+        "failure_code": "chunk_size_mismatch",
+        "manifest_sha256": "e6f0e1d36b7cfce1f32d568ff844e92af4f0e76f4010e62947ae62c21e6948da",
+        "operation_status": "failed",
+        "run_id": "4165352d-ad9a-4dd3-b9e2-d4db21604489",
+        "scenario": "truncated",
+        "transport": "local"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.0470000000204891,
+        "failure_code": "chunk_hash_mismatch",
+        "manifest_sha256": "2dc63fab695bb584aa7b2f4c3aa6e17e39b6627eff9708733876ea7d26e49d3d",
+        "operation_status": "failed",
+        "run_id": "fb39cb1f-6c2b-415d-afcb-3afa385bcad0",
+        "scenario": "corrupted",
+        "transport": "local"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.23500000010244548,
+        "failure_code": null,
+        "manifest_sha256": "aa54864b6511e28eaa7d7dbb30959e191578c937eab270b3e58c791f2e9b4e71",
+        "operation_status": "passed",
+        "run_id": "7d877418-5f7d-4edf-b17a-fb8e6d1677a7",
+        "scenario": "healthy",
+        "transport": "http-loopback"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.015999999828636646,
+        "failure_code": "chunk_set_mismatch",
+        "manifest_sha256": "28fd22bbff3d6fe20855397a27bdc6e137a2c81242a8053bc573dbff37c35fc8",
+        "operation_status": "failed",
+        "run_id": "e29657c9-df45-47c0-9e27-2715b09d5fae",
+        "scenario": "missing",
+        "transport": "http-loopback"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.0470000000204891,
+        "failure_code": "chunk_manifest_invalid",
+        "manifest_sha256": "18d1b35a772701ad82794f6c3eea49186c169cc1120946eb7e3b610dbd337689",
+        "operation_status": "failed",
+        "run_id": "477458d0-ddea-4546-88bb-a01a619925b6",
+        "scenario": "duplicate",
+        "transport": "http-loopback"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.06299999984912574,
+        "failure_code": "chunk_manifest_order",
+        "manifest_sha256": "a4c298c6287ed6cfe2aae077509be41c62dbe57fe47e253d381ce9745b84e716",
+        "operation_status": "failed",
+        "run_id": "9f605fd7-8eb6-4db2-b6d1-f559c0a71a24",
+        "scenario": "reordered",
+        "transport": "http-loopback"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.06300000008195639,
+        "failure_code": "chunk_http_response",
+        "manifest_sha256": "187c75dabc32085c25570477c78d5bbce35e0fb9f3cb9ba4c82214eb8e1ee4f7",
+        "operation_status": "failed",
+        "run_id": "d1191747-d67e-4e0f-9b9a-7bb27d91a57c",
+        "scenario": "truncated",
+        "transport": "http-loopback"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.0779999999795109,
+        "failure_code": "chunk_hash_mismatch",
+        "manifest_sha256": "9dfc0ae06173eccaa4603c79729da4bd3a45918dae4b017ff8e4b2b5ad9fdb62",
+        "operation_status": "failed",
+        "run_id": "a518aef0-cfff-49df-b645-1da94db4fd42",
+        "scenario": "corrupted",
+        "transport": "http-loopback"
+      }
+    ],
+    "mode": "container-reference",
+    "operation": "synthetic-chunk-acceptance",
+    "production_iso_eligible": false,
+    "reference_eligible": false,
+    "run_id": "b8d6f009-f4c8-4e70-9759-766de030082f",
+    "runtime_pipeline_complete": false,
+    "schema_version": "1.0",
+    "source_dirty": false,
+    "source_revision": "72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3",
+    "status": "passed",
+    "synthetic": true
+  },
+  "linux_acceptance": {
+    "cases": [
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.027324279000026763,
+        "failure_code": null,
+        "manifest_sha256": "d28654f6f770f8a707ff402be51408f714f58b62f910229872efc36a28bc974d",
+        "operation_status": "passed",
+        "run_id": "d6e133a9-d0e2-42b9-b06b-461ab0a81a5d",
+        "scenario": "healthy",
+        "transport": "local"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.019292639000013878,
+        "failure_code": "chunk_set_mismatch",
+        "manifest_sha256": "21d18975bf4e29b23697fe225d60e559c0a3b34c48fa2eb497f0b761f7a56abd",
+        "operation_status": "failed",
+        "run_id": "8e3eb67e-d781-46b2-a3f2-2b87c1b8677c",
+        "scenario": "missing",
+        "transport": "local"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.019596234999994522,
+        "failure_code": "chunk_manifest_invalid",
+        "manifest_sha256": "bc7eaf3b786bb0420b2afb737e89bbd6a0a9893c3ae982c3bcc859fc5eba60df",
+        "operation_status": "failed",
+        "run_id": "9de2982f-9279-49a2-81e0-73cddb4d25dc",
+        "scenario": "duplicate",
+        "transport": "local"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.017295379000017874,
+        "failure_code": "chunk_manifest_order",
+        "manifest_sha256": "94969ac6221bb2ec5058a8723b6b3f63804057431b6a5f6ac4b8d91ddb475156",
+        "operation_status": "failed",
+        "run_id": "1a498e39-a211-4d04-b959-c987d09d8036",
+        "scenario": "reordered",
+        "transport": "local"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.017687105999982577,
+        "failure_code": "chunk_size_mismatch",
+        "manifest_sha256": "5e033ed1e76f53e5d0f165968825a2bb644010ab7a4c33a271453fd5b62ced76",
+        "operation_status": "failed",
+        "run_id": "92eae8b2-f230-4f4c-b358-a27155260495",
+        "scenario": "truncated",
+        "transport": "local"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.017082570000013675,
+        "failure_code": "chunk_hash_mismatch",
+        "manifest_sha256": "94d053fffadccac8c5758d51dfeae2205e1281c4fafa7612e35eb4231cc94c33",
+        "operation_status": "failed",
+        "run_id": "4100379d-fb1e-42f9-b99e-1380f5392fd5",
+        "scenario": "corrupted",
+        "transport": "local"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.049545103000014024,
+        "failure_code": null,
+        "manifest_sha256": "ca2f100cda21a694e0560a297182e8cfb04045fa41e46c8f14ae72d079f57039",
+        "operation_status": "passed",
+        "run_id": "4cd4ea47-9915-472c-998b-cb75e385147d",
+        "scenario": "healthy",
+        "transport": "http-loopback"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.017840545000012753,
+        "failure_code": "chunk_set_mismatch",
+        "manifest_sha256": "fbe651ccf8946dd3333f39b930b0d93d0e144824ed2af8fa093c36af39fc62af",
+        "operation_status": "failed",
+        "run_id": "5c494130-83fc-4aab-a3e3-b22f0e03f337",
+        "scenario": "missing",
+        "transport": "http-loopback"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.03604132800001025,
+        "failure_code": "chunk_manifest_invalid",
+        "manifest_sha256": "6babd30af25bf8dff307963a8b24ec1ef0e34445af22a18edf08f583d1d56475",
+        "operation_status": "failed",
+        "run_id": "14d188e3-442a-4598-93e5-0584c62e9e6b",
+        "scenario": "duplicate",
+        "transport": "http-loopback"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.03550194299998566,
+        "failure_code": "chunk_manifest_order",
+        "manifest_sha256": "359fe08bf72636bb42244f0dd4f1ece54770091a932c2265046b55ce11d4fddc",
+        "operation_status": "failed",
+        "run_id": "11ffd295-5b9e-4007-bd85-1b434037b004",
+        "scenario": "reordered",
+        "transport": "http-loopback"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.01964178800000127,
+        "failure_code": "chunk_http_response",
+        "manifest_sha256": "b707f3f090f78b5cb7a8db05b0be2274cb28f254e817a400575b44e81c7e7c23",
+        "operation_status": "failed",
+        "run_id": "1379602e-4d8e-4b6d-bfee-2a7efa90d383",
+        "scenario": "truncated",
+        "transport": "http-loopback"
+      },
+      {
+        "acceptance_status": "passed",
+        "duration_seconds": 0.04294424400001162,
+        "failure_code": "chunk_hash_mismatch",
+        "manifest_sha256": "bc2808d286e496de7c80aaaf2afe1f70def746eac18158140302e481125abdb2",
+        "operation_status": "failed",
+        "run_id": "b76fd7d8-f300-408a-b172-bef23a6ba7dd",
+        "scenario": "corrupted",
+        "transport": "http-loopback"
+      }
+    ],
+    "mode": "container-reference",
+    "operation": "synthetic-chunk-acceptance",
+    "production_iso_eligible": false,
+    "reference_eligible": false,
+    "run_id": "ddc5143c-4d6d-4f7e-8426-8d5adf18dc0f",
+    "runtime_pipeline_complete": false,
+    "schema_version": "1.0",
+    "source_dirty": false,
+    "source_revision": "72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3",
+    "status": "passed",
+    "synthetic": true
+  },
+  "fixture_tests": {
+    "windows": {
+      "environment": "Windows CPython3.12.14",
+      "cases": 252,
+      "passed": 145,
+      "skipped": 107,
+      "seconds": 11.886,
+      "observation": "writer observed full suite"
+    },
+    "linux": {
+      "environment": "local WSL Ubuntu24.04 native bundle clone Python3.12.3, no Docker/host services",
+      "cases": 252,
+      "passed": 249,
+      "skipped": 3,
+      "seconds": 10.25,
+      "skip_reasons": "two Windows-only cases and one existing root-only UID10001 case in nonroot WSL"
+    }
+  },
+  "criteria": {
+    "AC-01": "pass: actual generated binary round trips on Windows and Linux through local storage and loopback HTTP; whole-file bytes/SHA, contiguous order, offsets, chunk sizes/hashes and final output rechecked",
+    "AC-02": "pass: missing, duplicate, reordered, truncated and corrupted chunks fail deterministically in both transports; all ten negative operations per environment retain failed status, no verified output and refused consumer boundary; real incoming/response header deadline regressions pass",
+    "AC-03": "pass: generated synthetic .bin fixtures, explicit unsupported registry adapter and false release/production flags; no bootable ISO, RHEL redistribution, proprietary platform or candidate-image claim"
+  },
+  "review": {
+    "kind": "independent root engineering source review, not independent human examination",
+    "reviewed_source": "72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3",
+    "corrected_findings": [
+      "Accepted sockets were uncapped before header parsing, potentially blocking shutdown.",
+      "Per-receive client timeout did not bound dripping response headers."
+    ],
+    "corrections": "Exact socket objects are registered/capped before parsing; owned-socket watchdogs interrupt server/client header and body reads; shutdown joins are bounded; unexpected handler failures refuse the component.",
+    "independent_focused_windows": {
+      "source_revision": "87b64e28c30b6b5b9c7606f2295ef848ad906516",
+      "cases": 15,
+      "passed": 14,
+      "skipped": 1,
+      "seconds": 3.602
+    },
+    "final_followup_review": "72d preserves guards and bounds handler diagnostics; no remaining material findings"
+  },
+  "limits": [
+    "Local and loopback-only transports; no external registry fetching.",
+    "Successful reconstruction is an independent component, not candidate-derived image validation or complete release qualification.",
+    "Private generated files remain outside Git; no infrastructure allocated.",
+    "Hashes bind consistent bytes, not authenticity against a host administrator rewriting source and every record."
+  ],
+  "runtime_pipeline_complete": false,
+  "reference_eligible": false,
+  "production_iso_eligible": false
+}
