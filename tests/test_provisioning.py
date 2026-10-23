@@ -1,5 +1,6 @@
 """Synthetic plan/policy and subprocess fixtures; every Docker call is mocked."""
 import base64
+import errno
 from copy import deepcopy
 import hashlib
 import json
@@ -122,6 +123,25 @@ class PlanPolicy(unittest.TestCase):
         for operation in ('../destroy', 'shell', 'apply -auto-approve'):
             with self.assertRaises(ValueError): runtime.operation(operation, 1)
 
+    def test_unavailable_scenario_is_fixed_and_probe_never_accepts_an_existing_endpoint(self):
+        healthy, unavailable = p.scenario_source('healthy'), p.scenario_source('provider-unavailable')
+        self.assertEqual(unavailable, healthy.replace(b'unix:///var/run/docker.sock', p.UNAVAILABLE_ENDPOINT.encode()))
+        for value in ('remote', 'unix:///tmp/arbitrary.sock', '', None):
+            with self.assertRaises(p.ProvisioningError): p.scenario_source(value)
+        with patch.object(runtime.os, 'lstat', side_effect=FileNotFoundError), patch.object(runtime.socket, 'socket') as factory:
+            client = factory.return_value.__enter__.return_value
+            client.connect.side_effect = FileNotFoundError(errno.ENOENT, 'Synthetic absent endpoint')
+            self.assertEqual(runtime.probe_unavailable(), {'endpoint': p.UNAVAILABLE_ENDPOINT, 'path_absent': True, 'connect_errno': 'ENOENT'})
+            client.connect.assert_called_once_with('/run/wormhole/provider-unavailable.sock')
+            client.settimeout.assert_called_once_with(1)
+            client.connect.side_effect = PermissionError(errno.EACCES, 'Synthetic inaccessible endpoint')
+            with self.assertRaises(ValueError): runtime.probe_unavailable()
+            client.connect.side_effect = None
+            with self.assertRaises(ValueError): runtime.probe_unavailable()
+        with patch.object(runtime.os, 'lstat', return_value=object()), patch.object(runtime.socket, 'socket') as factory:
+            with self.assertRaises(ValueError): runtime.probe_unavailable()
+            factory.assert_not_called()
+
     def test_bounded_json_refuses_duplicate_nonfinite_symlink_and_overlarge_results(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary); path = root / 'output'
@@ -147,13 +167,19 @@ class Controller(unittest.TestCase):
             source_revision = SHA
             plan = self.plan
             _reconciliation_only = False
+            record = {'resources': []}
             def _active(self): pass
             def set_phase(self, phase): calls.append(('phase', phase))
             def refresh(self): calls.append(('refresh',))
             def check_destroy_recovery_capacity(self, identifier):
                 calls.append(('recovery-capacity', identifier)); return {'synthetic_fixture': True, 'allocation_permitted': False}
-            def register_resource(self, kind, identifier): calls.append(('register', kind, identifier))
-            def reconcile_resource(self, kind, identifier): calls.append(('reconcile', kind, identifier))
+            def register_resource(self, kind, identifier):
+                calls.append(('register', kind, identifier))
+                self.record['resources'].append({'kind': kind, 'id': identifier, 'outcome': 'pending'})
+            def reconcile_resource(self, kind, identifier):
+                calls.append(('reconcile', kind, identifier))
+                for value in self.record['resources']:
+                    if value['kind'] == kind and value['id'] == identifier: value['outcome'] = 'absent'
         self.lease = Lease()
         tools = self.run.file('private/tools'); tools.mkdir(mode=0o700)
         (tools / 'bin').mkdir(mode=0o700); (tools / 'mirror').mkdir(mode=0o700)
@@ -212,6 +238,8 @@ class Controller(unittest.TestCase):
         if args[0] == 'start': self.running[args[1]] = True
         if args[0] == 'stop': self.running[args[-1]] = False
         if args[0] == 'rm': self.removed.add(args[1])
+        if args[0] == 'ps':
+            return {'log': (CONTROLLER + '\n').encode() if CONTROLLER not in self.removed else b'', 'log_truncated': False}
         return {'log': b'', 'log_truncated': False}
 
     def operation(self, name):
@@ -233,15 +261,81 @@ class Controller(unittest.TestCase):
         if name == 'final-state': return {'values': {'root_module': {'resources': []}}}
         return {'synthetic': True}
 
-    def patches(self):
+    def patches(self, *, mock_operations=True):
         from contextlib import ExitStack
         stack = ExitStack()
         stack.enter_context(patch.object(p, 'provisioner_identity', return_value=(0, 0, [])))
         stack.enter_context(patch.object(images, 'inspect', side_effect=self.inspect))
         stack.enter_context(patch.object(images, 'docker', side_effect=self.docker))
         stack.enter_context(patch.object(images, 'cgroup_limits', return_value={'synthetic': True}))
-        stack.enter_context(patch.object(self.session, 'operation', side_effect=self.operation))
+        if mock_operations: stack.enter_context(patch.object(self.session, 'operation', side_effect=self.operation))
         return stack
+
+    def unavailable_capture(self, args, **kwargs):
+        """Actual operation() records, synthetic process/provider output only."""
+        name, attempt = args[-2], int(args[-1])
+        if name in ('plan', 'destroy-plan'):
+            saved = self.session.state / ('apply.tfplan' if name == 'plan' else 'destroy.tfplan')
+            saved.write_bytes(b'synthetic saved plan'); saved.chmod(0o600)
+        if name == 'apply': raw = b'Synthetic provider error: dial unix /run/wormhole/provider-unavailable.sock: connect: no such file or directory'
+        elif name == 'probe-unavailable': raw = json.dumps({'endpoint': p.UNAVAILABLE_ENDPOINT, 'path_absent': True, 'connect_errno': 'ENOENT'}).encode()
+        elif name in ('show-state', 'final-state'): raw = b'{"values":{"root_module":{"resources":[]}}}'
+        elif name == 'show-destroy-plan': raw = b'{"format_version":"1.2","terraform_version":"1.17.0","resource_changes":[]}'
+        elif name == 'show-plan': raw = json.dumps(plan(self.session.variables)).encode()
+        elif name in ('version', 'schema'): raw = json.dumps(self.operation(name)).encode()
+        else: raw = b'Synthetic completed fixed operation'
+        folder = self.session.state / 'operations'; folder.mkdir(mode=0o700, exist_ok=True)
+        stem = folder / (name + '-' + str(attempt)); stem.with_suffix('.out').write_bytes(raw); stem.with_suffix('.out').chmod(0o600)
+        passed = name != 'apply'
+        atomic_json(stem.with_suffix('.json'), {'operation': name, 'attempt': attempt, 'returncode': 0 if passed else 1,
+            'duration_seconds': .01, 'output_bytes': len(raw), 'output_sha256': hashlib.sha256(raw).hexdigest(),
+            'truncated': False, 'timed_out': False, 'passed': passed})
+        return {'status': 'pass' if passed else 'fail', 'returncode': 0 if passed else 2, 'log': b'synthetic runtime receipt', 'log_truncated': False}
+
+    def test_fixed_unavailable_apply_failure_needs_specific_proof_then_empty_saved_destroy(self):
+        self.session = p.ProvisioningSession(self.run, self.lease, toolchain=self.tools, scenario='provider-unavailable')
+        with self.patches(mock_operations=False), patch.object(images, 'docker_configuration', return_value='/synthetic/config'), \
+             patch.object(p, '_run_process', side_effect=self.unavailable_capture):
+            with self.assertRaises(p.ProvisioningError) as error: self.session.provision()
+            self.assertEqual(error.exception.code, 'terraform_failed')
+            self.assertTrue(self.session.receipt['unknown_outcome'])
+            with self.assertRaises(p.ProvisioningError): self.session.destroy()
+            self.assertEqual(self.session.owned, {})
+            proof = self.session.prove_provider_unavailable()
+            self.assertEqual(proof['status'], 'proved-zero-contact')
+            self.assertFalse(self.session.receipt['unknown_outcome'])
+            result = self.session.destroy()
+        self.assertEqual(result['status'], 'failed')
+        self.assertEqual(result['primary_failure']['code'], 'terraform_failed')
+        self.assertEqual(result['cleanup'], 'completed')
+        self.assertEqual(result['resources'], [])
+        names = [x['operation'] for x in result['operations']]
+        self.assertIn('apply', names); self.assertIn('destroy', names)
+        self.assertEqual(names.count('probe-unavailable'), 2)
+        self.assertFalse(any(call[:2] == ('docker', 'update') or call == ('docker', 'start', CID) for call in self.calls))
+
+    def test_unavailable_proof_refuses_extra_operation_or_owned_resource_without_clearing_unknown(self):
+        self.session = p.ProvisioningSession(self.run, self.lease, toolchain=self.tools, scenario='provider-unavailable')
+        with self.patches(mock_operations=False), patch.object(images, 'docker_configuration', return_value='/synthetic/config'), \
+             patch.object(p, '_run_process', side_effect=self.unavailable_capture):
+            with self.assertRaises(p.ProvisioningError): self.session.provision()
+            self.lease.record['resources'].append({'kind': 'network', 'id': NET, 'outcome': 'pending'})
+            with self.assertRaises(p.ProvisioningError): self.session.prove_provider_unavailable()
+            self.assertTrue(self.session.receipt['unknown_outcome'])
+            self.lease.record['resources'].pop()
+            (self.session.state / 'operations/unaccounted-1.out').write_bytes(b'Synthetic incomplete request')
+            with self.assertRaises(p.ProvisioningError): self.session.prove_provider_unavailable()
+            self.assertTrue(self.session.receipt['unknown_outcome'])
+
+    def test_healthy_scenario_cannot_use_the_specific_unavailable_proof_or_repeat_unknown_mutation(self):
+        self.session.prepare()
+        self.session.receipt['unknown_outcome'] = True
+        with self.assertRaises(p.ProvisioningError): self.session.prove_provider_unavailable()
+        self.session.verify_provisioner = lambda _: None
+        with patch.object(images, 'inspect', return_value={}), patch.object(p, '_run_process') as execute:
+            with self.assertRaises(p.ProvisioningError) as error: self.session.operation('apply')
+            self.assertEqual(error.exception.code, 'daemon_outcome_unknown')
+            execute.assert_not_called()
 
     def test_actual_workflow_policy_orders_pid_and_inspection_before_start_then_provider_refresh_destroy(self):
         with self.patches():

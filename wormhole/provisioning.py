@@ -27,6 +27,8 @@ H1 = 'h1:1jD5QVpeLkdxKEWWJpTzNdxtR0WNNFq28Po4yq9w+VM='
 ADDRESSES = {'docker_network.run', 'docker_container.target'}
 ID = re.compile(r'[a-f0-9]{64}\Z')
 MAX_OUTPUT = 4 * 1024 * 1024
+SCENARIOS = ('healthy', 'provider-unavailable')
+UNAVAILABLE_ENDPOINT = 'unix:///run/wormhole/provider-unavailable.sock'
 
 
 class ProvisioningError(RunError):
@@ -204,9 +206,19 @@ def verified_toolchain(run, supplied=None):
     return verified
 
 
+def scenario_source(scenario):
+    require(type(scenario) is str and scenario in SCENARIOS, 'invalid_scenario', 'Only fixed reviewed scenarios are supported.')
+    raw = (CONTEXT / 'main.tf').read_bytes()
+    expected = b'provider "docker" { host = "unix:///var/run/docker.sock" }'
+    require(raw.count(expected) == 1, 'input_changed', 'The source must contain the one fixed reviewed provider endpoint.')
+    return raw if scenario == 'healthy' else raw.replace(expected,
+        ('provider "docker" { host = "' + UNAVAILABLE_ENDPOINT + '" }').encode())
+
+
 class ProvisioningSession:
     """Caller owns run.locked(), docker_scope(run) and the canonical held lease."""
-    def __init__(self, run, lease, *, toolchain=None):
+    def __init__(self, run, lease, *, toolchain=None, scenario='healthy'):
+        require(type(scenario) is str and scenario in SCENARIOS, 'invalid_scenario', 'Only fixed reviewed scenarios are supported.')
         manifest = run.manifest()
         revision, dirty = source_identity()
         require(os.name == 'posix' and manifest['mode'] == 'container-reference' and
@@ -217,6 +229,7 @@ class ProvisioningSession:
                 lease.plan['profile'] == 'smoke' and lease.plan['target_count'] == 1 and not lease._reconciliation_only,
                 'admission_scope', 'Only this exact admitted real smoke run may allocate.')
         self.run, self.lease, self.toolchain = run, lease, toolchain
+        self.scenario = scenario
         self.destroy_only = False
         self.state = run.file('private/terraform')
         self.provisioner = None
@@ -226,7 +239,7 @@ class ProvisioningSession:
             'terraform_version': '1.17.0', 'provider': PROVIDER, 'provider_version': '4.6.0',
             'target_image': TARGET_IMAGE, 'operations': [], 'resources': [], 'inventory': None,
             'cleanup': 'not-started', 'primary_failure': None, 'secondary_failures': [],
-            'unknown_outcome': False,
+            'unknown_outcome': False, 'scenario': scenario,
             'runtime_pipeline_complete': False, 'production_iso_eligible': False}
         self.variables = {'run_id': run.id, 'source_revision': revision, 'image': TARGET_IMAGE,
             'public_input': str(images.safe_bind(run.file('private/target-input'))),
@@ -249,7 +262,7 @@ class ProvisioningSession:
             atomic_json(self.state / 'controller.json', {'schema_version': '1.0', 'run_id': self.run.id,
                 'source_revision': self.variables['source_revision'], 'id': self.provisioner,
                 'uid': self.uid, 'gid': self.gid, 'groups': self.socket_groups, 'mounts': self.mounts,
-                'image_labels': self.image_labels, 'inputs': self.inputs})
+                'image_labels': self.image_labels, 'inputs': self.inputs, 'scenario': self.scenario})
 
     def failure(self, error):
         if self.receipt['primary_failure'] is None:
@@ -278,7 +291,7 @@ class ProvisioningSession:
         require(root.is_relative_to(self.run.file('private')) and self.toolchain['terraform'] == root / 'bin/terraform' and
                 self.toolchain['mirror'] == root / 'mirror', 'toolchain_scope', 'Only the verified run-owned fixed toolchain is permitted.')
         self.receipt['toolchain'] = deepcopy(self.toolchain['receipt'])
-        for name, raw in {'main.tf': (CONTEXT / 'main.tf').read_bytes(),
+        for name, raw in {'main.tf': scenario_source(self.scenario),
                           '.terraform.lock.hcl': (CONTEXT / '.terraform.lock.hcl').read_bytes(),
                           'terraform.tfvars.json': json.dumps(self.variables, sort_keys=True).encode(),
                           'wormhole.tfrc': b'disable_checkpoint = true\nprovider_installation {\n filesystem_mirror {\n path = "/opt/toolchain/mirror"\n include = ["registry.terraform.io/kreuzwerker/docker"]\n }\n}\n'}.items():
@@ -391,6 +404,8 @@ class ProvisioningSession:
         self.attempts[name] = attempt
         mutating = name in {'apply', 'refresh-apply', 'destroy'}
         previous_unknown = self.receipt['unknown_outcome']
+        require(not mutating or previous_unknown is False, 'daemon_outcome_unknown',
+                'An uncertain prior operation cannot authorize another mutating Terraform command.')
         if mutating:
             self.receipt['unknown_outcome'] = True
             self.save()  # Write intent before a mutating exec can lose its response.
@@ -422,12 +437,14 @@ class ProvisioningSession:
             self.receipt['unknown_outcome'] = True
             self.save()
             raise
-        complete = result['status'] in {'pass', 'fail'} and not record['timed_out'] and not record['truncated'] and \
+        complete = result['status'] in {'pass', 'fail'} and not result['log_truncated'] and not record['timed_out'] and not record['truncated'] and \
             (not mutating or result['status'] == 'pass' and record['passed'])
         self.receipt['unknown_outcome'] = previous_unknown if complete else True
-        self.receipt['operations'].append({**record, 'evidence': 'private/terraform/operations/' + stem.name + '.out'})
+        self.receipt['operations'].append({**record, 'client_status': result['status'],
+            'client_returncode': result['returncode'], 'client_log_truncated': result['log_truncated'],
+            'evidence': 'private/terraform/operations/' + stem.name + '.out'})
         self.save()
-        require(result['status'] == 'pass' and record['passed'],
+        require(result['status'] == 'pass' and not result['log_truncated'] and record['passed'],
                 'terraform_failed', 'Terraform failed, timed out or exceeded output bounds; preserve private diagnostics and state.')
         return bounded_json(path) if name in JSON_OPERATIONS else record
 
@@ -516,7 +533,11 @@ class ProvisioningSession:
                     'plan_changed', 'The validated saved plan changed before apply.')
             self.receipt['validated_plan_sha256'] = saved
             self.lease.refresh()
+            if self.scenario == 'provider-unavailable':
+                self.receipt['provider_unavailable_probe_before'] = self.operation('probe-unavailable')
+                self.save()
             self.operation('apply')
+            require(self.scenario == 'healthy', 'expected_failure_missing', 'The fixed unavailable provider unexpectedly applied; preserve resources for review.')
             self.record_state(self.operation('show-state'), complete=True)
             target = self.owned['docker_container.target']
             self.lease.refresh()
@@ -567,9 +588,82 @@ class ProvisioningSession:
             'resource_id': value['target_id'], 'host': address, 'ssh_port': 2222, 'ssh_user': 'wormhole',
             'image_digest': TARGET_IMAGE, 'status': 'started'}]}
 
+    def prove_provider_unavailable(self):
+        """Clear only a fixed zero-contact negative case, never a general failure."""
+        self.held()
+        self.check_inputs()
+        require(not self.destroy_only and self.scenario == 'provider-unavailable' and not self.owned and
+                self.receipt['inventory'] is None and self.receipt['unknown_outcome'] is True and
+                self.receipt['primary_failure'] is not None and self.receipt['primary_failure']['code'] == 'terraform_failed' and
+                self.inputs['main.tf'] == hashlib.sha256(scenario_source('provider-unavailable')).hexdigest(),
+                'zero_contact_unproven', 'Only this exact fixed unavailable-provider failure can be proved.')
+        expected_probe = {'endpoint': UNAVAILABLE_ENDPOINT, 'path_absent': True, 'connect_errno': 'ENOENT'}
+        require(self.receipt.get('provider_unavailable_probe_before') == expected_probe,
+                'zero_contact_unproven', 'The fixed endpoint was not proved absent before actual apply.')
+        mutations = [x for x in self.receipt['operations'] if x['operation'] in {'apply', 'refresh-apply', 'destroy'}]
+        require(len(mutations) == 1, 'zero_contact_unproven', 'Only one known failed saved apply may be reconciled.')
+        failed = mutations[0]
+        before = self.receipt['operations'][:self.receipt['operations'].index(failed)]
+        require([x['operation'] for x in before] == ['version', 'init', 'schema', 'plan', 'show-plan', 'probe-unavailable'] and
+                all(x['passed'] is True and x.get('client_status') == 'pass' for x in before) and
+                self.receipt.get('validated_plan_sha256') == file_digest(self.state / 'apply.tfplan')[0],
+                'zero_contact_unproven', 'Actual successful preparation and the exact validated saved plan must precede apply.')
+        require(failed['operation'] == 'apply' and failed['returncode'] != 0 and failed['passed'] is False and
+                failed['timed_out'] is False and failed['truncated'] is False and failed.get('client_status') == 'fail' and
+                failed.get('client_returncode') == 2 and failed.get('client_log_truncated') is False,
+                'zero_contact_unproven', 'The actual saved apply needs a complete known nonzero terminal result.')
+        path = self.state / 'operations' / ('apply-' + str(failed['attempt']) + '.out')
+        digest, size = file_digest(path)
+        require(digest == failed['output_sha256'] and size == failed['output_bytes'],
+                'zero_contact_unproven', 'Actual apply diagnostics changed after capture.')
+        raw = path.read_bytes()
+        require(b'/run/wormhole/provider-unavailable.sock' in raw and b'no such file or directory' in raw,
+                'zero_contact_unproven', 'The actual provider failure does not identify the fixed absent Unix endpoint.')
+        require(self.operation('probe-unavailable') == expected_probe and not resources(self.operation('show-state')),
+                'zero_contact_unproven', 'The endpoint must remain absent and actual Terraform state must be empty.')
+        pending = {(x['kind'], x['id']) for x in self.lease.record['resources'] if x['outcome'] == 'pending'}
+        require(pending == {('container', self.provisioner)}, 'zero_contact_unproven', 'Only the existing exact controller may remain journaled.')
+        checks = []
+        for arguments, expected in (
+            (('ps', '-a', '--no-trunc', '--filter', 'label=' + images.LABEL + '.run_id=' + self.run.id, '--format', '{{.ID}}'), {self.provisioner}),
+            (('network', 'ls', '--no-trunc', '--filter', 'label=' + images.LABEL + '.run_id=' + self.run.id, '--format', '{{.ID}}'), set())):
+            observed = images.docker(arguments)
+            require(not observed['log_truncated'], 'zero_contact_unproven', 'The exact run-label observation must be complete.')
+            values = observed['log'].decode('ascii').splitlines()
+            require(set(values) == expected and len(values) == len(expected),
+                    'zero_contact_unproven', 'Unexpected run resources prevent zero-contact proof.')
+            checks.append({'kind': 'container' if arguments[0] == 'ps' else 'network', 'count': len(values)})
+        # A crash/missing result from any attempt is not made safe by a later
+        # empty snapshot. Bind every operation file to its completed record.
+        expected_files = set()
+        for record in self.receipt['operations']:
+            stem = record['operation'] + '-' + str(record['attempt'])
+            expected_files.update({stem + '.out', stem + '.json'})
+            require(record['timed_out'] is False and record['truncated'] is False and
+                    record.get('client_status') in {'pass', 'fail'} and record.get('client_log_truncated') is False,
+                    'zero_contact_unproven', 'Incomplete prior operation evidence remains uncertain.')
+            metadata = read_json(self.state / 'operations' / (stem + '.json'))
+            require(metadata == {key: value for key, value in record.items()
+                    if key not in {'client_status', 'client_returncode', 'client_log_truncated', 'evidence'}},
+                    'zero_contact_unproven', 'Captured terminal metadata differs from the bound operation record.')
+            digest, size = file_digest(self.state / 'operations' / (stem + '.out'))
+            require(digest == record['output_sha256'] and size == record['output_bytes'],
+                    'zero_contact_unproven', 'Captured operation output changed after the terminal result.')
+        require({x.name for x in (self.state / 'operations').iterdir()} == expected_files,
+                'zero_contact_unproven', 'Unrecorded or incomplete operations prevent zero-contact proof.')
+        proof = {'scenario': self.scenario, 'status': 'proved-zero-contact', 'endpoint': UNAVAILABLE_ENDPOINT,
+            'before_and_after_enoent': True, 'actual_saved_apply_failed': True, 'terraform_state_empty': True,
+            'run_resources': checks, 'source_sha256': self.inputs['main.tf'], 'recorded_at': now()}
+        self.receipt['provider_unavailable_proof'] = proof
+        self.receipt['unknown_outcome'] = False
+        self.save()
+        return deepcopy(proof)
+
     def destroy(self):
         """Terraform owns deletion. Every current state ID is inspected before planning it."""
         try:
+            require(self.receipt['unknown_outcome'] is False, 'daemon_outcome_unknown',
+                    'Unknown daemon work must be resolved by a specific reviewed proof before destroy.')
             require(self.provisioner is not None, 'provisioner_missing', 'Retained exact provisioner is required for Terraform destroy.')
             state = resources(self.operation('show-state'))
             require(set(state) == set(self.owned) and all(x.get('id') == self.owned[key] for key, x in state.items()),
@@ -626,9 +720,11 @@ class ProvisioningSession:
         session.destroy_only = True
         session.state = run.file('private/terraform')
         record = read_json(session.state / 'controller.json')
-        require(set(record) == {'schema_version', 'run_id', 'source_revision', 'id', 'uid', 'gid', 'groups', 'mounts', 'image_labels', 'inputs'} and
+        require(set(record) == {'schema_version', 'run_id', 'source_revision', 'id', 'uid', 'gid', 'groups', 'mounts', 'image_labels', 'inputs', 'scenario'} and
                 record['schema_version'] == '1.0' and record['run_id'] == run.id and record['source_revision'] == revision and
-                type(record['id']) is str and ID.fullmatch(record['id']), 'recovery_scope', 'Retained controller metadata is missing or differs.')
+                type(record['id']) is str and ID.fullmatch(record['id']) and record['scenario'] in SCENARIOS,
+                'recovery_scope', 'Retained controller metadata is missing or differs.')
+        session.scenario = record['scenario']
         session.provisioner, session.uid, session.gid = record['id'], record['uid'], record['gid']
         session.socket_groups, session.image_labels, session.inputs = record['groups'], record['image_labels'], record['inputs']
         require((session.uid, session.gid, session.socket_groups) == provisioner_identity(),
@@ -636,7 +732,8 @@ class ProvisioningSession:
         session.mounts = {key: tuple(item) for key, item in record['mounts'].items()}
         session.variables = bounded_json(session.state / 'terraform.tfvars.json')
         session.receipt = read_json(run.file('evidence/provisioning.json'))
-        require(common(session.receipt) == common(manifest) and session.receipt.get('provisioner_id', session.provisioner) == session.provisioner and
+        require(common(session.receipt) == common(manifest) and session.receipt.get('scenario') == session.scenario and
+                session.receipt.get('provisioner_id', session.provisioner) == session.provisioner and
                 session.receipt.get('unknown_outcome') is False,
                 'daemon_outcome_unknown', 'Uncertain daemon work remains blocked for separately reviewed recovery; time passing is insufficient.')
         session.owned = {x['address']: x['id'] for x in session.receipt['resources']}
@@ -682,15 +779,20 @@ class ProvisioningSession:
         return session
 
 
-def qualify():
+def qualify(scenario='healthy'):
+    require(type(scenario) is str and scenario in SCENARIOS, 'invalid_scenario', 'Only fixed reviewed scenarios are supported.')
     run = create_run(images.RUNS_ROOT, fixture=False, kernel_lock=True)
     try:
         with run.locked():
             execute_run(run)  # Preserve the unsupported complete-pipeline outcome; this is a separate partial operation.
         images.create_auth(run)
         with run.locked(), images.docker_scope(run), AdmissionLease(images.INFRASTRUCTURE, run.id, run.manifest()['source_revision'], 'smoke') as lease:
-            session = ProvisioningSession(run, lease)
-            session.provision()
+            session = ProvisioningSession(run, lease, scenario=scenario)
+            try:
+                session.provision()
+            except ProvisioningError:
+                if scenario != 'provider-unavailable': raise
+                session.prove_provider_unavailable()
             receipt = session.destroy()
             lease.finish(reconciliation_complete=True)
     except BaseException as error:
@@ -705,12 +807,14 @@ def main(arguments=None):
     parser = argparse.ArgumentParser(description='Admitted real one-target Terraform qualification; no complete-pipeline claim.')
     parser.add_argument('operation', choices=('qualify', 'recover'))
     parser.add_argument('--run-id')
+    parser.add_argument('--scenario', choices=SCENARIOS, default='healthy')
     options = parser.parse_args(arguments)
     try:
         if options.operation == 'qualify':
             require(options.run_id is None, 'invalid_arguments', 'Qualification always creates a fresh run.')
-            result = qualify()
+            result = qualify(options.scenario)
         else:
+            require(options.scenario == 'healthy', 'invalid_arguments', 'Recovery uses the existing recorded scenario.')
             from .runs import Run
             run = Run(images.RUNS_ROOT, options.run_id)
             with run.locked(), images.docker_scope(run), AdmissionLease.resume(images.INFRASTRUCTURE, run.id, run.manifest()['source_revision'], 'smoke') as lease:

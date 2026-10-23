@@ -4,10 +4,12 @@ No caller supplies executable paths, Terraform flags, arbitrary URLs or commands
 Outputs/state remain private in the one explicit host bind; stdout is a receipt.
 """
 import hashlib
+import errno
 import json
 import os
 from pathlib import Path
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -18,6 +20,7 @@ JSON_LIMIT = 4 * 1024 * 1024
 LOG_LIMIT = 65536
 OPERATION_TIMEOUT = 120
 OPERATIONS = {
+    'probe-unavailable': (),
     'version': ('version', '-json'),
     'init': ('init', '-input=false', '-no-color', '-lockfile=readonly', '-get=false'),
     'schema': ('providers', 'schema', '-json'),
@@ -35,7 +38,27 @@ OPERATIONS = {
     'final-state': ('show', '-json'),
 }
 JSON_OPERATIONS = {'version', 'schema', 'show-plan', 'show-state', 'show-refresh-plan',
-                   'output', 'show-destroy-plan', 'final-state'}
+                   'output', 'show-destroy-plan', 'final-state', 'probe-unavailable'}
+UNAVAILABLE_PATH = '/run/wormhole/provider-unavailable.sock'
+
+
+def probe_unavailable():
+    """One fixed local endpoint; no caller-provided path, DNS or TCP request."""
+    def absent():
+        try: os.lstat(UNAVAILABLE_PATH)
+        except FileNotFoundError: return
+        raise ValueError('The fixed unavailable endpoint must not exist')
+    absent()
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+        client.settimeout(1)
+        try: client.connect(UNAVAILABLE_PATH)
+        except OSError as error:
+            if error.errno != errno.ENOENT:
+                raise ValueError('The fixed endpoint did not return ENOENT') from None
+        else:
+            raise ValueError('The fixed endpoint unexpectedly accepted a connection')
+    absent()
+    return {'endpoint': 'unix://' + UNAVAILABLE_PATH, 'path_absent': True, 'connect_errno': 'ENOENT'}
 
 
 def environment():
@@ -73,7 +96,9 @@ def operation(name, attempt):
     descriptor = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     try:
         with os.fdopen(descriptor, 'wb') as stream:
-            process = subprocess.Popen([TOOL, '-chdir=/state', *OPERATIONS[name]], cwd=STATE,
+            command = [sys.executable, str(Path(__file__).resolve()), 'probe-unavailable-internal'] if name == 'probe-unavailable' else \
+                [TOOL, '-chdir=/state', *OPERATIONS[name]]
+            process = subprocess.Popen(command, cwd=STATE,
                 env=environment(), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT, start_new_session=True, close_fds=True, bufsize=0)
             os.set_blocking(process.stdout.fileno(), False)
@@ -128,6 +153,9 @@ def main(arguments=None):
     try:
         os.umask(0o077)
         guard()
+        if args == ['probe-unavailable-internal']:
+            print(json.dumps(probe_unavailable()), flush=True)
+            return 0
         if args == ['serve']:
             if os.getpid() != 1:
                 raise ValueError('Serve requires container PID1')

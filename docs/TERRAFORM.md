@@ -9,6 +9,7 @@ Use the exact reviewed clean source and existing authorized Linux Docker access:
 
 ```text
 python -m wormhole.provisioning qualify
+python -m wormhole.provisioning qualify --scenario provider-unavailable
 python -m unittest discover -s tests -p test_provisioning.py -v
 ```
 
@@ -115,6 +116,32 @@ replaced. Unknown daemon results, missing context, legacy locks, source/ownershi
 changes and unmatched resources refuse. There is no generic confirmation flag
 to clear an unknown result. General recovery belongs to WORM-008. Never delete
 the journal, lock or Terraform state to bypass a refusal.
+
+The fixed `provider-unavailable` scenario is an acceptance negative, not an
+operator-supplied endpoint. Before input hashes are captured, it selects only
+`unix:///run/wormhole/provider-unavailable.sock` in the authored provider block.
+A bounded inside-container probe requires that exact tmpfs path to be absent and
+an actual Unix connect to fail with ENOENT. The probe runs before an actual saved
+apply; schema and plan alone need not contact Docker. A successful apply is an
+unexpected failure of the negative scenario, never a passing negative result.
+
+`provision()` preserves and raises the actual nonzero apply failure. The explicit
+`prove_provider_unavailable()` method can clear only this scenario's uncertainty:
+it binds successful preparation, the validated saved-plan hash, complete failed
+apply diagnostics identifying the fixed missing socket, a second inside-container
+ENOENT probe, empty actual state, no Terraform-owned IDs, and complete run-label
+and journal observations showing only the existing provisioner. Every operation
+file must match its bound terminal receipt and output hash; missing, extra,
+timed-out or truncated attempts refuse. It accepts no confirmation flag or
+arbitrary proof payload. Normal saved empty destroy and controller-last cleanup
+then run. The primary Terraform failure and failed partial status remain intact;
+the separately recorded negative proof does not turn failed provisioning into a
+successful workload. Actual host acceptance must still verify this sequence.
+
+Generic uncertain operations cannot be followed by another mutating Terraform
+command or destroy, including within the original session. A captured nonzero
+provider failure at the real socket remains unresolved; the fixed absent-endpoint
+proof cannot authorize its cleanup.
 
 Acceptance still requires two actual serial runs with disjoint state/names and
 inventory, actual saved-plan Terraform lifecycle and cgroups, a provider failure,
