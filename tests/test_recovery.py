@@ -201,7 +201,7 @@ class Cleanup(unittest.TestCase):
             def empty(name):
                 self.f.calls.append(('retry-operation', name))
                 if name in ('show-state', 'final-state'): return {'values': {'root_module': {'resources': []}}}
-                if name == 'show-destroy-plan': return {'format_version': '1.2', 'terraform_version': '1.17.0', 'resource_changes': []}
+                if name == 'show-destroy-plan': return {'format_version': '1.2', 'terraform_version': '1.17.0', 'resource_changes': [], 'variables': {key: {'value': value} for key, value in self.session.variables.items()}}
                 return {'synthetic': True}
             with patch.object(self.session, 'operation', side_effect=empty):
                 complete = r.cleanup_session(self.session, self.lease, reason='failure')
@@ -264,7 +264,7 @@ class Cleanup(unittest.TestCase):
         self.lease.finish = Mock()
         def empty(session, name):
             if name in ('show-state', 'final-state'): return {'values': {'root_module': {'resources': []}}}
-            if name == 'show-destroy-plan': return {'format_version': '1.2', 'terraform_version': '1.17.0', 'resource_changes': []}
+            if name == 'show-destroy-plan': return {'format_version': '1.2', 'terraform_version': '1.17.0', 'resource_changes': [], 'variables': {key: {'value': value} for key, value in self.session.variables.items()}}
             return {'synthetic': True}
         with self.f.patches(), patch.object(r, 'source_identity', return_value=(fixture.SHA, False)), \
              patch.object(r.AdmissionLease, 'resume', return_value=nullcontext(self.lease)), \

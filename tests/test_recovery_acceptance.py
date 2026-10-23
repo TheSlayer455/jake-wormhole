@@ -83,7 +83,7 @@ class Controller(unittest.TestCase):
         def after_destroy(name):
             if fixture.CID in self.f.removed and fixture.NET in self.f.removed:
                 if name in ('show-state', 'final-state'): return {'values': {'root_module': {'resources': []}}}
-                if name == 'show-destroy-plan': return {'format_version': '1.2', 'terraform_version': '1.17.0', 'resource_changes': []}
+                if name == 'show-destroy-plan': return {'format_version': '1.2', 'terraform_version': '1.17.0', 'resource_changes': [], 'variables': {key: {'value': value} for key, value in self.session.variables.items()}}
             return original(name)
         result = {'status': 'fail', 'returncode': 17, 'log': a.EXPECTED_CHECK, 'log_truncated': False}
         with self.harness(), patch.object(self.session, 'operation', side_effect=after_destroy), \

@@ -17,9 +17,10 @@ import time
 
 from . import images
 from .admission import AdmissionLease, infrastructure_status
-from .provisioning import ADDRESSES, ID, ProvisioningSession, bounded_json, file_digest, resources
+from .provisioning import ADDRESSES, ID, ProvisioningSession, bounded_json, file_digest, resources, layout_addresses
 from .provisioning_acceptance import disk_sample, scan_private_material, snapshot
 from .recovery import RecoveryError, cancellation_requested, cleanup_session, recover_run, safe_code
+from .targets import TargetPlan
 from .runs import Run, RunError, SOURCE_ROOT, atomic_bytes, atomic_json, common, create_run, now, read_json, source_identity
 from .stages import _run_process, execute_run
 
@@ -62,7 +63,7 @@ def _finished(run):
 
 
 def _functional_failure(session):
-    target = session.owned['docker_container.target']
+    target = session.target_resources['target-001']
     session.verify_target(images.inspect('container', target))
     result = _run_process(('docker', '--config', images.docker_configuration(), '--host', images.SOCKET,
         'exec', target, '/usr/bin/python3', '-c',
@@ -189,9 +190,12 @@ def _worker(run):
 
 def _checkpoint_proof(run, worker_pid):
     checkpoint = read_json(run.file(CHECKPOINT))
+    context = read_json(run.file('private/terraform/controller.json'))
+    target_plan = TargetPlan.from_record(context['target_plan']) if context.get('resource_layout') == 'indexed-targets-v1' else None
+    require(target_plan is None or target_plan.profile == run.manifest()['profile'], 'checkpoint_identity')
     require(common(checkpoint) == common(run.manifest()) and checkpoint.get('operation') == 'known-terminal-destroy-before-journal' and
             type(checkpoint.get('worker_pid')) is int and checkpoint['worker_pid'] == worker_pid and
-            type(checkpoint.get('owned')) is dict and set(checkpoint['owned']) == ADDRESSES,
+            type(checkpoint.get('owned')) is dict and set(checkpoint['owned']) == layout_addresses(target_plan),
             'invalid_interruption_checkpoint')
     receipt = read_json(run.file('evidence/provisioning.json'))
     require(common(receipt) == common(run.manifest()) and receipt['unknown_outcome'] is False and
@@ -210,7 +214,7 @@ def _checkpoint_proof(run, worker_pid):
         require(digest == record['output_sha256'] and size == record['output_bytes'] and
                 read_json(stem.with_suffix('.json')) == {key: item for key, item in record.items()
                     if key not in {'client_status', 'client_returncode', 'client_log_truncated', 'evidence'}}, 'checkpoint_capture_changed')
-    require(not resources(bounded_json(stem.with_suffix('.out'))), 'checkpoint_state_not_empty')
+    require(not resources(bounded_json(stem.with_suffix('.out')), target_plan), 'checkpoint_state_not_empty')
     for address, identifier in checkpoint['owned'].items():
         require(type(identifier) is str and ID.fullmatch(identifier) and images.inspect(
             'container' if address.startswith('docker_container.') else 'network', identifier, missing=True) is None,

@@ -18,7 +18,7 @@ import time
 
 from . import images
 from .admission import AdmissionLease
-from .provisioning import ADDRESSES, ID, ProvisioningError, ProvisioningSession
+from .provisioning import ADDRESSES, ID, ProvisioningError, ProvisioningSession, layout_addresses
 from .runs import (RunError, _owned, atomic_json, common, create_run, now,
                    source_identity)
 from .stages import execute_run
@@ -146,10 +146,11 @@ def scan_private_material(run):
 
 def ownership_negative(session, sentinel):
     """Change only an expected ID in memory, then invoke the normal destroy API."""
-    require(set(session.owned) == ADDRESSES and session.receipt['unknown_outcome'] is False and
+    require(set(session.owned) == layout_addresses(getattr(session, 'target_plan', None)) and session.receipt['unknown_outcome'] is False and
             session.receipt['primary_failure'] is None, 'negative_not_ready')
     original = deepcopy(session.owned)
-    target, network = original['docker_container.target'], original['docker_network.run']
+    target_address = session.target_plan.address_for('target-001') if getattr(session, 'target_plan', None) is not None else 'docker_container.target'
+    target, network = original[target_address], original['docker_network.run']
     require(sentinel not in {target, network, session.provisioner}, 'sentinel_is_owned')
     before = {'target': snapshot('container', target), 'network': snapshot('network', network),
               'sentinel': snapshot('container', sentinel, unrelated=True)}
@@ -158,7 +159,7 @@ def ownership_negative(session, sentinel):
     require(wrong not in {*original.values(), sentinel, session.provisioner}, 'negative_id_collision')
     observed = None
     try:
-        session.owned['docker_container.target'] = wrong
+        session.owned[session.target_plan.address_for('target-001') if getattr(session, 'target_plan', None) is not None else 'docker_container.target'] = wrong
         try:
             session.destroy()
         except ProvisioningError as error:
@@ -182,9 +183,9 @@ def ownership_negative(session, sentinel):
 def _identity(session, inventory):
     manifest = session.run.manifest()
     require(manifest['mode'] == 'container-reference' and manifest['source_dirty'] is False and
-            set(session.owned) == ADDRESSES and inventory['run_id'] == session.run.id and
+            set(session.owned) == layout_addresses(getattr(session, 'target_plan', None)) and inventory['run_id'] == session.run.id and
             inventory['source_revision'] == manifest['source_revision'] and len(inventory['targets']) == 1 and
-            inventory['targets'][0]['resource_id'] == session.owned['docker_container.target'], 'acceptance_identity')
+            inventory['targets'][0]['resource_id'] == session.owned[session.target_plan.address_for('target-001') if getattr(session, 'target_plan', None) is not None else 'docker_container.target'], 'acceptance_identity')
     return {'run_id': session.run.id, 'source_revision': manifest['source_revision'],
         'state_path': str(session.state), 'public_input': session.variables['public_input'],
         'target_name': 'wormhole-' + session.run.id + '-target-001',

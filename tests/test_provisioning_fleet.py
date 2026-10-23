@@ -7,6 +7,7 @@ from unittest.mock import patch
 import test_provisioning as base
 from wormhole import provisioning as p, images
 from wormhole.targets import TargetPlan
+from wormhole.runs import RunError, read_json, atomic_json
 
 
 class FleetPlanPolicy(unittest.TestCase):
@@ -145,6 +146,46 @@ class FleetLifecycle(unittest.TestCase):
         self.assertEqual(sum(row['role'] == 'terraform-target' for row in rows), 5)
         self.assertEqual(sum(row['role'] == 'terraform-network' for row in rows), 1)
         self.assertEqual(sum(row['role'] == 'provisioner' for row in rows), 1)
+
+    def test_retained_five_target_recovery_uses_exact_layout_and_terraform_destroy(self):
+        with self.patches(): self.session.provision()
+        (self.session.state / 'operations').mkdir(mode=0o700)
+        self.lease._reconciliation_only = True
+        original = deepcopy(self.session.owned)
+        with self.patches():
+            retained = p.ProvisioningSession.resume_destroy(self.run, self.lease)
+            self.assertEqual(retained.target_plan, TargetPlan('five-targets'))
+            self.assertEqual(retained.owned, original)
+            with patch.object(retained, 'operation', side_effect=self.operation): result = retained.destroy()
+        self.assertEqual(result['cleanup'], 'completed')
+        self.assertEqual(retained.owned, original)
+        self.assertEqual(len(result['resources']), 6)
+        self.assertFalse(any(call[:2] == ('docker', 'rm') and call[-1] in self.identities.values() for call in self.calls))
+
+    def test_changed_controller_layout_cannot_start_retained_recovery(self):
+        with self.patches(): self.session.provision()
+        context = self.session.state / 'controller.json'
+        record = read_json(context); record['target_plan']['target_ids'].reverse(); atomic_json(context, record)
+        self.lease._reconciliation_only = True
+        with self.patches(), patch.object(images, 'inspect') as inspect:
+            with self.assertRaises(RunError): p.ProvisioningSession.resume_destroy(self.run, self.lease)
+        inspect.assert_not_called()
+
+    def test_duplicate_observed_ids_refuse_before_register_or_inspect(self):
+        value = base.plan(self.session.variables, 'refresh')['prior_state']
+        value['values']['root_module']['resources'][-1]['values']['id'] = base.CID
+        with patch.object(images, 'inspect') as inspect:
+            with self.assertRaises(p.ProvisioningError): self.session.record_state(value, complete=True)
+        inspect.assert_not_called()
+        self.assertEqual(self.lease.record['resources'], [])
+
+    def test_twenty_target_plan_does_not_authorize_runtime_allocation(self):
+        from wormhole.admission import build_plan
+        from test_admission import observed
+        self.lease.plan = build_plan('twenty-targets', observed()); self.lease.plan['synthetic'] = False
+        with patch.object(images, 'docker') as docker:
+            with self.assertRaises(p.ProvisioningError): p.ProvisioningSession(self.run, self.lease)
+        docker.assert_not_called()
 
 
 if __name__ == '__main__': unittest.main()
