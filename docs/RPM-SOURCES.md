@@ -108,6 +108,16 @@ exception class name. Exception messages, ambient environment and arbitrary
 traceback content are excluded; these diagnostics cannot turn a failure into
 a validated dependency selection.
 
+The separate `prepare_eula(run)` / `validate_eula(run)` API retains the original
+[official March 2019 UBI EULA PDF](https://www.redhat.com/licenses/EULA_Red_Hat_Universal_Base_Image_English_20190422.pdf)
+at `private/rpm-sources/UBI-EULA-20190422.pdf`: exactly 248,785 bytes and SHA256
+`a07025b9f5b71a816febe6ac76f21c9f759c806fa0a66874af90a50c3293f1b6`.
+It uses the same supervised worker, default TLS validation, no proxy or redirect
+and a distinct fixed URL. It adds no general download endpoint. The installer
+must copy those bytes unmodified into the derived image and preserve component
+licenses. The initial base observation did not find an embedded EULA at its
+fixed queried paths; this artifact is explicitly sourced from Red Hat's site.
+
 ## Verification limits
 
 Source fixtures use generated public bytes, actual bounded gzip reads, fake DNF

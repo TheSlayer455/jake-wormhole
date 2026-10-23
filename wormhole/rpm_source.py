@@ -19,6 +19,10 @@ LOCK = SOURCE_ROOT / 'rpm/lock.json'
 URL = 'https://cdn-ubi.redhat.com/content/public/ubi/dist/ubi9/9/x86_64/baseos/os/'
 BASE_IMAGE = 'sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1'
 BASE_CONFIG = 'sha256:9be18d9ba921714e79e390694315e3341047fe758ac79b62e671d92d4217c3fb'
+EULA_URL = 'https://www.redhat.com/licenses/EULA_Red_Hat_Universal_Base_Image_English_20190422.pdf'
+EULA_NAME = 'UBI-EULA-20190422.pdf'
+EULA_BYTES = 248785
+EULA_SHA256 = 'a07025b9f5b71a816febe6ac76f21c9f759c806fa0a66874af90a50c3293f1b6'
 TIMEOUT = 180
 CHUNK = 65536
 POLICY = {'worker_seconds': TIMEOUT, 'metadata_file_bytes': 16*1024*1024,
@@ -117,6 +121,20 @@ def load_lock(supplied=None):
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, *_args, **_kwargs):
         raise SourceError('rpm_redirect_refused', 'Only exact official pinned source URLs are allowed.')
+
+
+def fetch_eula(destination, *, opener=None):
+    """One exact official license artifact; never a caller-supplied URL."""
+    if opener is None:opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect()).open
+    require(not destination.exists() and not destination.is_symlink(),'rpm_eula_exists')
+    partial=destination.with_name(destination.name+'.partial');digest=hashlib.sha256();total=0
+    with opener(EULA_URL,timeout=20) as response:
+        require(response.geturl()==EULA_URL,'rpm_redirect_refused')
+        with os.fdopen(os.open(partial,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600),'wb') as output:
+            while raw:=response.read1(CHUNK):
+                total+=len(raw);require(total<=EULA_BYTES,'rpm_eula_bound');digest.update(raw);output.write(raw)
+            output.flush();os.fsync(output.fileno())
+    require(total==EULA_BYTES and digest.hexdigest()==EULA_SHA256,'rpm_eula_changed');os.replace(partial,destination)
 
 
 def fetch(item, destination, *, opener=None):
@@ -236,11 +254,12 @@ def _worker(run, operation):
         result=validate_resolution(run,raw,request,lock)
         folder=root/'packages';folder.mkdir(mode=0o700)
         for item in result['packages']:fetch(item,folder/Path(item['path']).name)
+    elif operation=='eula':fetch_eula(root/EULA_NAME)
     else:require(False,'rpm_worker_operation')
 
 
 def supervised(run, operation):
-    require(operation in ('metadata','packages'),'rpm_worker_operation')
+    require(operation in ('metadata','packages','eula'),'rpm_worker_operation')
     guard(run);lock=load_lock();identity=sha(lock_bytes())
     result=_run_process((sys.executable,'-c',WORKER,str(run.workspace),run.id,operation),cwd=SOURCE_ROOT,timeout=TIMEOUT)
     atomic_bytes(run.file('private/rpm-'+operation+'-preparation.log'),result['log'],limit=65536)
@@ -252,6 +271,18 @@ def supervised(run, operation):
 
 def prepare_metadata(run, lock=None):
     load_lock(lock);supervised(run,'metadata');return validate_metadata(run,lock)
+
+
+def validate_eula(run):
+    path=run.file('private/rpm-sources/'+EULA_NAME)
+    hash_file(path,{'bytes':EULA_BYTES,'sha256':EULA_SHA256})
+    return path
+
+
+def prepare_eula(run):
+    guard(run);path=run.file('private/rpm-sources/'+EULA_NAME)
+    if not path.exists() and not path.is_symlink():supervised(run,'eula')
+    return validate_eula(run)
 
 
 def validate_observation(observation):

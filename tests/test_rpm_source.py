@@ -57,6 +57,33 @@ def fixtures(run):
 
 
 class PublicSources(unittest.TestCase):
+    def test_fixed_eula_artifact_never_expands_url_or_accepts_changed_bytes(self):
+        raw=b'%PDF-synthetic exact license bytes'
+        with patch.object(s,'EULA_BYTES',len(raw)),patch.object(s,'EULA_SHA256',s.sha(raw)):
+            for fault in ('good','short','long','hash','redirect'):
+                with self.subTest(fault=fault),tempfile.TemporaryDirectory() as folder:
+                    path=Path(folder)/s.EULA_NAME
+                    body=raw[:-1] if fault=='short' else raw+b'!' if fault=='long' else b'x'*len(raw) if fault=='hash' else raw
+                    url='https://example.invalid/' if fault=='redirect' else s.EULA_URL
+                    opener=Mock(return_value=Response(body,url))
+                    if fault=='good':s.fetch_eula(path,opener=opener);self.assertEqual(path.read_bytes(),raw)
+                    else:
+                        with self.assertRaises(s.SourceError):s.fetch_eula(path,opener=opener)
+                        self.assertFalse(path.exists())
+                    opener.assert_called_once_with(s.EULA_URL,timeout=20)
+
+    def test_eula_replay_is_hash_bound_and_uses_supervised_fixed_operation(self):
+        with tempfile.TemporaryDirectory() as folder:
+            run=create_run(Path(folder)/'runs',fixture=False,identity=(SHA,False));root=run.file('private/rpm-sources');root.mkdir(mode=0o700)
+            raw=b'%PDF-synthetic';path=root/s.EULA_NAME
+            def fixed_worker(current,operation):
+                self.assertEqual(current,run);self.assertEqual(operation,'eula');path.write_bytes(raw);path.chmod(0o600)
+            with patch.object(s,'guard'),patch.object(s,'supervised',side_effect=fixed_worker) as worker,\
+                 patch.object(s,'EULA_BYTES',len(raw)),patch.object(s,'EULA_SHA256',s.sha(raw)):
+                self.assertEqual(s.prepare_eula(run),path);self.assertEqual(s.prepare_eula(run),path);worker.assert_called_once()
+                path.write_bytes(b'changed')
+                with self.assertRaises(s.SourceError):s.prepare_eula(run)
+
     def test_new_request_retains_old_probe_provenance_and_rejects_supplied_body_edits(self):
         from wormhole import rpm_target
         with tempfile.TemporaryDirectory() as folder:
