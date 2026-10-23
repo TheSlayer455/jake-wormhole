@@ -10,7 +10,9 @@ The separate checkout began empty and clean. The minimal initial `main` commit i
 
 `.github/workflows/verify.yml` defines the `repository-verification` job on hosted Ubuntu 24.04, with read-only contents permission, a five-minute limit and no persisted checkout credential. Checkout is pinned to the official `actions/checkout` v7.0.1 commit `3d3c42e5aac5ba805825da76410c181273ba90b1`; its source action declares Node 24. The action source was read before selection: [pinned action definition](https://github.com/actions/checkout/blob/3d3c42e5aac5ba805825da76410c181273ba90b1/action.yml).
 
-The workflow is authored at this checkpoint. An actual GitHub run, final source commit and branch-protection availability must be observed after pushing the development branch. Record those results in the next state/handoff checkpoint; authored configuration is not proof of an enforced or passing remote check.
+GitHub Actions is enabled for this private repository (observed through the repository permissions API). The workflow is authored at this checkpoint; its actual run and final source commit must be observed after pushing the development branch. Authored configuration is not proof of a passing remote check.
+
+The attempted required-status protection for `main` was rejected with HTTP 403: GitHub requires a paid plan or public visibility for this private-repository feature. No billing or visibility change was made. Consequently `repository-verification` is an available CI check, not an enforced branch-protection gate. Human review and manual merge discipline remain required; do not report the unavailable control as configured.
 
 ## Review and rollback
 
