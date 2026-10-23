@@ -308,6 +308,10 @@ def _recover_run(run):
         helper_summary = {'primary_failure': None, 'unknown_outcome': False}
         try:
             helper = None
+            bound_provisioning = read_json(run.file('evidence/provisioning.json'))
+            require(common(bound_provisioning) == common(manifest) and valid_failure(bound_provisioning.get('primary_failure')) and
+                    type(bound_provisioning.get('unknown_outcome')) is bool,
+                    'identity_mismatch', 'Provisioning status must be bound to this exact run and source before component cleanup.')
             if run.file('private/readiness-controller.json').exists():
                 from .readiness import ReadinessSession, readiness_status
                 helper_summary['unknown_outcome'] = True  # Missing/invalid status cannot conceal uncertainty.
@@ -315,7 +319,9 @@ def _recover_run(run):
                 require(type(summary) is dict and valid_failure(summary.get('primary_failure')) and
                         type(summary.get('unknown_outcome')) is bool, 'invalid_cleanup', 'Readiness recovery status is malformed.')
                 helper_summary = summary
-                require(helper_summary['unknown_outcome'] is False, 'daemon_outcome_unknown', 'Readiness has unresolved daemon work; preserve every component.')
+            require(bound_provisioning['unknown_outcome'] is False and helper_summary['unknown_outcome'] is False,
+                    'daemon_outcome_unknown', 'A component has unresolved daemon work; preserve every component before teardown.')
+            if run.file('private/readiness-controller.json').exists():
                 helper = ReadinessSession.resume_cleanup(run, lease)
                 helper.cleanup()  # Helper must be absent before Terraform's exact pending view is resumed.
             session = ProvisioningSession.resume_destroy(run, lease)
@@ -350,6 +356,9 @@ def _recover_run(run):
                 'resources': _resources(view, lease), 'unknown_outcome': prior['unknown_outcome'],
                 'terraform_state_retained': True, 'private_state_removed': False,
                 'runtime_pipeline_complete': False, 'production_iso_eligible': False}
+            component_failure = helper_summary.get('primary_failure')
+            if component_failure is not None and component_failure != value['primary_failure']:
+                value['secondary_failures'].append(deepcopy(component_failure))
             _save(run, value)
             return value
         reason = 'cancelled' if cancellation_requested(run) else 'failure' if session.receipt['primary_failure'] else 'success'

@@ -335,6 +335,30 @@ class Cleanup(unittest.TestCase):
             self.assertEqual(value['unknown_outcome'], unknown)
         factory.assert_called_once()
 
+    def test_provisioning_unknown_blocks_known_helper_before_any_component_teardown(self):
+        with self.f.patches(): self.session.provision()
+        primary = {'code': 'provider_mutation_failed', 'recorded_at': now()}
+        helper_primary = {'code': 'readiness_failed', 'recorded_at': now()}
+        self.session.receipt.update(unknown_outcome=True, primary_failure=primary); self.session.save()
+        self.lease._reconciliation_only = True
+        atomic_json(self.run.file('private/readiness-controller.json'), {'synthetic': True})
+        helper = Mock(run=self.run, lease=self.lease, helper='e' * 64,
+            receipt={**common(self.run.manifest()), 'primary_failure': helper_primary, 'unknown_outcome': False})
+        factory = Mock(return_value=helper)
+        readiness = SimpleNamespace(readiness_status=lambda _: {'primary_failure': helper_primary, 'unknown_outcome': False},
+            ReadinessSession=SimpleNamespace(resume_cleanup=factory))
+        with patch.dict(sys.modules, {'wormhole.readiness': readiness}), \
+             patch.object(r, 'source_identity', return_value=(fixture.SHA, False)), \
+             patch.object(r.AdmissionLease, 'resume', return_value=nullcontext(self.lease)), \
+             patch.object(images, 'docker_scope', return_value=nullcontext()), \
+             patch.object(images, 'docker', side_effect=AssertionError('No Docker request while a component is unknown')), \
+             patch.object(p.ProvisioningSession, 'resume_destroy') as resume:
+            value = r.recover_run(self.run)
+            helper.cleanup.assert_not_called(); factory.assert_not_called(); resume.assert_not_called()
+        self.assertEqual(value['status'], 'blocked'); self.assertTrue(value['unknown_outcome'])
+        self.assertEqual(value['primary_failure'], primary)
+        self.assertIn(helper_primary, value['secondary_failures'])
+
     def test_recover_reserved_preparation_without_controller_finishes_but_empty_allocation_intent_refuses(self):
         self.lease.record['phase'] = 'reserved'; self.lease._reconciliation_only = True; self.lease.finish = Mock()
         self.session.receipt['primary_failure'] = {'code': 'tool_download_failed', 'recorded_at': now()}; self.session.save()
