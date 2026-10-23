@@ -152,6 +152,18 @@ class ArtifactContracts(unittest.TestCase):
             with self.subTest(kind=kind, changes=changes), self.assertRaises(ContractError):
                 validate_artifact(kind, record)
 
+    def test_hosts_accept_plain_addresses_but_never_ipv6_scope_identifiers(self):
+        for host in ("127.0.0.1", "::1", "fd00::2", "target-1.run-network"):
+            record = fixtures()["inventory"]
+            record["targets"][0]["host"] = host
+            with self.subTest(accepted_host=host):
+                validate_artifact("inventory", record)
+        for host in ("fe80::1%zone", "fe80::1%zone\n", "fe80::1%user@host", "fe80::1%bad;command"):
+            record = fixtures()["inventory"]
+            record["targets"][0]["host"] = host
+            with self.subTest(rejected_host=host), self.assertRaises(ContractError):
+                validate_artifact("inventory", record)
+
     def test_numeric_and_collection_bounds_are_enforced(self):
         for field, values in {"timeout_seconds": [0, -1, 3601, float("nan"), float("inf")],
                               "duration_seconds": [-1, 86401], "returncode": [1.5, 2**31],

@@ -100,7 +100,7 @@ _STAGE = _object({
 _TARGET = _object({
     "target_id": _ID,
     "resource_id": _text(128, pattern=_exact(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}")),
-    "host": _text(253, format="host"),
+    "host": _text(253, pattern=_exact(r"[A-Za-z0-9:][A-Za-z0-9.:-]{0,252}"), format="host"),
     "ssh_port": {"type": "integer", "minimum": 1, "maximum": 65535},
     "ssh_user": _text(32, pattern=_exact(r"[a-z_][a-z0-9_-]{0,31}")),
     "image_digest": _IMAGE,
@@ -276,6 +276,10 @@ def _validate(schema, value, path):
             if schema.get("format") == "date-time":
                 datetime.fromisoformat(value.replace("Z", "+00:00"))
             if schema.get("format") == "host":
+                # Docker target addresses need no interface scope. ipaddress
+                # otherwise accepts arbitrary scope text after a percent sign.
+                if "%" in value:
+                    raise ValueError
                 try:
                     ipaddress.ip_address(value)
                 except ValueError:
