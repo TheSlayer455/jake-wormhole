@@ -8,6 +8,7 @@ import re
 import shutil
 import stat
 import subprocess
+import sys
 from uuid import UUID, uuid4
 
 from .contracts import ContractError, validate_artifact
@@ -193,6 +194,18 @@ class Run:
 
     @contextmanager
     def locked(self):
+        policy = self.file("lock-policy.json")
+        if policy.exists():
+            expected = {"schema_version": "1.0", "run_id": self.id, "kind": "linux-flock"}
+            if read_json(policy) != expected or self.manifest()["mode"] != "container-reference":
+                raise RunError("invalid_lock_policy", "The run's immutable lock policy is invalid.")
+            with self._kernel_locked():
+                yield
+            return
+        # Legacy fixtures/runs retain their original policy. A stale legacy
+        # PID file is never deleted or converted merely because its PID died.
+        if self.file("operation.lock").exists():
+            raise RunError("invalid_lock_policy", "A stable run lock exists without its policy; preserve it for reviewed recovery.")
         path = self.file(".lock")
         try:
             descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
@@ -205,8 +218,35 @@ class Run:
         finally:
             path.unlink()
 
+    @contextmanager
+    def _kernel_locked(self):
+        if not sys.platform.startswith("linux"):
+            raise RunError("linux_required", "This real run requires Linux kernel flock semantics.")
+        import fcntl
+        legacy = self.file(".lock")
+        if legacy.exists():
+            raise RunError("run_busy", "A legacy lock remains; explicit reviewed recovery is required.")
+        path = self.file("operation.lock")
+        descriptor = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+        try:
+            _owned(path)
+            identity = os.fstat(descriptor)
+            if (identity.st_dev, identity.st_ino) != (path.stat().st_dev, path.stat().st_ino):
+                raise RunError("unsafe_lock", "The stable run lock inode changed.")
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise RunError("run_busy", "Another process holds this run's kernel lock.") from None
+            if legacy.exists() or (identity.st_dev, identity.st_ino) != (path.stat().st_dev, path.stat().st_ino):
+                raise RunError("unsafe_lock", "Run lock ownership changed during acquisition.")
+            yield
+        finally:
+            os.close(descriptor)  # Persistent inode; kernel releases after crash.
 
-def create_run(workspace, *, fixture, identity=None):
+
+def create_run(workspace, *, fixture, identity=None, kernel_lock=False):
+    if type(kernel_lock) is not bool or kernel_lock and (fixture or not sys.platform.startswith("linux")):
+        raise RunError("invalid_lock_policy", "Kernel locking is supported only for new real Linux runs.")
     base = workspace_path(workspace, create=True)
     revision, dirty = source_identity() if identity is None else identity
     identifier = str(uuid4())
@@ -215,6 +255,8 @@ def create_run(workspace, *, fixture, identity=None):
     for relative in ("private", "private/logs", "private/terraform", "private/inventory", "private/credentials", "evidence"):
         (path / relative).mkdir(mode=0o700)
     atomic_json(path / "owner.json", {"application": "jake-wormhole", "format": 1, "run_id": identifier})
+    if kernel_lock:
+        atomic_json(path / "lock-policy.json", {"schema_version": "1.0", "run_id": identifier, "kind": "linux-flock"})
     timestamp = now()
     manifest = {"schema_version": "1.0", "run_id": identifier, "source_revision": revision,
                 "source_dirty": dirty, "mode": "fixture" if fixture else "container-reference",

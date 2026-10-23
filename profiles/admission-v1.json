@@ -12,7 +12,7 @@
   "limits": {
     "target": {"memory_mib": 256, "disk_mib": 64, "cpus": 0.25, "pids_limit": 64, "log_max_size_bytes": 1048576, "log_max_files": 2, "timeout_seconds": 300},
     "helper": {"memory_mib": 512, "disk_mib": 256, "cpus": 1, "pids_limit": 128, "log_max_size_bytes": 1048576, "log_max_files": 2, "timeout_seconds": 600},
-    "provisioner": {"memory_mib": 512, "disk_mib": 256, "cpus": 0.5, "pids_limit": 128, "log_max_size_bytes": 1048576, "log_max_files": 2, "timeout_seconds": 600},
+    "provisioner": {"memory_mib": 512, "disk_mib": 512, "cpus": 0.5, "pids_limit": 128, "log_max_size_bytes": 1048576, "log_max_files": 2, "timeout_seconds": 600},
     "build": {"memory_mib": 2048, "disk_mib": 4096, "cpus": 2, "pids_limit": 256, "log_max_size_bytes": 1048576, "log_max_files": 2, "timeout_seconds": 600},
     "overhead": {"memory_mib": 512, "disk_mib": 512, "cpus": 0.25, "pids_limit": 64, "log_max_size_bytes": 1048576, "log_max_files": 2, "timeout_seconds": 600}
   }

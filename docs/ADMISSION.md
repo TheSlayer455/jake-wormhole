@@ -142,6 +142,27 @@ idempotently. The existing archive is never replaced. Missing, changed or
 mismatched archives fail closed, and completed run IDs cannot be reused for new
 admission. This is a supported adapter boundary, not a journal-edit workaround.
 
+## Provisioning prerequisites (WORM-006)
+
+New real Linux provisioning runs explicitly select a persistent per-run kernel
+lock; existing fixtures and legacy PID locks are not silently migrated or deleted.
+A lost kernel-policy marker cannot downgrade a held lock to the legacy policy.
+See [decision 0004](decisions/0004-provisioning-locks-and-recovery-capacity.md).
+
+`check_destroy_recovery_capacity(exact_controller_id)` is a separate evidence-only
+check for a resumed reconciling lease's existing pending container. It remeasures
+current capacity against the unchanged original profile without replacing the
+plan/journal or permitting allocation. The Terraform adapter still owes complete
+retained-provisioner identity/configuration and bounded destroy-only command proof.
+An already-known controller restart has a new workload budget to check; ordinary
+ownership-verified stop/removal remains possible without fresh admission. No
+replacement controller or unknown resource may be registered through resume.
+
+The provisioner disk slot is now a 512 MiB planning hypothesis, retaining the
+original memory/CPU/PID/time limits. Verified archives plus extracted binaries alone
+use about 253.54 MiB; actual cache/state measurements must qualify the remaining
+margin. This is not a hard disk quota or proof of twenty-target execution.
+
 ## Applied-limit and materialization boundaries
 
 Desired native settings include memory+swap, NanoCPUs, PID cap, rotated logs,

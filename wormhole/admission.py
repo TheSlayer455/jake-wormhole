@@ -472,6 +472,36 @@ class AdmissionLease:
         resources.append({"kind": kind, "id": resource_id, "outcome": "pending", "size_bytes": 0})
         self._save()
 
+    def check_destroy_recovery_capacity(self, container_id):
+        """Remeasure a retained controller's destroy-only recovery budget.
+
+        This returns evidence, not allocation permission. The trusted Terraform
+        adapter must separately verify this exact pending container's role,
+        immutable image, complete mounts/configuration and bounded destroy-only
+        command before restarting it. No new controller, phase, resource, plan or
+        uncertain daemon result is adopted or changed by this check.
+        """
+        self._active()
+        _require(self._reconciliation_only and self.record["phase"] == "reconciling",
+                 "reconciliation_only", "Retained destroy recovery requires a resumed reconciling lease.")
+        _resource_identity("container", container_id)
+        _require(any(x["kind"] == "container" and x["id"] == container_id and x["outcome"] == "pending"
+                     for x in self.record["resources"]), "ownership_mismatch",
+                 "Only an existing exact pending controller can be considered for destroy recovery.")
+        refreshed = build_plan(self.profile, self.collector(self.root))
+        _require(refreshed["synthetic"] is self.allow_synthetic, "synthetic_observation")
+        unchanged = ("profile", "target_count", "controller_concurrency", "build_concurrency",
+                     "requirements", "limits", "headroom", "materialization")
+        _require(all(refreshed[key] == self.plan[key] for key in unchanged), "profile_changed",
+                 "Recovery must retain the original reviewed profile and limits.")
+        _require(refreshed["admitted"], "capacity_refused",
+                 "Insufficient current capacity to restart the retained bounded destroy controller.")
+        return {"schema_version": "1.0", "operation": "retained-terraform-destroy-capacity",
+                "run_id": self.run_id, "source_revision": self.source_revision,
+                "container_id": container_id, "checked_at": now(), "plan": deepcopy(refreshed),
+                "limits": deepcopy(self.plan["limits"]["provisioner"]),
+                "allocation_permitted": False, "ownership_and_command_proof_required": True}
+
     def reconcile_resource(self, kind, resource_id, *, outcome="absent", size_bytes=0):
         self._active()
         _resource_identity(kind, resource_id)

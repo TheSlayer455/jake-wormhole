@@ -45,6 +45,7 @@ class Planning(unittest.TestCase):
             self.assertFalse(plan["production_iso_eligible"])
             self.assertFalse(plan["materialization"]["daemon_operation_cgroup_capped"])
             self.assertGreater(plan["materialization"]["extra_disk_reserve_bytes"], 0)
+            self.assertEqual(plan["limits"]["provisioner"]["disk_mib"], 512)
 
     def test_exact_thresholds_and_independent_smaller_profile_after_refusal(self):
         value = observed()
