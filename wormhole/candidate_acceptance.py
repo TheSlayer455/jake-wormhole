@@ -146,6 +146,7 @@ def acceptance(sentinel):
         try:
             c.require(suite.manifest()['source_revision'] == revision[0] and suite.manifest()['source_dirty'] is False, 'candidate_acceptance_source')
             for scenario in CASES:
+                value = None  # A refusal before this child exists must not blame the preceding successful child.
                 c.require(source_identity() == revision, 'candidate_acceptance_source')
                 result['pending_scenario'] = scenario; save()
                 value = qualify_case(scenario, sentinel)

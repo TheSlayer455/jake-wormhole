@@ -66,5 +66,15 @@ class CandidateOperator(CandidateFixture, unittest.TestCase):
         self.assertEqual(receipt['failed_child_run_id'], self.run.id); self.assertEqual(receipt['status'], 'failed')
         self.assertNotIn('Synthetic failure text', json.dumps(receipt))
 
+    def test_source_change_before_second_child_does_not_attribute_failure_to_first_healthy_run(self):
+        result = {'status': 'passed', 'source_revision': SHA, 'source_dirty': False, 'scenario': 'healthy',
+            'run_id': self.run.id, 'derived_image': DERIVED}
+        identities = [(SHA, False), (SHA, False), (SHA, False), ('b' * 40, False)]
+        with patch.object(a, 'source_identity', side_effect=identities), patch.object(a, 'qualify_case', return_value=result) as qualify:
+            with self.assertRaises(c.CandidateError) as error: a.acceptance('f' * 64)
+        self.assertEqual(qualify.call_count, 1)
+        receipt = read_json(self.run.workspace / error.exception.suite_run_id / 'evidence/candidate-acceptance-suite.json')
+        self.assertIsNone(receipt['failed_child_run_id']); self.assertEqual(receipt['cases'][0]['run_id'], self.run.id)
+
 
 if __name__ == '__main__': unittest.main()
