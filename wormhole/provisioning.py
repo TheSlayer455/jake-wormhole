@@ -676,7 +676,7 @@ class ProvisioningSession:
         else:
             require(actual.get('Image') == self.target_image_id, 'ownership_mismatch', 'The target image is not the qualified immutable input.')
 
-    def verify_target(self, actual, *, target_id=None, stopped=False, pid_pending=False, inspection_timeout=20):
+    def verify_target(self, actual, *, target_id=None, stopped=False, pid_pending=False, inspection_timeout=20, network_observation=None):
         target_id = self.target_plan.resolve(target_id) if getattr(self, 'target_plan', None) is not None else 'target-001'
         require(target_id in self.target_resources, 'resource_identity', 'The exact target has not been observed.')
         self.verify_owned(actual, 'target', self.target_resources[target_id], target_id=target_id)
@@ -707,7 +707,7 @@ class ProvisioningSession:
                 type(endpoints[expected_network]) is dict,
                 'unsafe_target', 'Target networking differs from the exact run bridge.')
         network_id = self.owned['docker_network.run']
-        self.verify_owned(images.inspect('network', network_id, timeout=inspection_timeout), 'network', network_id)
+        self.verify_owned(images.inspect('network', network_id, timeout=inspection_timeout) if network_observation is None else network_observation, 'network', network_id)
         # Docker can leave the stopped NetworkConnect endpoint ID unresolved until
         # start. The sole named endpoint is pending intent, backed by independent
         # exact owned internal-network inspection; running targets require its ID.

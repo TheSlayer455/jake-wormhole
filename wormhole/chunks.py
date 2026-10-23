@@ -397,49 +397,56 @@ def inject_fault(run, manifest, scenario):
                 byte = stream.read(1); stream.seek(0); stream.write(bytes([byte[0] ^ 1]))
 
 
-def execute_fixture(run, *, transport='local', scenario='healthy', size=262181, chunk_size=65536, timeout=15):
+def execute_fixture(run, **options):
+    """Public lock-owning wrapper; nested calls still refuse."""
+    with run.locked() as guard:
+        return execute_fixture_held(run, guard, **options)
+
+
+def execute_fixture_held(run, guard, *, transport='local', scenario='healthy', size=262181, chunk_size=65536, timeout=15):
     """Own the Run lock; one attempt only. Return failed component data, not acceptance."""
     require(transport in TRANSPORTS and scenario in SCENARIOS and type(size) is int and 2 <= size <= MAX_TOTAL and
         type(chunk_size) is int and 1 <= chunk_size <= MAX_CHUNK and
         2 <= (size + chunk_size - 1) // chunk_size <= MAX_CHUNKS and
         type(timeout) in (int, float) and .05 <= timeout <= 30, 'chunk_configuration')
-    with run.locked():
-        base = common(run.manifest())
-        require(base['mode'] == 'container-reference' and source_identity() == (base['source_revision'], False) and
-                base['source_dirty'] is False, 'chunk_source_changed')
-        require(not run.file('evidence/chunks.json').exists() and not run.file('private/chunks').exists(), 'chunk_attempt_exists')
-        began, deadline = time.monotonic(), time.monotonic() + timeout
-        run.file('private/chunks').mkdir(mode=0o700)
-        plan = {**base, 'operation': 'synthetic-chunks', 'synthetic': True, 'scenario': scenario, 'transport': transport,
-            'fixture': 'wormhole-generated-binary-v1', 'size': size, 'chunk_size': chunk_size, 'timeout_seconds': timeout,
-            'runtime_pipeline_complete': False, 'reference_eligible': False, 'production_iso_eligible': False}
-        atomic_json(run.file('evidence/chunk-plan.json'), plan)
-        receipt = {**base, 'operation': 'synthetic-chunks', 'synthetic': True, 'status': 'pending',
-            'plan_sha256': sha(canonical(plan)), 'manifest_sha256': None, 'checked_chunks': [], 'verified_output': None,
-            'failure': None, 'duration_seconds': 0., 'updated_at': now(), 'runtime_pipeline_complete': False,
-            'reference_eligible': False, 'production_iso_eligible': False}
-        atomic_json(run.file('evidence/chunks.json'), receipt)
-        try:
-            generate_fixture(run.file('private/chunks/source.synthetic.bin'), size, deadline)
-            manifest = split_fixture(run, chunk_size, deadline)
-            atomic_json(run.file('evidence/chunk-original-manifest.json'), manifest)
-            receipt['manifest_sha256'] = sha(canonical(manifest))
-            inject_fault(run, manifest, scenario)
-            atomic_json(run.file('evidence/chunk-manifest.json'), manifest)
-            local = LocalChunks(run.file('private/chunks/parts'))
-            if transport == 'http-loopback':
-                with LoopbackFixture(local, [item['name'] for item in manifest['chunks']], deadline) as adapter:
-                    result = reconstruct(run, manifest, receipt['manifest_sha256'], adapter, deadline, receipt['checked_chunks'])
-            else:
-                result = reconstruct(run, manifest, receipt['manifest_sha256'], local, deadline, receipt['checked_chunks'])
-            require(source_identity() == (base['source_revision'], False), 'chunk_source_changed')
-            deadline_check(deadline)
-            receipt.update(status='passed', verified_output=result)
-        except (RunError, OSError, ValueError) as error:
-            receipt.update(status='failed', failure={'code': getattr(error, 'code', 'chunk_io_error'), 'recorded_at': now()})
-        receipt.update(duration_seconds=time.monotonic() - began, updated_at=now())
-        atomic_json(run.file('evidence/chunks.json'), receipt)
-        return receipt
+    from .runs import HeldRunGuard
+    require(type(guard) is HeldRunGuard, 'run_lock_required'); guard.check(run)
+    base = common(run.manifest())
+    require(base['mode'] == 'container-reference' and source_identity() == (base['source_revision'], False) and
+            base['source_dirty'] is False, 'chunk_source_changed')
+    require(not run.file('evidence/chunks.json').exists() and not run.file('private/chunks').exists(), 'chunk_attempt_exists')
+    began, deadline = time.monotonic(), time.monotonic() + timeout
+    run.file('private/chunks').mkdir(mode=0o700)
+    plan = {**base, 'operation': 'synthetic-chunks', 'synthetic': True, 'scenario': scenario, 'transport': transport,
+        'fixture': 'wormhole-generated-binary-v1', 'size': size, 'chunk_size': chunk_size, 'timeout_seconds': timeout,
+        'runtime_pipeline_complete': False, 'reference_eligible': False, 'production_iso_eligible': False}
+    atomic_json(run.file('evidence/chunk-plan.json'), plan)
+    receipt = {**base, 'operation': 'synthetic-chunks', 'synthetic': True, 'status': 'pending',
+        'plan_sha256': sha(canonical(plan)), 'manifest_sha256': None, 'checked_chunks': [], 'verified_output': None,
+        'failure': None, 'duration_seconds': 0., 'updated_at': now(), 'runtime_pipeline_complete': False,
+        'reference_eligible': False, 'production_iso_eligible': False}
+    atomic_json(run.file('evidence/chunks.json'), receipt)
+    try:
+        generate_fixture(run.file('private/chunks/source.synthetic.bin'), size, deadline)
+        manifest = split_fixture(run, chunk_size, deadline)
+        atomic_json(run.file('evidence/chunk-original-manifest.json'), manifest)
+        receipt['manifest_sha256'] = sha(canonical(manifest))
+        inject_fault(run, manifest, scenario)
+        atomic_json(run.file('evidence/chunk-manifest.json'), manifest)
+        local = LocalChunks(run.file('private/chunks/parts'))
+        if transport == 'http-loopback':
+            with LoopbackFixture(local, [item['name'] for item in manifest['chunks']], deadline) as adapter:
+                result = reconstruct(run, manifest, receipt['manifest_sha256'], adapter, deadline, receipt['checked_chunks'])
+        else:
+            result = reconstruct(run, manifest, receipt['manifest_sha256'], local, deadline, receipt['checked_chunks'])
+        require(source_identity() == (base['source_revision'], False), 'chunk_source_changed')
+        deadline_check(deadline)
+        receipt.update(status='passed', verified_output=result)
+    except (RunError, OSError, ValueError) as error:
+        receipt.update(status='failed', failure={'code': getattr(error, 'code', 'chunk_io_error'), 'recorded_at': now()})
+    receipt.update(duration_seconds=time.monotonic() - began, updated_at=now())
+    atomic_json(run.file('evidence/chunks.json'), receipt)
+    return receipt
 
 
 def report_chunks(run):

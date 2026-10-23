@@ -160,42 +160,49 @@ def fixture(case):
 
 
 def assess_run(run, raw, expected):
+    """Public lock-owning wrapper; nested calls still refuse."""
+    with run.locked() as guard:
+        return assess_run_held(run, guard, raw, expected)
+
+
+def assess_run_held(run, guard, raw, expected):
     """Write once under the exact Run lock. This component allocates no infrastructure."""
     require(type(raw) is bytes and 1 <= len(raw) <= MAX_INPUT, 'assessment_input_bound')
-    with run.locked():
-        manifest = run.manifest()
-        require(source_identity() == (manifest['source_revision'], False) and not manifest['source_dirty'], 'assessment_source_changed')
-        require(not any(run.file(path).exists() for path in (PLAN, RECEIPT, ORIGINAL)), 'assessment_attempt_reused')
-        plan = make_plan(run, expected)
-        atomic_json(run.file(PLAN), plan)
-        receipt = {**common(manifest), 'component': 'synthetic-assessment', 'policy_id': POLICY,
-                   'plan_sha256': plan['plan_sha256'], 'synthetic': True, 'original_path': ORIGINAL,
-                   'original_sha256': hashlib.sha256(raw).hexdigest(), 'original_size_bytes': len(raw),
-                   'status': 'running', 'result': None, 'assessment_artifact': None, 'primary_failure': None,
-                   'duration_seconds': 0, 'created_at': now(), 'updated_at': now(),
-                   'runtime_pipeline_complete': False, 'reference_eligible': False,
-                   'production_iso_eligible': False, 'limitations': list(LIMITATIONS)}
+    from .runs import HeldRunGuard
+    require(type(guard) is HeldRunGuard, 'run_lock_required'); guard.check(run)
+    manifest = run.manifest()
+    require(source_identity() == (manifest['source_revision'], False) and not manifest['source_dirty'], 'assessment_source_changed')
+    require(not any(run.file(path).exists() for path in (PLAN, RECEIPT, ORIGINAL)), 'assessment_attempt_reused')
+    plan = make_plan(run, expected)
+    atomic_json(run.file(PLAN), plan)
+    receipt = {**common(manifest), 'component': 'synthetic-assessment', 'policy_id': POLICY,
+               'plan_sha256': plan['plan_sha256'], 'synthetic': True, 'original_path': ORIGINAL,
+               'original_sha256': hashlib.sha256(raw).hexdigest(), 'original_size_bytes': len(raw),
+               'status': 'running', 'result': None, 'assessment_artifact': None, 'primary_failure': None,
+               'duration_seconds': 0, 'created_at': now(), 'updated_at': now(),
+               'runtime_pipeline_complete': False, 'reference_eligible': False,
+               'production_iso_eligible': False, 'limitations': list(LIMITATIONS)}
+    atomic_json(run.file(RECEIPT), receipt)
+    started = time.monotonic()
+    try:
+        atomic_bytes(run.file(ORIGINAL), raw, limit=MAX_INPUT)
+        result = parse_checklist(raw, plan['expected_findings'])
+        artifact = {**common(manifest), 'status': 'pass' if result['policy_verdict'] == 'pass' else 'fail',
+                    'synthetic': True, 'policy_id': POLICY,
+                    'findings': [{key: row[key] for key in ('finding_id', 'status', 'summary')} for row in result['findings']]}
+        validate_artifact('assessment', artifact)
+        receipt.update(status='passed' if result['policy_verdict'] == 'pass' else 'rejected',
+                       result=result, assessment_artifact=artifact)
+    except AssessmentError as error:
+        receipt.update(status='failed', primary_failure={'code': error.code})
+        raise
+    except BaseException:
+        receipt.update(status='failed', primary_failure={'code': 'assessment_operation_incomplete'})
+        raise
+    finally:
+        receipt.update(duration_seconds=time.monotonic() - started, updated_at=now())
         atomic_json(run.file(RECEIPT), receipt)
-        started = time.monotonic()
-        try:
-            atomic_bytes(run.file(ORIGINAL), raw, limit=MAX_INPUT)
-            result = parse_checklist(raw, plan['expected_findings'])
-            artifact = {**common(manifest), 'status': 'pass' if result['policy_verdict'] == 'pass' else 'fail',
-                        'synthetic': True, 'policy_id': POLICY,
-                        'findings': [{key: row[key] for key in ('finding_id', 'status', 'summary')} for row in result['findings']]}
-            validate_artifact('assessment', artifact)
-            receipt.update(status='passed' if result['policy_verdict'] == 'pass' else 'rejected',
-                           result=result, assessment_artifact=artifact)
-        except AssessmentError as error:
-            receipt.update(status='failed', primary_failure={'code': error.code})
-            raise
-        except BaseException:
-            receipt.update(status='failed', primary_failure={'code': 'assessment_operation_incomplete'})
-            raise
-        finally:
-            receipt.update(duration_seconds=time.monotonic() - started, updated_at=now())
-            atomic_json(run.file(RECEIPT), receipt)
-        return deepcopy(receipt)
+    return deepcopy(receipt)
 
 
 def original_bytes(run):
