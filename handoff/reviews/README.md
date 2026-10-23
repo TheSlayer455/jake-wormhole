@@ -14,3 +14,8 @@ See also [candidate source/image/test binding and exact-source recovery](WORM-01
 <!-- WORM-010 actual qualification 1920c9621017190a8756affab36e5d25e6102978 -->
 
 [Five-target fleet review](WORM-010.md) records the exact WORM-010 source reviews and actual qualification limits.
+
+
+<!-- WORM-011 actual capability 88c8df01c38986fb909b3cfe231a97081f790bc1 -->
+
+[Optional PowerShell capability review](WORM-011.md) records exact source findings and actual qualification limits.

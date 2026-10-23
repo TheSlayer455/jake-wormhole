@@ -1,3 +1,17 @@
+# Current: WORM-014 implementation, October23 at18:01UTC
+
+WORM-002 through WORM-013 and WORM-016 are Done in Minx through explicit
+owner-directed delegated normal UI decisions, with source-bound evidence and
+solution comments. WORM-014 revision2 is approved and claimed for the bounded
+RPM derivative container extension. Its runtime qualification is not yet done.
+This isolated branch normally merges completed candidate57978e20,
+fleet06540879 and optional PowerShell68c30b08; all earlier checkpoints below
+retain their original times and may describe work subsequently completed.
+No PR is merged or production deployment/ISO eligibility implied. Refresh Minx
+for current claim expiry and requirements before continuing.
+
+## Preserved historical checkpoints
+
 # Engineering checkpoint
 
 <!-- WORM-013 actual qualification dfff72bec8bbea050bae73e6bba846e388f449e9 -->
@@ -124,6 +138,19 @@ The cases cover delayed and never-started targets, wrong authentication key/user
 Linux: 277 cases, 275 passed, 2 Windows-only skips, 19.359 seconds. Windows: 277 cases, 161 passed, 116 platform skips, 17.542 seconds. These source fixtures are separate from actual runtime acceptance. Independent engineering source reviews are recorded with their exact commits. [Criterion evidence](../handoff/evidence/WORM-010.json) retains all twelve distinct Run IDs and sanitized result counts.
 
 Twenty-target runtime remains unverified. This ticket does not qualify candidate binding, a complete pipeline, VM/ISO boot/install, STIG or scanner compatibility. Full-pipeline and production ISO eligibility remain false. Publishing, exact final-source hosted CI and the delegated normal Owner decision still require separate observation; this generator claims none of them.
+
+
+<!-- WORM-011 actual capability 88c8df01c38986fb909b3cfe231a97081f790bc1 -->
+
+## WORM-011 actual optional PowerShell acceptance passed, October 23, 2026
+
+Clean source `88c8df01c38986fb909b3cfe231a97081f790bc1` passed four serial fresh operations: actual missing-package failure, independent ordinary Terraform/SSH/Ansible diagnostics, offline optional image build and a fresh optional PowerShell smoke. The missing operation remains failed with `package_unavailable`, expected `powershell=7.6.8-1.deb`, exit 100 and its exact helper location. A separate ordinary Run passed all ten actual functional checks and normal Terraform/helper cleanup.
+
+Retained optional image: `sha256:7cbb64abd73f3a91b4d8d17a5f825902302e0fa772b88a1c3d66ec8aaa56b737`. Actual PowerShell was 7.6.8 Core/Unix with .NET 10.0.13 and fixed result 2. All dependency versions and the unchanged ordinary helper doctor passed. Actual builder cgroups were 2 GiB/2 CPU/256 PIDs and probe 512 MiB/1 CPU/128 PIDs, with zero extra swap. The stopped builder writable layer was 225,894,400 bytes; this is a sample, not a quota. Known owned containers were reconciled, the optional image intentionally retained and the unrelated sentinel unchanged.
+
+Linux homelab source fixtures: 258 cases, 256 passed, two Windows-only skips, 11.361 seconds. Windows writer fixtures: 258 cases, 149 passed, 109 platform skips, 8.346 seconds. Source fixtures are separate from actual runtime evidence. Independent engineering review closed commit-response, immutable image-provenance and interrupted known-cleanup gaps at the tested source. The original failed inode fixture record remains private; deterministic test correction and final exact-source verification passed.
+
+[Criterion evidence](../handoff/evidence/WORM-011.json) records actual Run IDs, package versions, cgroups and hashes without raw logs or credentials. Scanner compatibility remains explicitly unavailable: no authorized scanner package or documented compatible method was supplied. Host PowerShell, remoting/STIG/controller/transport/target compatibility, the complete pipeline and production ISO eligibility are not established. Publication, final-source hosted CI and the delegated normal Owner decision remain separate unverified steps here.
 
 ## WORM-009 actual acceptance passed, October 23
 

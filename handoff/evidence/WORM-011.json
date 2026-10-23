@@ -1,0 +1,533 @@
+{
+  "schema_version": "1.0",
+  "ticket_key": "WORM-011",
+  "requirements_revision": 2,
+  "tested_source_revision": "88c8df01c38986fb909b3cfe231a97081f790bc1",
+  "observed_at": "2026-10-23T17:42:43.696598+00:00",
+  "evidence_kind": "Actual authorized homelab capability acceptance with separately labeled source fixtures",
+  "input_provenance": [
+    {
+      "name": "WORM-011-optional-acceptance-88c8df0.json",
+      "sha256": "87090a05c8f4f63dced382b5b51e3a278c078e50440065445881b96776ba2bd7",
+      "bytes": 4654
+    },
+    {
+      "name": "WORM-011-missing-readback-88c8df0.json",
+      "sha256": "e7bebafa3e540d7f6978020a05fcdefc2c448521ce5b87c553ffffb7693ae971",
+      "bytes": 10234
+    },
+    {
+      "name": "WORM-011-ordinary-readback-88c8df0.json",
+      "sha256": "fc02c20cc9a2a22f71fe604308126802211bcd7c4b7986f86d816b9ac847bde0",
+      "bytes": 32351
+    },
+    {
+      "name": "WORM-011-build-readback-88c8df0.json",
+      "sha256": "136a5b4e0f46dc198c85d178a325cfc1482b628e27c17b416bb9f2923189e947",
+      "bytes": 9775
+    },
+    {
+      "name": "WORM-011-smoke-readback-88c8df0.json",
+      "sha256": "541d9272ba9b36615a2418682e8262c139530f622bea3a781ad6965d14bc6eb9",
+      "bytes": 9345
+    },
+    {
+      "name": "WORM-011-homelab-source-qualification.json",
+      "sha256": "8133e9f8114f9c436de65d273c05c33c6c8ab979ce7791f50f34849a5469683d",
+      "bytes": 79612
+    }
+  ],
+  "suite": {
+    "component": "optional-powershell-acceptance",
+    "existing_sentinel_modified": false,
+    "mode": "container-reference",
+    "optional_image_id": "sha256:7cbb64abd73f3a91b4d8d17a5f825902302e0fa772b88a1c3d66ec8aaa56b737",
+    "primary_failure": null,
+    "production_iso_eligible": false,
+    "run_id": "d7e37309-42ae-43d8-a5bc-364f1006c868",
+    "runtime_pipeline_complete": false,
+    "scanner_compatibility": "unavailable-no-authorized-package-or-documented-method",
+    "schema_version": "1.0",
+    "source_dirty": false,
+    "source_revision": "88c8df01c38986fb909b3cfe231a97081f790bc1",
+    "stages": [
+      {
+        "acceptance_status": "passed",
+        "operation_status": "failed",
+        "run_id": "43162c30-95f0-48f3-a4ec-417e536face0",
+        "source_revision": "88c8df01c38986fb909b3cfe231a97081f790bc1",
+        "stage": "missing-package-fixture"
+      },
+      {
+        "acceptance_status": "passed",
+        "operation_status": "pass",
+        "run_id": "18b7e95a-2afc-412a-ac58-32ad2e272279",
+        "source_revision": "88c8df01c38986fb909b3cfe231a97081f790bc1",
+        "stage": "independent-ordinary-terraform-ssh-ansible"
+      },
+      {
+        "acceptance_status": "passed",
+        "operation_status": "completed",
+        "run_id": "d3646755-2591-4b57-9af2-8ffe0d7bd2df",
+        "source_revision": "88c8df01c38986fb909b3cfe231a97081f790bc1",
+        "stage": "offline-optional-image-build"
+      },
+      {
+        "acceptance_status": "passed",
+        "operation_status": "completed",
+        "run_id": "05c50c94-8d63-468a-b3a7-13f391600586",
+        "source_revision": "88c8df01c38986fb909b3cfe231a97081f790bc1",
+        "stage": "fresh-optional-powershell-smoke"
+      }
+    ],
+    "status": "passed",
+    "updated_at": "2026-10-23T17:42:43.658Z"
+  },
+  "components": {
+    "missing": {
+      "run_id": "43162c30-95f0-48f3-a4ec-417e536face0",
+      "status": "failed",
+      "operation": "probe",
+      "runtime_operation": "missing",
+      "source_revision": "88c8df01c38986fb909b3cfe231a97081f790bc1",
+      "source_dirty": false,
+      "image": "sha256:4f7f306ecd431b4b48169777966d88c1f09f2139506176a6b85203f5bae69a71",
+      "image_id": null,
+      "container_id": "bcf751942a41620ca9e6fd4853eff83d543ad7e1622ca60a02ac161925c00bb1",
+      "recipe_sha256": "9cc3e56485527290235d5c785529efb00ecdac92cf51773ae34767492fe07056",
+      "source_files": {
+        "assemble.sh": "34cb7c983994b1639ae97886bac8951060672b086ab298804bcef2427e1ea416",
+        "lock.json": "10fb03c0d070ca1bd568af2031ab6a24b2d9c7ea69ad65c61515f6d60aa80f47",
+        "runtime.py": "703b1608c4bf4bb3a1b9c5241b813ad624338d1a09d032d88a3be580396ddc1b"
+      },
+      "cgroups": {
+        "cpu.max": "100000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "exit_code": 1,
+      "primary_failure": {
+        "code": "package_unavailable"
+      },
+      "cleanup_failures": [],
+      "resources_reconciled": true,
+      "unknown_outcome": false,
+      "updated_at": "2026-10-23T17:41:32.066Z",
+      "production_iso_eligible": false,
+      "runtime_pipeline_complete": false,
+      "failure": {
+        "code": "package_unavailable",
+        "execution_location": "optional-helper-package-source-fixture",
+        "expected_version": "7.6.8-1.deb",
+        "package": "powershell",
+        "returncode": 100
+      },
+      "source": "fixed-empty-local-APT-source-and-state",
+      "network": "none",
+      "ordinary_helper_doctor_passed": true
+    },
+    "build": {
+      "run_id": "d3646755-2591-4b57-9af2-8ffe0d7bd2df",
+      "status": "completed",
+      "operation": "build",
+      "runtime_operation": null,
+      "source_revision": "88c8df01c38986fb909b3cfe231a97081f790bc1",
+      "source_dirty": false,
+      "image": "sha256:4f7f306ecd431b4b48169777966d88c1f09f2139506176a6b85203f5bae69a71",
+      "image_id": "sha256:7cbb64abd73f3a91b4d8d17a5f825902302e0fa772b88a1c3d66ec8aaa56b737",
+      "container_id": "e57da5db82b95228ee6776dbe1a0dd68809217ba48899a9769df524b4d12653d",
+      "recipe_sha256": "9cc3e56485527290235d5c785529efb00ecdac92cf51773ae34767492fe07056",
+      "source_files": {
+        "assemble.sh": "34cb7c983994b1639ae97886bac8951060672b086ab298804bcef2427e1ea416",
+        "lock.json": "10fb03c0d070ca1bd568af2031ab6a24b2d9c7ea69ad65c61515f6d60aa80f47",
+        "runtime.py": "703b1608c4bf4bb3a1b9c5241b813ad624338d1a09d032d88a3be580396ddc1b"
+      },
+      "cgroups": {
+        "cpu.max": "200000 100000",
+        "memory.max": "2147483648",
+        "memory.swap.max": "0",
+        "pids.max": "256"
+      },
+      "exit_code": 0,
+      "primary_failure": null,
+      "cleanup_failures": [],
+      "resources_reconciled": true,
+      "unknown_outcome": false,
+      "updated_at": "2026-10-23T17:42:35.130Z",
+      "production_iso_eligible": false,
+      "runtime_pipeline_complete": false,
+      "local_tag": "jake-wormhole-helper-powershell:run-d3646755-2591-4b57-9af2-8ffe0d7bd2df",
+      "image_size_bytes": 158651595,
+      "sampled_writable_layer_bytes": 225894400,
+      "base_reference": {
+        "image_id": "sha256:4f7f306ecd431b4b48169777966d88c1f09f2139506176a6b85203f5bae69a71",
+        "recipe_sha256": "f3b03c77e0af5d8c583e1761f236abfd499da9ad935d2f480164a83b2e79a843",
+        "source_files": {
+          "apt-packages.lock": "fe0de1322c82557616d372c076038bee1b3f37002197f778a4dafff7e6cc3dda",
+          "assemble.sh": "c24ef254993b3b3e1d3c12835049bcd9c1210bc75f0eb97f50294b8548566312",
+          "helper-requirements.lock": "15ea873a5a96915d5ebb870cd714d729a360181b5f2f4e61c7fa1a467a40e262",
+          "images.lock.json": "44e7c225a1e13a0b70d0778fb9b3ff12bc99adfaf5083816c90e2b537d26257e",
+          "runtime.py": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+          "ssh_config": "e8593986e36f4476c9410f849e0920f684241c4f7f258ea6e6180b06b9a73717",
+          "sshd_config": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1"
+        },
+        "source_revision": "244ea4b8961fa3be5ca82c122f95a1bd776c210d"
+      }
+    },
+    "smoke": {
+      "run_id": "05c50c94-8d63-468a-b3a7-13f391600586",
+      "status": "completed",
+      "operation": "probe",
+      "runtime_operation": "smoke",
+      "source_revision": "88c8df01c38986fb909b3cfe231a97081f790bc1",
+      "source_dirty": false,
+      "image": "sha256:7cbb64abd73f3a91b4d8d17a5f825902302e0fa772b88a1c3d66ec8aaa56b737",
+      "image_id": null,
+      "container_id": "ff5e32f9d7ecc4af7f1d4a09e762815febb04eae1bf75fe2fc56e91c0e7541bc",
+      "recipe_sha256": "9cc3e56485527290235d5c785529efb00ecdac92cf51773ae34767492fe07056",
+      "source_files": {
+        "assemble.sh": "34cb7c983994b1639ae97886bac8951060672b086ab298804bcef2427e1ea416",
+        "lock.json": "10fb03c0d070ca1bd568af2031ab6a24b2d9c7ea69ad65c61515f6d60aa80f47",
+        "runtime.py": "703b1608c4bf4bb3a1b9c5241b813ad624338d1a09d032d88a3be580396ddc1b"
+      },
+      "cgroups": {
+        "cpu.max": "100000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "exit_code": 0,
+      "primary_failure": null,
+      "cleanup_failures": [],
+      "resources_reconciled": true,
+      "unknown_outcome": false,
+      "updated_at": "2026-10-23T17:42:43.635Z",
+      "production_iso_eligible": false,
+      "runtime_pipeline_complete": false,
+      "powershell": {
+        "dotnet": "10.0.13",
+        "edition": "Core",
+        "platform": "Unix",
+        "result": 2,
+        "version": "7.6.8"
+      },
+      "dependency_versions": {
+        "libc6": "2.39-0ubuntu8.9",
+        "libgcc-s1": "14.2.0-4ubuntu2~24.04.1",
+        "libgssapi-krb5-2": "1.20.1-6ubuntu2.10",
+        "libicu74": "74.2-1ubuntu3.1",
+        "libssl3t64": "3.0.13-0ubuntu3.16",
+        "libstdc++6": "14.2.0-4ubuntu2~24.04.1",
+        "zlib1g": "1:1.3.dfsg-3.1ubuntu2.2"
+      },
+      "ordinary_helper_doctor": {
+        "passed": true,
+        "uid": 10001,
+        "checks": {
+          "MarkupSafe": {
+            "expected": "3.0.4",
+            "observed": "3.0.4",
+            "passed": true
+          },
+          "PyYAML": {
+            "expected": "6.0.3",
+            "observed": "6.0.3",
+            "passed": true
+          },
+          "ansible-core": {
+            "expected": "2.21.5",
+            "observed": "2.21.5",
+            "passed": true
+          },
+          "ca-certificates": {
+            "expected": "20260816ubuntu0.24.04.1",
+            "observed": "20260816ubuntu0.24.04.1",
+            "passed": true
+          },
+          "cffi": {
+            "expected": "2.1.1",
+            "observed": "2.1.1",
+            "passed": true
+          },
+          "cryptography": {
+            "expected": "50.0.2",
+            "observed": "50.0.2",
+            "passed": true
+          },
+          "jinja2": {
+            "expected": "3.1.6",
+            "observed": "3.1.6",
+            "passed": true
+          },
+          "openssh-client": {
+            "expected": "1:9.6p1-3ubuntu13.20",
+            "observed": "1:9.6p1-3ubuntu13.20",
+            "passed": true
+          },
+          "packaging": {
+            "expected": "26.3",
+            "observed": "26.3",
+            "passed": true
+          },
+          "pycparser": {
+            "expected": "3.12",
+            "observed": "3.12",
+            "passed": true
+          },
+          "python": {
+            "expected_series": "3.12",
+            "observed": "3.12.3",
+            "passed": true
+          },
+          "python3": {
+            "expected": "3.12.3-0ubuntu2.1",
+            "observed": "3.12.3-0ubuntu2.1",
+            "passed": true
+          },
+          "python3-pip-whl": {
+            "expected": "24.0+dfsg-1ubuntu1.3",
+            "observed": "24.0+dfsg-1ubuntu1.3",
+            "passed": true
+          },
+          "python3-setuptools-whl": {
+            "expected": "68.1.2-2ubuntu1.2",
+            "observed": "68.1.2-2ubuntu1.2",
+            "passed": true
+          },
+          "python3-venv": {
+            "expected": "3.12.3-0ubuntu2.1",
+            "observed": "3.12.3-0ubuntu2.1",
+            "passed": true
+          },
+          "python3.12": {
+            "expected": "3.12.3-1ubuntu0.17",
+            "observed": "3.12.3-1ubuntu0.17",
+            "passed": true
+          },
+          "python3.12-venv": {
+            "expected": "3.12.3-1ubuntu0.17",
+            "observed": "3.12.3-1ubuntu0.17",
+            "passed": true
+          },
+          "resolvelib": {
+            "expected": "1.2.1",
+            "observed": "1.2.1",
+            "passed": true
+          },
+          "ubuntu": {
+            "observed": "24.04",
+            "passed": true
+          }
+        },
+        "failures": []
+      }
+    },
+    "ordinary": {
+      "run_id": "18b7e95a-2afc-412a-ac58-32ad2e272279",
+      "provisioning_status": "completed",
+      "readiness_status": "ready",
+      "functional_status": "passed",
+      "required_rows": 10,
+      "checks": [
+        {
+          "check_id": "os-applicability",
+          "evidence": [
+            "evidence/validation-plan.json",
+            "evidence/validation-observations.json"
+          ],
+          "expected": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+          "observed": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+          "required": true,
+          "status": "pass",
+          "target_id": "target-001"
+        },
+        {
+          "check_id": "package-ca-certificates",
+          "evidence": [
+            "evidence/validation-plan.json",
+            "evidence/validation-observations.json"
+          ],
+          "expected": "20260816ubuntu0.24.04.1",
+          "observed": "20260816ubuntu0.24.04.1",
+          "required": true,
+          "status": "pass",
+          "target_id": "target-001"
+        },
+        {
+          "check_id": "package-python3",
+          "evidence": [
+            "evidence/validation-plan.json",
+            "evidence/validation-observations.json"
+          ],
+          "expected": "3.12.3-0ubuntu2.1",
+          "observed": "3.12.3-0ubuntu2.1",
+          "required": true,
+          "status": "pass",
+          "target_id": "target-001"
+        },
+        {
+          "check_id": "package-python3-12",
+          "evidence": [
+            "evidence/validation-plan.json",
+            "evidence/validation-observations.json"
+          ],
+          "expected": "3.12.3-1ubuntu0.17",
+          "observed": "3.12.3-1ubuntu0.17",
+          "required": true,
+          "status": "pass",
+          "target_id": "target-001"
+        },
+        {
+          "check_id": "package-openssh-client",
+          "evidence": [
+            "evidence/validation-plan.json",
+            "evidence/validation-observations.json"
+          ],
+          "expected": "1:9.6p1-3ubuntu13.20",
+          "observed": "1:9.6p1-3ubuntu13.20",
+          "required": true,
+          "status": "pass",
+          "target_id": "target-001"
+        },
+        {
+          "check_id": "package-openssh-server",
+          "evidence": [
+            "evidence/validation-plan.json",
+            "evidence/validation-observations.json"
+          ],
+          "expected": "1:9.6p1-3ubuntu13.20",
+          "observed": "1:9.6p1-3ubuntu13.20",
+          "required": true,
+          "status": "pass",
+          "target_id": "target-001"
+        },
+        {
+          "check_id": "package-openssh-sftp-server",
+          "evidence": [
+            "evidence/validation-plan.json",
+            "evidence/validation-observations.json"
+          ],
+          "expected": "1:9.6p1-3ubuntu13.20",
+          "observed": "1:9.6p1-3ubuntu13.20",
+          "required": true,
+          "status": "pass",
+          "target_id": "target-001"
+        },
+        {
+          "check_id": "sshd-config-sha256",
+          "evidence": [
+            "evidence/validation-plan.json",
+            "evidence/validation-observations.json"
+          ],
+          "expected": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1",
+          "observed": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1",
+          "required": true,
+          "status": "pass",
+          "target_id": "target-001"
+        },
+        {
+          "check_id": "payload-sha256",
+          "evidence": [
+            "evidence/validation-plan.json",
+            "evidence/validation-observations.json"
+          ],
+          "expected": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+          "observed": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+          "required": true,
+          "status": "pass",
+          "target_id": "target-001"
+        },
+        {
+          "check_id": "payload-public-key-function",
+          "evidence": [
+            "evidence/validation-plan.json",
+            "evidence/validation-observations.json"
+          ],
+          "expected": "{\"invalid_rejected\":true,\"status\":\"observed\",\"valid_normalized\":true}",
+          "observed": "{\"invalid_rejected\":true,\"status\":\"observed\",\"valid_normalized\":true}",
+          "required": true,
+          "status": "pass",
+          "target_id": "target-001"
+        }
+      ],
+      "capture": {
+        "sha256": "9f621c126a4b0b9c4f765b70c0d30defc08ab88b85f2f8b43e2c955eb3cdcd08",
+        "size_bytes": 1707,
+        "complete": true
+      },
+      "cleanup": "completed",
+      "terraform_final_state_empty": true,
+      "primary_failure": null,
+      "unknown_outcome": false
+    }
+  },
+  "pinned_artifacts": [
+    {
+      "filename": "powershell.deb",
+      "url": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.8/powershell_7.6.8-1.deb_amd64.deb",
+      "bytes": 55409518,
+      "sha256": "f687eb1a3ba7b22a1ff35d85893b64aec1045ff718f13ceb8e56c300d60494dc"
+    },
+    {
+      "filename": "libicu74.deb",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/pool/main/i/icu/libicu74_74.2-1ubuntu3.1_amd64.deb",
+      "bytes": 10860078,
+      "sha256": "c9a70989678660eed9a1e904c74fa043da8bec8e2036856fc16e31ced79b04f8"
+    }
+  ],
+  "pinned_installed_file_sha256": {
+    "pwsh": "873de21f04b6a0269c220f9c8396ff5cd639e8deb058a32cc26df54b69bbff8d",
+    "LICENSE.txt": "7c77a44a8acd9b41fdc209864a8016b3d430b5d0e09309818d5b7444336df744",
+    "ThirdPartyNotices.txt": "275443457d6f9eac61ef2367da89b1420b94f68c1cc94ed305d2591514ea88d1"
+  },
+  "artifact_hash_verification": "Actual fixed doctor compares all three pinned installed files before the fixed smoke; no archive-signature verification is claimed. Immutable Git blobs establish source hashes; Windows working-tree newline normalization is not substituted.",
+  "fixture_tests": {
+    "linux": {
+      "cases": 258,
+      "skipped": 2,
+      "seconds": 11.361,
+      "passed": 256
+    },
+    "windows": {
+      "cases": 258,
+      "passed": 149,
+      "skipped": 109,
+      "seconds": 8.346,
+      "environment": "Windows CPython3.12.14",
+      "tested_source_revision": "88c8df01c38986fb909b3cfe231a97081f790bc1",
+      "provenance": "Writer tool observation, exact clean88c8df0 full unittest discover. Precise observation timestamp was not recorded."
+    }
+  },
+  "criteria": {
+    "AC-01": "pass: actual fixed empty local APT-source/state failure identifies powershell 7.6.8-1.deb and execution location, remains failed, followed by a separate fresh actual Terraform/strict SSH/Ansible lifecycle with ten required passed checks and normal cleanup.",
+    "AC-02": "pass: exact ordinary-helper-derived optional image built offline and a fresh UID 10001/read-only/no-network smoke observed PowerShell 7.6.8 Core/Unix, .NET 10.0.13, result 2 and all pinned dependencies; actual cgroup caps recorded.",
+    "AC-03": "pass: no authorized scanner package or documented compatible scanner method was available or invoked; every component keeps scanner compatibility explicitly unavailable and complete-pipeline/production ISO eligibility false."
+  },
+  "review": {
+    "kind": "Independent engineering subagent source review; separate from independent human examination",
+    "reviewed_revision": "88c8df01c38986fb909b3cfe231a97081f790bc1",
+    "remaining_material_findings": [],
+    "corrected_findings": [
+      "Docker combined-output diagnostics are not an image ID oracle; completed request plus pre-absent unique tag and exact provenance is verified.",
+      "Optional image labels derive from the original clean build Run/current recipe; empty receipt labels and base-image substitution are refused.",
+      "Known absent cleanup and matching archive-first finish resume are idempotent; dirty/fixture originals and uncertainty remain refused."
+    ],
+    "independent_linux_focused": {
+      "cases": 21,
+      "passed": 21,
+      "seconds": 1.879
+    },
+    "historical_fixture_correction": "At 964ca90 a Linux inode-substitution fixture reused its unlinked inode; test-only 3f6acef retains the old inode to exercise genuine substitution. Original failed verification remains private; final exact 88 source fixtures pass."
+  },
+  "limits": [
+    "Only explicitly selected fixed container PowerShell execution is supported; no host install, scanner, remoting or STIG compatibility is established.",
+    "Actual missing-package failure uses fixed empty local APT source/state and network-none; it is not a claim that normal installed packages are missing.",
+    "Writable-layer and Docker image sizes are observations, not disk reservations or daemon hard quotas.",
+    "Private state, credentials, raw captures, signed redirect URLs and host paths stay outside this export.",
+    "Publishing, hosted CI, merge and Owner acceptance require separate observations."
+  ],
+  "scanner_compatibility": "unavailable-no-authorized-package-or-documented-method",
+  "runtime_pipeline_complete": false,
+  "production_iso_eligible": false
+}
