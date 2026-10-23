@@ -143,7 +143,9 @@ unexpected failure of the negative scenario, never a passing negative result.
 `provision()` preserves and raises the actual nonzero apply failure. The explicit
 `prove_provider_unavailable()` method can clear only this scenario's uncertainty:
 it binds successful preparation, the validated saved-plan hash, complete failed
-apply diagnostics identifying the fixed missing socket, a second inside-container
+apply diagnostics identifying the exact pinned provider client/Ping failure,
+the SDK's fixed-endpoint wrapped sentence and authored network-resource context,
+a second inside-container
 ENOENT probe, empty actual state, no Terraform-owned IDs, and complete run-label
 and journal observations showing only the existing provisioner. Every operation
 file must match its bound terminal receipt and output hash; missing, extra,

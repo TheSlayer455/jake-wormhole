@@ -19,6 +19,14 @@ from test_admission import observed
 
 SHA = 'a' * 40
 CID, NET, CONTROLLER = 'a' * 64, 'b' * 64, 'c' * 64
+# Sanitized actual pinned-provider diagnostic, containing only the fixed endpoint
+# and authored network context; no run identity, credentials or private key data.
+WRAPPED_UNAVAILABLE = (b'docker_network.run: Creating...\n\n'
+    b'Error: failed to create Docker client: Error pinging Docker server, please make sure that '
+    b"unix:///run/wormhole/provider-unavailable.sock is reachable and has a  '_ping' endpoint. Error: "
+    b'Cannot connect to the Docker daemon at unix:///run/wormhole/provider-unavailable.sock. Is the docker daemon running?\n\n'
+    b'  with docker_network.run,\n  on main.tf line 24, in resource "docker_network" "run":\n'
+    b'  24: resource "docker_network" "run" {\n\n')
 
 
 def inputs(identifier='12345678-1234-4234-9234-123456789abc'):
@@ -174,6 +182,18 @@ class PlanPolicy(unittest.TestCase):
         for value in ('remote', 'unix:///tmp/arbitrary.sock', '', None):
             with self.assertRaises(p.ProvisioningError): p.scenario_source(value)
 
+    def test_provider_sdk_wrapped_diagnostic_is_bound_to_exact_fixed_endpoint_and_ping_failure(self):
+        self.assertTrue(p.unavailable_diagnostic(WRAPPED_UNAVAILABLE))
+        for raw in (b'Cannot connect to the Docker daemon',
+                    WRAPPED_UNAVAILABLE.replace(b'provider-unavailable.sock', b'arbitrary.sock'),
+                    WRAPPED_UNAVAILABLE.replace(b'Error pinging Docker server', b'Other error'),
+                    WRAPPED_UNAVAILABLE.replace(b'with docker_network.run,', b'with unrelated.resource,'),
+                    WRAPPED_UNAVAILABLE.replace(b'in resource "docker_network" "run":', b'in resource "docker_container" "target":'),
+                    b'dial unix /run/wormhole/provider-unavailable.sock: connect: no such file or directory',
+                    b'Error pinging Docker server: timeout at unix:///run/wormhole/provider-unavailable.sock',
+                    WRAPPED_UNAVAILABLE.decode()):
+            with self.subTest(raw=raw): self.assertFalse(p.unavailable_diagnostic(raw))
+
     @unittest.skipUnless(hasattr(runtime.socket, 'AF_UNIX'), 'Unix endpoint probe requires Linux AF_UNIX; socket calls are mocked')
     def test_fixed_unix_probe_never_accepts_an_existing_or_wrong_failure_endpoint(self):
         with patch.object(runtime.os, 'lstat', side_effect=FileNotFoundError), patch.object(runtime.socket, 'socket') as factory:
@@ -325,7 +345,7 @@ class Controller(unittest.TestCase):
         if name in ('plan', 'destroy-plan'):
             saved = self.session.state / ('apply.tfplan' if name == 'plan' else 'destroy.tfplan')
             saved.write_bytes(b'synthetic saved plan'); saved.chmod(0o600)
-        if name == 'apply': raw = b'Synthetic provider error: dial unix /run/wormhole/provider-unavailable.sock: connect: no such file or directory'
+        if name == 'apply': raw = WRAPPED_UNAVAILABLE
         elif name == 'probe-unavailable': raw = json.dumps({'endpoint': p.UNAVAILABLE_ENDPOINT, 'path_absent': True, 'connect_errno': 'ENOENT'}).encode()
         elif name in ('show-state', 'final-state'): raw = b'{"values":{"root_module":{"resources":[]}}}'
         elif name == 'show-destroy-plan': raw = b'{"format_version":"1.2","terraform_version":"1.17.0","resource_changes":[]}'

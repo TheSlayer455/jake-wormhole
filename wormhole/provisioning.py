@@ -261,6 +261,16 @@ def scenario_source(scenario):
         ('provider "docker" { host = "' + UNAVAILABLE_ENDPOINT + '" }').encode())
 
 
+def unavailable_diagnostic(raw):
+    """Pinned provider/SDK messages bind diagnostics; probes establish ENOENT."""
+    endpoint = UNAVAILABLE_ENDPOINT.encode()
+    wrapped = b'Cannot connect to the Docker daemon at ' + endpoint + b'. Is the docker daemon running?'
+    provider = (b'Error: failed to create Docker client: Error pinging Docker server, please make sure that ' + endpoint +
+        b" is reachable and has a  '_ping' endpoint. Error: " + wrapped)
+    return type(raw) is bytes and provider in raw and b'with docker_network.run,' in raw and \
+        b'in resource "docker_network" "run":' in raw
+
+
 class ProvisioningSession:
     """Caller owns run.locked(), docker_scope(run) and the canonical held lease."""
     def __init__(self, run, lease, *, toolchain=None, scenario='healthy'):
@@ -663,7 +673,7 @@ class ProvisioningSession:
         require(digest == failed['output_sha256'] and size == failed['output_bytes'],
                 'zero_contact_unproven', 'Actual apply diagnostics changed after capture.')
         raw = path.read_bytes()
-        require(b'/run/wormhole/provider-unavailable.sock' in raw and b'no such file or directory' in raw,
+        require(unavailable_diagnostic(raw),
                 'zero_contact_unproven', 'The actual provider failure does not identify the fixed absent Unix endpoint.')
         require(self.operation('probe-unavailable') == expected_probe and not resources(self.operation('show-state')),
                 'zero_contact_unproven', 'The endpoint must remain absent and actual Terraform state must be empty.')
