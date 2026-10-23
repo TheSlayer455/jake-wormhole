@@ -19,3 +19,5 @@ See also [candidate source/image/test binding and exact-source recovery](WORM-01
 <!-- WORM-011 actual capability 88c8df01c38986fb909b3cfe231a97081f790bc1 -->
 
 [Optional PowerShell capability review](WORM-011.md) records exact source findings and actual qualification limits.
+
+See [native RPM reference and same-candidate qualification](WORM-014.md).

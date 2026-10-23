@@ -1,0 +1,613 @@
+{
+  "early_actual_observations": [
+    {
+      "admission_finished": true,
+      "capture_sha256": "1d2cd77b81da1f66f34cf3094070d8a30360278f4c19ddc4498df3828f459c85",
+      "cgroups": {
+        "cpu.max": "200000 100000",
+        "memory.max": "2147483648",
+        "memory.swap.max": "0",
+        "pids.max": "256"
+      },
+      "cleanup": "completed",
+      "observations": {
+        "base_image_id": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+        "dnf": {
+          "available": true,
+          "base_api": true,
+          "repos_loaded": false,
+          "transaction_run": false,
+          "version": "4.14.0"
+        },
+        "eula_scope": {
+          "candidate_EULA_paths_found": false,
+          "identity_files_do_not_establish_license_presence": true,
+          "whole_image_search_performed": false
+        },
+        "key_files": [
+          {
+            "bytes": 3682,
+            "path": "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+            "primary_fingerprints": [
+              "567E347AD0044ADE55BA8A5F199E2F91FD431D51",
+              "7E4624258C406535D56D6F135054E4A45A6340B3"
+            ],
+            "sha256": "0db3dc1b6228f29d60f37c5ad91d9f4cd3547895e8ebedb242469b1c0a0cdf08",
+            "signature_verification": "not-performed"
+          }
+        ],
+        "os_release": {
+          "CPE_NAME": "cpe:/o:redhat:enterprise_linux:9::baseos",
+          "ID": "rhel",
+          "NAME": "Red Hat Enterprise Linux",
+          "PLATFORM_ID": "platform:el9",
+          "PRETTY_NAME": "Red Hat Enterprise Linux 9.8 (Plow)",
+          "VERSION_ID": "9.8"
+        },
+        "public_base_reference": "registry.access.redhat.com/ubi9/ubi@sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+        "python": {
+          "executable": "/usr/bin/python3",
+          "version": "3.9.25"
+        },
+        "rpm": {
+          "version": "4.16.1.3"
+        },
+        "rpm_header_count": 188,
+        "ssh_keygen_present": false,
+        "sshd_present": false
+      },
+      "observed_at": "2026-10-23T18:20:44.122159+00:00",
+      "operation": "ubi-base-probe",
+      "production_iso_eligible": false,
+      "recipe_sha256": "cf6042655913ffbb39f7b0ccef8409b2583eb4439c783b305a147c6c21e7f9fd",
+      "run_id": "95661bd0-0530-4d8a-95ff-c94238e92fbf",
+      "runtime_pipeline_complete": false,
+      "source_files": {
+        "lock.json": "0853cf445f3969da6f29e5aa58b1831b28e4113cb830bfdb0dfe4d19ae8c8446",
+        "probe.py": "b20dd2f4074866b3d42137cb5ffce62d9ac77e6a9ed852bc78d3910762748ef6"
+      },
+      "source_revision": "be55565369e2c6bcea3e80303504ac657b500506",
+      "started_at": "2026-10-23T18:20:36.884Z",
+      "status": "passed",
+      "unknown_outcome": false,
+      "unrelated_sentinel_unchanged": true,
+      "updated_at": "2026-10-23T18:20:44.105Z"
+    },
+    {
+      "admission_finished": true,
+      "base_packages_sha256": "2860534af45f03f12989f2f9b24ba3fa8bed9f999362570fe1498a7f63770d7b",
+      "base_probe": {
+        "capture_sha256": "1d2cd77b81da1f66f34cf3094070d8a30360278f4c19ddc4498df3828f459c85",
+        "recipe_sha256": "cf6042655913ffbb39f7b0ccef8409b2583eb4439c783b305a147c6c21e7f9fd",
+        "run_id": "95661bd0-0530-4d8a-95ff-c94238e92fbf",
+        "source_revision": "be55565369e2c6bcea3e80303504ac657b500506"
+      },
+      "capture_bytes": 1265,
+      "capture_sha256": "be0be41831976ce32df6a55d56a03e8957954bfa866861059fd1c17ab3ad834d",
+      "cgroups": {
+        "cpu.max": "200000 100000",
+        "memory.max": "2147483648",
+        "memory.swap.max": "0",
+        "pids.max": "256"
+      },
+      "cleanup": "completed",
+      "observed_at": "2026-10-23T18:39:36.039181+00:00",
+      "operation": "ubi-offline-resolution",
+      "production_iso_eligible": false,
+      "recipe_sha256": "34711c1f0ebfd9af407755c72ceab0f04a169c1b9287554e7c9a962e0e42cb9b",
+      "removed_packages": [],
+      "request_sha256": "f06b23f85b83c7d0d45b0865c4771c58ef0909a17e8a2e7ace6f50e3049a2229",
+      "requested_packages": [
+        {
+          "arch": "x86_64",
+          "epoch": 0,
+          "name": "openssh-server",
+          "release": "13.el9_8",
+          "version": "9.9p1"
+        },
+        {
+          "arch": "x86_64",
+          "epoch": 0,
+          "name": "python3",
+          "release": "7.el9_8.3",
+          "version": "3.9.25"
+        },
+        {
+          "arch": "x86_64",
+          "epoch": 2,
+          "name": "shadow-utils",
+          "release": "16.el9",
+          "version": "4.9"
+        }
+      ],
+      "run_id": "f29517a0-9f78-40bf-acb6-4fdd7693dcf1",
+      "runtime_pipeline_complete": false,
+      "selected_bytes": 1011137,
+      "selected_packages": [
+        {
+          "arch": "x86_64",
+          "bytes": 443578,
+          "epoch": 0,
+          "name": "openssh",
+          "path": "Packages/o/openssh-9.9p1-13.el9_8.x86_64.rpm",
+          "release": "13.el9_8",
+          "repo_id": "wormhole-ubi9-baseos",
+          "sha256": "f3a0c1bf130cf8335db06a3b13793b4f590208e5a3f20a1a3391eb8f0162d06a",
+          "version": "9.9p1"
+        },
+        {
+          "arch": "x86_64",
+          "bytes": 567559,
+          "epoch": 0,
+          "name": "openssh-server",
+          "path": "Packages/o/openssh-server-9.9p1-13.el9_8.x86_64.rpm",
+          "release": "13.el9_8",
+          "repo_id": "wormhole-ubi9-baseos",
+          "sha256": "98b9fafb13d6482639a5cecc381166fa22484d770b65ed12f29159cce5e0d426",
+          "version": "9.9p1"
+        }
+      ],
+      "source_files": {
+        "lock.json": "0853cf445f3969da6f29e5aa58b1831b28e4113cb830bfdb0dfe4d19ae8c8446",
+        "probe.py": "b20dd2f4074866b3d42137cb5ffce62d9ac77e6a9ed852bc78d3910762748ef6",
+        "resolve.py": "b9ad9c5e8853858ab218b2895e18ee19d870d223a634029c11c57b055fcdaf05"
+      },
+      "source_revision": "c37c07dc6a919746c374491622c2cfa8003b7d9d",
+      "sources_sha256": "94d0ab366b6e2993adbdb72e32e18e392c4aecb5cd08e118fdfd7b373f6f308f",
+      "started_at": "2026-10-23T18:39:27.104Z",
+      "status": "passed",
+      "unknown_outcome": false,
+      "unrelated_sentinel_unchanged": true,
+      "updated_at": "2026-10-23T18:39:36.019Z"
+    }
+  ],
+  "early_failed_attempts": [
+    {
+      "cleanup": "pending",
+      "container_created": false,
+      "description": "The Docker 29 engine returned the pinned platform manifest as image ID, while the original validator expected its distinct OCI config digest. The failed receipt and original unknown flag were preserved.",
+      "observed_at": "2026-10-23T18:12:49.264480+00:00",
+      "operation": "ubi-base-probe",
+      "primary_failure": {
+        "code": "rpm_base_invalid",
+        "recorded_at": "2026-10-23T18:12:49.249Z"
+      },
+      "production_iso_eligible": false,
+      "reconciliation_limit": "Raw successful pull output was not retained. Reconciliation relied on source-traced control flow and positive exact immutable-image inspection, without modifying the failed receipt.",
+      "run_id": "f73f9caf-bee1-4225-a6f7-1f888f1e4f12",
+      "runtime_pipeline_complete": false,
+      "separate_reconciliation": {
+        "controller_sha256": "4ad2d8a7d43a7c8712190b6005d31d1e2648fcb226f54c5a944e52f779ebcd56",
+        "docker_mutations": false,
+        "journal_finalized_through": "AdmissionLease.resume/finish",
+        "manifest_descriptor_and_config_rootfs_verified": true,
+        "new_resources_registered": false,
+        "observed_at": "2026-10-23T18:19:17.765Z",
+        "operation": "exact-original-source-positive-public-base-reconciliation",
+        "original_receipt_modified": false,
+        "original_receipt_sha256": "ce30ac688d36909b43693468597423a7b5bd9a6af6288e6e9b28b49c7c07a04f",
+        "public_base_manifest_sha256": "3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+        "pull_completion_evidence": "source-traced control flow plus positively inspected exact immutable public image; raw successful pull output was not retained",
+        "resources_adopted": false,
+        "retained_public_base_image_id": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+        "retained_public_base_size_bytes": 80416938,
+        "status": "completed",
+        "upstream_config_sha256": "9be18d9ba921714e79e390694315e3341047fe758ac79b62e671d92d4217c3fb"
+      },
+      "source_revision": "01fe92b2e275016b22e7388e11dbb17896cbdf46",
+      "started_at": "2026-10-23T18:12:42.115Z",
+      "status": "failed",
+      "unknown_outcome": true,
+      "updated_at": "2026-10-23T18:12:49.249Z"
+    },
+    {
+      "admission": {
+        "observed_at": "2026-10-23T18:28:56.613547+00:00",
+        "resource_outcomes": [
+          {
+            "kind": "image",
+            "outcome": "retained"
+          },
+          {
+            "kind": "container",
+            "outcome": "absent"
+          }
+        ],
+        "state": "finished"
+      },
+      "capture_bytes": 92,
+      "capture_sha256": "b8f76e51b76a99b549f8e3ef653d1bb66559ec6cfe69a0d75bff48604c900740",
+      "captured_result": {
+        "code": "rpm_resolution_refused",
+        "operation": "ubi-offline-resolution-v1",
+        "status": "failed"
+      },
+      "cgroups": {
+        "cpu.max": "200000 100000",
+        "memory.max": "2147483648",
+        "memory.swap.max": "0",
+        "pids.max": "256"
+      },
+      "cleanup": "completed",
+      "description": "The fixed solver emitted a generic failed result. Its original capture does not identify the underlying exception.",
+      "observed_at": "2026-10-23T18:28:30.799285+00:00",
+      "operation": "ubi-offline-resolution",
+      "primary_failure": {
+        "code": "rpm_resolution_runtime",
+        "recorded_at": "2026-10-23T18:28:30.622Z"
+      },
+      "production_iso_eligible": false,
+      "run_id": "ca71b295-feba-4360-86db-ed0885897eab",
+      "runtime_pipeline_complete": false,
+      "sentinel_limit": "The failed component receipt does not persist a sentinel-result field; do not invent one from a later successful Run.",
+      "sentinel_unchanged_direct_failure_receipt": null,
+      "source_revision": "6f71aeb06a96d66f034e40a3a869088a6a089321",
+      "started_at": "2026-10-23T18:28:21.801Z",
+      "status": "failed",
+      "unknown_outcome": false,
+      "updated_at": "2026-10-23T18:28:30.754Z"
+    },
+    {
+      "admission": {
+        "observed_at": "2026-10-23T18:34:04.428608+00:00",
+        "resource_outcomes": [
+          {
+            "kind": "image",
+            "outcome": "retained"
+          },
+          {
+            "kind": "container",
+            "outcome": "absent"
+          }
+        ],
+        "state": "finished"
+      },
+      "capture_bytes": 140,
+      "capture_sha256": "8d4a55db21ed12268922fcd692e3acd7feedb5cf3d33554d7aabfa35991dfc5b",
+      "captured_result": {
+        "code": "rpm_resolution_refused",
+        "exception_class": "OSError",
+        "operation": "ubi-offline-resolution-v1",
+        "phase": "sack-load",
+        "status": "failed"
+      },
+      "cgroups": {
+        "cpu.max": "200000 100000",
+        "memory.max": "2147483648",
+        "memory.swap.max": "0",
+        "pids.max": "256"
+      },
+      "cleanup": "completed",
+      "description": "The bounded diagnostic observed OSError during sack-load. Source tracing found a missing logfile parent; the directory fix later progressed through DNF. No raw original exception text was captured.",
+      "observed_at": "2026-10-23T18:31:57.415663+00:00",
+      "operation": "ubi-offline-resolution",
+      "primary_failure": {
+        "code": "rpm_resolution_runtime",
+        "recorded_at": "2026-10-23T18:31:57.242Z"
+      },
+      "production_iso_eligible": false,
+      "run_id": "1178d43d-7849-4e97-aaae-954d59f85158",
+      "runtime_pipeline_complete": false,
+      "sentinel_limit": "The failed component receipt does not persist a sentinel-result field; do not invent one from a later successful Run.",
+      "sentinel_unchanged_direct_failure_receipt": null,
+      "source_revision": "f612628f35e57ae158427b16e291b11b12b9001a",
+      "started_at": "2026-10-23T18:31:48.835Z",
+      "status": "failed",
+      "unknown_outcome": false,
+      "updated_at": "2026-10-23T18:31:57.373Z"
+    },
+    {
+      "admission": {
+        "observed_at": "2026-10-23T18:38:43.667822+00:00",
+        "resource_outcomes": [
+          {
+            "kind": "image",
+            "outcome": "retained"
+          },
+          {
+            "kind": "container",
+            "outcome": "absent"
+          }
+        ],
+        "state": "finished"
+      },
+      "capture_bytes": 1265,
+      "capture_sha256": "29e0ef640e67f325bdba19f61a8e0870db7ba03a50624045573eb298a37797bd",
+      "captured_result": {
+        "base_image_id": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+        "base_packages_sha256": "2860534af45f03f12989f2f9b24ba3fa8bed9f999362570fe1498a7f63770d7b",
+        "operation": "ubi-offline-resolution-v1",
+        "packages": [
+          {
+            "arch": "x86_64",
+            "bytes": 443578,
+            "epoch": 0,
+            "name": "openssh",
+            "path": "Packages/o/openssh-9.9p1-13.el9_8.x86_64.rpm",
+            "release": "13.el9_8",
+            "repo_id": "wormhole-ubi9-baseos",
+            "sha256": "f3a0c1bf130cf8335db06a3b13793b4f590208e5a3f20a1a3391eb8f0162d06a",
+            "version": "9.9p1"
+          },
+          {
+            "arch": "x86_64",
+            "bytes": 567559,
+            "epoch": 0,
+            "name": "openssh-server",
+            "path": "Packages/o/openssh-server-9.9p1-13.el9_8.x86_64.rpm",
+            "release": "13.el9_8",
+            "repo_id": "wormhole-ubi9-baseos",
+            "sha256": "98b9fafb13d6482639a5cecc381166fa22484d770b65ed12f29159cce5e0d426",
+            "version": "9.9p1"
+          }
+        ],
+        "remove_packages": [],
+        "request_sha256": "54597ae8c81eef5d85b8dc6b59f81655e2e827019b47a72432b5689d7ccfd10c",
+        "requested_packages": [
+          {
+            "arch": "x86_64",
+            "epoch": 0,
+            "name": "openssh-server",
+            "release": "13.el9_8",
+            "version": "9.9p1"
+          },
+          {
+            "arch": "x86_64",
+            "epoch": 0,
+            "name": "python3",
+            "release": "7.el9_8.3",
+            "version": "3.9.25"
+          },
+          {
+            "arch": "x86_64",
+            "epoch": 2,
+            "name": "shadow-utils",
+            "release": "16.el9",
+            "version": "4.9"
+          }
+        ],
+        "sources_sha256": "94d0ab366b6e2993adbdb72e32e18e392c4aecb5cd08e118fdfd7b373f6f308f",
+        "status": "passed"
+      },
+      "cgroups": {
+        "cpu.max": "200000 100000",
+        "memory.max": "2147483648",
+        "memory.swap.max": "0",
+        "pids.max": "256"
+      },
+      "cleanup": "completed",
+      "description": "The container returned a passed two-RPM selection, but the host rejected its pinned catalog because libstdc++ contains plus signs. The overall operation remained failed; no validated selection was returned.",
+      "observed_at": "2026-10-23T18:35:35.366002+00:00",
+      "operation": "ubi-offline-resolution",
+      "primary_failure": {
+        "code": "rpm_catalog_invalid",
+        "recorded_at": "2026-10-23T18:35:35.178Z"
+      },
+      "production_iso_eligible": false,
+      "run_id": "7f342850-6ee3-4928-a64a-f580a23afecf",
+      "runtime_pipeline_complete": false,
+      "sentinel_limit": "The failed component receipt does not persist a sentinel-result field; do not invent one from a later successful Run.",
+      "sentinel_unchanged_direct_failure_receipt": null,
+      "source_revision": "dc096f824027ea22a3b622b8ad5b7cac1a0933b9",
+      "started_at": "2026-10-23T18:35:26.453Z",
+      "status": "failed",
+      "unknown_outcome": false,
+      "updated_at": "2026-10-23T18:35:35.318Z"
+    }
+  ],
+  "later_failed_SSH": {
+    "SSH_qualified": false,
+    "admission": "finished",
+    "build": {
+      "dependency_check": "passed",
+      "eula": {
+        "bytes": 248785,
+        "path": "/licenses/ubi9-container/UBI-EULA-20190422.pdf",
+        "sha256": "a07025b9f5b71a816febe6ac76f21c9f759c806fa0a66874af90a50c3293f1b6"
+      },
+      "hostkeys_absent_before_runtime": true,
+      "installed_rpm_header_count": 190,
+      "key_files": [
+        {
+          "path": "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+          "primary_fingerprints": [
+            "567E347AD0044ADE55BA8A5F199E2F91FD431D51",
+            "7E4624258C406535D56D6F135054E4A45A6340B3"
+          ],
+          "sha256": "0db3dc1b6228f29d60f37c5ad91d9f4cd3547895e8ebedb242469b1c0a0cdf08"
+        }
+      ],
+      "os_release": {
+        "ID": "rhel",
+        "NAME": "Red Hat Enterprise Linux",
+        "PRETTY_NAME": "Red Hat Enterprise Linux 9.8 (Plow)",
+        "VERSION_ID": "9.8"
+      },
+      "signature_results": [
+        {
+          "filename": "openssh-9.9p1-13.el9_8.x86_64.rpm",
+          "sha256": "f3a0c1bf130cf8335db06a3b13793b4f590208e5a3f20a1a3391eb8f0162d06a",
+          "signature": "verified",
+          "verification_output": "/packages/openssh-9.9p1-13.el9_8.x86_64.rpm:\n    Header V4 RSA/SHA256 Signature, key ID fd431d51: OK\n    Header SHA256 digest: OK\n    Header SHA1 digest: OK\n    Payload SHA256 digest: OK\n    MD5 digest: OK\n",
+          "verification_output_sha256": "651635e888269b91555cf951e426f3d268c4af32ea82b4eed71b04380dc7bcaa",
+          "verification_returncode": 0
+        },
+        {
+          "filename": "openssh-server-9.9p1-13.el9_8.x86_64.rpm",
+          "sha256": "98b9fafb13d6482639a5cecc381166fa22484d770b65ed12f29159cce5e0d426",
+          "signature": "verified",
+          "verification_output": "/packages/openssh-server-9.9p1-13.el9_8.x86_64.rpm:\n    Header V4 RSA/SHA256 Signature, key ID fd431d51: OK\n    Header SHA256 digest: OK\n    Header SHA1 digest: OK\n    Payload SHA256 digest: OK\n    MD5 digest: OK\n",
+          "verification_output_sha256": "e6729e9f1228e56e1d45ca72247b439284fa50725ac4dce64091911c3f95d2f0",
+          "verification_returncode": 0
+        }
+      ],
+      "virtual_key_header_count": 2
+    },
+    "cleanup": "completed",
+    "completed_readiness_stages": [
+      "created",
+      "started",
+      "endpoint-discovered",
+      "tcp-reachable"
+    ],
+    "derived_image": "sha256:7462a585177219bb607a05f2bca3d37cfa0e1b97acc53d3e9543618b9bd23327",
+    "description": "The builder and provisioned target passed their earlier guards and TCP succeeded. The strict SSH probe refused authentication; no functional SSH/Ansible result was established. Normal exact-owned cleanup preserved the original failure. Its cause was not yet proven by this receipt.",
+    "phase": "provision",
+    "primary_failure": "ssh_authentication_refused",
+    "probes": [
+      {
+        "category": null,
+        "operation": "tcp",
+        "returncode": 0,
+        "status": "pass",
+        "timed_out": false,
+        "truncated": false
+      },
+      {
+        "category": "ssh_authentication_refused",
+        "operation": "ssh",
+        "returncode": 255,
+        "status": "fail",
+        "timed_out": false,
+        "truncated": false
+      }
+    ],
+    "run_id": "ed0dcb50-22cc-4f7d-b87f-35a3a68a5337",
+    "source_revision": "66b0e27df7bf629db957337c47401b44f602ba73",
+    "status": "failed",
+    "suite_run_id": "e3bd19db-f00e-4608-94d2-d43a5cbfac7d",
+    "unknown_outcome": false
+  },
+  "later_failed_SSH_with_server_diagnostic": {
+    "SSH_qualified": false,
+    "admission": "finished",
+    "build": {
+      "dependency_check": "passed",
+      "eula": {
+        "bytes": 248785,
+        "path": "/licenses/ubi9-container/UBI-EULA-20190422.pdf",
+        "sha256": "a07025b9f5b71a816febe6ac76f21c9f759c806fa0a66874af90a50c3293f1b6"
+      },
+      "hostkeys_absent_before_runtime": true,
+      "installed_rpm_header_count": 190,
+      "key_files": [
+        {
+          "path": "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+          "primary_fingerprints": [
+            "567E347AD0044ADE55BA8A5F199E2F91FD431D51",
+            "7E4624258C406535D56D6F135054E4A45A6340B3"
+          ],
+          "sha256": "0db3dc1b6228f29d60f37c5ad91d9f4cd3547895e8ebedb242469b1c0a0cdf08"
+        }
+      ],
+      "os_release": {
+        "ID": "rhel",
+        "NAME": "Red Hat Enterprise Linux",
+        "PRETTY_NAME": "Red Hat Enterprise Linux 9.8 (Plow)",
+        "VERSION_ID": "9.8"
+      },
+      "signature_results": [
+        {
+          "filename": "openssh-9.9p1-13.el9_8.x86_64.rpm",
+          "sha256": "f3a0c1bf130cf8335db06a3b13793b4f590208e5a3f20a1a3391eb8f0162d06a",
+          "signature": "verified",
+          "verification_output": "/packages/openssh-9.9p1-13.el9_8.x86_64.rpm:\n    Header V4 RSA/SHA256 Signature, key ID fd431d51: OK\n    Header SHA256 digest: OK\n    Header SHA1 digest: OK\n    Payload SHA256 digest: OK\n    MD5 digest: OK\n",
+          "verification_output_sha256": "651635e888269b91555cf951e426f3d268c4af32ea82b4eed71b04380dc7bcaa",
+          "verification_returncode": 0
+        },
+        {
+          "filename": "openssh-server-9.9p1-13.el9_8.x86_64.rpm",
+          "sha256": "98b9fafb13d6482639a5cecc381166fa22484d770b65ed12f29159cce5e0d426",
+          "signature": "verified",
+          "verification_output": "/packages/openssh-server-9.9p1-13.el9_8.x86_64.rpm:\n    Header V4 RSA/SHA256 Signature, key ID fd431d51: OK\n    Header SHA256 digest: OK\n    Header SHA1 digest: OK\n    Payload SHA256 digest: OK\n    MD5 digest: OK\n",
+          "verification_output_sha256": "e6729e9f1228e56e1d45ca72247b439284fa50725ac4dce64091911c3f95d2f0",
+          "verification_returncode": 0
+        }
+      ],
+      "virtual_key_header_count": 2
+    },
+    "cleanup": "completed",
+    "derived_image": "sha256:d43df64633fbe8c8c8e8b8c5b1c60430b3e09757b32f8aadba8c37026862ec39",
+    "description": "The original bounded server log records two linux_audit_write_entry failures with EPERM during refused SSH authentication. The separate successful diagnostic capture does not establish authentication success. A secondary cleanup_exit kill EPERM is retained as an observation; it does not prove that another capability is required. No raw log is exported.",
+    "diagnostic_capture": {
+      "audit_write_EPERM_occurrences": 2,
+      "bytes": 483,
+      "raw_exported": false,
+      "secondary_cleanup_exit_kill_EPERM_observed": true,
+      "sha256": "449bfa64f21c0a9df2ac5db7c405e3db300d6522a581f8a458f3c3187d44065e",
+      "status": "captured"
+    },
+    "phase": "provision",
+    "primary_failure": "ssh_authentication_refused",
+    "run_id": "0ea691c0-0803-4abf-8119-39f0a7e5ca43",
+    "source_revision": "ce3ec10b0dd3b98c4522de806aedbd2887efc33c",
+    "status": "failed",
+    "suite_run_id": "df91e790-5d6e-49b8-bab4-08048e509eb3",
+    "unknown_outcome": false
+  },
+  "later_failed_provision": {
+    "SSH_qualified": false,
+    "admission": "finished",
+    "build": {
+      "dependency_check": "passed",
+      "eula": {
+        "bytes": 248785,
+        "path": "/licenses/ubi9-container/UBI-EULA-20190422.pdf",
+        "sha256": "a07025b9f5b71a816febe6ac76f21c9f759c806fa0a66874af90a50c3293f1b6"
+      },
+      "hostkeys_absent_before_runtime": true,
+      "installed_rpm_header_count": 190,
+      "key_files": [
+        {
+          "path": "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+          "primary_fingerprints": [
+            "567E347AD0044ADE55BA8A5F199E2F91FD431D51",
+            "7E4624258C406535D56D6F135054E4A45A6340B3"
+          ],
+          "sha256": "0db3dc1b6228f29d60f37c5ad91d9f4cd3547895e8ebedb242469b1c0a0cdf08"
+        }
+      ],
+      "os_release": {
+        "ID": "rhel",
+        "NAME": "Red Hat Enterprise Linux",
+        "PRETTY_NAME": "Red Hat Enterprise Linux 9.8 (Plow)",
+        "VERSION_ID": "9.8"
+      },
+      "signature_results": [
+        {
+          "filename": "openssh-9.9p1-13.el9_8.x86_64.rpm",
+          "sha256": "f3a0c1bf130cf8335db06a3b13793b4f590208e5a3f20a1a3391eb8f0162d06a",
+          "signature": "verified",
+          "verification_output": "/packages/openssh-9.9p1-13.el9_8.x86_64.rpm:\n    Header V4 RSA/SHA256 Signature, key ID fd431d51: OK\n    Header SHA256 digest: OK\n    Header SHA1 digest: OK\n    Payload SHA256 digest: OK\n    MD5 digest: OK\n",
+          "verification_output_sha256": "651635e888269b91555cf951e426f3d268c4af32ea82b4eed71b04380dc7bcaa",
+          "verification_returncode": 0
+        },
+        {
+          "filename": "openssh-server-9.9p1-13.el9_8.x86_64.rpm",
+          "sha256": "98b9fafb13d6482639a5cecc381166fa22484d770b65ed12f29159cce5e0d426",
+          "signature": "verified",
+          "verification_output": "/packages/openssh-server-9.9p1-13.el9_8.x86_64.rpm:\n    Header V4 RSA/SHA256 Signature, key ID fd431d51: OK\n    Header SHA256 digest: OK\n    Header SHA1 digest: OK\n    Payload SHA256 digest: OK\n    MD5 digest: OK\n",
+          "verification_output_sha256": "e6729e9f1228e56e1d45ca72247b439284fa50725ac4dce64091911c3f95d2f0",
+          "verification_returncode": 0
+        }
+      ],
+      "virtual_key_header_count": 2
+    },
+    "cleanup": "completed",
+    "derived_image": "sha256:3bb56c2aacfe53fc28eb1e8ddc91ac90a8bed6df74b082af6b5f092e501e2abd",
+    "description": "The derived image retained builder WORMHOLE_ROLE/Run configuration, conflicting with the strict target environment guard. Do not attribute this failure solely to entrypoint/Cmd splitting. The source fix uses process-only builder environment and rejects inherited project variables in the image.",
+    "phase": "provision",
+    "primary_failure": "unsafe_target",
+    "run_id": "2a302c0e-ddb3-4934-8964-0d6c04590e06",
+    "source_revision": "71878d1e8bde5cedb50223fc3614a9c07e086894",
+    "status": "failed",
+    "suite_run_id": "870bc439-18a1-40d3-b335-1cf7ae1a17b4",
+    "unknown_outcome": false
+  },
+  "limits": [
+    "The initial 01fe failed unknown receipt was never rewritten; separate source-bound positive-image reconciliation finalized admission.",
+    "The generic 6f failure has no captured original exception; f612 observed sack-load/OSError; dc container passed but host catalog refused plus signs.",
+    "Historical 718, 66 and ce3 build/signature/EULA success does not establish successful functional SSH qualification.",
+    "Successful collection of a failed server log is distinct from a passing SSH result; its raw contents remain private."
+  ]
+}
