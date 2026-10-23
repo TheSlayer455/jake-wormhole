@@ -374,6 +374,7 @@ class HelperSubprocess(unittest.TestCase):
                 result, observation = runtime.ansible(value, attempt)
             self.assertEqual(result['returncode'], 0); self.assertEqual(observation['ping'], 'pong')
             self.assertIn('ansible.builtin.ping', calls[0]); self.assertIn('--tree', calls[0]); self.assertIn('--forks', calls[0])
+            self.assertNotIn('-a', calls[0]); self.assertNotIn('--args', calls[0]); self.assertNotIn('{}', calls[0])
             inventory = json.loads((attempt / 'inventory.json').read_text())['all']['hosts']['target-001']
             self.assertEqual(inventory['ansible_connection'], 'ssh')
             self.assertEqual(inventory['ansible_python_interpreter'], '/usr/bin/python3')
@@ -401,7 +402,10 @@ class HelperSubprocess(unittest.TestCase):
                 ({'elapsed': 0, 'skipped': True}, 0, False, False, False), ({'elapsed': True}, 0, False, False, False)]
             for index, (tree, code, timed_out, truncated, expected) in enumerate(cases):
                 attempt = root / ('case-' + str(index)); attempt.mkdir(mode=0o700)
-                def child(*_):
+                def child(argv, *_):
+                    self.assertEqual(argv.count('-a'), 1)
+                    self.assertEqual(json.loads(argv[argv.index('-a') + 1]), {'timeout': 15, 'connect_timeout': 3, 'sleep': 1})
+                    self.assertEqual(argv[argv.index('-m') + 1], 'ansible.builtin.wait_for_connection')
                     results = attempt / 'results'; results.mkdir()
                     (results / 'target-001').write_text(json.dumps(tree))
                     return {'returncode': code, 'log': '', 'timed_out': timed_out, 'truncated': truncated}

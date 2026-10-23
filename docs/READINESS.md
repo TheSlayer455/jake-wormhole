@@ -64,6 +64,9 @@ configured Python interpreter. Genuine pinned Ansible Core2.21.5 then runs
 `ansible.builtin.wait_for_connection` and `ansible.builtin.ping`, requiring the
 expected target's structured result and actual `pong`. Connection is explicitly
 `ssh`; no local connection or target Docker exec substitutes for these checks.
+The ping CLI omits `-a`; pinned ad-hoc parsing treats an empty JSON object as
+falsey and falls back to raw parameters. Only the wait action receives its fixed,
+nonempty timeout arguments.
 The inventory sets `ansible_ssh_use_tty=false` and
 `ansible_ssh_transfer_method=piped`. Pinned2.21.5 otherwise defaults to forced
 TTY allocation, which the target deliberately forbids. Piped transfer uses
