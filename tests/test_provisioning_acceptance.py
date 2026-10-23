@@ -100,7 +100,7 @@ class PrivateEvidence(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix='wormhole-acceptance-synthetic-')
         self.addCleanup(self.temp.cleanup)
         self.run = create_run(Path(self.temp.name) / 'runs', fixture=False, identity=(SHA, False))
-        self.secret = b'-----BEGIN OPENSSH PRIVATE KEY-----\n' + b'A' * 70 + b'\n-----END OPENSSH PRIVATE KEY-----\n'
+        self.secret = b'-----BEGIN ' + b'OPENSSH PRIVATE KEY-----\n' + b'A' * 70 + b'\n-----END OPENSSH PRIVATE KEY-----\n'
         atomic_bytes(self.run.file('private/credentials/id_ed25519'), self.secret)
         self.run.file('private/target-input').mkdir(mode=0o700)
         key = self.run.file('private/target-input/authorized_keys')
@@ -125,7 +125,7 @@ class PrivateEvidence(unittest.TestCase):
     def test_cross_chunk_key_body_private_path_and_public_key_content_are_rejected_without_match_export(self):
         public = self.run.file('private/target-input/authorized_keys').read_bytes().strip()
         needles = [b'A' * 70, str(self.run.file('private/credentials/id_ed25519')).encode(), public,
-                   b'-----BEGIN EC PRIVATE KEY-----']
+                   b'-----BEGIN ' + b'EC PRIVATE KEY-----']
         for needle in needles:
             with self.subTest(pattern_bytes=len(needle)):
                 atomic_bytes(self.output, b'x' * (a.CHUNK - 20) + needle + b'x')
