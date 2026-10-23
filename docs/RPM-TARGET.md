@@ -153,6 +153,29 @@ provisioner keeps its separate stock image, fixed socket/mounts and limits. Exac
 original-source recovery validates the recorded platform binding without
 executing reconstructed candidate data; no generic image override is introduced.
 
+The later actual ce3ec10 attempt reached SSH but the retained server log reported
+`linux_audit_write_entry failed: Operation not permitted`. Known scoped cleanup
+completed and the original failed capture remains unchanged. A separate
+`cleanup_exit: kill(...)` error was secondary; it does not authorize another
+capability. The UsePAM warning did not establish an authentication-policy defect.
+
+Only an already validated UBI binding now selects the fixed typed
+`ubi9-ssh-audit-write-v1` target policy. It adds `AUDIT_WRITE` to `SETGID`, `SETUID`
+and `SYS_CHROOT`; the stock and Ubuntu candidate policy keep their existing three
+capabilities. Exact generated Terraform inputs, the saved-plan gate, stopped/live
+container checks, private controller metadata and recovery evidence must agree.
+No CLI or mutable capability list grants this policy. Original failed Runs use
+their original source and are not converted to the new policy.
+
+`AUDIT_WRITE` permits records in the shared kernel audit log, a real effect beyond
+the container filesystem. It does not grant audit read/control or alter host audit
+settings. The bounded target lifetime, exact owned calls, resource limits and
+remaining confinement stay in force. No `AUDIT_CONTROL`, `AUDIT_READ`, `KILL`,
+privileged mode, host setting, PAM or algorithm change is included. See the
+[Linux capability reference](https://man7.org/linux/man-pages/man7/capabilities.7.html)
+and [Docker capability documentation](https://docs.docker.com/engine/containers/run/#runtime-privilege-and-linux-capabilities).
+This source correction still requires a fresh actual SSH/Ansible qualification.
+
 ## Read-only RPM validation
 
 `RPMValidationSession(readiness, binding, scenario=...)` uses the existing fixed

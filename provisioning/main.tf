@@ -15,6 +15,7 @@ variable "image" { type = string }
 variable "public_input" { type = string }
 variable "target_limits" { type = any }
 variable "target_ids" { type = list(string) }
+variable "target_capabilities" { type = list(string) }
 locals {
   prefix = "wormhole-${var.run_id}"
   common = {
@@ -64,7 +65,7 @@ resource "docker_container" "target" {
   env = ["WORMHOLE_RUN_ID=${var.run_id}", "WORMHOLE_RUNTIME_TTL_SECONDS=300"]
   capabilities {
     drop = ["ALL"]
-    add  = ["SETGID", "SETUID", "SYS_CHROOT"]
+    add  = var.target_capabilities
   }
   tmpfs = {
     "/run" = "rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0"

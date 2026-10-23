@@ -5,6 +5,7 @@ private state and exact accounting; native deletion never substitutes for destro
 """
 import argparse
 from copy import deepcopy
+from enum import Enum
 import hashlib
 import ipaddress
 import json
@@ -30,6 +31,18 @@ ID = re.compile(r'[a-f0-9]{64}\Z')
 MAX_OUTPUT = 4 * 1024 * 1024
 SCENARIOS = ('healthy', 'provider-unavailable')
 UNAVAILABLE_ENDPOINT = 'unix:///run/wormhole/provider-unavailable.sock'
+
+
+class TargetRuntimePolicy(Enum):
+    QUALIFIED_SSH = 'qualified-ssh-v1'
+    UBI9_AUDIT_WRITE = 'ubi9-ssh-audit-write-v1'
+
+    @property
+    def capabilities(self):
+        return tuple(images.TARGET_CAPS) + (('AUDIT_WRITE',) if self is TargetRuntimePolicy.UBI9_AUDIT_WRITE else ())
+
+    def record(self):
+        return {'id':self.value,'capabilities':list(self.capabilities)}
 
 
 class ProvisioningError(RunError):
@@ -135,9 +148,12 @@ def validate_refresh(value, variables, owned, target_plan=None):
             'unsafe_plan', 'Refresh cannot introduce modules or executable Terraform provisioners.')
 
 
-def validate_plan(value, variables, *, operation='create', owned=None, target_plan=None):
+def validate_plan(value, variables, *, operation='create', owned=None, target_plan=None, runtime_policy=TargetRuntimePolicy.QUALIFIED_SSH):
     """Typed allowlist for actual Terraform JSON, not text matching the plan UI."""
     allowed = layout_addresses(target_plan)
+    require(type(runtime_policy) is TargetRuntimePolicy and
+            variables.get('target_capabilities',list(images.TARGET_CAPS)) == list(runtime_policy.capabilities),
+            'unsafe_plan', 'Target capability inputs must match the trusted session policy; input values cannot grant a policy.')
     require(type(value) is dict, 'unsafe_plan', 'The plan must be a structured supported Terraform record.')
     if target_plan is not None:
         require(value.get('variables') == {key: {'value': item} for key, item in variables.items()}, 'unsafe_plan', 'The indexed plan must contain exact generated input bindings.')
@@ -223,7 +239,8 @@ def validate_plan(value, variables, *, operation='create', owned=None, target_pl
                 'unsafe_plan', 'Target security or ownership differs.')
         caps = target.get('capabilities')
         require(type(caps) is list and len(caps) == 1 and set(caps[0]) == {'add', 'drop'} and
-                set(caps[0]['add']) == set(images.TARGET_CAPS) and caps[0]['drop'] == ['ALL'],
+                type(caps[0]['add']) is list and len(caps[0]['add']) == len(runtime_policy.capabilities) and
+                all(type(x) is str for x in caps[0]['add']) and set(caps[0]['add']) == set(runtime_policy.capabilities) and caps[0]['drop'] == ['ALL'],
                 'unsafe_plan', 'Only the qualified SSH target capabilities are permitted.')
         require(target.get('tmpfs') == {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0',
                 '/tmp': 'rw,nosuid,nodev,noexec,size=16m,mode=1777'} and
@@ -374,9 +391,10 @@ class ProvisioningSession:
             'runtime_pipeline_complete': False, 'production_iso_eligible': False,
             'resource_layout': LAYOUT, 'target_plan': self.target_plan.record(), 'pending_target_ids': list(self.target_plan.target_ids)}
         if self.target_binding is not None: self.receipt['target_binding'] = deepcopy(self.target_binding)
+        self.receipt['target_runtime_policy'] = self.target_runtime_policy.record()
         self.variables = {'run_id': run.id, 'source_revision': revision, 'image': self.target_image_id,
             'public_input': str(images.safe_bind(run.file('private/target-input'))), 'target_ids': list(self.target_plan.target_ids),
-            'target_limits': deepcopy(lease.plan['limits']['target']['terraform'])}
+            'target_limits': deepcopy(lease.plan['limits']['target']['terraform']), 'target_capabilities':list(self.target_runtime_policy.capabilities)}
         self.variables['target_limits'].pop('start'); self.variables['target_limits'].pop('must_run')
         self.inputs = {}
 
@@ -389,6 +407,15 @@ class ProvisioningSession:
     def target_image_labels(self):
         binding = getattr(self, 'target_binding', None)
         return binding['image_labels'] if binding is not None else self.image_labels
+
+    @property
+    def target_runtime_policy(self):
+        # Construction/resume validate the full platform binding before assigning
+        # it. No CLI, Terraform variable or imported field selects capabilities.
+        binding = getattr(self, 'target_binding', None)
+        if binding is None: return TargetRuntimePolicy.QUALIFIED_SSH
+        _, version = target_binding_policy(binding)
+        return TargetRuntimePolicy.UBI9_AUDIT_WRITE if version == 2 else TargetRuntimePolicy.QUALIFIED_SSH
 
     @property
     def target_resources(self):
@@ -426,6 +453,7 @@ class ProvisioningSession:
                 'source_revision': self.variables['source_revision'], 'id': self.provisioner,
                 'uid': self.uid, 'gid': self.gid, 'groups': self.socket_groups, 'mounts': self.mounts,
                 'image_labels': self.image_labels, 'inputs': self.inputs, 'scenario': self.scenario,
+                'target_runtime_policy':self.target_runtime_policy.record(),
                 **({'resource_layout': LAYOUT, 'target_plan': self.target_plan.record()} if getattr(self, 'target_plan', None) is not None else {}),
                 **({'target_binding_version': target_binding_policy(self.target_binding)[1], 'target_binding': self.target_binding} if getattr(self, 'target_binding', None) is not None else {})})
 
@@ -657,7 +685,9 @@ class ProvisioningSession:
                 actual['State'].get('StartedAt') == '0001-01-01T00:00:00Z' and actual.get('RestartCount', 0) == 0,
                 'premature_start', 'The target must be observed created and never started before PID enforcement/start.')
         host, config = actual['HostConfig'], actual['Config']
-        require(config.get('User') == '0:0' and images.capability_names(host.get('CapAdd')) == set(images.TARGET_CAPS) and
+        require(config.get('User') == '0:0' and type(host.get('CapAdd')) is list and
+                len(host['CapAdd']) == len(self.target_runtime_policy.capabilities) and
+                images.capability_names(host['CapAdd']) == set(self.target_runtime_policy.capabilities) and
                 host.get('NetworkMode') == 'bridge' and
                 config.get('Entrypoint') == ['/usr/bin/python3', '/opt/wormhole/runtime.py'] and config.get('Cmd') == ['target'] and
                 set(x for x in config.get('Env', []) if x.startswith('WORMHOLE_')) ==
@@ -701,7 +731,7 @@ class ProvisioningSession:
             self.receipt['actual_tools'] = {'terraform_version': version['terraform_version'], 'platform': version['platform'],
                 'provider_version': '4.6.0', 'offline_readonly_lock_h1_confirmed': H1, 'provider_schema_observed': True}
             self.operation('plan')
-            validate_plan(self.operation('show-plan'), self.variables, target_plan=self.target_plan)
+            validate_plan(self.operation('show-plan'), self.variables, target_plan=self.target_plan, runtime_policy=self.target_runtime_policy)
             saved, _ = file_digest(self.state / 'apply.tfplan')
             self.check_inputs()
             require(file_digest(self.state / 'apply.tfplan')[0] == saved,
@@ -783,7 +813,7 @@ class ProvisioningSession:
                 'target_not_ready', 'Inventory refresh requires the complete known graph.')
         try:
             self.operation('refresh-plan')
-            validate_plan(self.operation('show-refresh-plan'), self.variables, operation='refresh', owned=self.owned, target_plan=self.target_plan)
+            validate_plan(self.operation('show-refresh-plan'), self.variables, operation='refresh', owned=self.owned, target_plan=self.target_plan, runtime_policy=self.target_runtime_policy)
             self.operation('refresh-apply')
             self.receipt['inventory'] = self.inventory(self.operation('output'))
             self.run.save_artifact('inventory', self.receipt['inventory'])
@@ -946,7 +976,7 @@ class ProvisioningSession:
                     require(set(actual.get('Containers', {})) <= set(self.target_resources.values()),
                             'ownership_mismatch', 'An unexpected endpoint is attached; refuse network destruction.')
             self.operation('destroy-plan')
-            validate_plan(self.operation('show-destroy-plan'), self.variables, operation='destroy', owned=remaining, target_plan=getattr(self, 'target_plan', None))
+            validate_plan(self.operation('show-destroy-plan'), self.variables, operation='destroy', owned=remaining, target_plan=getattr(self, 'target_plan', None), runtime_policy=self.target_runtime_policy)
             self.operation('destroy')
             require(not resources(self.operation('final-state'), getattr(self, 'target_plan', None)), 'destroy_incomplete', 'Terraform still records managed resources after destroy.')
             self.receipt.setdefault('cleanup_progress', {})['terraform_final_state_empty'] = True
@@ -1028,7 +1058,7 @@ class ProvisioningSession:
         session.state = run.file('private/terraform')
         record = read_json(session.state / 'controller.json')
         new_layout = 'resource_layout' in record or 'target_plan' in record
-        fields = {'schema_version', 'run_id', 'source_revision', 'id', 'uid', 'gid', 'groups', 'mounts', 'image_labels', 'inputs', 'scenario'}
+        fields = {'schema_version', 'run_id', 'source_revision', 'id', 'uid', 'gid', 'groups', 'mounts', 'image_labels', 'inputs', 'scenario', 'target_runtime_policy'}
         if new_layout: fields |= {'resource_layout', 'target_plan'}
         candidate_layout = 'target_binding_version' in record or 'target_binding' in record
         if candidate_layout: fields |= {'target_binding_version', 'target_binding'}
@@ -1046,6 +1076,8 @@ class ProvisioningSession:
             require(new_layout and session.target_plan.profile == 'smoke' and
                 session.scenario == 'healthy', 'recovery_scope', 'Unsupported candidate layout cannot be reinterpreted.')
             session.target_binding = policy.validate_binding(run, record['target_binding'], artifacts=False)
+        require(record['target_runtime_policy'] == session.target_runtime_policy.record(),
+                'recovery_scope', 'Retained target capability policy differs from its validated platform binding.')
         session.provisioner, session.uid, session.gid = record['id'], record['uid'], record['gid']
         session.socket_groups, session.image_labels, session.inputs = record['groups'], record['image_labels'], record['inputs']
         require((session.uid, session.gid, session.socket_groups) == provisioner_identity(),
@@ -1055,6 +1087,8 @@ class ProvisioningSession:
         if new_layout:
             require(session.variables.get('target_ids') == list(session.target_plan.target_ids), 'recovery_scope', 'Recorded target inputs changed.')
         require(session.variables.get('image') == session.target_image_id, 'recovery_scope', 'Retained target image differs from its explicit binding.')
+        require(session.variables.get('target_capabilities') == list(session.target_runtime_policy.capabilities),
+                'recovery_scope', 'Retained target capability input differs from the fixed platform policy.')
         session.receipt = read_json(run.file('evidence/provisioning.json'))
         require(common(session.receipt) == common(manifest) and session.receipt.get('scenario') == session.scenario and
                 session.receipt.get('provisioner_id', session.provisioner) == session.provisioner and
@@ -1063,6 +1097,7 @@ class ProvisioningSession:
         require((new_layout and session.receipt.get('resource_layout') == LAYOUT and session.receipt.get('target_plan') == session.target_plan.record()) or
                 (not new_layout and 'target_ids' not in session.variables), 'recovery_scope', 'Evidence and controller layout must match without conversion.')
         require(session.receipt.get('target_image') == session.target_image_id and
+            session.receipt.get('target_runtime_policy') == session.target_runtime_policy.record() and
             (session.receipt.get('target_binding') == session.target_binding if candidate_layout else 'target_binding' not in session.receipt),
             'recovery_scope', 'Retained evidence cannot replace its candidate or stock image contract.')
         session.owned = {x['address']: x['id'] for x in session.receipt['resources']}

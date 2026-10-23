@@ -72,7 +72,8 @@ class RpmCandidate(RpmFixture,unittest.TestCase):
     def test_forged_binding_fields_unfinished_build_and_changed_bytes_cannot_pass(self):
         binding=binding_for(self)
         for alter in (lambda x:x.update(source_candidate_sha256='0'*64),lambda x:x.update(content_sha256='0'*64),
-            lambda x:x['image_labels'].update(extra='unapproved'),lambda x:x.update(source_dirty=0)):
+            lambda x:x['image_labels'].update(extra='unapproved'),lambda x:x.update(source_dirty=0),
+            lambda x:x.update(target_capabilities=['AUDIT_CONTROL']),lambda x:x.update(target_runtime_policy='arbitrary')):
             changed=deepcopy(binding);alter(changed)
             with self.assertRaises(Exception):rc.validate_binding(self.run,changed)
         receipt=read_json(self.run.file('evidence/rpm-candidate-build.json'));receipt['unknown_outcome']=True

@@ -8,7 +8,32 @@ from unittest.mock import patch
 import test_provisioning as base
 from test_candidate import DERIVED
 from wormhole import candidate as c, rpm_candidate as rc, rpm_assembly as assembly, rpm_target, provisioning as p, images
-from wormhole.runs import read_json
+from wormhole.runs import read_json,atomic_json,atomic_bytes
+
+
+class RuntimeCapabilityPlans(unittest.TestCase):
+    def test_only_explicit_typed_session_policy_can_authorize_ubi_audit_write(self):
+        standard=list(images.TARGET_CAPS)
+        self.assertEqual(set(standard),{'SETUID','SETGID','SYS_CHROOT'})
+        stock=base.inputs();stock['target_capabilities']=standard
+        p.validate_plan(base.plan(stock),stock)
+        ubi=deepcopy(stock);ubi['target_capabilities']=standard+['AUDIT_WRITE']
+        with self.assertRaises(p.ProvisioningError):p.validate_plan(base.plan(ubi),ubi)
+        p.validate_plan(base.plan(ubi),ubi,runtime_policy=p.TargetRuntimePolicy.UBI9_AUDIT_WRITE)
+        for bad in ('ubi9-ssh-audit-write-v1',True,{'id':'ubi9-ssh-audit-write-v1'}):
+            with self.subTest(bad=bad),self.assertRaises(p.ProvisioningError):
+                p.validate_plan(base.plan(ubi),ubi,runtime_policy=bad)
+        for caps in (standard,standard+['AUDIT_CONTROL'],standard+['AUDIT_READ'],standard+['KILL'],
+            standard+['AUDIT_WRITE','AUDIT_CONTROL'],standard+['AUDIT_WRITE','AUDIT_WRITE']):
+            value=deepcopy(ubi);value['target_capabilities']=caps
+            with self.subTest(caps=caps),self.assertRaises(p.ProvisioningError):
+                p.validate_plan(base.plan(value),value,runtime_policy=p.TargetRuntimePolicy.UBI9_AUDIT_WRITE)
+        # A valid input record cannot hide extra capabilities in either saved
+        # plan representation, even when both representations agree.
+        value=base.plan(ubi)
+        value['planned_values']['root_module']['resources'][1]['values']['capabilities'][0]['add'].append('KILL')
+        value['resource_changes'][1]['change']['after']['capabilities'][0]['add'].append('KILL')
+        with self.assertRaises(p.ProvisioningError):p.validate_plan(value,ubi,runtime_policy=p.TargetRuntimePolicy.UBI9_AUDIT_WRITE)
 
 
 @unittest.skipUnless(os.name == 'posix', 'Linux provisioning policy fixture; Docker/Terraform mocked')
@@ -48,6 +73,7 @@ class CandidateProvisioning(unittest.TestCase):
             self.assertEqual(inventory['targets'][0]['image_digest'], DERIVED)
             context = read_json(self.run.file('private/terraform/controller.json'))
             self.assertEqual(context['target_binding_version'], self.expected_binding_version); self.assertEqual(context['target_binding'], self.binding)
+            self.assertEqual(context['target_runtime_policy'],self.session.target_runtime_policy.record())
             wrong = deepcopy(target); wrong['Image'] = p.TARGET_IMAGE
             with self.assertRaises(p.ProvisioningError): self.session.verify_target(wrong)
             result = self.session.destroy()
@@ -63,6 +89,7 @@ class CandidateProvisioning(unittest.TestCase):
                 resumed = p.ProvisioningSession.resume_destroy(self.run, self.lease)
             validation.assert_called_once_with(self.run, self.binding, artifacts=False)
             self.assertEqual(resumed.target_image_id, DERIVED); self.assertTrue(resumed.destroy_only)
+            self.assertEqual(resumed.target_runtime_policy,self.session.target_runtime_policy)
             with patch.object(resumed, 'operation', side_effect=self.operation): result = resumed.destroy()
         self.assertEqual(result['cleanup'], 'completed')
         self.assertEqual(result['target_binding'], self.binding)
@@ -73,6 +100,47 @@ class RpmCandidateProvisioning(CandidateProvisioning):
     policy = rc
     operation_name = 'ubi9-candidate-image-binding'
     expected_binding_version = 2
+
+    def test_ubi_caps_are_exact_before_start_and_never_expand_stock_defaults(self):
+        self.assertIs(self.session.target_runtime_policy,p.TargetRuntimePolicy.UBI9_AUDIT_WRITE)
+        self.assertEqual(set(self.session.variables['target_capabilities']),set(images.TARGET_CAPS)|{'AUDIT_WRITE'})
+        self.assertNotIn('AUDIT_WRITE',images.TARGET_CAPS)
+        with self.patches():
+            self.session.create_stopped();target=self.container(base.CID)
+            self.session.verify_target(target,stopped=True)
+            for capabilities in (list(images.TARGET_CAPS),list(self.session.target_runtime_policy.capabilities)+['AUDIT_CONTROL'],
+                list(self.session.target_runtime_policy.capabilities)+['AUDIT_READ'],list(self.session.target_runtime_policy.capabilities)+['KILL'],
+                list(self.session.target_runtime_policy.capabilities)+['AUDIT_WRITE']):
+                changed=deepcopy(target);changed['HostConfig']['CapAdd']=capabilities
+                with self.subTest(capabilities=capabilities),self.assertRaises(p.ProvisioningError) as error:
+                    self.session.verify_target(changed,stopped=True)
+                self.assertEqual(error.exception.code,'unsafe_target')
+            self.assertFalse(self.running[base.CID])
+            self.session.destroy()
+
+    def test_resume_refuses_policy_context_receipt_or_input_tamper_before_restart(self):
+        with self.patches():
+            self.session.provision();self.running[base.CONTROLLER]=False;self.lease._reconciliation_only=True
+            (self.session.state/'operations').mkdir(mode=0o700)
+            context_path=self.session.state/'controller.json';receipt_path=self.run.file('evidence/provisioning.json')
+            variables_path=self.session.state/'terraform.tfvars.json'
+            originals={path:read_json(path) for path in (context_path,receipt_path,variables_path)}
+            original_bytes={path:path.read_bytes() for path in originals}
+            for path in originals:
+                changed=deepcopy(originals[path])
+                if path==variables_path:changed['target_capabilities']=list(images.TARGET_CAPS)
+                else:changed['target_runtime_policy']=p.TargetRuntimePolicy.QUALIFIED_SSH.record()
+                atomic_json(path,changed);before=len(self.calls)
+                with patch.object(rc,'validate_binding',return_value=deepcopy(self.binding)),self.assertRaises(p.ProvisioningError) as error:
+                    p.ProvisioningSession.resume_destroy(self.run,self.lease)
+                self.assertEqual(error.exception.code,'recovery_scope')
+                self.assertFalse(any(call[:2]==('docker','start') for call in self.calls[before:]))
+                self.assertFalse(any(call[0]=='operation' for call in self.calls[before:]))
+                atomic_bytes(path,original_bytes[path])
+            with patch.object(rc,'validate_binding',return_value=deepcopy(self.binding)):
+                resumed=p.ProvisioningSession.resume_destroy(self.run,self.lease)
+            self.assertIs(resumed.target_runtime_policy,p.TargetRuntimePolicy.UBI9_AUDIT_WRITE)
+            with patch.object(resumed,'operation',side_effect=self.operation):resumed.destroy()
 
     def test_real_commit_layout_matches_unchanged_strict_provisioning_guard(self):
         # Parse the authored Dockerfile change instructions, rather than giving

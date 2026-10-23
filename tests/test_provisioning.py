@@ -78,7 +78,7 @@ def plan(variables, operation='create'):
         'publish_all_ports': False, 'network_mode': 'bridge', 'ipc_mode': 'private', 'cgroupns_mode': 'private',
         **variables['target_limits'], 'entrypoint': ['/usr/bin/python3', '/opt/wormhole/runtime.py'], 'command': ['target'],
         'security_opts': ['no-new-privileges:true'], 'labels': label('target'),
-        'capabilities': [{'add': list(images.TARGET_CAPS), 'drop': ['ALL']}],
+        'capabilities': [{'add': list(variables.get('target_capabilities',images.TARGET_CAPS)), 'drop': ['ALL']}],
         'tmpfs': {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0', '/tmp': 'rw,nosuid,nodev,noexec,size=16m,mode=1777'},
         'env': ['WORMHOLE_RUN_ID=' + variables['run_id'], 'WORMHOLE_RUNTIME_TTL_SECONDS=300'],
         'volumes': [{'host_path': variables['public_input'], 'container_path': '/run/input', 'read_only': True}],
@@ -302,7 +302,7 @@ class Controller(unittest.TestCase):
                          ['WORMHOLE_RUN_ID=' + self.run.id, 'WORMHOLE_RUNTIME_TTL_SECONDS=300']}
         host = {'Memory': expected['memory_bytes'], 'MemorySwap': expected['memory_swap_bytes'], 'NanoCpus': expected['nano_cpus'],
             'PidsLimit': expected['pids_limit'] if root else self.target_pid_limit, 'ReadonlyRootfs': True, 'Privileged': False,
-            'CapDrop': ['ALL'], 'CapAdd': [] if root else list(images.TARGET_CAPS), 'PidMode': '', 'IpcMode': 'private',
+            'CapDrop': ['ALL'], 'CapAdd': [] if root else list(self.session.target_runtime_policy.capabilities), 'PidMode': '', 'IpcMode': 'private',
             'NetworkMode': 'none' if root else 'bridge', 'LogConfig': {'Type': expected['log_driver'], 'Config': expected['log_opts']},
             'SecurityOpt': ['no-new-privileges:true'], 'RestartPolicy': {'Name': 'no'}, 'GroupAdd': [],
             'Tmpfs': {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=' + ('0700' if root else '0755') + ',uid=0,gid=0',
@@ -475,6 +475,16 @@ class Controller(unittest.TestCase):
             self.assertEqual(self.session.receipt['primary_failure']['code'], 'limits_not_enforced')
             self.assertNotIn(('docker', 'start', CID), self.calls)
             self.assertIsNone(self.session.receipt['inventory'])
+
+    def test_stock_target_cannot_inherit_the_ubi_only_audit_write_capability(self):
+        self.assertIs(self.session.target_runtime_policy,p.TargetRuntimePolicy.QUALIFIED_SSH)
+        with self.patches():
+            self.session.create_stopped()
+            target=self.container(CID);target['HostConfig']['CapAdd'].append('AUDIT_WRITE')
+            with self.assertRaises(p.ProvisioningError) as error:self.session.verify_target(target,stopped=True)
+            self.assertEqual(error.exception.code,'unsafe_target')
+            self.assertFalse(self.running[CID])
+            self.session.destroy()
 
     def test_actual_workflow_policy_orders_pid_and_inspection_before_start_then_provider_refresh_destroy(self):
         with self.patches():
