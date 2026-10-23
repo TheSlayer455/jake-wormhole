@@ -14,6 +14,7 @@ variable "source_revision" { type = string }
 variable "image" { type = string }
 variable "public_input" { type = string }
 variable "target_limits" { type = any }
+variable "target_ids" { type = list(string) }
 locals {
   prefix = "wormhole-${var.run_id}"
   common = {
@@ -37,7 +38,8 @@ resource "docker_network" "run" {
   }
 }
 resource "docker_container" "target" {
-  name              = "${local.prefix}-target-001"
+  for_each          = toset(var.target_ids)
+  name              = "${local.prefix}-${each.key}"
   image             = var.image
   start             = false
   must_run          = false
@@ -75,7 +77,7 @@ resource "docker_container" "target" {
   }
   networks_advanced { name = docker_network.run.name }
   dynamic "labels" {
-    for_each = merge(local.common, { "io.jake-wormhole.role" = "target" })
+    for_each = merge(local.common, { "io.jake-wormhole.role" = "target", "io.jake-wormhole.target_id" = each.key })
     content {
       label = labels.key
       value = labels.value
@@ -86,8 +88,10 @@ output "run" {
   value = {
     network_id   = docker_network.run.id
     network_name = docker_network.run.name
-    target_id    = docker_container.target.id
-    image        = docker_container.target.image
-    network_data = docker_container.target.network_data
+    targets = { for target_id, target in docker_container.target : target_id => {
+      resource_id = target.id
+      image = target.image
+      network_data = target.network_data
+    } }
   }
 }

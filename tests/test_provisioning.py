@@ -37,6 +37,37 @@ def inputs(identifier='12345678-1234-4234-9234-123456789abc'):
 
 
 def plan(variables, operation='create'):
+    if 'target_ids' in variables:
+        legacy = deepcopy(variables); ids = legacy.pop('target_ids')
+        value = plan(legacy, operation)
+        value['variables'] = {key: {'value': item} for key, item in variables.items()}
+        def expand(items, values_key):
+            result = []
+            for item in items:
+                if item['address'] != 'docker_container.target':
+                    row = deepcopy(item); row.update(type='docker_network', name='run'); result.append(row); continue
+                for number, target_id in enumerate(ids, 1):
+                    row = deepcopy(item); row['address'] = 'docker_container.target[' + json.dumps(target_id) + ']'; row['index'] = target_id
+                    row.update(type='docker_container', name='target')
+                    blobs = [row['change'].get(key) for key in ('before', 'after')] if values_key == 'change' else [row['values']]
+                    for blob in blobs:
+                        if blob is None: continue
+                        blob['name'] = 'wormhole-' + variables['run_id'] + '-' + target_id
+                        blob['labels'].append({'label': images.LABEL + '.target_id', 'value': target_id})
+                        if 'id' in blob: blob['id'] = CID if number == 1 else format(number, '064x')
+                    result.append(row)
+            return result
+        if value['planned_values'].get('root_module', {}).get('resources'):
+            value['planned_values']['root_module']['resources'] = expand(value['planned_values']['root_module']['resources'], 'values')
+        value['resource_changes'] = expand(value['resource_changes'], 'change')
+        if operation == 'refresh':
+            value['prior_state']['values']['root_module']['resources'] = expand(value['prior_state']['values']['root_module']['resources'], 'values')
+            value['resource_drift'] = expand(value['resource_drift'], 'change')
+            output = value['planned_values']['outputs']['run']['value']
+            value['planned_values']['outputs']['run']['value'] = {'network_id': NET, 'network_name': output['network_name'],
+                'targets': {target_id: {'resource_id': CID if number == 1 else format(number, '064x'), 'image': variables['image'],
+                    'network_data': []} for number, target_id in enumerate(ids, 1)}}
+        return value
     prefix = 'wormhole-' + variables['run_id']
     common = {images.LABEL + '.run_id': variables['run_id'], images.LABEL + '.source_revision': SHA}
     label = lambda role: [{'label': key, 'value': value} for key, value in {**common, images.LABEL + '.role': role}.items()]
@@ -224,11 +255,11 @@ class Controller(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory(prefix='wormhole-provisioning-synthetic-')
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
-        self.run = create_run(self.root / 'runs', fixture=False, identity=(SHA, False))
+        self.run = create_run(self.root / 'runs', fixture=False, profile=getattr(self, 'fixture_profile', 'smoke'), identity=(SHA, False))
         target_input = self.run.file('private/target-input'); target_input.mkdir(mode=0o755)
         blob = struct.pack('>I', 11) + b'ssh-ed25519' + struct.pack('>I', 32) + bytes(range(32))
         (target_input / 'authorized_keys').write_text('ssh-ed25519 ' + base64.b64encode(blob).decode() + '\n')
-        self.plan = a.build_plan('smoke', observed()); self.plan['synthetic'] = False
+        self.plan = a.build_plan(getattr(self, 'fixture_profile', 'smoke'), observed()); self.plan['synthetic'] = False
         calls = self.calls = []
         class Lease:
             run_id = self.run.id
@@ -322,9 +353,9 @@ class Controller(unittest.TestCase):
             return plan(self.session.variables, 'refresh' if name == 'show-refresh-plan' else 'destroy' if name == 'show-destroy-plan' else 'create')
         if name == 'show-state':
             value = plan(self.session.variables, 'refresh'); return value['prior_state']
-        if name == 'output': return {'run': {'sensitive': False, 'value': {'network_id': NET, 'target_id': CID,
-            'network_name': 'wormhole-' + self.run.id + '-network', 'image': p.TARGET_IMAGE,
-            'network_data': [{'network_name': 'wormhole-' + self.run.id + '-network', 'ip_address': '172.31.77.2'}]}}}
+        if name == 'output': return {'run': {'sensitive': False, 'value': {'network_id': NET,
+            'network_name': 'wormhole-' + self.run.id + '-network', 'targets': {'target-001': {'resource_id': CID, 'image': p.TARGET_IMAGE,
+            'network_data': [{'network_name': 'wormhole-' + self.run.id + '-network', 'ip_address': '172.31.77.2'}]}}}}}
         if name == 'destroy': self.removed.update({CID, NET})
         if name == 'final-state': return {'values': {'root_module': {'resources': []}}}
         return {'synthetic': True}
@@ -348,7 +379,7 @@ class Controller(unittest.TestCase):
         if name == 'apply': raw = WRAPPED_UNAVAILABLE
         elif name == 'probe-unavailable': raw = json.dumps({'endpoint': p.UNAVAILABLE_ENDPOINT, 'path_absent': True, 'connect_errno': 'ENOENT'}).encode()
         elif name in ('show-state', 'final-state'): raw = b'{"values":{"root_module":{"resources":[]}}}'
-        elif name == 'show-destroy-plan': raw = b'{"format_version":"1.2","terraform_version":"1.17.0","resource_changes":[]}'
+        elif name == 'show-destroy-plan': raw = json.dumps({'format_version': '1.2', 'terraform_version': '1.17.0', 'resource_changes': [], 'variables': {key: {'value': value} for key, value in self.session.variables.items()}}).encode()
         elif name == 'show-plan': raw = json.dumps(plan(self.session.variables)).encode()
         elif name in ('version', 'schema'): raw = json.dumps(self.operation(name)).encode()
         else: raw = b'Synthetic completed fixed operation'
@@ -408,7 +439,7 @@ class Controller(unittest.TestCase):
     def test_stopped_stage_allows_pause_without_start_or_invented_inventory(self):
         with self.patches():
             owned = self.session.create_stopped()
-            self.assertEqual(owned, {'docker_container.target': CID, 'docker_network.run': NET})
+            self.assertEqual(owned, {'docker_container.target[\"target-001\"]': CID, 'docker_network.run': NET})
             self.assertEqual(self.session.receipt['status'], 'created-stopped')
             self.assertIsNone(self.session.receipt['inventory'])
             self.assertFalse(self.running[CID])
@@ -485,7 +516,7 @@ class Controller(unittest.TestCase):
             with self.assertRaises(p.ProvisioningError) as error: self.session.provision()
         self.assertEqual(error.exception.code, 'premature_start')
         self.assertFalse(any(call[:2] == ('docker', 'update') or call == ('docker', 'start', CID) for call in self.calls))
-        self.assertEqual(self.session.owned['docker_container.target'], CID)
+        self.assertEqual(self.session.owned['docker_container.target[\"target-001\"]'], CID)
 
     def test_only_the_independently_verified_internal_run_endpoint_is_allowed(self):
         with self.patches():
@@ -549,7 +580,7 @@ class Controller(unittest.TestCase):
     def test_provider_output_cannot_redirect_inventory_and_input_edits_fail(self):
         with self.patches():
             self.session.provision()
-            output = self.operation('output'); output['run']['value']['network_data'][0]['ip_address'] = '127.0.0.1'
+            output = self.operation('output'); output['run']['value']['targets']['target-001']['network_data'][0]['ip_address'] = '127.0.0.1'
             with self.assertRaises(p.ProvisioningError): self.session.inventory(output)
             self.session.state.joinpath('main.tf').write_text('resource "unsafe" "injected" {}')
             with self.assertRaises(p.ProvisioningError): self.session.check_inputs()

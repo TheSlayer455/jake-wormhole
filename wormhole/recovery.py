@@ -178,7 +178,7 @@ def _resources(session, lease):
     for item in lease.record['resources']:
         identifier = item['id']
         role = ('provisioner' if identifier == session.provisioner else
-            'terraform-target' if identifier == owned.get('docker_container.target') else
+            'terraform-target' if any(address.startswith('docker_container.') and identifier == resource_id for address, resource_id in owned.items()) else
             'terraform-network' if identifier == owned.get('docker_network.run') else
             'helper' if identifier == helper else 'retained-image' if item['kind'] == 'image' else 'other-owned')
         result.append({'kind': item['kind'], 'id': identifier, 'role': role,

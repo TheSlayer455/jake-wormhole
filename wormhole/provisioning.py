@@ -19,6 +19,7 @@ from .admission import AdmissionLease
 from .runs import (RunError, SOURCE_ROOT, _owned, atomic_bytes, atomic_json, common,
                    create_run, now, read_json, source_identity)
 from .stages import _run_process, execute_run
+from .targets import TargetPlan, LAYOUT, NETWORK
 
 CONTEXT = SOURCE_ROOT / 'provisioning'
 TARGET_IMAGE = 'sha256:6d15eb2c495d48c1eb6485a74d1adaef3e0e3a6e7c83063ba8459f90c27c683e'
@@ -53,45 +54,63 @@ def _labels(values):
     return result
 
 
-def resources(value):
+def layout_addresses(target_plan=None):
+    return ADDRESSES if target_plan is None else target_plan.expected_addresses
+
+
+def target_specs(target_plan=None):
+    return [('target-001', 'docker_container.target')] if target_plan is None else [
+        (identifier, target_plan.address_for(identifier)) for identifier in target_plan.target_ids]
+
+
+def resources(value, target_plan=None):
+    allowed = layout_addresses(target_plan)
     require(type(value) is dict, 'unsafe_state', 'State must be a structured Terraform result.')
     values = value.get('values', value.get('planned_values', {}))
     require(type(values) is dict, 'unsafe_state', 'Terraform values must be a structured object.')
     module = values.get('root_module', {})
     require(type(module) is dict and not module.get('child_modules'), 'unsafe_state', 'Nested infrastructure modules are unsupported.')
     items = module.get('resources', [])
-    require(type(items) is list and len(items) <= 2 and
+    require(type(items) is list and len(items) <= len(allowed) and
             all(type(x) is dict and x.get('mode') == 'managed' and x.get('provider_name') == PROVIDER and
-                x.get('address') in ADDRESSES and type(x.get('values')) is dict for x in items),
+                x.get('address') in allowed and type(x.get('values')) is dict for x in items),
             'unsafe_state', 'Only the two fixed managed resources are permitted.')
+    if target_plan is not None:
+        for item in items:
+            is_target = item['address'] != NETWORK
+            require(item.get('type') == ('docker_container' if is_target else 'docker_network') and
+                item.get('name') == ('target' if is_target else 'run') and
+                (item.get('index') == target_plan.id_for_address(item['address']) if is_target else item.get('index') is None),
+                'unsafe_state', 'Typed resource identity/index differs from the exact layout.')
     result = {x['address']: x['values'] for x in items}
     require(len(result) == len(items), 'unsafe_state', 'Resource addresses cannot repeat.')
     return result
 
 
-def validate_refresh(value, variables, owned):
+def validate_refresh(value, variables, owned, target_plan=None):
     """Terraform 1.17 refresh-only records refreshed resources in prior_state.
 
     Drift describes observations, not infrastructure actions. Empty planned
     resources must never be interpreted as a new create graph or empty ownership.
     """
-    require(type(owned) is dict and set(owned) == ADDRESSES and
+    allowed = layout_addresses(target_plan)
+    require(type(owned) is dict and set(owned) == allowed and
             all(type(x) is str and ID.fullmatch(x) for x in owned.values()) and
             value.get('resource_changes', []) == [] and value.get('complete') is True,
             'unsafe_plan', 'Refresh requires both exact owned IDs and no infrastructure actions.')
     prior = value.get('prior_state')
     require(type(prior) is dict and prior.get('format_version') == '1.0' and prior.get('terraform_version') == '1.17.0',
             'unsafe_plan', 'Refresh requires the actual supported refreshed prior-state record.')
-    refreshed = resources(prior)
-    require(set(refreshed) == ADDRESSES and all(refreshed[key].get('id') == owned[key] for key in ADDRESSES),
+    refreshed = resources(prior, target_plan)
+    require(set(refreshed) == allowed and all(refreshed[key].get('id') == owned[key] for key in allowed),
             'unsafe_plan', 'Refresh must preserve the complete exact managed identities.')
-    planned = resources(value)
+    planned = resources(value, target_plan)
     require(not planned or planned == refreshed, 'unsafe_plan', 'Planned refresh resources contradict the observed prior state.')
     drift = value.get('resource_drift', [])
-    require(type(drift) is list and len(drift) <= 2, 'unsafe_plan', 'Observed resource drift is bounded to this smoke graph.')
+    require(type(drift) is list and len(drift) <= len(allowed), 'unsafe_plan', 'Observed resource drift is bounded to this smoke graph.')
     seen = set()
     for item in drift:
-        require(type(item) is dict and item.get('address') in ADDRESSES and item['address'] not in seen and
+        require(type(item) is dict and item.get('address') in allowed and item['address'] not in seen and
                 item.get('mode') == 'managed' and item.get('provider_name') == PROVIDER and
                 not any(item.get(key) for key in ('deposed', 'generated_config', 'importing')) and
                 type(item.get('change')) is dict, 'unsafe_plan', 'Unexpected resource drift identity or provider.')
@@ -107,18 +126,21 @@ def validate_refresh(value, variables, owned):
             outputs['run'].get('sensitive') is False and type(outputs['run'].get('value')) is dict,
             'unsafe_plan', 'Refresh requires the one non-sensitive run output.')
     output = outputs['run']['value']
-    require(output.get('network_id') == owned['docker_network.run'] and output.get('target_id') == owned['docker_container.target'] and
-            output.get('image') == variables['image'] and output.get('network_name') == 'wormhole-' + variables['run_id'] + '-network',
-            'unsafe_plan', 'Refresh output must remain bound to the exact managed run identities.')
+    validate_output_identity(output, variables, owned, target_plan)
+
     configuration = value.get('configuration', {}).get('root_module', {})
     require(type(configuration) is dict and not configuration.get('module_calls') and
-            type(configuration.get('resources', [])) is list and len(configuration.get('resources', [])) <= 2 and
+            type(configuration.get('resources', [])) is list and len(configuration.get('resources', [])) <= len(allowed) and
             all(type(x) is dict and not x.get('provisioners') for x in configuration.get('resources', [])),
             'unsafe_plan', 'Refresh cannot introduce modules or executable Terraform provisioners.')
 
 
-def validate_plan(value, variables, *, operation='create', owned=None):
+def validate_plan(value, variables, *, operation='create', owned=None, target_plan=None):
     """Typed allowlist for actual Terraform JSON, not text matching the plan UI."""
+    allowed = layout_addresses(target_plan)
+    if target_plan is not None:
+        require(value.get('variables') == {key: {'value': item} for key, item in variables.items()}, 'unsafe_plan', 'The indexed plan must contain exact generated input bindings.')
+        require(variables.get('target_ids') == list(target_plan.target_ids), 'unsafe_plan', 'Target inputs differ from the immutable layout.')
     require(type(value) is dict and value.get('format_version') == '1.2' and
             value.get('terraform_version') == '1.17.0' and value.get('errored', False) is False,
             'unsafe_plan', 'Unsupported or errored Terraform plan format/version.')
@@ -126,17 +148,23 @@ def validate_plan(value, variables, *, operation='create', owned=None):
         require(value['variables'] == {key: {'value': item} for key, item in variables.items()},
                 'unsafe_plan', 'The plan is not bound to the exact generated inputs.')
     if operation == 'refresh':
-        validate_refresh(value, variables, owned)
+        validate_refresh(value, variables, owned, target_plan)
         return
     changes = value.get('resource_changes', [])
-    require(type(changes) is list and len(changes) <= 2, 'unsafe_plan', 'Unexpected resource graph.')
+    require(type(changes) is list and len(changes) <= len(allowed), 'unsafe_plan', 'Unexpected resource graph.')
     addresses = set()
     for item in changes:
         require(type(item) is dict and type(item.get('change')) is dict, 'unsafe_plan', 'Malformed resource change.')
         address, change = item.get('address'), item.get('change', {})
-        require(address in ADDRESSES and address not in addresses and item.get('mode') == 'managed' and
+        require(address in allowed and address not in addresses and item.get('mode') == 'managed' and
                 item.get('provider_name') == PROVIDER and not item.get('deposed') and
                 not item.get('generated_config') and not item.get('importing'), 'unsafe_plan', 'Unapproved resource/provider operation.')
+        if target_plan is not None:
+            is_target = address != NETWORK
+            require(item.get('type') == ('docker_container' if is_target else 'docker_network') and
+                item.get('name') == ('target' if is_target else 'run') and
+                (item.get('index') == target_plan.id_for_address(address) if is_target else item.get('index') is None),
+                'unsafe_plan', 'Typed change identity/index differs from the exact layout.')
         addresses.add(address)
         unsafe_unknown = {'start', 'must_run', 'privileged', 'read_only', 'user', 'ports', 'publish_all_ports',
             'mounts', 'volumes', 'devices', 'device_requests', 'gpus', 'capabilities', 'security_opts',
@@ -159,9 +187,9 @@ def validate_plan(value, variables, *, operation='create', owned=None):
         require(addresses == set(owned), 'unsafe_plan', 'Destroy is incomplete or includes an unexpected resource.')
         return
     if operation == 'create':
-        require(addresses == ADDRESSES, 'unsafe_plan', 'Fresh creation requires both exact resource changes.')
-    planned = resources(value)
-    require(set(planned) == ADDRESSES, 'unsafe_plan', 'The complete smoke graph must be present.')
+        require(addresses == allowed, 'unsafe_plan', 'Fresh creation requires both exact resource changes.')
+    planned = resources(value, target_plan)
+    require(set(planned) == allowed, 'unsafe_plan', 'The complete smoke graph must be present.')
     for item in changes:
         after = item['change'].get('after')
         require(type(after) is dict and all(_same(after.get(key), planned[item['address']].get(key))
@@ -176,41 +204,60 @@ def validate_plan(value, variables, *, operation='create', owned=None):
     require(_labels(network.get('labels')) == {**expected_labels, images.LABEL + '.role': 'network'},
             'unsafe_plan', 'Network ownership labels differ.')
     require(not network.get('options') and not network.get('ipam_options'), 'unsafe_plan', 'Network driver overrides are forbidden.')
-    target = planned['docker_container.target']
-    for key, expected in {'name': prefix + '-target-001', 'image': variables['image'], 'start': False,
-        'must_run': False, 'privileged': False, 'read_only': True, 'user': '0:0', 'restart': 'no',
-        'rm': False, 'publish_all_ports': False, 'network_mode': 'bridge', 'ipc_mode': 'private',
-        'cgroupns_mode': 'private', **variables['target_limits']}.items():
-        require(_same(target.get(key), expected), 'unsafe_plan', 'A required target limit, identity or confinement field differs.')
-    for key in ('ports', 'mounts', 'devices', 'device_requests', 'device_cgroup_rules', 'gpus', 'pid_mode',
-                'group_add', 'host', 'links', 'dns', 'dns_opts', 'dns_search', 'sysctls', 'storage_opts',
-                'cgroup_parent', 'runtime'):
-        require(not target.get(key), 'unsafe_plan', 'Unapproved target ports, privileges, namespaces, mounts or commands.')
-    require(target.get('entrypoint') == ['/usr/bin/python3', '/opt/wormhole/runtime.py'] and target.get('command') == ['target'],
-            'unsafe_plan', 'Only the fixed qualified target entrypoint is permitted.')
-    require(set(target.get('security_opts') or []) == {'no-new-privileges:true'} and
-            _labels(target.get('labels')) == {**expected_labels, images.LABEL + '.role': 'target'},
-            'unsafe_plan', 'Target security or ownership differs.')
-    caps = target.get('capabilities')
-    require(type(caps) is list and len(caps) == 1 and set(caps[0]) == {'add', 'drop'} and
-            set(caps[0]['add']) == set(images.TARGET_CAPS) and caps[0]['drop'] == ['ALL'],
-            'unsafe_plan', 'Only the qualified SSH target capabilities are permitted.')
-    require(target.get('tmpfs') == {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0',
-            '/tmp': 'rw,nosuid,nodev,noexec,size=16m,mode=1777'} and
-            set(target.get('env') or []) == {'WORMHOLE_RUN_ID=' + variables['run_id'], 'WORMHOLE_RUNTIME_TTL_SECONDS=300'},
-            'unsafe_plan', 'Only fixed tmpfs and bounded target environment are permitted.')
-    volumes = target.get('volumes')
-    require(type(volumes) is list and len(volumes) == 1 and volumes[0].get('host_path') == variables['public_input'] and
-            volumes[0].get('container_path') == '/run/input' and volumes[0].get('read_only') is True and
-            not volumes[0].get('volume_name') and not volumes[0].get('from_container'),
-            'unsafe_plan', 'Only the exact public authorized-key input bind is allowed.')
-    networks = target.get('networks_advanced')
-    require(type(networks) is list and len(networks) == 1 and networks[0].get('name') == prefix + '-network' and
-            not networks[0].get('ipv4_address') and not networks[0].get('ipv6_address'),
-            'unsafe_plan', 'Only the run bridge with a daemon-assigned endpoint is allowed.')
+    for target_id, address in target_specs(target_plan):
+        target = planned[address]
+        for key, expected in {'name': prefix + '-' + target_id, 'image': variables['image'], 'start': False,
+            'must_run': False, 'privileged': False, 'read_only': True, 'user': '0:0', 'restart': 'no',
+            'rm': False, 'publish_all_ports': False, 'network_mode': 'bridge', 'ipc_mode': 'private',
+            'cgroupns_mode': 'private', **variables['target_limits']}.items():
+            require(_same(target.get(key), expected), 'unsafe_plan', 'A required target limit, identity or confinement field differs.')
+        for key in ('ports', 'mounts', 'devices', 'device_requests', 'device_cgroup_rules', 'gpus', 'pid_mode',
+                    'group_add', 'host', 'links', 'dns', 'dns_opts', 'dns_search', 'sysctls', 'storage_opts',
+                    'cgroup_parent', 'runtime'):
+            require(not target.get(key), 'unsafe_plan', 'Unapproved target ports, privileges, namespaces, mounts or commands.')
+        require(target.get('entrypoint') == ['/usr/bin/python3', '/opt/wormhole/runtime.py'] and target.get('command') == ['target'],
+                'unsafe_plan', 'Only the fixed qualified target entrypoint is permitted.')
+        require(set(target.get('security_opts') or []) == {'no-new-privileges:true'} and
+                _labels(target.get('labels')) == {**expected_labels, images.LABEL + '.role': 'target', **({images.LABEL + '.target_id': target_id} if target_plan is not None else {})},
+                'unsafe_plan', 'Target security or ownership differs.')
+        caps = target.get('capabilities')
+        require(type(caps) is list and len(caps) == 1 and set(caps[0]) == {'add', 'drop'} and
+                set(caps[0]['add']) == set(images.TARGET_CAPS) and caps[0]['drop'] == ['ALL'],
+                'unsafe_plan', 'Only the qualified SSH target capabilities are permitted.')
+        require(target.get('tmpfs') == {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0',
+                '/tmp': 'rw,nosuid,nodev,noexec,size=16m,mode=1777'} and
+                set(target.get('env') or []) == {'WORMHOLE_RUN_ID=' + variables['run_id'], 'WORMHOLE_RUNTIME_TTL_SECONDS=300'},
+                'unsafe_plan', 'Only fixed tmpfs and bounded target environment are permitted.')
+        volumes = target.get('volumes')
+        require(type(volumes) is list and len(volumes) == 1 and volumes[0].get('host_path') == variables['public_input'] and
+                volumes[0].get('container_path') == '/run/input' and volumes[0].get('read_only') is True and
+                not volumes[0].get('volume_name') and not volumes[0].get('from_container'),
+                'unsafe_plan', 'Only the exact public authorized-key input bind is allowed.')
+        networks = target.get('networks_advanced')
+        require(type(networks) is list and len(networks) == 1 and networks[0].get('name') == prefix + '-network' and
+                not networks[0].get('ipv4_address') and not networks[0].get('ipv6_address'),
+                'unsafe_plan', 'Only the run bridge with a daemon-assigned endpoint is allowed.')
     configuration = value.get('configuration', {}).get('root_module', {})
     require(not configuration.get('module_calls') and not any(x.get('provisioners') for x in configuration.get('resources', [])),
             'unsafe_plan', 'Modules and executable Terraform provisioners are forbidden.')
+
+
+def validate_output_identity(output, variables, owned, target_plan=None):
+    require(type(output) is dict and output.get('network_id') == owned.get(NETWORK) and
+        output.get('network_name') == 'wormhole-' + variables['run_id'] + '-network',
+        'inventory_invalid', 'Provider output network identity differs from exact ownership.')
+    if target_plan is None:
+        require(output.get('target_id') == owned.get('docker_container.target') and output.get('image') == variables['image'],
+                'inventory_invalid', 'Provider output target identity differs.')
+        return {'target-001': {'resource_id': output['target_id'], 'image': output['image'], 'network_data': output.get('network_data')}}
+    require(set(output) == {'network_id', 'network_name', 'targets'} and type(output.get('targets')) is dict and
+            set(output['targets']) == set(target_plan.target_ids), 'inventory_invalid', 'Provider must report every exact planned target.')
+    for identifier, address in target_specs(target_plan):
+        row = output['targets'][identifier]
+        require(type(row) is dict and set(row) == {'resource_id', 'image', 'network_data'} and
+            row['resource_id'] == owned.get(address) and row['image'] == variables['image'] and type(row['network_data']) is list,
+            'inventory_invalid', 'Provider target identity differs from the exact owned target map.')
+    return output['targets']
 
 
 def bounded_json(path, limit=MAX_OUTPUT):
@@ -282,8 +329,10 @@ class ProvisioningSession:
                 'source_scope', 'Real provisioning requires the exact clean recorded Linux source.')
         lease._active()
         require(lease.run_id == run.id and lease.source_revision == revision and lease.plan['synthetic'] is False and
-                lease.plan['profile'] == 'smoke' and lease.plan['target_count'] == 1 and not lease._reconciliation_only,
+                lease.plan['profile'] in {'smoke', 'five-targets'} and lease.plan['target_count'] in {1, 5} and not lease._reconciliation_only,
                 'admission_scope', 'Only this exact admitted real smoke run may allocate.')
+        self.target_plan = TargetPlan.from_lease(lease)
+        require(manifest['profile'] == self.target_plan.profile, 'admission_scope', 'Run and lease profiles differ.')
         self.run, self.lease, self.toolchain = run, lease, toolchain
         self.scenario = scenario
         self.destroy_only = False
@@ -296,12 +345,33 @@ class ProvisioningSession:
             'target_image': TARGET_IMAGE, 'operations': [], 'resources': [], 'inventory': None,
             'cleanup': 'not-started', 'primary_failure': None, 'secondary_failures': [],
             'unknown_outcome': False, 'scenario': scenario,
-            'runtime_pipeline_complete': False, 'production_iso_eligible': False}
+            'runtime_pipeline_complete': False, 'production_iso_eligible': False,
+            'resource_layout': LAYOUT, 'target_plan': self.target_plan.record(), 'pending_target_ids': list(self.target_plan.target_ids)}
         self.variables = {'run_id': run.id, 'source_revision': revision, 'image': TARGET_IMAGE,
-            'public_input': str(images.safe_bind(run.file('private/target-input'))),
+            'public_input': str(images.safe_bind(run.file('private/target-input'))), 'target_ids': list(self.target_plan.target_ids),
             'target_limits': deepcopy(lease.plan['limits']['target']['terraform'])}
         self.variables['target_limits'].pop('start'); self.variables['target_limits'].pop('must_run')
         self.inputs = {}
+
+    @property
+    def target_resources(self):
+        return {identifier: self.owned[address] for identifier, address in target_specs(getattr(self, 'target_plan', None)) if address in self.owned}
+
+    @property
+    def network_id(self):
+        require(NETWORK in self.owned, 'inventory_unavailable', 'The exact network has not been observed.')
+        return self.owned[NETWORK]
+
+    def target_inventory(self, target_id):
+        if getattr(self, 'target_plan', None) is not None: self.target_plan.address_for(target_id)
+        else: require(target_id == 'target-001', 'target_identity_invalid', 'Unknown smoke target.')
+        value = self.receipt.get('inventory')
+        if value is None: return None
+        require(type(value) is dict and common(value) == common(self.run.manifest()), 'inventory_unavailable', 'No current bound inventory exists.')
+        rows = [row for row in value['targets'] if row['target_id'] == target_id]
+        if not rows: return None
+        require(len(rows) == 1 and rows[0]['resource_id'] == self.target_resources.get(target_id), 'inventory_unavailable', 'The target endpoint is not observed.')
+        return deepcopy(rows[0])
 
     def held(self, *, allocating=False):
         self.lease._active()
@@ -318,7 +388,8 @@ class ProvisioningSession:
             atomic_json(self.state / 'controller.json', {'schema_version': '1.0', 'run_id': self.run.id,
                 'source_revision': self.variables['source_revision'], 'id': self.provisioner,
                 'uid': self.uid, 'gid': self.gid, 'groups': self.socket_groups, 'mounts': self.mounts,
-                'image_labels': self.image_labels, 'inputs': self.inputs, 'scenario': self.scenario})
+                'image_labels': self.image_labels, 'inputs': self.inputs, 'scenario': self.scenario,
+                **({'resource_layout': LAYOUT, 'target_plan': self.target_plan.record()} if getattr(self, 'target_plan', None) is not None else {})})
 
     def failure(self, error):
         if self.receipt['primary_failure'] is None:
@@ -364,9 +435,11 @@ class ProvisioningSession:
         require({x.name for x in self.state.iterdir() if x.name.endswith(('.tf', '.tf.json'))} == {'main.tf'},
                 'input_changed', 'Additional Terraform configuration is forbidden.')
 
-    def labels(self, role):
-        return {images.LABEL + '.run_id': self.run.id, images.LABEL + '.source_revision': self.variables['source_revision'],
-                images.LABEL + '.role': role}
+    def labels(self, role, target_id=None):
+        values = {images.LABEL + '.run_id': self.run.id, images.LABEL + '.source_revision': self.variables['source_revision'], images.LABEL + '.role': role}
+        if role == 'target' and getattr(self, 'target_plan', None) is not None:
+            values[images.LABEL + '.target_id'] = self.target_plan.resolve(target_id)
+        return values
 
     def start_provisioner(self):
         self.held(allocating=True)
@@ -505,14 +578,17 @@ class ProvisioningSession:
         return bounded_json(path) if name in JSON_OPERATIONS else record
 
     def record_state(self, value, *, complete=False):
-        found = resources(value)
-        if complete: require(set(found) == ADDRESSES, 'incomplete_state', 'Actual Terraform state is missing the smoke resources.')
+        found = resources(value, getattr(self, 'target_plan', None))
+        if complete: require(set(found) == layout_addresses(getattr(self, 'target_plan', None)), 'incomplete_state', 'Actual Terraform state is missing the smoke resources.')
+        identifiers = [values.get('id') for values in found.values()]
+        require(all(type(x) is str and ID.fullmatch(x) for x in identifiers) and len(set(identifiers)) == len(identifiers),
+                'resource_identity', 'Every observed resource must have a distinct exact ID.')
         for address, values in found.items():
             identifier = values.get('id')
             require(type(identifier) is str and ID.fullmatch(identifier), 'resource_identity', 'Actual provider state must contain exact IDs.')
             role = 'target' if address.startswith('docker_container.') else 'network'
             actual = images.inspect('container' if role == 'target' else 'network', identifier)
-            self.verify_owned(actual, role, identifier)
+            self.verify_owned(actual, role, identifier, target_id=self.target_plan.id_for_address(address) if role == 'target' and getattr(self, 'target_plan', None) is not None else None)
             require(address not in self.owned or self.owned[address] == identifier, 'ownership_mismatch', 'State cannot replace this run resource identity.')
             if address not in self.owned:
                 self.lease.register_resource('container' if role == 'target' else 'network', identifier)
@@ -520,10 +596,12 @@ class ProvisioningSession:
         self.save()
         return found
 
-    def verify_owned(self, actual, role, identifier):
+    def verify_owned(self, actual, role, identifier, *, target_id=None):
         labels = actual.get('Config', {}).get('Labels') if role == 'target' else actual.get('Labels')
-        name = 'wormhole-' + self.run.id + ('-target-001' if role == 'target' else '-network')
-        expected_labels = self.labels(role) if role == 'network' else {**self.image_labels, **self.labels(role)}
+        if role == 'target':
+            target_id = self.target_plan.resolve(target_id) if getattr(self, 'target_plan', None) is not None else 'target-001'
+        name = 'wormhole-' + self.run.id + ('-' + target_id if role == 'target' else '-network')
+        expected_labels = self.labels(role) if role == 'network' else {**self.image_labels, **self.labels(role, target_id)}
         require(actual.get('Id') == identifier and labels == expected_labels and actual.get('Name', '').lstrip('/') == name,
                 'ownership_mismatch', 'Exact resource labels, name or identity differ from this run.')
         if role == 'network':
@@ -532,8 +610,10 @@ class ProvisioningSession:
         else:
             require(actual.get('Image') == TARGET_IMAGE, 'ownership_mismatch', 'The target image is not the qualified immutable input.')
 
-    def verify_target(self, actual, *, stopped=False, pid_pending=False, inspection_timeout=20):
-        self.verify_owned(actual, 'target', self.owned['docker_container.target'])
+    def verify_target(self, actual, *, target_id=None, stopped=False, pid_pending=False, inspection_timeout=20):
+        target_id = self.target_plan.resolve(target_id) if getattr(self, 'target_plan', None) is not None else 'target-001'
+        require(target_id in self.target_resources, 'resource_identity', 'The exact target has not been observed.')
+        self.verify_owned(actual, 'target', self.target_resources[target_id], target_id=target_id)
         self.verify_limits(actual, 'target', stopped=stopped, pid_pending=pid_pending)
         require(not stopped or actual['State'].get('Status') == 'created' and actual['State'].get('Pid') == 0 and
                 actual['State'].get('StartedAt') == '0001-01-01T00:00:00Z' and actual.get('RestartCount', 0) == 0,
@@ -583,7 +663,7 @@ class ProvisioningSession:
             self.receipt['actual_tools'] = {'terraform_version': version['terraform_version'], 'platform': version['platform'],
                 'provider_version': '4.6.0', 'offline_readonly_lock_h1_confirmed': H1, 'provider_schema_observed': True}
             self.operation('plan')
-            validate_plan(self.operation('show-plan'), self.variables)
+            validate_plan(self.operation('show-plan'), self.variables, target_plan=self.target_plan)
             saved, _ = file_digest(self.state / 'apply.tfplan')
             self.check_inputs()
             require(file_digest(self.state / 'apply.tfplan')[0] == saved,
@@ -596,14 +676,22 @@ class ProvisioningSession:
             self.operation('apply')
             require(self.scenario == 'healthy', 'expected_failure_missing', 'The fixed unavailable provider unexpectedly applied; preserve resources for review.')
             self.record_state(self.operation('show-state'), complete=True)
-            target = self.owned['docker_container.target']
             self.lease.refresh()
-            before = images.inspect('container', target)
-            self.verify_target(before, stopped=True, pid_pending=True)
-            self.receipt['target_before_pid_update'] = {'status': before['State']['Status'],
-                'started_at': before['State']['StartedAt'], 'pids_limit': before['HostConfig'].get('PidsLimit')}
-            images.docker(('update', '--pids-limit', str(self.lease.plan['limits']['target']['pids_limit']), target))
-            self.verify_target(images.inspect('container', target), stopped=True)
+            self.receipt['targets_before_pid_update'] = {}
+            # No target can start until every exact target is observed never-started
+            # and its actual PID cap has been applied and reinspected.
+            for target_id, target in self.target_resources.items():
+                before = images.inspect('container', target)
+                self.verify_target(before, target_id=target_id, stopped=True, pid_pending=True)
+                self.receipt['targets_before_pid_update'][target_id] = {'status': before['State']['Status'],
+                    'started_at': before['State']['StartedAt'], 'pids_limit': before['HostConfig'].get('PidsLimit')}
+                self.receipt['unknown_outcome'] = True; self.save()
+                images.docker(('update', '--pids-limit', str(self.lease.plan['limits']['target']['pids_limit']), target))
+                self.verify_target(images.inspect('container', target), target_id=target_id, stopped=True)
+                self.receipt['unknown_outcome'] = False; self.save()
+            self.receipt['targets_confined'] = True
+            if len(self.target_resources) == 1:
+                self.receipt['target_before_pid_update'] = next(iter(self.receipt['targets_before_pid_update'].values()))
             self.receipt['status'] = 'created-stopped'
             self.save()
             return deepcopy(self.owned)
@@ -611,41 +699,66 @@ class ProvisioningSession:
             self._provision_failure(error)
             raise
 
-    def start_and_inventory(self):
-        """Start the confined target once, then obtain its actual provider output."""
+    def start_targets(self, target_ids):
+        """Start an exact nonempty subset once, after the whole graph is confined."""
         try:
             self.held(allocating=True)
-            require(self.scenario == 'healthy' and self.receipt['status'] == 'created-stopped' and
-                    self.receipt['unknown_outcome'] is False and set(self.owned) == ADDRESSES,
-                    'target_not_ready', 'Start requires this complete, confined, never-started target.')
-            target = self.owned['docker_container.target']
+            require(type(target_ids) in (list, tuple) and 1 <= len(target_ids) <= len(self.target_plan.target_ids) and
+                all(type(x) is str for x in target_ids) and len(set(target_ids)) == len(target_ids) and
+                set(target_ids) <= set(self.target_plan.target_ids), 'target_identity_invalid', 'Start accepts only exact planned target identities.')
+            require(self.scenario == 'healthy' and self.receipt['status'] in {'created-stopped', 'partially-started'} and
+                self.receipt['unknown_outcome'] is False and set(self.owned) == self.target_plan.expected_addresses and
+                self.receipt.get('targets_confined') is True, 'target_not_ready', 'Start requires the complete confined graph.')
             self.check_inputs()
-            controller = images.inspect('container', self.provisioner)
-            self.verify_provisioner(controller)
+            controller = images.inspect('container', self.provisioner); self.verify_provisioner(controller)
             state = controller['State']
             require(state.get('Running') is True and state.get('Status') == 'running' and
-                    type(state.get('Pid')) is int and state['Pid'] > 0 and
-                    not state.get('Paused', False) and not state.get('Restarting', False),
-                    'provisioner_unavailable', 'The retained provisioner must still be running before target start.')
-            self.verify_target(images.inspect('container', target), stopped=True)
+                type(state.get('Pid')) is int and state['Pid'] > 0 and not state.get('Paused', False) and not state.get('Restarting', False),
+                'provisioner_unavailable', 'The retained provisioner must be running before any target start.')
+            existing = self.receipt.setdefault('targets_started', {})
+            require(not set(target_ids) & set(existing), 'target_not_ready', 'An already-started target cannot be restarted.')
+            # Reinspect all selected targets before the first start in this batch.
+            for target_id in target_ids:
+                self.verify_target(images.inspect('container', self.target_resources[target_id]), target_id=target_id, stopped=True)
             self.lease.refresh()
-            images.docker(('start', target))
-            live = images.inspect('container', target)
-            self.verify_target(live)
-            self.receipt['target_started_at'] = live['State']['StartedAt']
-            self.receipt['target_cgroups'] = images.cgroup_limits(live['State']['Pid'], self.lease.plan['limits']['target']['docker_create'])
+            for target_id in target_ids:
+                target = self.target_resources[target_id]
+                self.receipt['unknown_outcome'] = True; self.save()
+                images.docker(('start', target))
+                live = images.inspect('container', target); self.verify_target(live, target_id=target_id)
+                existing[target_id] = {'started_at': live['State']['StartedAt'],
+                    'cgroups': images.cgroup_limits(live['State']['Pid'], self.lease.plan['limits']['target']['docker_create'])}
+                self.receipt['unknown_outcome'] = False; self.save()
+            self.receipt['status'] = 'partially-started'
+            if len(existing) == 1 and len(self.target_plan.target_ids) == 1:
+                value = next(iter(existing.values()))
+                self.receipt['target_started_at'], self.receipt['target_cgroups'] = value['started_at'], value['cgroups']
+            self.save()
+            return deepcopy(existing)
+        except BaseException as error:
+            self._provision_failure(error)
+            raise
+
+    def refresh_inventory(self):
+        self.held(allocating=True)
+        require(self.receipt['unknown_outcome'] is False and set(self.owned) == self.target_plan.expected_addresses,
+                'target_not_ready', 'Inventory refresh requires the complete known graph.')
+        try:
             self.operation('refresh-plan')
-            validate_plan(self.operation('show-refresh-plan'), self.variables, operation='refresh', owned=self.owned)
+            validate_plan(self.operation('show-refresh-plan'), self.variables, operation='refresh', owned=self.owned, target_plan=self.target_plan)
             self.operation('refresh-apply')
-            output = self.operation('output')
-            self.receipt['inventory'] = self.inventory(output)
+            self.receipt['inventory'] = self.inventory(self.operation('output'))
             self.run.save_artifact('inventory', self.receipt['inventory'])
-            self.receipt['status'] = 'provisioned'
+            self.receipt['status'] = 'provisioned' if self.receipt['inventory']['status'] == 'pass' else 'partially-started'
             self.save()
             return deepcopy(self.receipt['inventory'])
         except BaseException as error:
             self._provision_failure(error)
             raise
+
+    def start_and_inventory(self, target_ids=None):
+        self.start_targets(list(self.target_plan.target_ids) if target_ids is None else target_ids)
+        return self.refresh_inventory()
 
     def provision(self):
         self.create_stopped()
@@ -659,24 +772,38 @@ class ProvisioningSession:
             except Exception as diagnostic: self.failure(diagnostic)
 
     def inventory(self, output):
-        require(type(output) is dict and set(output) == {'run'} and output['run'].get('sensitive') is False,
+        require(type(output) is dict and set(output) == {'run'} and type(output['run']) is dict and output['run'].get('sensitive') is False,
                 'inventory_invalid', 'Expected exactly the non-sensitive provider run output.')
         value = output['run']['value']
-        require(value.get('target_id') == self.owned['docker_container.target'] and value.get('network_id') == self.owned['docker_network.run'] and
-                value.get('image') == TARGET_IMAGE and value.get('network_name') == 'wormhole-' + self.run.id + '-network',
-                'inventory_invalid', 'Provider output identity differs from actual owned state.')
-        endpoints = [x for x in value.get('network_data', []) if x.get('network_name') == value['network_name']]
-        require(len(endpoints) == 1, 'inventory_invalid', 'Provider must observe exactly one run-network endpoint.')
-        address = endpoints[0].get('ip_address', '')
-        try: parsed = ipaddress.ip_address(address)
-        except ValueError: raise ProvisioningError('inventory_invalid', 'The provider has no actual numeric endpoint.') from None
-        actual = images.inspect('container', value['target_id']); self.verify_target(actual)
-        observed = actual['NetworkSettings']['Networks'][value['network_name']]
-        require(parsed.version == 4 and not parsed.is_loopback and not parsed.is_unspecified and address == observed['IPAddress'] and
-                observed['NetworkID'] == value['network_id'], 'inventory_invalid', 'Provider endpoint does not match exact network inspection.')
-        return {**common(self.run.manifest()), 'status': 'pass', 'targets': [{'target_id': 'target-001',
-            'resource_id': value['target_id'], 'host': address, 'ssh_port': 2222, 'ssh_user': 'wormhole',
-            'image_digest': TARGET_IMAGE, 'status': 'started'}]}
+        observed_targets = validate_output_identity(value, self.variables, self.owned, getattr(self, 'target_plan', None))
+        rows, pending, addresses = [], [], set()
+        for target_id, row in observed_targets.items():
+            actual = images.inspect('container', row['resource_id'])
+            stopped = actual['State'].get('Status') == 'created'
+            self.verify_target(actual, target_id=target_id, stopped=stopped)
+            endpoints = row['network_data']
+            require(type(endpoints) is list and len(endpoints) <= 1 and all(type(x) is dict and x.get('network_name') == value['network_name'] for x in endpoints),
+                    'inventory_invalid', 'Provider must observe only the sole exact run endpoint for every target.')
+            address = endpoints[0].get('ip_address', '') if endpoints else ''
+            actual_endpoint = actual['NetworkSettings']['Networks'][value['network_name']]
+            if stopped:
+                require(address in ('', None) and not actual_endpoint.get('IPAddress'), 'inventory_invalid', 'Pending targets cannot advertise an endpoint.')
+                pending.append(target_id)
+                continue
+            require(len(endpoints) == 1, 'inventory_invalid', 'A started target needs its actual provider endpoint.')
+            require(actual['State'].get('Running') is True, 'inventory_invalid', 'A stopped/exited target is not a ready inventory endpoint.')
+            try: parsed = ipaddress.ip_address(address)
+            except (ValueError, TypeError): raise ProvisioningError('inventory_invalid', 'Provider has no actual numeric endpoint.') from None
+            require(parsed.version == 4 and str(parsed) == address and not any((parsed.is_loopback, parsed.is_unspecified,
+                parsed.is_multicast, parsed.is_link_local, parsed.is_reserved)) and address not in addresses and
+                address == actual_endpoint['IPAddress'] and actual_endpoint['NetworkID'] == value['network_id'],
+                'inventory_invalid', 'Provider endpoint differs from exact inspection or repeats another target.')
+            addresses.add(address)
+            rows.append({'target_id': target_id, 'resource_id': row['resource_id'], 'host': address, 'ssh_port': 2222,
+                'ssh_user': 'wormhole', 'image_digest': TARGET_IMAGE, 'status': 'started'})
+        self.receipt['pending_target_ids'] = sorted(pending)
+        return {**common(self.run.manifest()), 'status': 'unverified' if pending else 'pass',
+                'targets': sorted(rows, key=lambda x: x['target_id'])}
 
     def prove_provider_unavailable(self):
         """Clear only a fixed zero-contact negative case, never a general failure."""
@@ -709,7 +836,7 @@ class ProvisioningSession:
         raw = path.read_bytes()
         require(unavailable_diagnostic(raw),
                 'zero_contact_unproven', 'The actual provider failure does not identify the fixed absent Unix endpoint.')
-        require(self.operation('probe-unavailable') == expected_probe and not resources(self.operation('show-state')),
+        require(self.operation('probe-unavailable') == expected_probe and not resources(self.operation('show-state'), getattr(self, 'target_plan', None)),
                 'zero_contact_unproven', 'The endpoint must remain absent and actual Terraform state must be empty.')
         pending = {(x['kind'], x['id']) for x in self.lease.record['resources'] if x['outcome'] == 'pending'}
         require(pending == {('container', self.provisioner)}, 'zero_contact_unproven', 'Only the existing exact controller may remain journaled.')
@@ -765,7 +892,7 @@ class ProvisioningSession:
                         self._reconcile_absent('container' if address.startswith('docker_container.') else 'network', identifier)
                     self._reconcile_absent('container', self.provisioner)
                     return self._cleanup_complete()
-            state = resources(self.operation('show-state'))
+            state = resources(self.operation('show-state'), getattr(self, 'target_plan', None))
             require(set(state) <= set(self.owned) and all(x.get('id') == self.owned[key] for key, x in state.items()),
                     'ownership_mismatch', 'State resources changed; destructive operations are refused.')
             self.verify_provisioner(controller if controller is not None else images.inspect('container', self.provisioner))
@@ -775,15 +902,15 @@ class ProvisioningSession:
                 actual = images.inspect('container' if role == 'target' else 'network', identifier, missing=True)
                 if actual is None: continue
                 require(address in state, 'ownership_mismatch', 'A surviving owned object is missing from Terraform state; no native deletion or adoption is permitted.')
-                self.verify_owned(actual, role, identifier)
+                self.verify_owned(actual, role, identifier, target_id=self.target_plan.id_for_address(address) if role == 'target' and getattr(self, 'target_plan', None) is not None else None)
                 remaining[address] = identifier
                 if role == 'network':
-                    require(set(actual.get('Containers', {})) <= {self.owned.get('docker_container.target')},
+                    require(set(actual.get('Containers', {})) <= set(self.target_resources.values()),
                             'ownership_mismatch', 'An unexpected endpoint is attached; refuse network destruction.')
             self.operation('destroy-plan')
-            validate_plan(self.operation('show-destroy-plan'), self.variables, operation='destroy', owned=remaining)
+            validate_plan(self.operation('show-destroy-plan'), self.variables, operation='destroy', owned=remaining, target_plan=getattr(self, 'target_plan', None))
             self.operation('destroy')
-            require(not resources(self.operation('final-state')), 'destroy_incomplete', 'Terraform still records managed resources after destroy.')
+            require(not resources(self.operation('final-state'), getattr(self, 'target_plan', None)), 'destroy_incomplete', 'Terraform still records managed resources after destroy.')
             self.receipt.setdefault('cleanup_progress', {})['terraform_final_state_empty'] = True
             self.save()  # Durable before absence acknowledgements or controller removal.
             for address, identifier in self.owned.items():
@@ -830,7 +957,7 @@ class ProvisioningSession:
                     read_json(stem.with_suffix('.json')) == {key: value for key, value in record.items()
                         if key not in {'client_status', 'client_returncode', 'client_log_truncated', 'evidence'}},
                     'recovery_scope', 'The completed teardown captures are missing or changed.')
-        require(not resources(bounded_json(stem.with_suffix('.out'))),
+        require(not resources(bounded_json(stem.with_suffix('.out')), getattr(self, 'target_plan', None)),
                 'recovery_scope', 'The completed final-state capture is nonempty.')
 
     def _cleanup_complete(self):
@@ -855,17 +982,23 @@ class ProvisioningSession:
         revision, dirty = source_identity()
         require(lease._reconciliation_only and lease.run_id == run.id and lease.source_revision == manifest['source_revision'] and
                 revision == manifest['source_revision'] and not dirty and not manifest['source_dirty'] and
-                lease.plan['profile'] == 'smoke' and lease.plan['synthetic'] is False,
+                lease.plan['profile'] in {'smoke', 'five-targets'} and lease.plan['synthetic'] is False,
                 'recovery_scope', 'Destroy recovery requires this exact clean-source run and held reconciliation-only lease.')
         session = cls.__new__(cls)
         session.run, session.lease = run, lease
         session.destroy_only = True
         session.state = run.file('private/terraform')
         record = read_json(session.state / 'controller.json')
-        require(set(record) == {'schema_version', 'run_id', 'source_revision', 'id', 'uid', 'gid', 'groups', 'mounts', 'image_labels', 'inputs', 'scenario'} and
+        new_layout = 'resource_layout' in record or 'target_plan' in record
+        fields = {'schema_version', 'run_id', 'source_revision', 'id', 'uid', 'gid', 'groups', 'mounts', 'image_labels', 'inputs', 'scenario'}
+        if new_layout: fields |= {'resource_layout', 'target_plan'}
+        require(set(record) == fields and
                 record['schema_version'] == '1.0' and record['run_id'] == run.id and record['source_revision'] == revision and
                 type(record['id']) is str and ID.fullmatch(record['id']) and record['scenario'] in SCENARIOS,
                 'recovery_scope', 'Retained controller metadata is missing or differs.')
+        session.target_plan = TargetPlan.from_record(record['target_plan']) if new_layout else None
+        require((new_layout and record['resource_layout'] == LAYOUT and session.target_plan == TargetPlan.from_lease(lease) and manifest['profile'] == session.target_plan.profile) or
+                (not new_layout and manifest['profile'] == 'smoke'), 'recovery_scope', 'Recorded layout/profile changed; no migration is permitted.')
         session.scenario = record['scenario']
         session.provisioner, session.uid, session.gid = record['id'], record['uid'], record['gid']
         session.socket_groups, session.image_labels, session.inputs = record['groups'], record['image_labels'], record['inputs']
@@ -873,13 +1006,17 @@ class ProvisioningSession:
                 'recovery_scope', 'Existing state/socket ownership changed; do not alter host ownership.')
         session.mounts = {key: tuple(item) for key, item in record['mounts'].items()}
         session.variables = bounded_json(session.state / 'terraform.tfvars.json')
+        if new_layout:
+            require(session.variables.get('target_ids') == list(session.target_plan.target_ids), 'recovery_scope', 'Recorded target inputs changed.')
         session.receipt = read_json(run.file('evidence/provisioning.json'))
         require(common(session.receipt) == common(manifest) and session.receipt.get('scenario') == session.scenario and
                 session.receipt.get('provisioner_id', session.provisioner) == session.provisioner and
                 session.receipt.get('unknown_outcome') is False,
                 'daemon_outcome_unknown', 'Uncertain daemon work remains blocked for separately reviewed recovery; time passing is insufficient.')
+        require((new_layout and session.receipt.get('resource_layout') == LAYOUT and session.receipt.get('target_plan') == session.target_plan.record()) or
+                (not new_layout and 'target_ids' not in session.variables), 'recovery_scope', 'Evidence and controller layout must match without conversion.')
         session.owned = {x['address']: x['id'] for x in session.receipt['resources']}
-        require(set(session.owned) <= ADDRESSES and len(session.owned) == len(session.receipt['resources']),
+        require(set(session.owned) <= layout_addresses(session.target_plan) and len(session.owned) == len(session.receipt['resources']) and len(set(session.owned.values())) == len(session.owned),
                 'recovery_scope', 'Only already-accounted exact Terraform resources can be recovered.')
         pending = {(x['kind'], x['id']) for x in lease.record['resources'] if x['outcome'] == 'pending'}
         required = {('container', session.provisioner)} | {('container' if address.startswith('docker_container.') else 'network', identifier)
