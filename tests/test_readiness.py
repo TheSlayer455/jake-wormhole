@@ -1,0 +1,315 @@
+"""No Docker/SSH/Ansible execution: policy fixtures and real bounded Python children."""
+import base64
+from copy import deepcopy
+from datetime import datetime, timezone
+import json
+import os
+from pathlib import Path
+import struct
+import sys
+import tempfile
+import time
+from types import SimpleNamespace
+import unittest
+from unittest.mock import Mock, patch
+
+from readiness import runtime
+from wormhole import admission, images, readiness as r
+from wormhole.runs import atomic_json, common, create_run, read_json
+from test_admission import observed
+
+SHA = 'a' * 40
+TARGET, NETWORK, CONTROLLER, HELPER = ('b' * 64, 'c' * 64, 'd' * 64, 'e' * 64)
+HOST_KEY = 'ssh-ed25519 ' + base64.b64encode(struct.pack('>I', 11) + b'ssh-ed25519' + struct.pack('>I', 32) + bytes(range(32))).decode()
+
+
+class Lease:
+    def __init__(self, run):
+        self.run_id, self.source_revision = run.id, SHA
+        self.plan = admission.build_plan('smoke', observed())
+        self.plan['synthetic'] = False  # Deliberately synthetic dependency object, never admission for allocation.
+        self._reconciliation_only = False
+        self.record = {'resources': [{'kind': kind, 'id': identifier, 'outcome': 'pending'} for kind, identifier in
+            (('container', CONTROLLER), ('container', TARGET), ('network', NETWORK))]}
+        self.phases = []
+    def _active(self): pass
+    def set_phase(self, name): self.phases.append(name)
+    def register_resource(self, kind, identifier): self.record['resources'].append({'kind': kind, 'id': identifier, 'outcome': 'pending'})
+    def reconcile_resource(self, kind, identifier):
+        item = next(x for x in self.record['resources'] if (x['kind'], x['id']) == (kind, identifier))
+        if item['outcome'] != 'pending': raise AssertionError('Reconciliation must be idempotent at the adapter boundary')
+        item['outcome'] = 'absent'
+
+
+class ReadinessPolicy(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix='wormhole-readiness-synthetic-')
+        self.addCleanup(temporary.cleanup)
+        self.run = create_run(Path(temporary.name) / 'runs', fixture=False, identity=(SHA, False))
+        self.lease = Lease(self.run)
+        self.started = True
+        self.helper_started = False
+        self.removed = False
+        self.calls = []
+        self.image_labels = {images.LABEL + '.source_revision': 'f' * 40, images.LABEL + '.role': 'helper'}
+        self.provisioning = SimpleNamespace(run=self.run, lease=self.lease,
+            owned={'docker_container.target': TARGET, 'docker_network.run': NETWORK},
+            receipt={'unknown_outcome': False, 'inventory': {**common(self.run.manifest()), 'status': 'pass', 'targets': [
+                {'target_id': 'target-001', 'resource_id': TARGET, 'host': '172.31.77.2', 'ssh_port': 2222, 'ssh_user': 'wormhole'}]}},
+            variables={'image': 'sha256:' + '1' * 64}, verify_target=Mock())
+        self.identity = patch.object(r, 'source_identity', return_value=(SHA, False)); self.identity.start(); self.addCleanup(self.identity.stop)
+        for module, name, arguments in ((r.qualification, 'build_reference', {'return_value': {'image_id': r.HELPER_IMAGE}}),
+            (images, 'inspect', {'side_effect': self.inspect}), (images, 'docker', {'side_effect': self.docker}),
+            (images, 'cgroup_limits', {'return_value': {'synthetic': True}}),
+            (r.qualification, 'copied_public_key', {'return_value': HOST_KEY}),
+            (r.qualification, 'inject_helper_inputs', {}), (images, 'docker_configuration', {'return_value': '/synthetic/empty-config'})):
+            mocked = patch.object(module, name, **arguments); mocked.start(); self.addCleanup(mocked.stop)
+        self.session = r.ReadinessSession(self.provisioning)
+
+    def target(self):
+        return {'Id': TARGET, 'State': {'Status': 'running' if self.started else 'created', 'Running': self.started,
+            'StartedAt': datetime.now(timezone.utc).isoformat() if self.started else '0001-01-01T00:00:00Z'},
+            'NetworkSettings': {'Networks': {'run': {'NetworkID': NETWORK, 'IPAddress': '172.31.77.2'}}}}
+
+    def helper(self):
+        spec = self.lease.plan['limits']['helper']['docker_create']
+        return {'Id': HELPER, 'Image': r.HELPER_IMAGE, 'Name': '/wormhole-' + self.run.id + '-helper',
+            'Config': {'User': '10001:10001', 'Entrypoint': ['/opt/wormhole/venv/bin/python', '/opt/wormhole/runtime.py', 'helper'],
+                'Cmd': ['wait', '180'], 'Labels': {**self.image_labels, images.LABEL + '.run_id': self.run.id,
+                images.LABEL + '.role': 'helper', images.LABEL + '.source_revision': SHA},
+                'Env': ['WORMHOLE_RUN_ID=' + self.run.id, 'WORMHOLE_RUNTIME_TTL_SECONDS=600']},
+            'State': {'Status': 'running' if self.helper_started else 'created', 'Running': self.helper_started,
+                'StartedAt': '2026-10-23T00:00:00Z' if self.helper_started else '0001-01-01T00:00:00Z', 'Pid': 999999},
+            'HostConfig': {'Memory': spec['memory_bytes'], 'MemorySwap': spec['memory_swap_bytes'], 'NanoCpus': spec['nano_cpus'],
+                'PidsLimit': spec['pids_limit'], 'LogConfig': {'Type': spec['log_driver'], 'Config': spec['log_opts']},
+                'Privileged': False, 'ReadonlyRootfs': True, 'NetworkMode': NETWORK, 'PidMode': '', 'IpcMode': 'private',
+                'RestartPolicy': {'Name': 'no'}, 'CapDrop': ['ALL'], 'CapAdd': [], 'SecurityOpt': ['no-new-privileges:true'],
+                'Tmpfs': {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=10001,gid=10001',
+                    '/tmp': 'rw,nosuid,nodev,noexec,size=16m,mode=1777',
+                    '/run/input': 'rw,nosuid,nodev,noexec,size=64k,mode=0700,uid=10001,gid=10001'}},
+            'Mounts': [{'Type': 'bind', 'Source': str(r.RUNTIME), 'Destination': r.SOURCE_MOUNT, 'RW': False}],
+            'NetworkSettings': {'Networks': {'run': {'NetworkID': NETWORK}}}}
+
+    def inspect(self, kind, identifier, **options):
+        self.calls.append(('inspect', kind, identifier))
+        if kind == 'image': return {'Config': {'Labels': self.image_labels}}
+        if identifier == TARGET: return self.target()
+        if identifier == HELPER:
+            if self.removed and options.get('missing'): return None
+            return self.helper()
+        raise AssertionError('No foreign resources may be inspected')
+
+    def docker(self, arguments, **options):
+        self.calls.append(('docker', *arguments))
+        if arguments[0] == 'create':
+            self.assertIn(str(r.RUNTIME), ' '.join(arguments))
+            return {'log': (HELPER + '\n').encode(), 'log_truncated': False}
+        self.assertEqual(arguments[-1], HELPER, 'Only the exact helper may be mutated')
+        if arguments[0] == 'start': self.helper_started = True
+        if arguments[0] == 'stop': self.helper_started = False
+        if arguments[0] == 'rm': self.removed = True
+        return {'log': b'', 'log_truncated': False}
+
+    def output(self, arguments, **options):
+        value = runtime.request(base64.b64decode(arguments[-1]))
+        operation = value['operation']; self.calls.append(('probe', operation))
+        observation = {'tcp': {'tcp_connected': True}, 'ssh': {'uid': 10001}, 'python': {'configured_interpreter_usable': True},
+                       'ansible-wait': {'structured_target_result': True}, 'ansible-ping': {'structured_target_result': True, 'ping': 'pong'}}[operation]
+        result = {**{key: value[key] for key in ('schema_version', 'run_id', 'source_revision', 'target_id', 'operation', 'attempt')},
+            'status': 'pass', 'category': None, 'returncode': 0, 'timed_out': False, 'truncated': False,
+            'duration_seconds': .001, 'observation': observation, 'private_diagnostic': 'synthetic transport result'}
+        return {'status': 'pass', 'returncode': 0, 'log_truncated': False, 'log': json.dumps(result).encode(), 'duration_seconds': .001}
+
+    def test_helper_is_confined_stopped_before_start_and_only_source_file_is_bound(self):
+        self.session.start_helper()
+        self.assertEqual(self.lease.phases, ['provisioning', 'validating'])
+        start = self.calls.index(('docker', 'start', HELPER))
+        self.assertIn(('inspect', 'container', HELPER), self.calls[:start])
+        self.assertFalse(self.session.receipt['unknown_outcome'])
+        for field, mutation in (('privilege', lambda x: x['HostConfig'].update(Privileged=True)),
+            ('socket', lambda x: x['Mounts'].append({'Type': 'bind', 'Source': '/var/run/docker.sock', 'Destination': '/socket', 'RW': True})),
+            ('network', lambda x: x['NetworkSettings'].update(Networks={})),
+            ('pid', lambda x: x['HostConfig'].update(PidsLimit=0))):
+            value = self.helper(); mutation(value)
+            with self.subTest(field=field), self.assertRaises(r.ReadinessError): self.session.verify_helper(value)
+
+    def test_healthy_wait_requires_every_actual_helper_protocol_result_and_stays_partial(self):
+        self.session.start_helper()
+        # Docker StartedAt is stable, unlike a sampled current-time clock.
+        target = self.target()
+        with patch.object(self, 'target', return_value=target), patch.object(r, '_run_process', side_effect=self.output):
+            result = self.session.wait_ready()
+            self.assertTrue(self.session.require_ready())
+        self.assertEqual([x['check_id'] for x in result['transitions']], list(r.EXPECTED))
+        self.assertEqual([x[1] for x in self.calls if x[0] == 'probe'], ['tcp', 'ssh', 'python', 'ansible-wait', 'ansible-ping'])
+        self.assertFalse(result['runtime_pipeline_complete']); self.assertFalse(result['production_iso_eligible'])
+        self.assertNotIn('synthetic transport result', json.dumps(result['probes']))
+
+    def test_delayed_and_never_start_have_measured_transitions_and_bounded_failure(self):
+        self.started = False; self.session.start_helper()
+        polls = []
+        started_target = None
+        original_target = self.target
+        def callback(elapsed):
+            nonlocal started_target
+            polls.append(elapsed)
+            if len(polls) == 2:
+                self.started = True; started_target = original_target()
+        def target(): return deepcopy(started_target) if started_target else {'Id': TARGET,
+            'State': {'Status': 'created', 'Running': False, 'StartedAt': '0001-01-01T00:00:00Z'}}
+        with patch.object(self, 'target', side_effect=target), patch.object(r, '_run_process', side_effect=self.output):
+            self.session.wait_ready(on_poll=callback)
+        self.assertGreaterEqual(polls[1], polls[0])
+        self.assertEqual(self.session.receipt['status'], 'ready')
+        self.session.receipt['status'] = 'waiting'; self.session.receipt['transitions'] = []
+        self.started = False; self.session.deadline = time.monotonic() + .02
+        with patch.object(r, 'RETRY_SLEEP', .005), self.assertRaises(r.ReadinessError) as error: self.session.wait_ready()
+        self.assertEqual(error.exception.code, 'target_not_started')
+        with self.assertRaises(r.ReadinessError): self.session.require_ready()
+
+    def test_authentication_trust_and_interpreter_failures_block_dependent_ping(self):
+        self.session.start_helper()
+        for failure, operation in (('ssh_key_rejected', 'ssh'), ('ssh_user_rejected', 'ssh'),
+                                   ('ssh_host_key_mismatch', 'ssh'), ('configured_interpreter_unavailable', 'python')):
+            self.session.receipt.update(status='waiting', primary_failure=None, transitions=[])
+            calls = []
+            def probe(name, address):
+                calls.append(name)
+                return {'status': 'fail', 'category': failure} if name == operation or name == 'ansible-wait' else {'status': 'pass'}
+            with patch.object(self.session, 'probe', side_effect=probe), patch.object(self.session, 'pin_trust', return_value=True), \
+                 self.assertRaises(r.ReadinessError) as error:
+                self.session.wait_ready()
+            self.assertEqual(error.exception.code, failure)
+            self.assertNotIn('ansible-ping', calls)
+            if failure == 'configured_interpreter_unavailable': self.assertIn('ansible-wait', calls)
+            self.assertEqual(self.session.receipt['primary_failure']['code'], failure)
+
+    def test_wrong_inventory_refuses_before_transport_and_timeout_keeps_unknown(self):
+        self.session.start_helper()
+        self.provisioning.receipt['inventory']['targets'][0]['host'] = '127.0.0.1'
+        with patch.object(r, '_run_process', side_effect=AssertionError('No arbitrary endpoint connection')), self.assertRaises(r.ReadinessError) as error:
+            self.session.wait_ready()
+        self.assertEqual(error.exception.code, 'inventory_endpoint_mismatch')
+        self.provisioning.receipt['inventory']['targets'][0]['host'] = '172.31.77.2'
+        self.session.receipt['primary_failure'] = None
+        with patch.object(r, '_run_process', return_value={'status': 'timeout', 'returncode': None, 'log': b'', 'log_truncated': False}), \
+             self.assertRaises(r.ReadinessError): self.session.probe('tcp', '172.31.77.2')
+        self.assertTrue(self.session.receipt['unknown_outcome'])
+        before = len(self.calls)
+        with self.assertRaises(r.ReadinessError): self.session.cleanup()
+        self.assertFalse(any(x[:2] == ('docker', 'stop') for x in self.calls[before:]))
+
+    def test_completed_receipt_with_wrong_identity_or_fake_pong_is_rejected(self):
+        self.session.start_helper()
+        original = self.output
+        for change in (lambda v: v.update(run_id='12345678-1234-4234-9234-123456789abc'),
+                       lambda v: v.update(observation={'ping': 'fake'}), lambda v: v.update(category='unreviewed_error')):
+            def forged(*args, **kwargs):
+                result = original(*args, **kwargs); value = json.loads(result['log']); change(value)
+                result['log'] = json.dumps(value).encode(); return result
+            with patch.object(r, '_run_process', side_effect=forged), self.assertRaises(r.ReadinessError):
+                self.session.probe('ansible-ping', '172.31.77.2')
+
+    def test_helper_cleanup_and_resume_are_exact_id_idempotent_preserve_primary_and_never_allocate(self):
+        self.session.start_helper()
+        self.session.failure(r.ReadinessError('ssh_key_rejected', 'Synthetic negative'))
+        self.lease._reconciliation_only = True
+        recovered = r.ReadinessSession.resume_cleanup(self.run, self.lease)
+        before = len(self.calls)
+        result = recovered.cleanup()
+        recovered.cleanup()
+        mutations = [x for x in self.calls[before:] if x[0] == 'docker']
+        self.assertEqual(mutations, [('docker', 'stop', '--time', '3', HELPER), ('docker', 'rm', HELPER)])
+        self.assertEqual(result['primary_failure']['code'], 'ssh_key_rejected')
+        self.assertEqual(result['status'], 'failed')
+        self.assertEqual(result['cleanup'], 'completed')
+        context = read_json(self.run.file('private/readiness-controller.json')); context['helper_id'] = TARGET
+        atomic_json(self.run.file('private/readiness-controller.json'), context)
+        with self.assertRaises(r.ReadinessError): r.ReadinessSession.resume_cleanup(self.run, self.lease)
+
+    def test_original_hostkey_pin_is_never_replaced_and_current_public_identity_is_recorded(self):
+        self.session.start_helper()
+        self.assertTrue(self.session.pin_trust())
+        changed = 'ssh-ed25519 ' + base64.b64encode(struct.pack('>I', 11) + b'ssh-ed25519' + struct.pack('>I', 32) + bytes(reversed(range(32)))).decode()
+        with patch.object(r.qualification, 'copied_public_key', return_value=changed):
+            observation = self.session.observe_hostkey()
+            self.assertTrue(self.session.pin_trust())
+        self.assertFalse(observation['matches_original_pin'])
+        self.assertEqual(self.session.pinned_key, HOST_KEY)
+        self.assertNotEqual(observation['fingerprint'], self.session.receipt['hostkey_fingerprint'])
+
+    def test_retained_primary_and_unknown_are_available_before_recovery_refusal(self):
+        self.session.start_helper()
+        self.session.failure(r.ReadinessError('ssh_host_key_mismatch', 'Synthetic negative'))
+        self.session.receipt['unknown_outcome'] = True; self.session.save()
+        value = r.readiness_status(self.run)
+        self.assertEqual(value['primary_failure']['code'], 'ssh_host_key_mismatch')
+        self.assertTrue(value['unknown_outcome'])
+        self.lease._reconciliation_only = True
+        before = len(self.calls)
+        with self.assertRaises(r.ReadinessError) as error: r.ReadinessSession.resume_cleanup(self.run, self.lease)
+        self.assertEqual(error.exception.code, 'helper_outcome_unknown')
+        self.assertFalse(any(x[0] == 'docker' for x in self.calls[before:]))
+        changed = read_json(self.run.file('evidence/readiness.json')); changed['source_revision'] = '9' * 40
+        atomic_json(self.run.file('evidence/readiness.json'), changed)
+        with self.assertRaises(r.ReadinessError): r.readiness_status(self.run)
+
+
+class HelperProtocol(unittest.TestCase):
+    def value(self, operation='ssh', scenario='healthy'):
+        return {'schema_version': '1.0', 'run_id': '12345678-1234-4234-9234-123456789abc', 'source_revision': SHA,
+            'target_id': 'target-001', 'address': '172.31.77.2', 'operation': operation, 'attempt': 1,
+            'scenario': scenario, 'timeout_seconds': 1}
+
+    def test_request_rejects_arbitrary_code_urls_overrides_duplicate_fields_and_nonfinite_bounds(self):
+        for change in ({'address': 'https://example.invalid'}, {'address': '127.0.0.1'}, {'operation': 'shell'},
+                       {'scenario': 'custom'}, {'timeout_seconds': float('inf')}, {'attempt': True}, {'command': 'echo bad'}):
+            value = {**self.value(), **change}
+            with self.subTest(change=change), self.assertRaises((ValueError, TypeError)): runtime.request(json.dumps(value).encode())
+        with self.assertRaises(ValueError): runtime.request(b'{"schema_version":"1.0","schema_version":"1.0"}')
+
+    def test_ssh_policy_and_error_categories_keep_trust_and_fixed_inputs(self):
+        args = runtime.ssh_options(self.value())
+        self.assertIn('StrictHostKeyChecking=yes', args)
+        self.assertIn('IdentitiesOnly=yes', args); self.assertIn('ControlMaster=no', args)
+        for log, category in (('Host key verification failed.', 'ssh_host_key_mismatch'),
+            ('REMOTE HOST IDENTIFICATION HAS CHANGED!', 'ssh_host_key_mismatch'),
+            ('Permission denied (publickey).', 'ssh_key_rejected'), ('Connection refused', 'ssh_transport_pending')):
+            result = {'returncode': 255, 'log': log, 'timed_out': False, 'truncated': False}
+            self.assertEqual(runtime.classify(self.value(scenario='wrong-key'), result), category)
+
+
+@unittest.skipUnless(os.name == 'posix', 'Real child/process-group fixtures require Linux')
+class HelperSubprocess(unittest.TestCase):
+    def test_capture_has_real_absolute_deadline_memory_bound_and_no_ambient_provider(self):
+        with tempfile.TemporaryDirectory(prefix='wormhole-helper-runtime-synthetic-') as temporary, patch.object(runtime, 'ROOT', Path(temporary)):
+            result = runtime.capture([sys.executable, '-c', 'import time;time.sleep(10)'], .05, {'PATH': os.environ['PATH']})
+            self.assertTrue(result['timed_out']); self.assertLess(result['duration_seconds'], 2)
+            result = runtime.capture([sys.executable, '-c', 'print("x"*1000000)'], 2, {'PATH': os.environ['PATH']})
+            self.assertTrue(result['truncated']); self.assertLessEqual(len(result['log']), runtime.MAX_LOG)
+            self.assertNotIn('SSH_AUTH_SOCK', runtime.environment()); self.assertNotIn('DOCKER_HOST', runtime.environment())
+
+    def test_actual_argv_and_private_structured_ansible_result_require_expected_ping(self):
+        with tempfile.TemporaryDirectory(prefix='wormhole-ansible-protocol-synthetic-') as temporary, patch.object(runtime, 'ROOT', Path(temporary)):
+            value = HelperProtocol().value('ansible-ping')
+            attempt = Path(temporary) / 'attempt'; attempt.mkdir(mode=0o700)
+            calls = []
+            def child(argv, timeout, environment):
+                calls.append(argv)
+                results = attempt / 'results'; results.mkdir()
+                (results / 'target-001').write_text(json.dumps({'ping': 'pong', 'changed': False}))
+                return {'returncode': 0, 'log': '', 'timed_out': False, 'truncated': False}
+            with patch.object(runtime, 'capture', side_effect=child):
+                result, observation = runtime.ansible(value, attempt)
+            self.assertEqual(result['returncode'], 0); self.assertEqual(observation['ping'], 'pong')
+            self.assertIn('ansible.builtin.ping', calls[0]); self.assertIn('--tree', calls[0]); self.assertIn('--forks', calls[0])
+            inventory = json.loads((attempt / 'inventory.json').read_text())['all']['hosts']['target-001']
+            self.assertEqual(inventory['ansible_connection'], 'ssh')
+            self.assertEqual(inventory['ansible_python_interpreter'], '/usr/bin/python3')
+            (attempt / 'results/target-001').write_text(json.dumps({'ping': 'fabricated'}))
+            with patch.object(runtime, 'capture', return_value={'returncode': 0, 'log': '', 'timed_out': False, 'truncated': False}):
+                result, observation = runtime.ansible(value, attempt)
+            self.assertEqual(result['returncode'], 2); self.assertIsNone(observation['ping'])
+
+
+if __name__ == '__main__': unittest.main()
