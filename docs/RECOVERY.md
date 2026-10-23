@@ -27,6 +27,9 @@ coordinator acknowledged it or stopped a remote operation. The coordinator check
 cancellation, stops the exact helper through its adapter, then performs normal
 Terraform cleanup. Generic process-group cancellation is not wired into mutating
 Docker/Terraform requests: terminating a client cannot prove daemon completion.
+A separate stable kernel publication lock serializes publishers; atomic rename
+exposes a complete single-link file to readers. It never relaxes the global
+hard-link check or unlinks the lock inode. Busy publication has a bounded retry.
 
 `cleanup_session(session, lease, reason=..., helper=...)` is the integration API
 when a coordinator already holds all three scopes. Reasons are `success`,
@@ -60,6 +63,10 @@ it, migrate legacy run locks or execute a newer checkout against an older run.
 A source-specific unsupported case stays visibly unresolved. Empty reservations
 can finish only before any allocation intent or runtime operation; an empty
 resource list in an allocation phase does not establish safety.
+Reserved preallocation recovery can also finish without a controller context
+only when there are no journaled resources, runtime operations, plans or state
+and matching evidence records no allocation. An allocation-phase missing
+controller instead produces a blocked uncertain cleanup receipt.
 
 Versioned receipts are written to `evidence/cleanup.json` and per-attempt files in
 `evidence/cleanup-attempts/`. Terminal attempts are retained. JSON and

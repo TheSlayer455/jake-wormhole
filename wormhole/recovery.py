@@ -5,10 +5,12 @@ Terraform retains authority over its targets/networks; helpers remove themselves
 through their own exact ownership-checked adapter before Terraform destruction.
 """
 from copy import deepcopy
+from contextlib import contextmanager
 from datetime import datetime
 import json
 import os
 import re
+import time
 from uuid import UUID, uuid4
 
 from . import images
@@ -50,6 +52,11 @@ def _timestamp(value):
 def _uuid(value):
     try: return type(value) is str and str(UUID(value)) == value
     except (ValueError, AttributeError): return False
+
+
+def valid_failure(value):
+    return value is None or type(value) is dict and set(value) == {'code', 'recorded_at'} and \
+        type(value['code']) is str and re.fullmatch(CODE, value['code']) and _timestamp(value['recorded_at'])
 
 
 def validate_cleanup(value):
@@ -122,21 +129,42 @@ def request_cancel(run):
     """Record intent without stealing a live run lock or signalling a reused PID."""
     require(run.manifest()['mode'] == 'fixture' or run.workspace == images.RUNS_ROOT,
             'recovery_scope', 'Real cancellation requires the fixed canonical run storage.')
-    existing = _request(run)
-    if existing is not None: return existing
-    value = {'schema_version': '1.0', 'run_id': run.id, 'source_revision': run.manifest()['source_revision'],
-        'request_id': str(uuid4()), 'requested_at': now(), 'reason': 'operator-request'}
-    path = run.file('cancel-request.json')
-    temporary = run.file('.cancel-' + str(uuid4()) + '.tmp')
-    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, 'O_NOFOLLOW', 0), 0o600)
+    with _cancel_publication(run):
+        existing = _request(run)
+        if existing is not None: return existing
+        value = {'schema_version': '1.0', 'run_id': run.id, 'source_revision': run.manifest()['source_revision'],
+            'request_id': str(uuid4()), 'requested_at': now(), 'reason': 'operator-request'}
+        atomic_json(run.file('cancel-request.json'), value)
+        return value
+
+
+@contextmanager
+def _cancel_publication(run):
+    """Separate stable kernel lock; never steal the coordinator's run lock."""
+    path = run.file('cancel-publication.lock')
+    descriptor = os.open(path, os.O_RDWR | os.O_CREAT | getattr(os, 'O_NOFOLLOW', 0), 0o600)
     try:
-        with os.fdopen(descriptor, 'wb') as stream:
-            stream.write((json.dumps(value, sort_keys=True) + '\n').encode()); stream.flush(); os.fsync(stream.fileno())
-        try: os.link(temporary, path)  # Atomic publish without replacing a concurrent request.
-        except FileExistsError: return _request(run)
+        _owned(path)
+        identity = os.fstat(descriptor)
+        deadline = time.monotonic() + 2
+        while True:
+            try:
+                if os.name == 'posix':
+                    import fcntl
+                    fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                else:
+                    import msvcrt
+                    os.lseek(descriptor, 0, os.SEEK_SET)
+                    msvcrt.locking(descriptor, msvcrt.LK_NBLCK, 1)
+                break
+            except OSError:
+                require(time.monotonic() < deadline, 'cancellation_busy', 'Another cancellation publisher remains active; retry without lock takeover.')
+                time.sleep(.005)
+        require((identity.st_dev, identity.st_ino) == (path.stat().st_dev, path.stat().st_ino),
+                'unsafe_lock', 'Cancellation publication lock changed.')
+        yield
     finally:
-        temporary.unlink(missing_ok=True)
-    return value
+        os.close(descriptor)  # Stable inode remains; crash releases only the kernel lock.
 
 
 def cancellation_requested(run):
@@ -173,9 +201,15 @@ def cleanup_session(session, lease, *, reason='success', helper=None):
     require(reason in REASONS, 'invalid_cleanup', 'Cleanup reason must be a fixed supported value.')
     session.held()
     require(session.lease is lease, 'admission_scope', 'Cleanup requires the session own held admission lease.')
+    if helper is not None:
+        require(helper.run.id == session.run.id and helper.run.path == session.run.path and helper.lease is lease,
+                'ownership_mismatch', 'Helper cleanup must belong to this exact run and lease.')
     helper_record = getattr(helper, 'receipt', {}) if helper is not None else {}
     require(type(helper_record) is dict and type(helper_record.get('unknown_outcome', False)) is bool,
             'invalid_cleanup', 'Helper cleanup requires its bounded structured outcome record.')
+    require(valid_failure(helper_record.get('primary_failure')), 'invalid_cleanup', 'Helper primary failure must have a bounded validated identity before persistence.')
+    if helper is not None:
+        require(common(helper_record) == common(session.run.manifest()), 'identity_mismatch', 'Helper outcome belongs to another run or source.')
     helper_id = getattr(helper, 'helper', None) if helper is not None else None
     if type(helper_id) is str and re.fullmatch(r'[a-f0-9]{64}', helper_id): session._cleanup_helper_id = helper_id
     if session.receipt['primary_failure'] is None and helper_record.get('primary_failure') is not None:
@@ -249,22 +283,64 @@ def _recover_run(run):
             require(value is not None and value['status'] == 'completed', 'recovery_scope', 'An archived admission needs its matching completed cleanup receipt.')
             lease.finish(reconciliation_complete=True)
             return value
+        if lease.record.get('phase') == 'reserved' and not lease.record['resources']:
+            require(not run.file('private/terraform/controller.json').exists() and not run.file('private/readiness-controller.json').exists(),
+                    'recovery_scope', 'Reserved recovery cannot hide a runtime controller context.')
+            folder = run.file('private/terraform')
+            require(not folder.exists() or not any(folder.glob('*.tfplan')) and not any(folder.glob('terraform.tfstate*')) and
+                    (not (folder / 'operations').exists() or not any((folder / 'operations').iterdir())),
+                    'recovery_scope', 'Reserved recovery requires no runtime operations, plans or state.')
+            path = run.file('evidence/provisioning.json')
+            prior = read_json(path) if path.exists() else {**common(manifest), 'primary_failure': None,
+                'unknown_outcome': False, 'resources': [], 'operations': []}
+            require(common(prior) == common(manifest) and prior['unknown_outcome'] is False and
+                    not prior['resources'] and not prior['operations'] and not prior.get('provisioner_id') and valid_failure(prior['primary_failure']),
+                    'recovery_scope', 'Reserved recovery requires exact evidence that no allocation or runtime operation began.')
+            stamp = now(); cancelled = cancellation_requested(run)
+            primary = prior['primary_failure'] or ({'code': 'cancelled', 'recorded_at': stamp} if cancelled else None)
+            value = {**common(manifest), 'operation': 'scoped-cleanup', 'attempt_id': str(uuid4()),
+                'reason': 'cancelled' if cancelled else 'failure' if primary else 'success', 'status': 'completed',
+                'created_at': stamp, 'updated_at': stamp, 'primary_failure': primary, 'secondary_failures': [],
+                'resources': [], 'unknown_outcome': False, 'terraform_state_retained': True, 'private_state_removed': False,
+                'runtime_pipeline_complete': False, 'production_iso_eligible': False}
+            _save(run, value); lease.finish(reconciliation_complete=True)
+            return value
+        helper_summary = {'primary_failure': None, 'unknown_outcome': False}
         try:
             helper = None
             if run.file('private/readiness-controller.json').exists():
-                from .readiness import ReadinessSession
+                from .readiness import ReadinessSession, readiness_status
+                helper_summary['unknown_outcome'] = True  # Missing/invalid status cannot conceal uncertainty.
+                summary = readiness_status(run)
+                require(type(summary) is dict and valid_failure(summary.get('primary_failure')) and
+                        type(summary.get('unknown_outcome')) is bool, 'invalid_cleanup', 'Readiness recovery status is malformed.')
+                helper_summary = summary
+                require(helper_summary['unknown_outcome'] is False, 'daemon_outcome_unknown', 'Readiness has unresolved daemon work; preserve every component.')
                 helper = ReadinessSession.resume_cleanup(run, lease)
                 helper.cleanup()  # Helper must be absent before Terraform's exact pending view is resumed.
             session = ProvisioningSession.resume_destroy(run, lease)
             if helper is not None: session._cleanup_helper_id = helper.helper
+            if session.receipt['primary_failure'] is None and helper_summary['primary_failure'] is not None:
+                session.receipt['primary_failure'] = deepcopy(helper_summary['primary_failure'])
+                session.receipt['status'] = 'failed'; session.save()
         except Exception as error:
             # Reporting has no execution authority. Keep recovery refusal visible
             # even when a component cannot produce an executable cleanup adapter.
             from types import SimpleNamespace
             prior = read_json(run.file('evidence/provisioning.json'))
             require(common(prior) == common(manifest), 'identity_mismatch', 'Recovery evidence belongs to another run or source.')
-            context = read_json(run.file('private/terraform/controller.json'))
-            view = SimpleNamespace(run=run, lease=lease, provisioner=context['id'], receipt=prior,
+            if helper is not None:
+                record = helper.receipt
+                require(type(record) is dict and valid_failure(record.get('primary_failure')) and type(record.get('unknown_outcome')) is bool,
+                        'invalid_cleanup', 'Readiness outcome could not be preserved safely.')
+                helper_summary = record
+            prior = deepcopy(prior)
+            if prior['primary_failure'] is None: prior['primary_failure'] = deepcopy(helper_summary.get('primary_failure'))
+            prior['unknown_outcome'] = prior['unknown_outcome'] or helper_summary.get('unknown_outcome', True)
+            context_path = run.file('private/terraform/controller.json')
+            context = read_json(context_path) if context_path.exists() else None
+            if context is None: prior['unknown_outcome'] = True  # Allocation phase without an exact returned controller cannot be cleared.
+            view = SimpleNamespace(run=run, lease=lease, provisioner=context['id'] if context is not None else None, receipt=prior,
                 owned={x['address']: x['id'] for x in prior['resources']})
             stamp = now()
             value = {**common(manifest), 'operation': 'scoped-cleanup', 'attempt_id': str(uuid4()),

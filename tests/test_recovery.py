@@ -7,11 +7,14 @@ import hashlib
 import os
 from pathlib import Path
 import tempfile
+import threading
+import sys
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch, Mock
 
 from wormhole import recovery as r, provisioning as p, images
-from wormhole.runs import create_run, atomic_json, read_json, now, RunError
+from wormhole.runs import create_run, atomic_json, read_json, now, common, RunError
 import test_provisioning as fixture
 
 
@@ -42,6 +45,22 @@ class LocalRecords(unittest.TestCase):
     def test_published_cleanup_schema_matches_source_definitions(self):
         source = Path(r.__file__).resolve().parents[1] / 'schemas/cleanup-v1.schema.json'
         self.assertEqual(json.loads(source.read_text()), r.cleanup_schema())
+
+    def test_cancel_reader_during_atomic_publish_never_observes_a_hard_link(self):
+        published, release = threading.Event(), threading.Event()
+        original = r.atomic_json
+        def pause(path, value):
+            original(path, value)
+            if path.name == 'cancel-request.json':
+                published.set(); self.assertTrue(release.wait(2))
+        with patch.object(r, 'atomic_json', side_effect=pause), ThreadPoolExecutor(max_workers=2) as executor:
+            first = executor.submit(r.request_cancel, self.run)
+            self.assertTrue(published.wait(2))
+            self.assertEqual(self.run.file('cancel-request.json').stat().st_nlink, 1)
+            self.assertTrue(r.cancellation_requested(self.run))
+            second = executor.submit(r.request_cancel, self.run)
+            release.set()
+            self.assertEqual(first.result()['request_id'], second.result()['request_id'])
 
 
 @unittest.skipUnless(os.name == 'posix', 'Linux cleanup-controller fixtures; all Docker/Terraform calls mocked')
@@ -77,7 +96,7 @@ class Cleanup(unittest.TestCase):
             self.session.provision()
             primary = {'code': 'functional_check_failed', 'recorded_at': now()}
             self.session.receipt['primary_failure'] = deepcopy(primary)
-            helper = Mock(run=self.run, lease=self.lease, receipt={})
+            helper = Mock(run=self.run, lease=self.lease, receipt={**common(self.run.manifest()), 'unknown_outcome': False})
             helper.cleanup.side_effect = RunError('helper_cleanup_failed', 'Sensitive synthetic detail must not be exported')
             with patch.object(self.session, 'destroy') as destroy:
                 value = r.cleanup_session(self.session, self.lease, reason='failure', helper=helper)
@@ -112,7 +131,7 @@ class Cleanup(unittest.TestCase):
     def test_helper_primary_and_uncertain_outcome_are_not_lost_at_component_boundary(self):
         with self.f.patches(): self.session.provision()
         primary = {'code': 'readiness_failed', 'recorded_at': now()}
-        helper = Mock(run=self.run, lease=self.lease, receipt={'primary_failure': primary, 'unknown_outcome': True})
+        helper = Mock(run=self.run, lease=self.lease, receipt={**common(self.run.manifest()), 'primary_failure': primary, 'unknown_outcome': True})
         with patch.object(self.session, 'destroy') as destroy:
             value = r.cleanup_session(self.session, self.lease, reason='failure', helper=helper)
             destroy.assert_not_called(); helper.cleanup.assert_not_called()
@@ -120,6 +139,18 @@ class Cleanup(unittest.TestCase):
         self.assertEqual(self.session.receipt['primary_failure'], primary)
         self.assertEqual(value['status'], 'blocked')
         self.assertTrue(value['unknown_outcome'])
+
+    def test_wrong_run_or_malformed_helper_cannot_contaminate_current_primary(self):
+        with self.f.patches(): self.session.provision()
+        primary = {'code': 'readiness_failed', 'recorded_at': now()}
+        helper = Mock(run=SimpleNamespace(id='foreign', path=self.run.path), lease=self.lease,
+            receipt={**common(self.run.manifest()), 'primary_failure': primary, 'unknown_outcome': False})
+        before = read_json(self.run.file('evidence/provisioning.json'))
+        with self.assertRaises(r.RecoveryError): r.cleanup_session(self.session, self.lease, helper=helper)
+        self.assertIsNone(self.session.receipt['primary_failure'])
+        helper.run = self.run; helper.receipt['primary_failure'] = {'code': 'bad', 'secret': 'must not persist'}
+        with self.assertRaises(r.RecoveryError): r.cleanup_session(self.session, self.lease, helper=helper)
+        self.assertEqual(read_json(self.run.file('evidence/provisioning.json')), before)
 
     def test_preallocation_reservation_can_finish_but_empty_allocation_intent_cannot(self):
         self.lease.record['phase'] = 'reserved'
@@ -252,6 +283,70 @@ class Cleanup(unittest.TestCase):
              patch.object(r.AdmissionLease, 'resume', side_effect=r.AdmissionError('infrastructure_busy', 'Synthetic busy lease')):
             with self.assertRaises(r.RecoveryError) as error: r.recover_run(self.run)
             self.assertEqual(error.exception.code, 'infrastructure_busy')
+
+    def test_recover_preserves_helper_primary_before_successful_component_cleanup(self):
+        with self.f.patches(): self.session.provision()
+        self.lease._reconciliation_only = True; self.session.destroy_only = True; self.lease.finish = Mock()
+        helper_id = 'e' * 64
+        self.lease.record['resources'].append({'kind': 'container', 'id': helper_id, 'outcome': 'pending'})
+        atomic_json(self.run.file('private/readiness-controller.json'), {'synthetic': True})
+        primary = {'code': 'readiness_failed', 'recorded_at': now()}
+        helper = Mock(run=self.run, lease=self.lease, helper=helper_id,
+            receipt={**common(self.run.manifest()), 'primary_failure': primary, 'unknown_outcome': False})
+        helper.cleanup.side_effect = lambda: self.lease.reconcile_resource('container', helper_id)
+        readiness = SimpleNamespace(readiness_status=lambda _: {'primary_failure': primary, 'unknown_outcome': False},
+            ReadinessSession=SimpleNamespace(resume_cleanup=Mock(return_value=helper)))
+        with self.f.patches(), patch.dict(sys.modules, {'wormhole.readiness': readiness}), \
+             patch.object(r, 'source_identity', return_value=(fixture.SHA, False)), \
+             patch.object(r.AdmissionLease, 'resume', return_value=nullcontext(self.lease)), \
+             patch.object(images, 'docker_scope', return_value=nullcontext()), \
+             patch.object(p.ProvisioningSession, 'resume_destroy', return_value=self.session):
+            value = r.recover_run(self.run)
+        self.assertEqual(value['status'], 'completed')
+        self.assertEqual(value['primary_failure'], primary)
+        self.assertEqual(self.session.receipt['primary_failure'], primary)
+        self.assertEqual(helper.receipt['primary_failure'], primary)
+
+    def test_recover_helper_unknown_or_refusal_preserves_component_failure_before_any_teardown(self):
+        with self.f.patches(): self.session.provision()
+        self.lease._reconciliation_only = True
+        atomic_json(self.run.file('private/readiness-controller.json'), {'synthetic': True})
+        primary = {'code': 'readiness_failed', 'recorded_at': now()}
+        factory = Mock(side_effect=RunError('readiness_scope', 'Synthetic refused helper context'))
+        for unknown in (True, False):
+            readiness = SimpleNamespace(readiness_status=lambda _: {'primary_failure': primary, 'unknown_outcome': unknown},
+                ReadinessSession=SimpleNamespace(resume_cleanup=factory))
+            with patch.dict(sys.modules, {'wormhole.readiness': readiness}), \
+                 patch.object(r, 'source_identity', return_value=(fixture.SHA, False)), \
+                 patch.object(r.AdmissionLease, 'resume', return_value=nullcontext(self.lease)), \
+                 patch.object(images, 'docker_scope', return_value=nullcontext()), \
+                 patch.object(p.ProvisioningSession, 'resume_destroy') as resume:
+                value = r.recover_run(self.run)
+                resume.assert_not_called()
+            self.assertEqual(value['status'], 'blocked')
+            self.assertEqual(value['primary_failure'], primary)
+            self.assertEqual(value['unknown_outcome'], unknown)
+        factory.assert_called_once()
+
+    def test_recover_reserved_preparation_without_controller_finishes_but_empty_allocation_intent_refuses(self):
+        self.lease.record['phase'] = 'reserved'; self.lease._reconciliation_only = True; self.lease.finish = Mock()
+        self.session.receipt['primary_failure'] = {'code': 'tool_download_failed', 'recorded_at': now()}; self.session.save()
+        with patch.object(r, 'source_identity', return_value=(fixture.SHA, False)), \
+             patch.object(r.AdmissionLease, 'resume', return_value=nullcontext(self.lease)), \
+             patch.object(images, 'docker_scope', return_value=nullcontext()), \
+             patch.object(p.ProvisioningSession, 'resume_destroy') as resume:
+            value = r.recover_run(self.run); resume.assert_not_called()
+        self.assertEqual(value['status'], 'completed')
+        self.assertEqual(value['primary_failure']['code'], 'tool_download_failed')
+        self.lease.finish.assert_called_once_with(reconciliation_complete=True)
+        self.lease.record['phase'] = 'provisioning'
+        with patch.object(r, 'source_identity', return_value=(fixture.SHA, False)), \
+             patch.object(r.AdmissionLease, 'resume', return_value=nullcontext(self.lease)), \
+             patch.object(images, 'docker_scope', return_value=nullcontext()):
+            value = r.recover_run(self.run)
+        self.assertEqual(value['status'], 'blocked')
+        self.assertTrue(value['unknown_outcome'])
+        self.lease.finish.assert_called_once()
 
 
 if __name__ == '__main__': unittest.main()
