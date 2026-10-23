@@ -15,6 +15,15 @@ import test_provisioning as fixture
 
 
 class Boundaries(unittest.TestCase):
+    def test_suite_rejects_a_case_from_a_different_clean_revision(self):
+        contradictory = {'run_id': '12345678-1234-4234-9234-123456789abc', 'source_revision': 'b' * 40,
+            'source_dirty': False, 'status': 'pass'}
+        with patch.object(a, 'source_identity', return_value=(fixture.SHA, False)), \
+             patch.object(a, 'qualify_case', return_value=contradictory) as qualify:
+            with self.assertRaises(r.RecoveryError) as error: a.acceptance('e' * 64)
+        self.assertEqual(error.exception.code, 'source_changed')
+        qualify.assert_called_once()
+
     def test_invalid_requests_cannot_create_a_run_or_launch_a_worker(self):
         with patch.object(a, '_fresh') as fresh, patch.object(a, 'source_identity', return_value=(fixture.SHA, False)):
             for scenario, sentinel in (('arbitrary', 'e' * 64), ('normal', '../unsafe'), ('normal', None)):

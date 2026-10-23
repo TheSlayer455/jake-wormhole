@@ -289,7 +289,10 @@ def acceptance(sentinel):
     cases = []
     for scenario in CASES:
         require(source_identity() == (revision, False), 'source_changed')
-        cases.append(qualify_case(scenario, sentinel))
+        case = qualify_case(scenario, sentinel)
+        require(case['source_revision'] == revision and case['source_dirty'] is False and case['status'] == 'pass' and
+                source_identity() == (revision, False), 'source_changed')
+        cases.append(case)
     require(len({x['run_id'] for x in cases}) == len(CASES), 'run_id_reused')
     return {'schema_version': '1.0', 'operation': 'recovery-acceptance-suite', 'source_revision': revision,
         'status': 'pass', 'cases': cases, 'existing_sentinel_modified': False,
