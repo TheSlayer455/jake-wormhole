@@ -566,7 +566,8 @@ class ProvisioningSession:
         require(endpoints[expected_network].get('NetworkID') in ({'', network_id} if stopped else {network_id}),
                 'unsafe_target', 'Target endpoint does not resolve to the exact owned run bridge.')
 
-    def provision(self):
+    def create_stopped(self):
+        """Create and confine the exact target without starting its runtime."""
         try:
             self.held(allocating=True)
             self.prepare(); self.start_provisioner()
@@ -603,9 +604,29 @@ class ProvisioningSession:
                 'started_at': before['State']['StartedAt'], 'pids_limit': before['HostConfig'].get('PidsLimit')}
             images.docker(('update', '--pids-limit', str(self.lease.plan['limits']['target']['pids_limit']), target))
             self.verify_target(images.inspect('container', target), stopped=True)
+            self.receipt['status'] = 'created-stopped'
+            self.save()
+            return deepcopy(self.owned)
+        except BaseException as error:
+            self._provision_failure(error)
+            raise
+
+    def start_and_inventory(self):
+        """Start the confined target once, then obtain its actual provider output."""
+        try:
+            self.held(allocating=True)
+            require(self.scenario == 'healthy' and self.receipt['status'] == 'created-stopped' and
+                    self.receipt['unknown_outcome'] is False and set(self.owned) == ADDRESSES,
+                    'target_not_ready', 'Start requires this complete, confined, never-started target.')
+            target = self.owned['docker_container.target']
+            self.check_inputs()
+            self.verify_provisioner(images.inspect('container', self.provisioner))
+            self.verify_target(images.inspect('container', target), stopped=True)
+            self.lease.refresh()
             images.docker(('start', target))
             live = images.inspect('container', target)
             self.verify_target(live)
+            self.receipt['target_started_at'] = live['State']['StartedAt']
             self.receipt['target_cgroups'] = images.cgroup_limits(live['State']['Pid'], self.lease.plan['limits']['target']['docker_create'])
             self.operation('refresh-plan')
             validate_plan(self.operation('show-refresh-plan'), self.variables, operation='refresh', owned=self.owned)
@@ -617,12 +638,19 @@ class ProvisioningSession:
             self.save()
             return deepcopy(self.receipt['inventory'])
         except BaseException as error:
-            self.failure(error)
-            # Failure diagnostics are independent and never native-delete Terraform-owned resources.
-            if self.provisioner is not None:
-                try: self.record_state(self.operation('show-state'))
-                except Exception as diagnostic: self.failure(diagnostic)
+            self._provision_failure(error)
             raise
+
+    def provision(self):
+        self.create_stopped()
+        return self.start_and_inventory()
+
+    def _provision_failure(self, error):
+        self.failure(error)
+        # Diagnostics do not replace the primary error or delete owned resources.
+        if self.provisioner is not None:
+            try: self.record_state(self.operation('show-state'))
+            except Exception as diagnostic: self.failure(diagnostic)
 
     def inventory(self, output):
         require(type(output) is dict and set(output) == {'run'} and output['run'].get('sensitive') is False,

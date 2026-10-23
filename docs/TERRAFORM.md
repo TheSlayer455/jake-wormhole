@@ -110,6 +110,14 @@ its existing real lease. `provision()` returns the actual versioned inventory;
 the session retains exact controller/state/resources until `destroy()`. Do not
 nested-acquire admission or mark the full pipeline passed from this receipt.
 
+WORM-007 separates this boundary into `create_stopped()` and
+`start_and_inventory()`. The first returns exact owned IDs after confinement and
+PID enforcement, with no started target or invented inventory. The second
+rechecks the never-started target and current admission, starts it once and
+returns the actual refreshed provider inventory. `provision()` composes both.
+This permits a bounded readiness coordinator to deliberately delay or omit start;
+it does not bypass either stage's guards or extend the target lifetime.
+
 Destroy first reads actual state and verifies every ID/name/image/label, refuses
 unexpected endpoints, validates an exact saved destroy plan, and applies it via
 Terraform. Native target/network deletion is never a fallback. Empty final state,

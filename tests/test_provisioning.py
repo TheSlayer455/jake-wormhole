@@ -405,6 +405,34 @@ class Controller(unittest.TestCase):
             self.assertEqual(error.exception.code, 'daemon_outcome_unknown')
             execute.assert_not_called()
 
+    def test_stopped_stage_allows_pause_without_start_or_invented_inventory(self):
+        with self.patches():
+            owned = self.session.create_stopped()
+            self.assertEqual(owned, {'docker_container.target': CID, 'docker_network.run': NET})
+            self.assertEqual(self.session.receipt['status'], 'created-stopped')
+            self.assertIsNone(self.session.receipt['inventory'])
+            self.assertFalse(self.running[CID])
+            self.assertEqual(self.target_pid_limit, self.plan['limits']['target']['pids_limit'])
+            self.assertNotIn(('docker', 'start', CID), self.calls)
+            inventory = self.session.start_and_inventory()
+            self.assertEqual(inventory['targets'][0]['resource_id'], CID)
+            self.assertEqual(self.session.receipt['target_started_at'], '2026-10-23T14:00:00Z')
+            with self.assertRaises(p.ProvisioningError) as error:
+                self.session.start_and_inventory()
+            self.assertEqual(error.exception.code, 'target_not_ready')
+            self.assertEqual(self.calls.count(('docker', 'start', CID)), 1)
+
+    def test_resumed_start_rechecks_stopped_limits_and_preserves_failure(self):
+        with self.patches():
+            self.session.create_stopped()
+            self.target_pid_limit = 1
+            with self.assertRaises(p.ProvisioningError) as error:
+                self.session.start_and_inventory()
+            self.assertEqual(error.exception.code, 'limits_not_enforced')
+            self.assertEqual(self.session.receipt['primary_failure']['code'], 'limits_not_enforced')
+            self.assertNotIn(('docker', 'start', CID), self.calls)
+            self.assertIsNone(self.session.receipt['inventory'])
+
     def test_actual_workflow_policy_orders_pid_and_inspection_before_start_then_provider_refresh_destroy(self):
         with self.patches():
             inventory = self.session.provision()
