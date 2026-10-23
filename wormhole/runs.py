@@ -244,7 +244,12 @@ class Run:
             os.close(descriptor)  # Persistent inode; kernel releases after crash.
 
 
-def create_run(workspace, *, fixture, identity=None, kernel_lock=False):
+def create_run(workspace, *, fixture, identity=None, kernel_lock=False, profile=None):
+    if type(fixture) is not bool:
+        raise RunError("invalid_profile", "The fixture flag must be explicit.")
+    profile = ("fixture" if fixture else "smoke") if profile is None else profile
+    if type(profile) is not str or (profile != "fixture" if fixture else profile not in {"smoke", "five-targets", "twenty-targets"}):
+        raise RunError("invalid_profile", "Use a declared profile consistent with the run mode.")
     if type(kernel_lock) is not bool or kernel_lock and (fixture or not sys.platform.startswith("linux")):
         raise RunError("invalid_lock_policy", "Kernel locking is supported only for new real Linux runs.")
     base = workspace_path(workspace, create=True)
@@ -260,7 +265,7 @@ def create_run(workspace, *, fixture, identity=None, kernel_lock=False):
     timestamp = now()
     manifest = {"schema_version": "1.0", "run_id": identifier, "source_revision": revision,
                 "source_dirty": dirty, "mode": "fixture" if fixture else "container-reference",
-                "profile": "fixture" if fixture else "smoke", "outcome": "running", "created_at": timestamp,
+                "profile": profile, "outcome": "running", "created_at": timestamp,
                 "updated_at": timestamp, "stages": [], "expected_checks": ["fixture-sha256"] if fixture else [],
                 "runtime_pipeline_complete": False, "production_iso_eligible": False}
     validate_artifact("run-manifest", manifest)
