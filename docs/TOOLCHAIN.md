@@ -86,3 +86,9 @@ Tests use generated labeled ZIP fixtures, not the downloaded executables. Linux
 tests exercise actual private files, streaming extraction, links, archive attacks,
 parent tamper rejection and the actual worker deadline. Windows skips the POSIX
 filesystem fixtures. No test installs host tools or calls Docker.
+
+Actual homelab preparation at source fc9ccf81e26ec83c11560f2f5579ab8ec316871e
+passed in 3.007 seconds with 265,992,159 cache-file bytes and 266,047,488 allocated
+bytes. [Sanitized evidence](../handoff/evidence/WORM-006-tool-preparation.json)
+records the exact pins and unchanged pending execution/h1 status. This is actual
+download/hash/extraction evidence, not a Terraform execution or host installation.

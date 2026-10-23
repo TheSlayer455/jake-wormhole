@@ -1,5 +1,27 @@
 # Engineering checkpoint
 
+## Current: WORM-006, October23 at14:52UTC
+
+WORM-002/003/004/005 are Done. WORM-005 has a solution comment, three passing
+criteria, two actual strict SSH qualifications, private PR4 final CI and delegated
+Owner decisions. WORM-006 revision2 is approved/claimed and In Progress. Current
+branch is codex/WORM-006-integration; private draft PR5 is stacked on005.
+
+Reviewed source fc9ccf81e26ec83c11560f2f5579ab8ec316871e adds new real-run kernel
+locks, fail-closed policy handling, evidence-only retained-controller budget checks
+and verified bounded private tool preparation. Actual homelab106 tests:104 pass,
+two Windows-only skips,5.208s. Windows106:66 pass,40 platform skips,4.667s.
+
+Actual tool preparation run b810b648-15db-41bd-a79e-d24bfb42fdf6 passed in3.007s
+with265,992,159 file bytes/266,047,488 allocated bytes,9 files, no Docker allocation
+or downloaded-binary execution. See [tool evidence](../handoff/evidence/WORM-006-tool-preparation.json).
+Its canonical lease finished with no resources; private cache remains retained.
+Terraform/provider version execution, actual h1 confirmation, plan/apply/output/
+destroy and failure acceptance remain unfinished. Separate provisioner source is
+being implemented in codex/WORM-006-provisioner. No006 completion is claimed.
+
+## Prior WORM-005 checkpoint
+
 October 23, 2026, 14:32 UTC. WORM-002/003/004 revision 2 are Done in Minx.
 WORM-005 revision 2 is In Progress; its actual image/SSH acceptance checks pass
 and final publication/CI/review are next. Retrieve Minx for current status and
