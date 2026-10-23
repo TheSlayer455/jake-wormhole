@@ -177,6 +177,28 @@ class RetainedAssessment(unittest.TestCase):
         with self.assertRaises(a.AssessmentError):
             a.report_assessment(self.run)
 
+    def test_json_boolean_number_aliases_cannot_change_frozen_or_reported_evidence(self):
+        original = self.assess()
+        plan = read_json(self.run.file(a.PLAN))
+        for modify in (lambda x: x['result']['counts'].update(Open=False),
+                       lambda x: x['result']['counts'].update(**{'Not Applicable': True}),
+                       lambda x: x['assessment_artifact'].update(synthetic=1),
+                       lambda x: x.update(source_dirty=0)):
+            value = deepcopy(original)
+            modify(value)
+            atomic_json(self.run.file(a.RECEIPT), value)
+            with self.assertRaises(a.AssessmentError):
+                a.report_assessment(self.run)
+        atomic_json(self.run.file(a.RECEIPT), original)
+        for field, alias in [('synthetic', 1), ('source_dirty', 0), ('reference_eligible', 0), ('production_iso_eligible', 0)]:
+            value = deepcopy(plan)
+            value[field] = alias
+            atomic_json(self.run.file(a.PLAN), value)
+            with self.assertRaises(a.AssessmentError):
+                a.report_assessment(self.run)
+        atomic_json(self.run.file(a.PLAN), plan)
+        self.assertEqual(a.report_assessment(self.run)['result'], original)
+
     def test_stale_source_interrupted_plan_and_competing_lock_cannot_overwrite(self):
         with patch.object(a, 'source_identity', return_value=(SHA, True)):
             with self.assertRaises(a.AssessmentError):

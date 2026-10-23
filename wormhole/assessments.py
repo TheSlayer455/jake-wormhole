@@ -47,6 +47,14 @@ def digest(value):
     return hashlib.sha256(canonical(value)).hexdigest()
 
 
+def same_json(left, right):
+    """JSON booleans and numbers are distinct even though Python False == 0."""
+    try:
+        return canonical(left) == canonical(right)
+    except (ValueError, TypeError, UnicodeError, RecursionError):
+        return False
+
+
 def text(value, maximum=1000, *, empty=False):
     if type(value) is not str:
         return False
@@ -79,7 +87,7 @@ def make_plan(run, expected):
 
 def validate_plan(run, value):
     require(type(value) is dict and 'expected_findings' in value, 'assessment_plan_changed')
-    require(value == make_plan(run, value['expected_findings']), 'assessment_plan_changed')
+    require(same_json(value, make_plan(run, value['expected_findings'])), 'assessment_plan_changed')
     return value
 
 
@@ -212,7 +220,7 @@ def report_assessment(run):
               'original_sha256', 'original_size_bytes', 'status', 'result', 'assessment_artifact', 'primary_failure',
               'duration_seconds', 'created_at', 'updated_at', 'runtime_pipeline_complete', 'reference_eligible',
               'production_iso_eligible', 'limitations'}
-    require(type(receipt) is dict and set(receipt) == fields and common(receipt) == common(run.manifest())
+    require(type(receipt) is dict and set(receipt) == fields and same_json(common(receipt), common(run.manifest()))
             and receipt['component'] == 'synthetic-assessment' and receipt['policy_id'] == POLICY
             and receipt['plan_sha256'] == plan['plan_sha256'] and receipt['synthetic'] is True
             and receipt['original_path'] == ORIGINAL and receipt['original_sha256'] == hashlib.sha256(raw).hexdigest()
@@ -237,7 +245,7 @@ def report_assessment(run):
                 'synthetic': True, 'policy_id': POLICY,
                 'findings': [{key: row[key] for key in ('finding_id', 'status', 'summary')} for row in result['findings']]}
     validate_artifact('assessment', artifact)
-    require(receipt['result'] == result and receipt['assessment_artifact'] == artifact and receipt['primary_failure'] is None
+    require(same_json(receipt['result'], result) and same_json(receipt['assessment_artifact'], artifact) and receipt['primary_failure'] is None
             and receipt['status'] == ('passed' if result['policy_verdict'] == 'pass' else 'rejected'), 'assessment_receipt_changed')
     readable = ['Synthetic assessment ' + run.id + ': reference policy ' + result['policy_verdict']]
     readable.extend(status + ': ' + str(result['counts'][status]) for status in STATUSES)

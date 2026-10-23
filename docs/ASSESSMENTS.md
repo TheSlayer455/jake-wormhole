@@ -18,6 +18,8 @@ Not Applicable requires the exact applicability and reason declared in advance.
 Counts, readable text and the normalized assessment share the same parsed records.
 Reporting re-reads the original and frozen plan, recomputes policy, and rejects
 changed counts, findings, outcomes, originals or eligibility flags.
+Evidence comparison preserves JSON types: a boolean cannot replace a numeric
+count, and a number cannot replace a boolean identity or simulation field.
 
 Reference-policy pass/reject is separate from reference-release eligibility.
 Both release flags remain false for either outcome: synthetic assessment,
