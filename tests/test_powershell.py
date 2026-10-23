@@ -105,7 +105,10 @@ class OptionalPolicy(unittest.TestCase):
             run=create_run(Path(folder)/'runs',fixture=False,identity=(SHA,False));mounts=p.binding_files(run)
             records={destination:p.binding_identity(path) for destination,path in mounts.items()}
             p.verify_bindings(run,mounts,False,records)
-            path=Path(next(iter(mounts.values())));raw=path.read_bytes();path.unlink();path.write_bytes(raw);path.chmod(0o444)
+            path=Path(next(iter(mounts.values())));raw=path.read_bytes();previous=path.stat().st_ino
+            path.rename(path.with_name('retained-old-inode.py'))
+            path.write_bytes(raw);path.chmod(0o444)
+            self.assertNotEqual(path.stat().st_ino,previous,'Keep the old inode allocated so this actually tests substitution')
             with self.assertRaises(p.CapabilityError):p.verify_bindings(run,mounts,False,records)
             self.assertEqual(path.parent.stat().st_mode&0o777,0o700)
 
