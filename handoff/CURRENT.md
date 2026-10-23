@@ -1,3 +1,19 @@
+# Current: WORM-017 implementation, October23 19:52UTC
+
+WORM-002 through WORM-016 are Done in Minx through Jake's explicit owner-directed
+delegated workflow, with per-criterion evidence and solution comments. WORM-015
+delivery `41a0047b7fa8083f6b6a740308b32efe690a8d54` is pushed in private draft PR15;
+both final hosted checks passed. Its actual six-case runtime source is
+`14d510044757f588c256e27c62a0cbad037d7ca1`. PRs remain unmerged.
+
+WORM-017 revision2 is approved and claimed for versioned reference run evidence,
+shared reports, exact completeness gates and safe exports. Implementation and
+actual qualification are pending. One writer owns each separate integration,
+core and records worktree. Refresh Minx for claim expiry. Twenty-target execution,
+tested-byte publication and production ISO eligibility remain separate.
+
+## Preserved historical checkpoints
+
 # Current continuation: WORM-015 delivery
 
 <!-- WORM-015 actual qualification 14d510044757f588c256e27c62a0cbad037d7ca1 -->
