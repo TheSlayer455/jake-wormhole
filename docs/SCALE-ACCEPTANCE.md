@@ -82,3 +82,11 @@ fallback delete, replacement controller, journal reset or broad prune.
 fixtures only. Its success is not an actual host/container/SSH/Ansible result.
 Real acceptance must be executed separately from the reviewed clean source and
 recorded with its actual observations, failures and cleanup outcomes.
+
+<!-- WORM-010 actual qualification 1920c9621017190a8756affab36e5d25e6102978 -->
+
+## Actual qualification at `1920c96`
+
+The staged smoke/five-target commands and the full ten-case fleet command passed on October 23, 2026, using clean `1920c9621017190a8756affab36e5d25e6102978`. The full suite used ten distinct five-target Runs with fifty declared rows each and two independent Ansible forks. All expected faults retained their failed underlying operation and nonpassing target rows; exact cleanup and the unrelated sentinel stayed separate and successful. The [portable evidence](../handoff/evidence/WORM-010.json) records sanitized identities/counts while full row/capture/state artifacts remain private.
+
+Linux: 277 cases, 275 passed, 2 Windows-only skips, 19.359 seconds. Windows: 277 cases, 161 passed, 116 platform skips, 17.542 seconds. Fixture counts and real runtime observations are recorded separately. No twenty-target, candidate/full-pipeline, VM/ISO/STIG or scanner qualification is inferred.
