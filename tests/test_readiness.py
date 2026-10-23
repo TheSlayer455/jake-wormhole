@@ -4,8 +4,11 @@ from copy import deepcopy
 from datetime import datetime, timezone
 import json
 import os
+import hashlib
 from pathlib import Path
 import struct
+import stat
+import subprocess
 import sys
 import tempfile
 import time
@@ -88,7 +91,7 @@ class ReadinessPolicy(unittest.TestCase):
                 'Tmpfs': {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=10001,gid=10001',
                     '/tmp': 'rw,nosuid,nodev,noexec,size=16m,mode=1777',
                     '/run/input': 'rw,nosuid,nodev,noexec,size=64k,mode=0700,uid=10001,gid=10001'}},
-            'Mounts': [{'Type': 'bind', 'Source': str(r.RUNTIME), 'Destination': r.SOURCE_MOUNT, 'RW': False}],
+            'Mounts': [{'Type': 'bind', 'Source': str(self.run.file('private/helper-source/runtime.py')), 'Destination': r.SOURCE_MOUNT, 'RW': False}],
             'NetworkSettings': {'Networks': {'run': {'NetworkID': NETWORK}}}}
 
     def inspect(self, kind, identifier, **options):
@@ -103,7 +106,8 @@ class ReadinessPolicy(unittest.TestCase):
     def docker(self, arguments, **options):
         self.calls.append(('docker', *arguments))
         if arguments[0] == 'create':
-            self.assertIn(str(r.RUNTIME), ' '.join(arguments))
+            self.assertIn(str(self.run.file('private/helper-source/runtime.py')), ' '.join(arguments))
+            self.assertNotIn('source=' + str(r.RUNTIME), ' '.join(arguments))
             return {'log': (HELPER + '\n').encode(), 'log_truncated': False}
         if arguments[0] == 'ps': return {'log': b'', 'log_truncated': False}
         self.assertEqual(arguments[-1], HELPER, 'Only the exact helper may be mutated')
@@ -275,6 +279,22 @@ class ReadinessPolicy(unittest.TestCase):
         self.lease.record['resources'].append({'kind': 'container', 'id': '9' * 64, 'outcome': 'pending'})
         with self.assertRaises(r.ReadinessError): r.ReadinessSession.resume_cleanup(self.run, self.lease)
 
+    def test_source_copy_is_exact_readonly_single_inode_and_recovery_rejects_tampering(self):
+        self.session.start_helper()
+        copy = self.session.bind_path
+        self.assertEqual(copy.read_bytes(), r.RUNTIME.read_bytes())
+        self.assertNotEqual(copy.stat().st_ino, r.RUNTIME.stat().st_ino)
+        if os.name == 'posix':
+            self.assertEqual(stat.S_IMODE(copy.stat().st_mode), 0o444)
+            self.assertEqual(stat.S_IMODE(copy.parent.stat().st_mode), 0o700)
+        self.session.validate_source_copy()
+        self.lease._reconciliation_only = True
+        r.ReadinessSession.resume_cleanup(self.run, self.lease)
+        copy.chmod(0o600); copy.write_bytes(b'changed executable code')
+        copy.chmod(0o444)
+        with self.assertRaises(r.ReadinessError): self.session.validate_source_copy()
+        with self.assertRaises(r.ReadinessError): r.ReadinessSession.resume_cleanup(self.run, self.lease)
+
     def test_late_inspect_receiver_and_final_probe_cannot_declare_new_readiness(self):
         self.session.start_helper()
         self.session.deadline = time.monotonic() + .04
@@ -361,6 +381,47 @@ class HelperSubprocess(unittest.TestCase):
             with patch.object(runtime, 'capture', return_value={'returncode': 0, 'log': '', 'timed_out': False, 'truncated': False}):
                 result, observation = runtime.ansible(value, attempt)
             self.assertEqual(result['returncode'], 2); self.assertIsNone(observation['ping'])
+
+
+@unittest.skipUnless(os.name == 'posix' and hasattr(os, 'geteuid') and os.geteuid() == 0,
+                     'Root-only disposable UID10001 permission fixture; no host/container changes')
+class PublicSourcePermissions(unittest.TestCase):
+    def test_root0600_original_stays_private_and_uid10001_can_reopen_only_readonly_code_inode(self):
+        with tempfile.TemporaryDirectory(prefix='wormhole-source-permission-synthetic-') as temporary:
+            root = Path(temporary)
+            original = root / 'original.py'
+            original.write_bytes(b'print("public synthetic reviewed code")\n')
+            original.chmod(0o600)
+            run = create_run(root / 'runs', fixture=False, identity=(SHA, False))
+            session = r.ReadinessSession.__new__(r.ReadinessSession)
+            session.run, session.bind_path, session.bind_identity = run, run.file('private/helper-source/runtime.py'), None
+            with patch.object(r, 'RUNTIME', original):
+                session.source_sha256 = r.runtime_hash()
+                session.prepare_source_copy()
+                session.validate_source_copy()
+                source_fd, copy_fd = os.open(original, os.O_RDONLY), os.open(session.bind_path, os.O_RDONLY)
+                try:
+                    # /proc/self/fd reopens the inode and checks its permissions
+                    # without traversing private host ancestry, like a single-file
+                    # bind. Reading an inherited FD directly would bypass that check.
+                    code = '''import hashlib,json,os,sys
+out={}
+for name,number in zip(('original','copy'),sys.argv[1:]):
+ try:
+  with open('/proc/self/fd/'+number,'rb') as f: out[name]=hashlib.sha256(f.read(65537)).hexdigest()
+ except PermissionError: out[name]='permission-denied'
+print(json.dumps(out))'''
+                    def drop():
+                        os.setgroups([]); os.setgid(10001); os.setuid(10001)
+                    result = subprocess.run([sys.executable, '-I', '-c', code, str(source_fd), str(copy_fd)],
+                        pass_fds=(source_fd, copy_fd), preexec_fn=drop, capture_output=True, timeout=5, check=True)
+                finally:
+                    os.close(source_fd); os.close(copy_fd)
+                value = json.loads(result.stdout)
+                self.assertEqual(value['original'], 'permission-denied')
+                self.assertEqual(value['copy'], session.source_sha256)
+                self.assertEqual(stat.S_IMODE(original.stat().st_mode), 0o600)
+                self.assertEqual(session.bind_path.stat().st_uid, 0)
 
 
 if __name__ == '__main__': unittest.main()

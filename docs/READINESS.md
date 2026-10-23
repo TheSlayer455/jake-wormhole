@@ -24,9 +24,15 @@ provisioning.destroy()                     # Terraform target/network; controlle
 
 The helper is original qualified build `9e864d00-ea9f-4a85-bdb5-f5873166e4d7`,
 immutable image `sha256:4f7f306ecd431b4b48169777966d88c1f09f2139506176a6b85203f5bae69a71`.
-Its original build provenance stays intact. Current reviewed `readiness/runtime.py`
-is mounted as one read-only file at `/opt/readiness/runtime.py`, with its hash in
-the private controller context. The helper has UID/GID10001, all capabilities
+Its original build provenance stays intact. Only current reviewed `readiness/runtime.py`
+is copied into the Run's `private/helper-source/runtime.py`. Its host parent is
+0700 and its public-code file is0444, owned by the state operator. The staged
+checkout keeps its original private permissions. The single-file read-only bind
+exposes the code inode at `/opt/readiness/runtime.py` without exposing private host
+ancestors. Source/copy hashes, exact path, owner/group, ordinary unique inode,
+size and modes are checked before execution and recovery; no keys, environment
+or configuration are copied. Original source provenance and retained copy identity
+are separate fields in the private controller context. The helper has UID/GID10001, all capabilities
 dropped, no-new-privileges, read-only root, bounded private tmpfs and the existing
 512MiB/1CPU/128PID/log limits. It joins only the actual owned internal network,
 has no host ports or Docker socket, and is inspected stopped before start and at
