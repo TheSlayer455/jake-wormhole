@@ -1,5 +1,42 @@
 # Engineering checkpoint
 
+## WORM-006 runtime qualification, October23 at15:16UTC
+
+WORM-002 through005 remain Done. WORM-006 r2 remains In Progress under the
+root session claim. Integration branch codex/WORM-006-integration contains the
+reviewed core, fixed scenarios and three-run acceptance operator. No006 passing
+criterion or completion has been submitted yet. Current Git revision and Minx
+claim must be retrieved before continuing; PR5 is still published only through
+9bf2178f762ea9a9c1a146da4b7797e395220d40.
+
+Actual clean source6e4c3028564cf8b1fd7618542c96d817c80fef25 passed133 Linux
+cases,131 pass/two Windows-only skips,6.349s. Its real run
+7938710b-431e-4101-b07f-7494d8d1c2a6 initialized the offline pinned tools,
+confirmed the provider h1, applied an owned network and target, inspected the
+never-started target, enforced its PID cap, started it and observed cgroups.
+The refresh-only plan exposed an incorrect JSON-shape assumption in the adapter;
+the target's actual endpoint appeared in provider output, but the partial run
+correctly remained failed. Normal retained-controller recovery then used a saved
+Terraform destroy and proved exact target/network/controller absence. All three
+attempts below have reconciled resources and retain their original failures:
+
+- 4620b7d2-33b4-463b-bd05-ec60f7ffafc7 at2431de3 failed initialization on HCL
+  syntax before provider/state/resource mutation. A separately reviewed fixed
+  initialization-only operator removed its sole exact controller, with bound
+  terminal diagnostics and no Terraform execution or state edits.
+- ac84bfd7-435e-4567-a9c7-44c24a53a58b at94c35cc initialized and planned, then
+  refused an unknown startup command before apply. Normal saved empty destroy
+  and controller cleanup passed. The command is now explicit and remains guarded.
+- 7938710b-431e-4101-b07f-7494d8d1c2a6 at6e4c302 applied real resources and
+  failed at refresh validation as described above; normal scoped destroy passed.
+
+Final acceptance must still demonstrate two disjoint complete lifecycles, scans
+for credential contents/exposure, ownership refusal with an unchanged unrelated
+sentinel, and actual fixed provider failure with bounded diagnostics/accounting.
+Fresh source review/test evidence and hosted CI must cover the final code. Raw
+state, keys and logs stay private outside Git. No complete pipeline, Ansible
+execution, production eligibility or independent human examination is claimed.
+
 ## Current: WORM-006, October23 at14:52UTC
 
 WORM-002/003/004/005 are Done. WORM-005 has a solution comment, three passing

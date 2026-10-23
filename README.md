@@ -2,7 +2,7 @@
 
 Private, container-only reference automation for source integrity, Terraform-managed targets, SSH/Ansible checks and attributable engineering evidence.
 
-Minx tracks the work under [WORM-001](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-001). The local Python CLI, measured Linux admission, pinned Ubuntu target/helper images and strict SSH image qualification work. Terraform provisioning, functional Ansible checks and the candidate pipeline remain separate unfinished increments. A complete container pipeline is not yet available.
+Minx tracks the work under [WORM-001](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-001). The local Python CLI, measured Linux admission, pinned Ubuntu target/helper images and strict SSH image qualification work. The Terraform adapter has performed an actual one-target apply and scoped destroy; its full acceptance suite is still being qualified. Functional Ansible checks and the candidate pipeline remain unfinished. A complete container pipeline is not yet available.
 
 Start with [AGENTS.md](AGENTS.md), [current state](docs/STATE.md) and [handoff](handoff/CURRENT.md). The [fidelity record](docs/FIDELITY.md) separates actual behavior from planned or simulated capabilities. [Repository controls](docs/REPOSITORY.md) records publication and CI observations.
 

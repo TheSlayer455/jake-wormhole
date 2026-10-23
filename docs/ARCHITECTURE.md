@@ -6,8 +6,10 @@ versioned artifact contracts. WORM-004 adds [measured admission](ADMISSION.md),
 reviewed profiles and a canonical Linux shared lock/durable journal.
 WORM-005 adds [qualified Ubuntu target/helper images](IMAGES.md), per-run keys,
 strict SSH qualification, actual cgroup inspection and exact owned cleanup.
-There is no Terraform configuration, functional Ansible playbook or complete
-runtime pipeline yet. Minx owns requirements,
+WORM-006 adds the [Terraform adapter](TERRAFORM.md), fixed provisioner and bounded
+acceptance operator. An actual one-target apply and retained-controller destroy
+have run; complete acceptance remains pending. There is no functional Ansible
+playbook or complete runtime pipeline yet. Minx owns requirements,
 assignment and review. The [owner-delegated workflow decision](decisions/0002-owner-delegated-workflow.md)
 describes authorized browser operations without changing Minx permissions.
 
