@@ -78,17 +78,21 @@ def restart_for_hostkey_case(session):
 
 def observe_rotated_hostkey(readiness):
     """Wait only for key generation after the single controlled owned restart."""
-    deadline = min(readiness.deadline, time.monotonic() + 20)
-    while time.monotonic() < deadline:
-        try:
-            observation = readiness.observe_hostkey()
-        except images.ImageError as error:
-            if error.code != 'qualification_attempt_failed':
-                raise
-        else:
-            if observation['matches_original_pin'] is False:
-                return observation
-        time.sleep(min(.1, max(0, deadline - time.monotonic())))
+    original_deadline = readiness.deadline
+    readiness.deadline = deadline = min(original_deadline, time.monotonic() + 20)
+    try:
+        while time.monotonic() < deadline:
+            try:
+                observation = readiness.observe_hostkey()
+            except images.ImageError as error:
+                if error.code != 'qualification_attempt_failed':
+                    raise
+            else:
+                if observation['matches_original_pin'] is False:
+                    return observation
+            time.sleep(min(.1, max(0, deadline - time.monotonic())))
+    finally:
+        readiness.deadline = original_deadline
     raise RunError('rotated_hostkey_unavailable', 'The new public identity was not observed within the bounded window.')
 
 
@@ -124,10 +128,14 @@ def qualify_case(scenario, sentinel):
                 readiness.deadline = min(readiness.deadline, time.monotonic() + 5)
                 result['negative_window_seconds'] = 5
             if scenario == 'changed-host-key':
-                pin_deadline = min(readiness.deadline, time.monotonic() + 20)
-                while not readiness.pin_trust():
-                    require(time.monotonic() < pin_deadline, 'original_hostkey_unavailable')
-                    time.sleep(.1)
+                original_deadline = readiness.deadline
+                readiness.deadline = pin_deadline = min(original_deadline, time.monotonic() + 20)
+                try:
+                    while not readiness.pin_trust():
+                        require(time.monotonic() < pin_deadline, 'original_hostkey_unavailable')
+                        time.sleep(min(.1, max(0, pin_deadline - time.monotonic())))
+                finally:
+                    readiness.deadline = original_deadline
                 original_pin = readiness.receipt['hostkey_fingerprint']
                 restart = restart_for_hostkey_case(provisioning)
                 observation = observe_rotated_hostkey(readiness)
