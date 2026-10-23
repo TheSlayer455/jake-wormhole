@@ -1,0 +1,16 @@
+{
+  "format": "wormhole-synthetic-chunk-cases-v1",
+  "synthetic": true,
+  "transports": ["local", "http-loopback"],
+  "fixture_size": 262181,
+  "chunk_size": 65536,
+  "cases": [
+    {"scenario": "healthy", "operation_status": "passed"},
+    {"scenario": "missing", "operation_status": "failed", "code": "chunk_set_mismatch"},
+    {"scenario": "duplicate", "operation_status": "failed", "code": "chunk_manifest_invalid"},
+    {"scenario": "reordered", "operation_status": "failed", "code": "chunk_manifest_order"},
+    {"scenario": "truncated", "operation_status": "failed", "local_code": "chunk_size_mismatch", "http_code": "chunk_http_response"},
+    {"scenario": "corrupted", "operation_status": "failed", "code": "chunk_hash_mismatch"}
+  ],
+  "production_iso_eligible": false
+}
