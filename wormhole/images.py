@@ -196,7 +196,11 @@ def docker(arguments, *, timeout=20, allow_missing=False):
     require(result["status"] != "timeout", "docker_request_unknown", "A Docker request exceeded its deadline; daemon outcome is unknown and admission must remain blocked.")
     if result["status"] != "pass":
         raw = result["log"]
-        if allow_missing and result["returncode"] == 1 and any(message in raw for message in (b"No such image", b"No such container", b"No such network", b"No such object")):
+        exact_missing_network = (len(arguments) == 3 and tuple(arguments[:2]) == ('network', 'inspect')
+            and re.fullmatch(r'[a-f0-9]{64}', arguments[2]) is not None
+            and re.search(rb'(?:^|\n)Error response from daemon: network ' + arguments[2].encode('ascii')
+                          + rb' not found\r?\n?$', raw) is not None)
+        if allow_missing and result["returncode"] == 1 and (exact_missing_network or any(message in raw for message in (b"No such image", b"No such container", b"No such network", b"No such object"))):
             return None
         raise ImageError("docker_api_failed", "A bounded local Docker request failed; inspect private evidence and reconcile exact owned resources.")
     return result

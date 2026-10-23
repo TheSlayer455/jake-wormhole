@@ -56,6 +56,17 @@ class ImagePolicy(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
 
+    def test_actual_docker29_absent_network_message_requires_exact_identity(self):
+        run = create_run(self.root / 'runs', fixture=False, identity=(SHA, False))
+        result = {'status': 'fail', 'returncode': 1, 'log_truncated': False,
+                  'log': ('[]\nError response from daemon: network ' + NETWORK + ' not found\n').encode()}
+        with images.docker_scope(run), patch.object(images, '_run_process', return_value=result):
+            self.assertIsNone(images.inspect('network', NETWORK, missing=True))
+            with self.assertRaises(images.ImageError): images.inspect('network', 'e' * 64, missing=True)
+        result['log'] = b'Cannot connect to Docker daemon: network not found'
+        with images.docker_scope(run), patch.object(images, '_run_process', return_value=result):
+            with self.assertRaises(images.ImageError): images.inspect('network', NETWORK, missing=True)
+
     def test_pins_and_generated_inputs_are_consistent_and_bounded(self):
         lock = images.load_lock()
         expected = []
