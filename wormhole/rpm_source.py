@@ -79,6 +79,12 @@ def safe_relative(value):
     return type(value) is str and len(value) <= 240 and re.fullmatch(r'(?:[A-Za-z0-9][A-Za-z0-9._-]*/)*[A-Za-z0-9][A-Za-z0-9._-]*', value) is not None and all(x not in ('.','..') for x in value.split('/'))
 
 
+def safe_package_path(value):
+    if type(value) is not str or len(value)>240 or re.fullmatch(r'Packages/[a-z0-9]/[A-Za-z0-9][A-Za-z0-9+_.~-]*\.rpm',value) is None:return False
+    stem=value.rsplit('/',1)[1].split('.',1)[0].lower()
+    return re.fullmatch(r'con|prn|aux|nul|com[1-9]|lpt[1-9]',stem) is None
+
+
 def digest_pin(value):
     return type(value) is str and re.fullmatch('[a-f0-9]{64}', value) is not None
 
@@ -138,7 +144,7 @@ def fetch_eula(destination, *, opener=None):
 
 
 def fetch(item, destination, *, opener=None):
-    require(safe_relative(item['path']) and item['path'].startswith(('repodata/','Packages/')) and digest_pin(item['sha256']) and
+    require((safe_relative(item['path']) and item['path'].startswith('repodata/') or safe_package_path(item['path'])) and digest_pin(item['sha256']) and
         type(item['bytes']) is int and 0 < item['bytes'] <= POLICY['rpm_file_bytes'], 'rpm_download_invalid')
     url = URL + item['path']
     if opener is None:
@@ -227,8 +233,8 @@ def package_catalog(run, lock=None):
         row={'name':node.findtext('c:name',namespaces=ns),'epoch':int(version.get('epoch')),'version':version.get('ver'),
             'release':version.get('rel'),'arch':arch,'path':node.find('c:location',ns).get('href'),
             'bytes':int(node.find('c:size',ns).get('package')),'sha256':checksum.text,'repo_id':lock['sources']['repository_id']}
-        require(checksum.get('type')=='sha256' and safe_relative(row['path']) and row['path'].startswith('Packages/') and
-            row['path'].endswith('.rpm') and digest_pin(row['sha256']) and 0<row['bytes']<=POLICY['rpm_file_bytes'],'rpm_catalog_invalid')
+        require(checksum.get('type')=='sha256' and safe_package_path(row['path']) and
+            digest_pin(row['sha256']) and 0<row['bytes']<=POLICY['rpm_file_bytes'],'rpm_catalog_invalid')
         key=canonical({k:row[k] for k in ('name','epoch','version','release','arch')})
         require(key not in catalog,'rpm_catalog_duplicate');catalog[key]=row
     return catalog

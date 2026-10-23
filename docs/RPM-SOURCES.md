@@ -13,6 +13,11 @@ pinned repomd are retained under a private Run cache. Compressed bytes and their
 declared expanded bytes are stream-hashed within separate limits. XML documents
 with entities/DOCTYPE declarations, changed repomd contracts, extra cache files,
 unlisted architectures and unsafe relative paths are refused.
+RPM paths use a separate strict `Packages/<letter-or-digit>/<filename>.rpm`
+grammar. Literal plus signs support the observed `libstdc++` package; traversal,
+colons/alternate streams, percent escapes, controls, backslashes, query strings
+and reserved Windows device basenames remain refused. The host catalog and
+container resolver enforce the same grammar; generic metadata paths stay strict.
 
 One fixed Python worker has an absolute 180-second whole-operation deadline,
 including slow-progress downloads and decompression. Socket timeouts supplement

@@ -75,6 +75,12 @@ def unique(pairs):
     return result
 
 
+def package_path(value):
+    if type(value) is not str or len(value)>240 or re.fullmatch(r'Packages/[a-z0-9]/[A-Za-z0-9][A-Za-z0-9+_.~-]*\.rpm',value) is None:return False
+    stem=value.rsplit('/',1)[1].split('.',1)[0].lower()
+    return re.fullmatch(r'con|prn|aux|nul|com[1-9]|lpt[1-9]',stem) is None
+
+
 def read(path, maximum=MAX_JSON):
     require(path.is_file() and not path.is_symlink() and path.stat().st_nlink==1 and 0<path.stat().st_size<=maximum)
     with path.open('rb') as stream:raw=stream.read(maximum+1)
@@ -105,7 +111,7 @@ def metadata(lock):
         row={'name':node.findtext('c:name',namespaces=ns),'epoch':int(version.get('epoch')),'version':version.get('ver'),
             'release':version.get('rel'),'arch':arch,'path':node.find('c:location',ns).get('href'),
             'bytes':int(node.find('c:size',ns).get('package')),'sha256':checksum.text,'repo_id':sources['repository_id']}
-        require(checksum.get('type')=='sha256' and re.fullmatch(r'Packages/[a-z0-9]/[A-Za-z0-9+_.~:-]+\.rpm',row['path']) and
+        require(checksum.get('type')=='sha256' and package_path(row['path']) and
             re.fullmatch('[a-f0-9]{64}',row['sha256']) and 0<row['bytes']<=64*1024*1024)
         key=canonical({k:row[k] for k in ('name','epoch','version','release','arch')});require(key not in catalog);catalog[key]=row
     return catalog

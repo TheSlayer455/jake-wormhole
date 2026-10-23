@@ -30,10 +30,10 @@ class Response:
     def read1(self,size):part,self.raw=self.raw[:size],self.raw[size:];return part
 
 
-def fixtures(run):
+def fixtures(run, additional=()):
     folder=run.file('private/rpm-sources/metadata');folder.mkdir(parents=True,mode=0o700);(folder/'repodata').mkdir(mode=0o700)
     packages=[];xml=[]
-    for record in s.REQUESTED:
+    for record in (*s.REQUESTED,*additional):
         row={**record,'path':'Packages/'+record['name'][0]+'/'+record['name']+'.rpm','bytes':3,'sha256':s.sha(b'rpm'),'repo_id':'wormhole-ubi9-baseos'}
         packages.append(row)
         xml.append('<package><name>'+row['name']+'</name><arch>'+row['arch']+'</arch><version epoch="'+str(row['epoch'])+'" ver="'+row['version']+'" rel="'+row['release']+'"/><checksum type="sha256">'+row['sha256']+'</checksum><size package="3"/><location href="'+row['path']+'"/></package>')
@@ -57,6 +57,27 @@ def fixtures(run):
 
 
 class PublicSources(unittest.TestCase):
+    def test_official_plus_package_paths_work_without_traversal_or_windows_ads(self):
+        # Observed in pinned UBI primary c5ee79e94b0f13bd8167ed6c0008e880e93c46564c5d42174393c81e775cd0d3.
+        actual='Packages/l/libstdc++-11.5.0-14.el9.x86_64.rpm'
+        self.assertTrue(s.safe_package_path(actual));self.assertTrue(resolver.package_path(actual))
+        for path in ('Packages/l/../escape.rpm','Packages/l/a.rpm:stream','Packages/l/a%2frpm.rpm','Packages/l/a.rpm?x',
+            'Packages/l/a\\b.rpm','Packages/l/.hidden.rpm','Packages/l/CON.rpm','Packages/l/nul.rpm','Packages/l/a.rpm/extra',
+            'https://example.invalid/a.rpm','Packages/l/space name.rpm'):
+            with self.subTest(path=path):self.assertFalse(s.safe_package_path(path));self.assertFalse(resolver.package_path(path))
+        with tempfile.TemporaryDirectory() as folder:
+            item={'path':actual,'bytes':3,'sha256':s.sha(b'rpm')};destination=Path(folder)/Path(actual).name
+            s.fetch(item,destination,opener=lambda *_a,**_kw:Response(b'rpm',s.URL+actual));self.assertEqual(destination.read_bytes(),b'rpm')
+
+    def test_catalog_accepts_plus_named_package_even_when_it_is_not_requested(self):
+        with tempfile.TemporaryDirectory() as folder:
+            run=create_run(Path(folder)/'runs',fixture=False,identity=(SHA,False))
+            extra={'name':'libstdc++','epoch':0,'version':'11.5.0','release':'14.el9','arch':'x86_64'}
+            lock,_,_,_=fixtures(run,[extra])
+            with patch.object(s,'load_lock',return_value=lock):
+                catalog=s.package_catalog(run,lock);self.assertEqual(len(catalog),4)
+                self.assertIn(s.canonical(extra),catalog)
+
     def test_fixed_eula_artifact_never_expands_url_or_accepts_changed_bytes(self):
         raw=b'%PDF-synthetic exact license bytes'
         with patch.object(s,'EULA_BYTES',len(raw)),patch.object(s,'EULA_SHA256',s.sha(raw)):
