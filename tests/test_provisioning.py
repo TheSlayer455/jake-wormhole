@@ -5,7 +5,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import re
 import struct
 import sys
 import tempfile
@@ -79,7 +78,7 @@ class PlanPolicy(unittest.TestCase):
         # This is a narrow regression for actual init's reported syntax error,
         # not an HCL parser or a substitute for real capped Terraform init.
         source = (p.CONTEXT / 'main.tf').read_text()
-        self.assertNotRegex(source, r'(?m)^\s*(?:content|capabilities|volumes)\s*\{\s*\S')
+        self.assertNotRegex(source, r'(?m)^[ \t]*(?:content|capabilities|volumes)[ \t]*\{[ \t]*\S')
 
     def test_dangerous_fields_unknowns_bool_aliases_and_inconsistent_changes_are_rejected(self):
         values = inputs()
