@@ -10,6 +10,7 @@ import shutil
 import struct
 import subprocess
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -93,6 +94,40 @@ class ImagePolicy(unittest.TestCase):
         with self.assertRaises(images.ImageError):
             images.fetch_artifact(item, target, opener=lambda *_a, **_k: Redirect(raw))
         self.assertFalse(target.exists())
+
+    def test_preparation_has_fixed_whole_worker_deadline_and_revalidates_parent_hash(self):
+        run = create_run(self.root / "runs", fixture=False, identity=(SHA, False))
+        lock = images.load_lock()
+        raw = b"synthetic CA fixture"
+        lock["apt"]["bootstrap_ca"]["sha256"] = hashlib.sha256(raw).hexdigest()
+        def successful_worker(argv, **kwargs):
+            self.assertEqual(argv[0], images.sys.executable)
+            self.assertEqual(argv[-3:], (str(run.workspace), run.id, "target"))
+            self.assertEqual(kwargs["cwd"], images.SOURCE_ROOT)
+            self.assertEqual(kwargs["timeout"], 180)
+            cache = run.file("private/image-artifacts"); cache.mkdir(mode=0o700)
+            (cache / "wheels").mkdir(mode=0o700)
+            images.atomic_bytes(cache / "bootstrap-ca.deb", raw)
+            return {"status": "pass", "log": b"", "log_truncated": False}
+        with patch.object(images, "_run_process", side_effect=successful_worker):
+            cache = images.prepare_artifacts(run, lock, "target")
+        self.assertEqual((cache / "bootstrap-ca.deb").read_bytes(), raw)
+        other = create_run(self.root / "runs", fixture=False, identity=(SHA, False))
+        def tampered_worker(*_args, **_kwargs):
+            cache = other.file("private/image-artifacts"); cache.mkdir(mode=0o700)
+            (cache / "wheels").mkdir(mode=0o700)
+            images.atomic_bytes(cache / "bootstrap-ca.deb", b"tampered")
+            return {"status": "pass", "log": b"", "log_truncated": False}
+        with patch.object(images, "_run_process", side_effect=tampered_worker), self.assertRaises(images.ImageError) as caught:
+            images.prepare_artifacts(other, lock, "target")
+        self.assertEqual(caught.exception.code, "artifact_hash_mismatch")
+
+    def test_preparation_timeout_never_accepts_worker_cache(self):
+        run = create_run(self.root / "runs", fixture=False, identity=(SHA, False))
+        with patch.object(images, "_run_process", return_value={"status": "timeout", "log": b"synthetic timeout", "log_truncated": False}), self.assertRaises(images.ImageError) as caught:
+            images.prepare_artifacts(run, images.load_lock(), "target")
+        self.assertEqual(caught.exception.code, "artifact_preparation_timeout")
+        self.assertFalse(run.file("private/image-artifacts").exists())
 
     def test_only_plain_bounded_ed25519_public_input_is_accepted(self):
         blob = struct.pack(">I", 11) + b"ssh-ed25519" + struct.pack(">I", 32) + bytes(range(32))
@@ -232,6 +267,32 @@ class ImagePolicy(unittest.TestCase):
 @unittest.skipUnless(os.name == "posix", "Linux-only driver; all Docker operations mocked")
 class BuildOrchestration(unittest.TestCase):
     setUp = ImagePolicy.setUp
+
+    def test_slow_progress_read_is_terminated_by_real_parent_deadline(self):
+        run = create_run(self.root / "runs", fixture=False, identity=(SHA, False))
+        # Only this test child's opener is replaced. No HTTP request is made.
+        worker = '''import sys, time
+from pathlib import Path
+from wormhole import images
+class Slow:
+    def __init__(self, url): self.url = url
+    def __enter__(self): return self
+    def __exit__(self, *args): return False
+    def geturl(self): return self.url
+    def read(self, limit):
+        (Path(sys.argv[1]) / sys.argv[2] / "private" / "slow-read-entered").touch(mode=0o600)
+        time.sleep(5)
+        return b"synthetic unfinished download"
+images.fetch_artifact.__kwdefaults__["opener"] = lambda url, **kwargs: Slow(url)
+exec(images._PREPARE_WORKER)
+'''
+        started = time.monotonic()
+        with patch.object(images, "_PREPARE_WORKER", worker), patch.object(images, "ARTIFACT_PREPARATION_TIMEOUT", 0.5), self.assertRaises(images.ImageError) as caught:
+            images.prepare_artifacts(run, images.load_lock(), "target")
+        self.assertLess(time.monotonic() - started, 2)
+        self.assertEqual(caught.exception.code, "artifact_preparation_timeout")
+        self.assertTrue(run.file("private/slow-read-entered").is_file())
+        self.assertFalse(run.file("private/image-artifacts/bootstrap-ca.deb").exists())
 
     def test_admission_entry_refusal_records_no_running_or_allocated_attempt(self):
         run = create_run(self.root / "runs", fixture=False, identity=(SHA, False))

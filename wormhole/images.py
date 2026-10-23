@@ -17,6 +17,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import sys
 import tarfile
 import time
 import urllib.request
@@ -37,7 +38,14 @@ BUILD_CAPS = ("CHOWN", "DAC_OVERRIDE", "FOWNER", "FSETID", "SETGID", "SETUID")
 TARGET_CAPS = ("SETGID", "SETUID", "SYS_CHROOT")
 MAX_DOWNLOAD = 16 * 1024 * 1024
 MAX_CACHE = 64 * 1024 * 1024
+ARTIFACT_PREPARATION_TIMEOUT = 180
 DOCKER_CONFIG = ContextVar("wormhole_image_docker_config", default=None)
+_PREPARE_WORKER = """import sys
+from wormhole.runs import Run
+from wormhole.images import load_lock, _prepare_artifacts_worker
+run = Run(sys.argv[1], sys.argv[2])
+_prepare_artifacts_worker(run, load_lock(), sys.argv[3])
+"""
 
 
 class ImageError(RunError):
@@ -100,7 +108,8 @@ def fetch_artifact(item, destination, *, opener=urllib.request.urlopen):
     return len(raw)
 
 
-def prepare_artifacts(run, lock, role):
+def _prepare_artifacts_worker(run, lock, role):
+    require(role in {"target", "helper"}, "invalid_image_role", "Only the two reviewed image roles are supported.")
     cache = run.file("private/image-artifacts")
     require(not cache.exists(), "artifact_cache_exists", "Each image attempt needs a fresh private artifact cache.")
     cache.mkdir(mode=0o700)
@@ -111,6 +120,42 @@ def prepare_artifacts(run, lock, role):
             require(Path(item["filename"]).name == item["filename"] and re.fullmatch(r"[A-Za-z0-9_.-]+\.whl", item["filename"]), "invalid_image_lock", "Wheel filenames must be plain locked basenames.")
             total += fetch_artifact(item, cache / "wheels" / item["filename"])
             require(total <= MAX_CACHE, "artifact_cache_too_large", "The locked artifact cache exceeds its total bound.")
+    return cache
+
+
+def prepare_artifacts(run, lock, role):
+    """One absolute whole-cache deadline also bounds slow-progress HTTP reads.
+
+    urllib's per-operation socket timeout is supplementary. The owned worker
+    group is killed/reaped by the existing bounded process executor on expiry.
+    Public artifact bytes stay in private bounded files, never captured stdout.
+    """
+    require(role in {"target", "helper"}, "invalid_image_role", "Only the two reviewed image roles are supported.")
+    cache = run.file("private/image-artifacts")
+    require(not cache.exists(), "artifact_cache_exists", "Each image attempt needs a fresh private artifact cache.")
+    result = _run_process((sys.executable, "-c", _PREPARE_WORKER, str(run.workspace), run.id, role),
+                          cwd=SOURCE_ROOT, timeout=ARTIFACT_PREPARATION_TIMEOUT)
+    atomic_bytes(run.file("private/image-artifacts-preparation.log"), result["log"], limit=65536)
+    require(result["status"] != "timeout", "artifact_preparation_timeout", "The absolute whole-cache preparation deadline expired; no Docker allocation is authorized.")
+    require(result["status"] == "pass" and not result["log_truncated"], "artifact_preparation_failed", "Bounded artifact preparation failed; preserve partial private cache and use a fresh attempt.")
+    _owned(cache, directory=True)
+    wheels = cache / "wheels"
+    _owned(wheels, directory=True)
+    items = [(lock["apt"]["bootstrap_ca"], cache / "bootstrap-ca.deb")]
+    if role == "helper":
+        items.extend((item, wheels / item["filename"]) for item in lock["helper_wheels"])
+    require({p.name for p in cache.iterdir()} == {"bootstrap-ca.deb", "wheels"}
+            and {p.name for p in wheels.iterdir()} == {path.name for _, path in items[1:]},
+            "unsafe_artifact_cache", "Prepared cache contains missing or unexpected files.")
+    total = 0
+    for item, path in items:
+        _owned(path)
+        with path.open("rb") as stream:
+            raw = stream.read(MAX_DOWNLOAD + 1)
+        require(len(raw) <= MAX_DOWNLOAD and hashlib.sha256(raw).hexdigest() == item["sha256"],
+                "artifact_hash_mismatch", "Prepared artifact bytes do not match the parent's original lock/bounds.")
+        total += len(raw)
+    require(total <= MAX_CACHE, "artifact_cache_too_large", "Prepared cache exceeds its total bound.")
     return cache
 
 
