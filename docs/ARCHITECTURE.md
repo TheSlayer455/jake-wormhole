@@ -2,7 +2,9 @@
 
 WORM-002 establishes the repository baseline. WORM-003 adds a standard-library
 Python CLI and isolated local fixture runs, bounded fixed stage adapters and six
-versioned artifact contracts. There is no Terraform configuration, target image,
+versioned artifact contracts. WORM-004 adds [measured admission](ADMISSION.md),
+reviewed profiles and a canonical Linux shared lock/durable journal.
+There is no Terraform configuration, target image,
 Ansible playbook or complete runtime pipeline yet. Minx owns requirements,
 assignment and review. The [owner-delegated workflow decision](decisions/0002-owner-delegated-workflow.md)
 describes authorized browser operations without changing Minx permissions.
@@ -18,8 +20,8 @@ run, contract and stage library exercised by tests. Run directories use UUIDs,
 explicit ownership markers and separate private/runtime and portable-evidence
 locations outside Git and vault paths. Atomic bounded JSON writes, symlink and
 junction refusal, per-run locks and fixed subprocess adapters protect this local
-path. They are not a Docker admission mechanism; shared resource admission is
-WORM-004.
+path. Real Docker allocation adapters must hold the separate admission lease and
+verify applied limits before starting owned resources.
 
 The synthetic fixture runs actual fixed local subprocesses for preflight and
 SHA256 checking. Declared real pipeline stages remain unsupported. Reports and

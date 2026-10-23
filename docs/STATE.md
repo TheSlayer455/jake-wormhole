@@ -1,49 +1,50 @@
 # Engineering checkpoint
 
-October 23, 2026. WORM-002 revision 2 is Done in Minx after owner-directed
-browser actions, with passing criterion evidence and a solution comment. Jake
-explicitly delegated the repeated approval/completion clicks; see
-[decision 0002](decisions/0002-owner-delegated-workflow.md). This is automated
-verification under owner instruction, not independent human examination.
+October 23, 2026, 13:27 UTC. WORM-002 and WORM-003 revision 2 are Done in
+Minx with solution comments and criterion evidence. Jake delegated repeated
+Owner browser actions; these are automated decisions, not independent human
+examination. See [decision 0002](decisions/0002-owner-delegated-workflow.md).
+WORM-004 and WORM-005 revision 2 are approved and claimed by separate sessions.
+Minx owns current claims, decisions, evidence and development references.
 
-WORM-003 revision 2 is approved and being implemented on `codex/WORM-003-cli`.
-The implementation commit checked locally is
-`a0f8381f08d2884532ebe53fd9aa8591ba94d67d`; this documentation follow-up also needs
-verification before publication. Minx is authoritative for the current status,
-lease, evidence and development references.
+Implemented: local CLI, isolated synthetic runs, six versioned artifact contracts,
+bounded stage execution, report/verify/fixture cleanup, and Linux measured
+resource admission with a canonical shared flock and durable resource journal.
+See [admission](ADMISSION.md) for profile, freshness, crash/cancellation,
+reconciliation, Terraform PID-cap and Docker materialization boundaries.
 
-Implemented: local standard-library Python CLI; canonical isolated UUID run
-storage outside Git/vaults; six generated v1 artifact schemas and matching fixed
-validators; bounded fixed-adapter stage execution; report/verify; exact fixture
-private-state cleanup; explicit unsupported real-run and publication results.
-The CLI quick-start commands ran, including the expected nonzero refusals.
+Admission source tested: 576379e0d7a03ccf64d53849bc13939e9981d0a3.
+This documentation follow-up changes no runtime code. Actual verification:
 
-Local verification: CPython 3.12.14, Git 2.55.0.windows.3, unittest exit 0;
-31 cases, 26 passed and five explicitly skipped for platform/policy reasons,
-3.237 seconds. Real CLI checks, two simultaneous fixture runs and two spawned
-workspace creators passed. Wrong-source/hash/check/status evidence, malformed
-records, unsafe paths and NTFS junctions reject. POSIX-only output-flood,
-process-group and timeout cases require Linux; the implementation agent exercised
-those in a disposable WSL Git snapshot with Python 3.12.3 (31 cases, two
-Windows-only skips). The final hosted CI must run the selected Python 3.12.14.
+- Windows CPython 3.12.14: 47 unittest cases, 34 passed and 13 explicit platform
+  skips, 3.121 seconds.
+- Existing homelab Linux CPython 3.12.3: same 47 cases, 45 passed and two
+  Windows-only skips, 2.731 seconds. Actual Linux lock/crash/cancellation and
+  interrupted-finalization tests use disposable synthetic test roots.
+- Read-only host collection at 13:26:45 UTC: 29,161,349,120 total memory bytes,
+  20,285,952,000 available, 213,143,437,312 free disk bytes, 16 allowed CPUs,
+  load 0.8931, 51 existing running containers. Docker 29.6.0 positively reports
+  cgroup v2 memory, swap, CPU quota and PID support. All 1/5/20 plans admitted
+  at that instant; this does not demonstrate scale execution or enforced limits.
+- Repository verifier: 43 tracked files, 43 local links, clean exact-source tree.
+  Independent engineering review of identical admission files at c8bb89d8 found
+  no material remaining defects; see [review](../handoff/reviews/WORM-004.md).
 
-Review found and corrected scoped IPv6 host parsing and a descendant-held stdout
-pipe that exceeded the stage deadline. Stage execution now uses an absolute
-deadline and POSIX process groups. Windows permits only two immutable reviewed
-leaf adapters and refuses other execution before launch; Windows ACL protection
-is not claimed verified. See [CLI details](CLI.md).
+Only private offline Git source and its bundle were staged under the existing
+unlocked /srv/homelab mount; no GitHub credential was transferred. No Wormhole
+runtime root, container, image, network, Terraform state or SSH material exists
+from this slice. Existing workloads were observed without mutation. Plans label
+allocation_performed=false and limits_enforced=false. Actual target execution
+and applied-limit verification remain later integrations.
 
-CI now selects CPython 3.12.14 with full-SHA official checkout/setup-python pins
-and runs the same unittest command. Exact-source hosted observations belong in
-the ticket/PR after pushing; earlier baseline CI is not evidence for this change.
-Required private branch protection remains unavailable on the account plan.
+WORM-003 source 9fb7ee772aae2e3b96b8541c5b7b9e41b05decc4 is pushed in private
+draft PR 2. Exact-source hosted CPython 3.12.14 CI passed 31 cases with two
+Windows-only skips. Final admission push/CI observations belong in Minx/its PR;
+earlier success does not qualify new source. Required branch protection remains
+unavailable on the private account plan. No PR was automatically merged.
 
-No Wormhole target images, containers, networks, Terraform state or SSH material
-were created. The fixture run is synthetic and cannot qualify reference
-publication. The runtime pipeline and production ISO eligibility remain false.
-
-Next: finish exact-source review/CI, attach WORM-003 criterion evidence and solution
-comment, submit In Review and release the claim, then apply the delegated normal
-Owner workflow after all criteria pass. WORM-004 and WORM-005 become eligible
-only after WORM-003 is actually Done. Continue with measured resource admission
-and minimal pinned target/helper images; no host tools or daemon settings changes.
+Next: finish WORM-004 publication/evidence, submit In Review and release the
+claim, then apply delegated normal Owner workflow only on passing criteria.
+Finish/review WORM-005 before its first admitted capped image build. Terraform
+WORM-006 becomes eligible only after both are Done. Production ISO eligibility
+remains false.
