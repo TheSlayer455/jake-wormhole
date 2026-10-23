@@ -130,9 +130,13 @@ def inject_helper_inputs(run, helper, host_key, address):
         private = stream.read(16385)
     require(1 <= len(private) <= 16384, 'invalid_auth', 'Client private key exceeds its bound.')
     known = ('[' + address + ']:2222 ' + host_key + '\n').encode()
+    with path.with_name('id_ed25519.pub').open('rb') as stream:
+        other_key = public_key(stream.read(513).decode('ascii'))
+    require(other_key != host_key, 'invalid_trust_fixture', 'Negative trust requires a distinct public key.')
+    wrong_known = ('[' + address + ']:2222 ' + other_key + '\n').encode()
     data = io.BytesIO()
     with tarfile.open(fileobj=data, mode='w') as archive:
-        for name, content in (('id_ed25519', private), ('known_hosts', known)):
+        for name, content in (('id_ed25519', private), ('known_hosts', known), ('wrong_known_hosts', wrong_known)):
             member = tarfile.TarInfo(name)
             member.uid = member.gid = 10001
             member.mode = 0o600
@@ -241,6 +245,17 @@ def qualify(target_build, helper_build):
                         'ssh_check_failed', 'Actual authenticated SSH user/tools differ from the image contract.')
                 receipt['ssh'] = {'passed': True, 'observed': observed, 'strict_host_key_checking': True,
                                   'public_key_authentication': True, 'private_key_exported': False}
+                wrong_trust = ('docker', '--config', docker_configuration(), '--host', SOCKET,
+                               'exec', helper, '/opt/wormhole/venv/bin/python', '/opt/wormhole/runtime.py',
+                               'helper', 'ssh', '-o', 'ConnectTimeout=3', '-o',
+                               'UserKnownHostsFile=/run/input/wrong_known_hosts', '-p', '2222', '--',
+                               'wormhole@' + address, '/usr/bin/true')
+                refused = _run_process(wrong_trust, cwd=Path(__file__).resolve().parents[1], timeout=10)
+                require(refused['returncode'] == 255 and b'Host key verification failed' in refused['log']
+                        and not refused['log_truncated'], 'hostkey_trust_not_rejected',
+                        'An intentionally wrong host key must fail specifically at host-key verification.')
+                receipt['negative_hostkey_trust'] = {'passed': True, 'verification_disabled': False,
+                                                       'specific_hostkey_refusal_observed': True}
                 rejected = []
                 for user in ('root', 'wormhole-nonexistent'):
                     command = ('docker', '--config', docker_configuration(), '--host', SOCKET,
@@ -283,7 +298,7 @@ def qualify(target_build, helper_build):
                     lease.finish(reconciliation_complete=True)
                     receipt['resources_reconciled'] = True
                     manifest = run.manifest()
-                    manifest.update(outcome='cleaned', updated_at=now())
+                    manifest.update(outcome='cleaned' if receipt['status'] == 'passed' else 'failed', updated_at=now())
                     run.save_manifest(manifest)
                 except BaseException as cleanup_failure:
                     receipt.update(resources_reconciled=False, cleanup_failure_code=getattr(cleanup_failure, 'code', 'cleanup_interrupted'))

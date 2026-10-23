@@ -1,5 +1,6 @@
 """Host-boundary checks for the real image qualification adapter."""
 from copy import deepcopy
+import base64
 import importlib.util
 import io
 import json
@@ -76,6 +77,7 @@ class RuntimeBoundary(unittest.TestCase):
         path = self.run.file('private/credentials/id_ed25519')
         path.parent.mkdir(parents=True)
         path.write_bytes(b'synthetic-private-fixture-not-a-key')
+        path.with_name('id_ed25519.pub').write_text('ssh-ed25519 ' + base64.b64encode(b'\x00\x00\x00\x0bssh-ed25519\x00\x00\x00\x20' + b'\x00' * 32).decode())
         public = 'ssh-ed25519 AAAA'
         with patch.object(qualification, 'docker_configuration', return_value='/private/empty-docker'), \
              patch.object(qualification.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, b'', b'')) as command:
@@ -84,7 +86,7 @@ class RuntimeBoundary(unittest.TestCase):
         self.assertEqual(args[0], ['docker', '--config', '/private/empty-docker', '--host', 'unix:///var/run/docker.sock', 'cp', '-a', '-', self.identifier + ':/run/input'])
         self.assertFalse({'DOCKER_CONTEXT', 'DOCKER_HOST', 'HOME', 'AWS_SECRET_ACCESS_KEY'} & set(kwargs['env']))
         with tarfile.open(fileobj=io.BytesIO(kwargs['input'])) as archive:
-            self.assertEqual([m.name for m in archive], ['id_ed25519', 'known_hosts'])
+            self.assertEqual([m.name for m in archive], ['id_ed25519', 'known_hosts', 'wrong_known_hosts'])
             for member in archive:
                 self.assertEqual((member.uid, member.gid, member.mode), (10001, 10001, 0o600))
         path.write_bytes(b'x' * 16385)

@@ -72,7 +72,10 @@ the canonical admission lease, inspects stopped runtime limits before start and
 reads actual cgroups. It provisions the helper's private tmpfs through a bounded
 stdin-only archive, obtains the exact-owned target's public host key through the
 trusted Docker control plane, then uses strict authenticated SSH as UID10001.
-Root and nonexistent-user login must fail specifically at authentication.
+Root and nonexistent-user login must fail specifically at authentication. An
+intentionally incorrect known-host key must fail specifically at trust checking,
+without disabling verification. A failed qualification keeps its primary failed
+manifest outcome even when owned-resource cleanup succeeds.
 No private key is printed or placed in evidence. The receipt includes client and
 host public fingerprints so two invocations can prove isolation. Every created
 container/network is inspected and removed by exact ID before admission finishes;
