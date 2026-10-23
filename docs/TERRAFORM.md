@@ -59,6 +59,12 @@ refuse. Only the saved plan is applied. The configuration/lock hashes are checke
 before each operation and the saved apply plan is hashed. All plans/state/logs
 remain private; public key contents are not Terraform variables.
 
+The target declares both entrypoint (`/usr/bin/python3`, the authored runtime)
+and command (`target`) explicitly. Their combined process arguments match the
+qualified image. An omitted command is OptionalComputed in provider 4.6.0 and
+remained unknown in an actual plan; the validator continues to reject unknown
+commands and inspection requires the exact declared split.
+
 Docker provider4.6.0 has no PID-cap field. After actual apply/state observation,
 the controller records exact owned IDs and observes the target still created and
 never started before updating only its PID cap. It then inspects all confinement

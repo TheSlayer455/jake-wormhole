@@ -37,7 +37,7 @@ def plan(variables, operation='create'):
     target = {'name': prefix + '-target-001', 'image': p.TARGET_IMAGE, 'start': False, 'must_run': False,
         'privileged': False, 'read_only': True, 'user': '0:0', 'restart': 'no', 'rm': False,
         'publish_all_ports': False, 'network_mode': 'bridge', 'ipc_mode': 'private', 'cgroupns_mode': 'private',
-        **variables['target_limits'], 'entrypoint': ['/usr/bin/python3', '/opt/wormhole/runtime.py', 'target'],
+        **variables['target_limits'], 'entrypoint': ['/usr/bin/python3', '/opt/wormhole/runtime.py'], 'command': ['target'],
         'security_opts': ['no-new-privileges:true'], 'labels': label('target'),
         'capabilities': [{'add': list(images.TARGET_CAPS), 'drop': ['ALL']}],
         'tmpfs': {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0', '/tmp': 'rw,nosuid,nodev,noexec,size=16m,mode=1777'},
@@ -85,13 +85,15 @@ class PlanPolicy(unittest.TestCase):
         values = inputs()
         for key, bad in (('start', True), ('privileged', True), ('read_only', False), ('memory', True),
                          ('network_mode', 'host'), ('pid_mode', 'host'), ('ports', [{'internal': 2222, 'external': 2222}]),
-                         ('entrypoint', ['/bin/sh']), ('devices', [{'host_path': '/dev/kvm'}]),
+                         ('entrypoint', ['/bin/sh']), ('command', []), ('command', ['shell']), ('devices', [{'host_path': '/dev/kvm'}]),
                          ('volumes', [{'host_path': '/private/keys', 'container_path': '/keys', 'read_only': True}])):
             value = plan(values)
             value['planned_values']['root_module']['resources'][1]['values'][key] = bad
             value['resource_changes'][1]['change']['after'][key] = bad
             with self.subTest(field=key), self.assertRaises(p.ProvisioningError): p.validate_plan(value, values)
         value = plan(values); value['resource_changes'][1]['change']['after_unknown']['ports'] = True
+        with self.assertRaises(p.ProvisioningError): p.validate_plan(value, values)
+        value = plan(values); value['resource_changes'][1]['change']['after_unknown']['command'] = True
         with self.assertRaises(p.ProvisioningError): p.validate_plan(value, values)
         value = plan(values); value['resource_changes'][1]['change']['after']['privileged'] = True
         with self.assertRaises(p.ProvisioningError): p.validate_plan(value, values)
@@ -200,8 +202,8 @@ class Controller(unittest.TestCase):
         expected = self.plan['limits'][role]['docker_create']
         root = identifier == CONTROLLER
         config = {'Labels': {**self.image_labels, **self.session.labels(role)},
-                  'User': '0:0', 'Entrypoint': ['/usr/bin/python3'] if root else ['/usr/bin/python3', '/opt/wormhole/runtime.py', 'target'],
-                  'Cmd': ['/opt/provisioning/runtime.py', 'serve'] if root else [],
+                  'User': '0:0', 'Entrypoint': ['/usr/bin/python3'] if root else ['/usr/bin/python3', '/opt/wormhole/runtime.py'],
+                  'Cmd': ['/opt/provisioning/runtime.py', 'serve'] if root else ['target'],
                   'Env': ['WORMHOLE_RUN_ID=' + self.run.id, 'WORMHOLE_ROLE=provisioner'] if root else
                          ['WORMHOLE_RUN_ID=' + self.run.id, 'WORMHOLE_RUNTIME_TTL_SECONDS=300']}
         host = {'Memory': expected['memory_bytes'], 'MemorySwap': expected['memory_swap_bytes'], 'NanoCpus': expected['nano_cpus'],
@@ -408,6 +410,14 @@ class Controller(unittest.TestCase):
                     return value
                 with self.subTest(mutation=mutation), patch.object(images, 'inspect', side_effect=wrong), self.assertRaises(p.ProvisioningError):
                     self.session.verify_target(pending, stopped=True)
+
+    def test_observed_target_must_keep_the_exact_split_entrypoint_and_command(self):
+        with self.patches():
+            self.session.provision()
+            for key, wrong in (('Cmd', []), ('Cmd', ['shell']), ('Entrypoint', ['/usr/bin/python3', '/opt/wormhole/runtime.py', 'target'])):
+                value = self.container(CID); value['Config'][key] = wrong
+                with self.subTest(field=key, value=wrong), self.assertRaises(p.ProvisioningError):
+                    self.session.verify_target(value)
 
     def test_supplied_dictionary_cannot_bypass_actual_tool_cache_revalidation(self):
         from wormhole import toolchain

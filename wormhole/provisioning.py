@@ -138,9 +138,9 @@ def validate_plan(value, variables, *, operation='create', owned=None):
         require(_same(target.get(key), expected), 'unsafe_plan', 'A required target limit, identity or confinement field differs.')
     for key in ('ports', 'mounts', 'devices', 'device_requests', 'device_cgroup_rules', 'gpus', 'pid_mode',
                 'group_add', 'host', 'links', 'dns', 'dns_opts', 'dns_search', 'sysctls', 'storage_opts',
-                'cgroup_parent', 'runtime', 'command'):
+                'cgroup_parent', 'runtime'):
         require(not target.get(key), 'unsafe_plan', 'Unapproved target ports, privileges, namespaces, mounts or commands.')
-    require(target.get('entrypoint') == ['/usr/bin/python3', '/opt/wormhole/runtime.py', 'target'],
+    require(target.get('entrypoint') == ['/usr/bin/python3', '/opt/wormhole/runtime.py'] and target.get('command') == ['target'],
             'unsafe_plan', 'Only the fixed qualified target entrypoint is permitted.')
     require(set(target.get('security_opts') or []) == {'no-new-privileges:true'} and
             _labels(target.get('labels')) == {**expected_labels, images.LABEL + '.role': 'target'},
@@ -485,7 +485,7 @@ class ProvisioningSession:
         host, config = actual['HostConfig'], actual['Config']
         require(config.get('User') == '0:0' and images.capability_names(host.get('CapAdd')) == set(images.TARGET_CAPS) and
                 host.get('NetworkMode') == 'bridge' and
-                config.get('Entrypoint') == ['/usr/bin/python3', '/opt/wormhole/runtime.py', 'target'] and not config.get('Cmd') and
+                config.get('Entrypoint') == ['/usr/bin/python3', '/opt/wormhole/runtime.py'] and config.get('Cmd') == ['target'] and
                 set(x for x in config.get('Env', []) if x.startswith('WORMHOLE_')) ==
                 {'WORMHOLE_RUN_ID=' + self.run.id, 'WORMHOLE_RUNTIME_TTL_SECONDS=300'},
                 'unsafe_target', 'The target runtime/user/privilege/lifetime differs from the qualified image contract.')

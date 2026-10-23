@@ -50,7 +50,8 @@ resource "docker_container" "target" {
   network_mode      = "bridge"
   ipc_mode          = "private"
   cgroupns_mode     = "private"
-  entrypoint        = ["/usr/bin/python3", "/opt/wormhole/runtime.py", "target"]
+  entrypoint        = ["/usr/bin/python3", "/opt/wormhole/runtime.py"]
+  command           = ["target"]
   memory            = var.target_limits.memory
   memory_swap       = var.target_limits.memory_swap
   cpus              = var.target_limits.cpus
