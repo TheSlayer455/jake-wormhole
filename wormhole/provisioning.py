@@ -321,7 +321,7 @@ def unavailable_diagnostic(raw):
 
 class ProvisioningSession:
     """Caller owns run.locked(), docker_scope(run) and the canonical held lease."""
-    def __init__(self, run, lease, *, toolchain=None, scenario='healthy'):
+    def __init__(self, run, lease, *, toolchain=None, scenario='healthy', target_binding=None):
         require(type(scenario) is str and scenario in SCENARIOS, 'invalid_scenario', 'Only fixed reviewed scenarios are supported.')
         manifest = run.manifest()
         revision, dirty = source_identity()
@@ -335,6 +335,14 @@ class ProvisioningSession:
         self.target_plan = TargetPlan.from_lease(lease)
         require(manifest['profile'] == self.target_plan.profile, 'admission_scope', 'Run and lease profiles differ.')
         self.run, self.lease, self.toolchain = run, lease, toolchain
+        self.target_binding = None
+        if target_binding is not None:
+            from .candidate import validate_binding, verify_image
+            self.target_binding = validate_binding(run, target_binding)
+            require(self.target_plan.profile == 'smoke' and scenario == 'healthy', 'candidate_scope', 'Candidate qualification starts at one Ubuntu target.')
+            verify_image(images.inspect('image', self.target_binding['image_id']), self.target_binding)
+            require(any(item['kind'] == 'image' and item['id'] == self.target_binding['image_id'] and item['outcome'] == 'retained'
+                for item in lease.record['resources']), 'candidate_scope', 'The derived candidate must be retained by this held run journal.')
         self.scenario = scenario
         self.destroy_only = False
         self.state = run.file('private/terraform')
@@ -343,16 +351,27 @@ class ProvisioningSession:
         self.attempts = {}
         self.receipt = {**common(manifest), 'operation': 'terraform-smoke', 'status': 'in-progress',
             'terraform_version': '1.17.0', 'provider': PROVIDER, 'provider_version': '4.6.0',
-            'target_image': TARGET_IMAGE, 'operations': [], 'resources': [], 'inventory': None,
+            'target_image': self.target_image_id, 'operations': [], 'resources': [], 'inventory': None,
             'cleanup': 'not-started', 'primary_failure': None, 'secondary_failures': [],
             'unknown_outcome': False, 'scenario': scenario,
             'runtime_pipeline_complete': False, 'production_iso_eligible': False,
             'resource_layout': LAYOUT, 'target_plan': self.target_plan.record(), 'pending_target_ids': list(self.target_plan.target_ids)}
-        self.variables = {'run_id': run.id, 'source_revision': revision, 'image': TARGET_IMAGE,
+        if self.target_binding is not None: self.receipt['target_binding'] = deepcopy(self.target_binding)
+        self.variables = {'run_id': run.id, 'source_revision': revision, 'image': self.target_image_id,
             'public_input': str(images.safe_bind(run.file('private/target-input'))), 'target_ids': list(self.target_plan.target_ids),
             'target_limits': deepcopy(lease.plan['limits']['target']['terraform'])}
         self.variables['target_limits'].pop('start'); self.variables['target_limits'].pop('must_run')
         self.inputs = {}
+
+    @property
+    def target_image_id(self):
+        binding = getattr(self, 'target_binding', None)
+        return binding['image_id'] if binding is not None else TARGET_IMAGE
+
+    @property
+    def target_image_labels(self):
+        binding = getattr(self, 'target_binding', None)
+        return binding['image_labels'] if binding is not None else self.image_labels
 
     @property
     def target_resources(self):
@@ -390,7 +409,8 @@ class ProvisioningSession:
                 'source_revision': self.variables['source_revision'], 'id': self.provisioner,
                 'uid': self.uid, 'gid': self.gid, 'groups': self.socket_groups, 'mounts': self.mounts,
                 'image_labels': self.image_labels, 'inputs': self.inputs, 'scenario': self.scenario,
-                **({'resource_layout': LAYOUT, 'target_plan': self.target_plan.record()} if getattr(self, 'target_plan', None) is not None else {})})
+                **({'resource_layout': LAYOUT, 'target_plan': self.target_plan.record()} if getattr(self, 'target_plan', None) is not None else {}),
+                **({'target_binding_version': 1, 'target_binding': self.target_binding} if getattr(self, 'target_binding', None) is not None else {})})
 
     def failure(self, error):
         if self.receipt['primary_failure'] is None:
@@ -602,14 +622,14 @@ class ProvisioningSession:
         if role == 'target':
             target_id = self.target_plan.resolve(target_id) if getattr(self, 'target_plan', None) is not None else 'target-001'
         name = 'wormhole-' + self.run.id + ('-' + target_id if role == 'target' else '-network')
-        expected_labels = self.labels(role) if role == 'network' else {**self.image_labels, **self.labels(role, target_id)}
+        expected_labels = self.labels(role) if role == 'network' else {**self.target_image_labels, **self.labels(role, target_id)}
         require(actual.get('Id') == identifier and labels == expected_labels and actual.get('Name', '').lstrip('/') == name,
                 'ownership_mismatch', 'Exact resource labels, name or identity differ from this run.')
         if role == 'network':
             require(actual.get('Driver') == 'bridge' and actual.get('Internal') is True and actual.get('Scope') == 'local' and
                     not actual.get('Ingress'), 'unsafe_network', 'Only the internal local run bridge may be managed.')
         else:
-            require(actual.get('Image') == TARGET_IMAGE, 'ownership_mismatch', 'The target image is not the qualified immutable input.')
+            require(actual.get('Image') == self.target_image_id, 'ownership_mismatch', 'The target image is not the qualified immutable input.')
 
     def verify_target(self, actual, *, target_id=None, stopped=False, pid_pending=False, inspection_timeout=20):
         target_id = self.target_plan.resolve(target_id) if getattr(self, 'target_plan', None) is not None else 'target-001'
@@ -801,7 +821,7 @@ class ProvisioningSession:
                 'inventory_invalid', 'Provider endpoint differs from exact inspection or repeats another target.')
             addresses.add(address)
             rows.append({'target_id': target_id, 'resource_id': row['resource_id'], 'host': address, 'ssh_port': 2222,
-                'ssh_user': 'wormhole', 'image_digest': TARGET_IMAGE, 'status': 'started'})
+                'ssh_user': 'wormhole', 'image_digest': self.target_image_id, 'status': 'started'})
         self.receipt['pending_target_ids'] = sorted(pending)
         return {**common(self.run.manifest()), 'status': 'unverified' if pending else 'pass',
                 'targets': sorted(rows, key=lambda x: x['target_id'])}
@@ -993,6 +1013,8 @@ class ProvisioningSession:
         new_layout = 'resource_layout' in record or 'target_plan' in record
         fields = {'schema_version', 'run_id', 'source_revision', 'id', 'uid', 'gid', 'groups', 'mounts', 'image_labels', 'inputs', 'scenario'}
         if new_layout: fields |= {'resource_layout', 'target_plan'}
+        candidate_layout = 'target_binding_version' in record or 'target_binding' in record
+        if candidate_layout: fields |= {'target_binding_version', 'target_binding'}
         require(set(record) == fields and
                 record['schema_version'] == '1.0' and record['run_id'] == run.id and record['source_revision'] == revision and
                 type(record['id']) is str and ID.fullmatch(record['id']) and record['scenario'] in SCENARIOS,
@@ -1001,6 +1023,12 @@ class ProvisioningSession:
         require((new_layout and record['resource_layout'] == LAYOUT and session.target_plan == TargetPlan.from_lease(lease) and manifest['profile'] == session.target_plan.profile) or
                 (not new_layout and manifest['profile'] == 'smoke'), 'recovery_scope', 'Recorded layout/profile changed; no migration is permitted.')
         session.scenario = record['scenario']
+        session.target_binding = None
+        if candidate_layout:
+            from .candidate import validate_binding
+            require(new_layout and record['target_binding_version'] == 1 and session.target_plan.profile == 'smoke' and
+                session.scenario == 'healthy', 'recovery_scope', 'Unsupported candidate layout cannot be reinterpreted.')
+            session.target_binding = validate_binding(run, record['target_binding'], artifacts=False)
         session.provisioner, session.uid, session.gid = record['id'], record['uid'], record['gid']
         session.socket_groups, session.image_labels, session.inputs = record['groups'], record['image_labels'], record['inputs']
         require((session.uid, session.gid, session.socket_groups) == provisioner_identity(),
@@ -1009,6 +1037,7 @@ class ProvisioningSession:
         session.variables = bounded_json(session.state / 'terraform.tfvars.json')
         if new_layout:
             require(session.variables.get('target_ids') == list(session.target_plan.target_ids), 'recovery_scope', 'Recorded target inputs changed.')
+        require(session.variables.get('image') == session.target_image_id, 'recovery_scope', 'Retained target image differs from its explicit binding.')
         session.receipt = read_json(run.file('evidence/provisioning.json'))
         require(common(session.receipt) == common(manifest) and session.receipt.get('scenario') == session.scenario and
                 session.receipt.get('provisioner_id', session.provisioner) == session.provisioner and
@@ -1016,6 +1045,9 @@ class ProvisioningSession:
                 'daemon_outcome_unknown', 'Uncertain daemon work remains blocked for separately reviewed recovery; time passing is insufficient.')
         require((new_layout and session.receipt.get('resource_layout') == LAYOUT and session.receipt.get('target_plan') == session.target_plan.record()) or
                 (not new_layout and 'target_ids' not in session.variables), 'recovery_scope', 'Evidence and controller layout must match without conversion.')
+        require(session.receipt.get('target_image') == session.target_image_id and
+            (session.receipt.get('target_binding') == session.target_binding if candidate_layout else 'target_binding' not in session.receipt),
+            'recovery_scope', 'Retained evidence cannot replace its candidate or stock image contract.')
         session.owned = {x['address']: x['id'] for x in session.receipt['resources']}
         require(set(session.owned) <= layout_addresses(session.target_plan) and len(session.owned) == len(session.receipt['resources']) and len(set(session.owned.values())) == len(session.owned),
                 'recovery_scope', 'Only already-accounted exact Terraform resources can be recovered.')

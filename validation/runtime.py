@@ -186,15 +186,70 @@ def unique(pairs):
     return result
 
 
+CANDIDATE_PROGRAM = r'''import hashlib,json,os,stat,sys,types
+from pathlib import Path
+root=Path('/opt/wormhole/reference')
+def read(name,limit):
+ path=root/name
+ if any(p.is_symlink() for p in (path,*path.parents)): raise ValueError('linked candidate')
+ info=path.lstat()
+ if not stat.S_ISREG(info.st_mode) or info.st_nlink!=1 or not 1<=info.st_size<=limit: raise ValueError('candidate file bound')
+ with path.open('rb') as stream: raw=stream.read(limit+1)
+ if len(raw)!=info.st_size or len(raw)>limit: raise ValueError('candidate changed')
+ return raw
+manifest=read('manifest.json',16384)
+source=read('source.synthetic.bin',8388608)
+payload=read('payload.py',16384)
+version=read('version.txt',128).decode('ascii').strip()
+configuration=json.loads(read('config.json',4096))
+source_sha=hashlib.sha256(source).hexdigest();payload_sha=hashlib.sha256(payload).hexdigest()
+function={'status':'unverified','value':None}
+if payload_sha==sys.argv[1]:
+ module=types.ModuleType('verified_reference_payload')
+ exec(compile(payload,'/opt/wormhole/reference/payload.py','exec'),module.__dict__)
+ result=module.describe(configuration,source_sha)
+ if hashlib.sha256(read('payload.py',16384)).hexdigest()!=payload_sha: raise ValueError('payload changed')
+ function={'status':'observed','value':result}
+release={}
+for line in Path('/usr/lib/os-release').read_text().splitlines():
+ if line.startswith(('ID=','VERSION_ID=')):
+  key,value=line.split('=',1);release[key]=value.strip('"')
+print(json.dumps({'schema_version':'1.0','os':{'id':release.get('ID'),'version_id':release.get('VERSION_ID')},
+ 'candidate_sha256':hashlib.sha256(manifest).hexdigest(),'source_sha256':source_sha,'payload_sha256':payload_sha,
+ 'version':version,'configuration':configuration,'function':function},sort_keys=True))
+'''
+
+
+def candidate_observation(value):
+    require(type(value) is dict and set(value) == {'schema_version', 'os', 'candidate_sha256', 'source_sha256',
+        'payload_sha256', 'version', 'configuration', 'function'} and value['schema_version'] == '1.0' and
+        type(value['os']) is dict and set(value['os']) == {'id', 'version_id'} and
+        all(type(x) is str and 1 <= len(x) <= 64 for x in value['os'].values()) and
+        all(type(value[key]) is str and re.fullmatch('[a-f0-9]{64}', value[key]) for key in
+            ('candidate_sha256', 'source_sha256', 'payload_sha256')) and
+        type(value['version']) is str and 1 <= len(value['version']) <= 128 and
+        type(value['configuration']) is dict and set(value['configuration']) == {'format', 'greeting'} and
+        all(type(x) is str and 1 <= len(x) <= 128 for x in value['configuration'].values()))
+    function = value['function']
+    require(type(function) is dict and set(function) == {'status', 'value'} and
+        ((function['status'] == 'unverified' and function['value'] is None) or
+         (function['status'] == 'observed' and type(function['value']) is dict and
+          set(function['value']) == {'version', 'message', 'source_sha256'} and
+          all(type(x) is str and 1 <= len(x) <= 128 for x in function['value'].values()))))
+    return value
+
+
 def decode(raw):
     require(type(raw) is bytes and 1 <= len(raw) <= 8192)
     value = json.loads(raw, object_pairs_hook=unique, parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
     fields = {'schema_version', 'run_id', 'source_revision', 'target_id', 'address', 'scenario', 'plan_sha256',
               'expected_payload_sha256', 'readiness_source_sha256', 'timeout_seconds'}
+    candidate = type(value) is dict and value.get('operation') == 'candidate-functional-v1'
+    if candidate: fields |= {'operation'}
     require(type(value) is dict and set(value) == fields and value['schema_version'] == '1.0' and
         type(value['run_id']) is str and str(UUID(value['run_id'])) == value['run_id'] and
         type(value['source_revision']) is str and re.fullmatch('[a-f0-9]{40}', value['source_revision']) and
-        value['target_id'] == 'target-001' and value['scenario'] in SCENARIOS and
+        value['target_id'] == 'target-001' and (value['scenario'] == 'healthy' if candidate else value['scenario'] in SCENARIOS) and
         all(type(value[k]) is str and re.fullmatch('[a-f0-9]{64}', value[k]) for k in
             ('plan_sha256', 'expected_payload_sha256', 'readiness_source_sha256')) and
         type(value['timeout_seconds']) in (int, float) and math.isfinite(value['timeout_seconds']) and
@@ -249,7 +304,8 @@ def collect(value, rr=None):
         'ansible_ssh_use_tty': False, 'ansible_ssh_transfer_method': 'piped', 'ansible_remote_tmp': '/tmp/wormhole-ansible'}
     inventory = attempt / 'inventory.json'
     inventory.write_text(json.dumps({'all': {'hosts': {'target-001': variables}}})); inventory.chmod(0o600)
-    command = ['/usr/bin/python3', '-I', '-B', '-c', TARGET_PROGRAM, value['expected_payload_sha256']]
+    candidate = value.get('operation') == 'candidate-functional-v1'
+    command = ['/usr/bin/python3', '-I', '-B', '-c', CANDIDATE_PROGRAM if candidate else TARGET_PROGRAM, value['expected_payload_sha256']]
     arguments = ['/opt/wormhole/venv/bin/ansible', '-i', str(inventory), 'target-001', '-m', 'ansible.builtin.command',
         '-a', json.dumps({'argv': command, 'expand_argument_vars': False}), '--forks', '1', '--timeout', '3']
     if value['scenario'] == 'unexpected-skip':
@@ -303,7 +359,7 @@ def collect(value, rr=None):
             tree.get('stderr') == '' and tree.get('msg', '') == '' and type(tree.get('stdout')) is str and
             len(tree['stdout'].encode()) <= 16384 and
             all(tree.get(key, False) is False for key in ('failed', 'unreachable', 'skipped')))
-        observed = observation(json.loads(tree['stdout'], object_pairs_hook=unique))
+        observed = (candidate_observation if candidate else observation)(json.loads(tree['stdout'], object_pairs_hook=unique))
         status, category = 'pass', None
     if time.monotonic() - began >= value['timeout_seconds']:
         status, category, observed = 'error', 'validation_timeout', None

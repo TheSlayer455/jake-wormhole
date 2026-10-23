@@ -73,7 +73,7 @@ def plan(variables, operation='create'):
     label = lambda role: [{'label': key, 'value': value} for key, value in {**common, images.LABEL + '.role': role}.items()]
     network = {'name': prefix + '-network', 'driver': 'bridge', 'internal': True, 'attachable': False,
                'ingress': False, 'ipv6': False, 'labels': label('network')}
-    target = {'name': prefix + '-target-001', 'image': p.TARGET_IMAGE, 'start': False, 'must_run': False,
+    target = {'name': prefix + '-target-001', 'image': variables['image'], 'start': False, 'must_run': False,
         'privileged': False, 'read_only': True, 'user': '0:0', 'restart': 'no', 'rm': False,
         'publish_all_ports': False, 'network_mode': 'bridge', 'ipc_mode': 'private', 'cgroupns_mode': 'private',
         **variables['target_limits'], 'entrypoint': ['/usr/bin/python3', '/opt/wormhole/runtime.py'], 'command': ['target'],
