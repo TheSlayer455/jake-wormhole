@@ -23,7 +23,7 @@ def doctor():
 
 
 def parser():
-    root = argparse.ArgumentParser(prog="python -m wormhole", description="Local contracts and an explicit synthetic fixture subset. The runtime pipeline is unfinished.")
+    root = argparse.ArgumentParser(prog="python -m wormhole", description="Private container reference automation and explicitly labeled local fixtures.")
     root.add_argument("--version", action="version", version=__version__)
     commands = root.add_subparsers(dest="command", required=True)
     commands.add_parser("doctor", help="Read local source/tool presence without provisioning or network calls.")
@@ -41,6 +41,16 @@ def parser():
         command.add_argument("run_id", help="Exact UUID returned by run.")
         command.add_argument("--workspace", default=workspace)
     from .images import RUNS_ROOT
+    reference = commands.add_parser("reference-run", help="Run the bounded one-target container reference pipeline on approved Linux storage.")
+    reference.add_argument("--platform", choices=("ubuntu", "ubi"), default="ubuntu")
+    reference.add_argument("--scenario", choices=("healthy", "version-expectation-mismatch"), default="healthy")
+    reference.add_argument("--base-run", help="Existing qualified public UBI base-probe UUID; required only for UBI.")
+    for name in ("reference-report", "reference-gate"):
+        command = commands.add_parser(name, help="Replay original reference evidence and retain explicit completeness failures.")
+        command.add_argument("run_id", help="Exact existing reference Run UUID.")
+        command.add_argument("--workspace", default=str(RUNS_ROOT))
+        if name == "reference-report":
+            command.add_argument("--format", choices=("json", "text", "junit"), default="json")
     for name, help_text in (
         ("cancel", "Request cooperative cancellation; the active coordinator acknowledges at a safe checkpoint."),
         ("recover", "Resume only exact owned real-run teardown, without new allocation."),
@@ -54,6 +64,7 @@ def parser():
 
 def main(arguments=None):
     options = parser().parse_args(arguments)
+    rendered = None
     try:
         if options.command == "doctor":
             value, status = doctor(), 0
@@ -62,6 +73,26 @@ def main(arguments=None):
             with run.locked():
                 value = execute_run(run)
             status = 0 if value["outcome"] == "passed" else 1
+        elif options.command == "reference-run":
+            from .images import RUNS_ROOT
+            from .pipeline import PipelineSession, make_request
+            run = create_run(RUNS_ROOT, fixture=False, kernel_lock=True)
+            request = make_request(run, platform=options.platform, scenario=options.scenario, base_run_id=options.base_run)
+            value = PipelineSession(run, request).execute()
+            status = 0 if value.get("reference_eligible") is True else 1
+        elif options.command in {"reference-report", "reference-gate"}:
+            from .pipeline import gate_pipeline, report_pipeline
+            run = Run(options.workspace, options.run_id)
+            with run.locked():
+                if options.command == "reference-gate":
+                    value = gate_pipeline(run)
+                else:
+                    report = report_pipeline(run)
+                    value = report["record"]
+                    rendered = report[options.format]
+                    if isinstance(rendered, bytes):
+                        rendered = rendered.decode("utf-8")
+                status = 0 if value.get("reference_eligible") is True else 1
         else:
             run = Run(options.workspace, options.run_id)
             if options.command in {"cancel", "recover", "cleanup-status"} or (
@@ -87,10 +118,18 @@ def main(arguments=None):
                         value, status = cleanup_run(run), 0
                     else:
                         raise RunError("publication_unsupported", "Reference qualification/publication is not implemented; no bytes were published.")
-        print(json.dumps(value, allow_nan=False, sort_keys=True, indent=2))
+        if rendered is None:
+            print(json.dumps(value, allow_nan=False, sort_keys=True, indent=2))
+        else:
+            sys.stdout.write(rendered)
+            if not rendered.endswith("\n"):
+                sys.stdout.write("\n")
         return status
     except (RunError, ContractError) as error:
-        print(json.dumps({"error": {"code": getattr(error, "code", "invalid_contract"), "message": str(error)}}, sort_keys=True))
+        failure = {"error": {"code": getattr(error, "code", "invalid_contract"), "message": str(error)}}
+        if getattr(error, "run_id", None) is not None:
+            failure["run_id"] = error.run_id
+        print(json.dumps(failure, sort_keys=True))
         return 2
     except OSError:
         print(json.dumps({"error": {"code": "local_io_error", "message": "Local state could not be accessed safely; preserve the run and inspect its cleanup record before retrying."}}))
