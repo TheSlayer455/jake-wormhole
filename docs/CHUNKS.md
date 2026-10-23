@@ -92,8 +92,12 @@ The HTTP adapter starts one disposable server on `127.0.0.1` at an ephemeral
 port and fetches only its fixed chunk paths. No caller-provided URL, hostname,
 redirect, proxy, authorization or fallback source is accepted. Responses require
 200, one exact Content-Length, no transfer encoding and the fixed content type.
-The client uses `read1` with deadline checks around each receive; socket waits
-are capped at 0.5 seconds and the server has its own bounded socket writes.
+The client uses `read1` with deadline checks around each receive, plus an absolute
+deadline watchdog holding only that client's exact socket object. It interrupts
+both response headers and bodies, including dripping headers. Accepted server
+sockets have a timeout before request-header parsing; the server deadline and
+context exit interrupt only that server's registered sockets. Socket waits are
+capped at 0.5 seconds. Shutdown joins have separate one-second bounds.
 This is a lightweight local fixture, not a general HTTP download service.
 The server is shut down after success or failure. `FutureRegistryAdapter` always
 refuses: a real GitLab Generic Package Registry implementation is unverified.
@@ -109,7 +113,8 @@ python scripts/verify_repository.py
 Tests exercise both actual loopback/local transports, all five integrity faults,
 manifest/receipt tampering, duplicate content hashes, source changes, interrupted
 writes, linked paths, exact output protection, redirects, duplicate length
-headers and a real slow loopback response. POSIX permission/link checks are
+headers, incomplete incoming request headers, dripping response headers and a
+real slow loopback response. POSIX permission/link checks are
 explicitly skipped on Windows and run on Linux. `--acceptance` is a real
 generated-binary processing command; it demonstrates neither boot/install nor
 candidate image mapping, full pipeline completion or publication eligibility.

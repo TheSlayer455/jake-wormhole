@@ -197,6 +197,46 @@ class LocalChunks:
             yield stream.read
 
 
+def shutdown_socket(owned_socket):
+    """Keep the exact socket object, never a reusable numeric descriptor."""
+    try:
+        owned_socket.shutdown(socket.SHUT_RDWR)
+    except OSError:
+        pass
+
+
+class FixtureServer(HTTPServer):
+    def __init__(self, address, handler, deadline):
+        self.deadline = deadline
+        self.closing = False
+        self.active = set()
+        self.active_lock = threading.Lock()
+        super().__init__(address, handler)
+
+    def get_request(self):
+        connection, address = super().get_request()
+        # BaseHTTPRequestHandler parses request headers before do_GET.
+        # Register and cap that socket before constructing the handler.
+        with self.active_lock:
+            if self.closing:
+                connection.close()
+                raise OSError('fixture closing')
+            connection.settimeout(max(.001, min(.5, self.deadline - time.monotonic())))
+            self.active.add(connection)
+        return connection, address
+
+    def shutdown_request(self, request):
+        with self.active_lock:
+            self.active.discard(request)
+        super().shutdown_request(request)
+
+    def abort_owned_connections(self):
+        with self.active_lock:
+            self.closing = True
+            for connection in self.active:
+                shutdown_socket(connection)
+
+
 class LoopbackFixture:
     """One local fixture server with a fixed allowlist and bounded lifetime."""
     def __init__(self, local, names, deadline):
@@ -227,16 +267,24 @@ class LoopbackFixture:
                             self.wfile.write(raw)
                 except (OSError, RunError):
                     self.close_connection = True
-        self.server = HTTPServer(('127.0.0.1', 0), Handler)
+        self.server = FixtureServer(('127.0.0.1', 0), Handler, deadline)
         self.thread = threading.Thread(target=self.server.serve_forever, kwargs={'poll_interval': .02}, daemon=True)
+        self.watchdog = threading.Timer(max(0., deadline - time.monotonic()), self.server.abort_owned_connections)
+        self.watchdog.daemon = True
 
     def __enter__(self):
         self.thread.start()
+        self.watchdog.start()
         return self
 
     def __exit__(self, *_):
-        self.server.shutdown(); self.server.server_close(); self.thread.join(timeout=1)
-        require(not self.thread.is_alive(), 'chunk_http_shutdown')
+        self.watchdog.cancel()
+        self.server.abort_owned_connections()
+        # Interrupt pre-header reads before asking serve_forever to finish.
+        stopper = threading.Thread(target=self.server.shutdown, daemon=True)
+        stopper.start(); stopper.join(timeout=1)
+        self.server.server_close(); self.thread.join(timeout=1); self.watchdog.join(timeout=1)
+        require(not any(thread.is_alive() for thread in (stopper, self.thread, self.watchdog)), 'chunk_http_shutdown')
 
     def validate_set(self, names):
         require(set(names) == self.names, 'chunk_set_mismatch')
@@ -248,7 +296,12 @@ class LoopbackFixture:
         require(item['name'] in self.names, 'chunk_name_invalid')
         connection = http.client.HTTPConnection('127.0.0.1', self.server.server_port,
             timeout=max(.01, min(.5, deadline - time.monotonic())))
+        watchdog = None
         try:
+            connection.connect()
+            owned_socket = connection.sock
+            watchdog = threading.Timer(max(0., deadline - time.monotonic()), shutdown_socket, args=(owned_socket,))
+            watchdog.daemon = True; watchdog.start()
             connection.request('GET', '/' + item['name'], headers={'Connection': 'close'})
             response = connection.getresponse()
             lengths = [value for key, value in response.getheaders() if key.lower() == 'content-length']
@@ -266,9 +319,13 @@ class LoopbackFixture:
                 return raw
             yield bounded_read
         except (OSError, http.client.HTTPException):
+            deadline_check(deadline)
             raise ChunkError('chunk_http_transport', 'The bounded loopback fixture did not complete.') from None
         finally:
             connection.close()
+            if watchdog is not None:
+                watchdog.cancel(); watchdog.join(timeout=1)
+                require(not watchdog.is_alive(), 'chunk_http_shutdown')
 
 
 class FutureRegistryAdapter:

@@ -4,6 +4,7 @@ import hashlib
 from http.server import BaseHTTPRequestHandler
 import json
 import os
+import socket
 from pathlib import Path
 import tempfile
 import time
@@ -193,6 +194,45 @@ class SyntheticChunks(unittest.TestCase):
         self.assertEqual(result['failure']['code'], 'chunk_http_transport')
         self.assertEqual(c.report_chunks(run)['result']['status'], 'failed')
         self.assertFalse(run.file('private/chunks/.reconstructed.partial').exists())
+        self.assertFalse(run.file('private/chunks/reconstructed.synthetic.bin').exists())
+
+    def test_incomplete_incoming_headers_cannot_hold_server_shutdown_open(self):
+        run, _ = self.successful()
+        manifest = read_json(run.file('evidence/chunk-manifest.json'))
+        local = c.LocalChunks(run.file('private/chunks/parts'))
+        fixture = c.LoopbackFixture(local, [x['name'] for x in manifest['chunks']], time.monotonic()+5)
+        with fixture:
+            connection = socket.create_connection(('127.0.0.1', fixture.server.server_port), timeout=1)
+            self.addCleanup(connection.close)
+            connection.sendall(b'GET /chunk-000000.bin HTTP/1.0\r\nX-Incomplete: ')
+            end = time.monotonic()+1
+            while not fixture.server.active and time.monotonic() < end: time.sleep(.005)
+            self.assertTrue(fixture.server.active, 'Actual accepted socket must be stuck before do_GET')
+            began = time.monotonic()
+        self.assertLess(time.monotonic()-began, 1)
+        self.assertFalse(fixture.thread.is_alive()); self.assertFalse(fixture.watchdog.is_alive())
+
+    def test_actual_dripping_response_headers_obey_absolute_deadline(self):
+        run, _ = self.successful()
+        manifest = read_json(run.file('evidence/chunk-manifest.json'))
+        run.file('private/chunks/reconstructed.synthetic.bin').unlink()
+        local = c.LocalChunks(run.file('private/chunks/parts'))
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *_): pass
+            def do_GET(self):
+                try:
+                    self.wfile.write(b'HTTP/1.0 200 OK\r\nX-Dripping: '); self.wfile.flush()
+                    # Each byte arrives faster than the per-receive socket
+                    # timeout, while the full header would take five seconds.
+                    for _ in range(100):
+                        self.wfile.write(b'x'); self.wfile.flush(); time.sleep(.05)
+                except OSError: pass
+        began = time.monotonic(); deadline = began+.2
+        with c.LoopbackFixture(local, [x['name'] for x in manifest['chunks']], deadline) as adapter:
+            adapter.server.RequestHandlerClass = Handler
+            with self.assertRaises(c.ChunkError):
+                c.reconstruct(run, manifest, c.sha(c.canonical(manifest)), adapter, deadline, [])
+        self.assertLess(time.monotonic()-began, 1.5)
         self.assertFalse(run.file('private/chunks/reconstructed.synthetic.bin').exists())
 
     @unittest.skipUnless(os.name == 'posix', 'POSIX permissions/link guarantees require Linux')
