@@ -2,6 +2,7 @@
 from copy import deepcopy
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -91,6 +92,24 @@ class AcceptanceGuards(unittest.TestCase):
         receipt=read_json(self.root/error.exception.suite_run_id/'evidence/rpm-acceptance-suite.json')
         self.assertEqual(receipt['failed_child_run_id'],BASE_RUN);self.assertEqual(receipt['error_code'],'rpm_example_failure')
         self.assertNotIn('PRIVATE ERROR TEXT',str(receipt))
+
+    def test_failure_diagnostic_requires_exact_target_guard_and_retains_only_private_bytes(self):
+        run=create_run(self.root,fixture=False,identity=(SHA,False));result={}
+        session=SimpleNamespace(target_resources={'target-001':'f'*64},verify_target=lambda *args,**kwargs:None)
+        capture={'status':'pass','returncode':0,'log':b'controlled server diagnostic\n','log_truncated':False}
+        with patch.object(a.images,'inspect',return_value={'Id':'f'*64}),patch.object(a.images,'docker_configuration',return_value='/fixed/private/config'),\
+            patch.object(a,'_run_process',return_value=capture) as call:
+            a.retain_readiness_failure(run,result,session)
+        self.assertEqual(call.call_args.args[0][-4:],('logs','--tail','200','f'*64))
+        self.assertEqual(call.call_args.kwargs['timeout'],5);self.assertEqual(call.call_args.kwargs['log_limit'],65536)
+        self.assertEqual(run.file(result['failure_diagnostic']['private_log']).read_bytes(),capture['log'])
+        self.assertEqual(result['failure_diagnostic']['sha256'],a.hashlib.sha256(capture['log']).hexdigest())
+        self.assertNotIn('controlled server diagnostic',str(result))
+        def refused(*args,**kwargs):raise a.rpm_target.RpmError('rpm_owned_target_refused','private guard detail')
+        session.verify_target=refused;result={}
+        with patch.object(a.images,'inspect',return_value={'Id':'f'*64}),patch.object(a,'_run_process') as call:
+            a.retain_readiness_failure(run,result,session)
+        call.assert_not_called();self.assertEqual(result['failure_diagnostic'],{'status':'unavailable','code':'rpm_owned_target_refused'})
 
 
 if __name__=='__main__':unittest.main()

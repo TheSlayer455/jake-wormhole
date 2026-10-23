@@ -5,6 +5,7 @@ operations. This is not a scanner, RHEL VM, ISO or complete-pipeline result.
 """
 import argparse
 from copy import deepcopy
+import hashlib
 import json
 import sys
 from uuid import UUID
@@ -15,8 +16,8 @@ from .provisioning import ProvisioningSession
 from .provisioning_acceptance import snapshot, scan_private_material, disk_sample, error_code
 from .readiness import ReadinessSession
 from .recovery import cleanup_session
-from .runs import Run, atomic_json, common, create_run, now, source_identity
-from .stages import execute_run
+from .runs import Run, SOURCE_ROOT, atomic_bytes, atomic_json, common, create_run, now, source_identity
+from .stages import _run_process, execute_run
 
 CASES = ('healthy', 'missing-optional-package', 'version-expectation-mismatch', 'unsupported-os')
 EXPECTED = {'missing-optional-package':'rpm_missing_package', 'version-expectation-mismatch':'rpm_version_mismatch',
@@ -46,6 +47,24 @@ def checked_rows(scenario, rows):
         for package in rpm.PACKAGES: expected['rpm-'+package] = 'unverified'
     require(all(x['status']==expected[x['check_id']] for x in rows), 'rpm_negative_not_observed')
     return deepcopy(rows)
+
+
+def retain_readiness_failure(run, result, session):
+    """Read only exact-owned target logs before normal cleanup; never mask failure."""
+    try:
+        identifier = session.target_resources['target-001']
+        actual = images.inspect('container', identifier)
+        session.verify_target(actual, target_id='target-001')
+        value = _run_process(('docker', '--config', images.docker_configuration(), '--host', images.SOCKET,
+            'logs', '--tail', '200', identifier), cwd=SOURCE_ROOT, timeout=5, log_limit=65536)
+        raw = value['log']
+        relative = 'private/rpm-target-readiness-failure.log'
+        atomic_bytes(run.file(relative), raw, limit=65536)
+        result['failure_diagnostic'] = {'status': value['status'], 'returncode': value.get('returncode'),
+            'log_truncated': value['log_truncated'], 'bytes': len(raw),
+            'sha256': hashlib.sha256(raw).hexdigest(), 'private_log': relative}
+    except Exception as error:
+        result['failure_diagnostic'] = {'status': 'unavailable', 'code': error_code(error)}
 
 
 def qualify_case(scenario, sentinel, base_run_id):
@@ -79,7 +98,13 @@ def qualify_case(scenario, sentinel, base_run_id):
             session = ProvisioningSession(run,lease,target_binding=binding); session.provision()
             require(sentinel not in {session.provisioner,*session.owned.values()},'rpm_sentinel_is_owned')
             readiness = ReadinessSession(session,validation=True)
-            readiness.start_helper(); readiness.wait_ready(); readiness.require_ready()
+            readiness.start_helper()
+            try:
+                readiness.wait_ready(); readiness.require_ready()
+            except BaseException:
+                retain_readiness_failure(run,result,session)
+                save()
+                raise
             result['phase']='ssh-ansible'; save()
             validator = RPMValidationSession(readiness,binding,scenario=scenario)
             observed = None
