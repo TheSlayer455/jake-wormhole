@@ -202,6 +202,17 @@ def docker(arguments, *, timeout=20, allow_missing=False):
                           + rb' not found\r?\n?$', raw) is not None)
         if allow_missing and result["returncode"] == 1 and (exact_missing_network or any(message in raw for message in (b"No such image", b"No such container", b"No such network", b"No such object"))):
             return None
+        # Keep the primary response private and immutable within this attempt.
+        # Public errors never print raw Docker output or inherited environment.
+        primary = Path(config).parent / 'docker-primary-failure'
+        if not primary.with_suffix('.json').exists():
+            try:
+                atomic_bytes(primary.with_suffix('.log'), raw, limit=65536)
+                atomic_json(primary.with_suffix('.json'), {'command': arguments[0],
+                    'returncode': result['returncode'], 'status': result['status'],
+                    'log_truncated': result['log_truncated'], 'recorded_at': now()})
+            except OSError:
+                pass  # Storage failure must not replace the original API error.
         raise ImageError("docker_api_failed", "A bounded local Docker request failed; inspect private evidence and reconcile exact owned resources.")
     return result
 

@@ -67,6 +67,17 @@ class ImagePolicy(unittest.TestCase):
         with images.docker_scope(run), patch.object(images, '_run_process', return_value=result):
             with self.assertRaises(images.ImageError): images.inspect('network', NETWORK, missing=True)
 
+    def test_api_failure_keeps_first_private_bounded_diagnostic_without_printing(self):
+        run = create_run(self.root / 'runs', fixture=False, identity=(SHA, False))
+        result = {'status': 'fail', 'returncode': 1, 'log_truncated': False,
+                  'log': b'synthetic primary API diagnostic'}
+        with images.docker_scope(run), patch.object(images, '_run_process', return_value=result):
+            with self.assertRaises(images.ImageError): images.docker(('container', 'inspect', CONTAINER))
+            result['log'] = b'synthetic secondary cleanup diagnostic'
+            with self.assertRaises(images.ImageError): images.docker(('container', 'inspect', CONTAINER))
+        self.assertEqual(run.file('private/docker-primary-failure.log').read_bytes(), b'synthetic primary API diagnostic')
+        self.assertEqual(read_json(run.file('private/docker-primary-failure.json'))['command'], 'container')
+
     def test_pins_and_generated_inputs_are_consistent_and_bounded(self):
         lock = images.load_lock()
         expected = []
