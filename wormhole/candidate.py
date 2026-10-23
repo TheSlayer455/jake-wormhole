@@ -311,12 +311,17 @@ def build_candidate(run, lease, bundle=None):
         # Known builder failures can be stopped exactly; uncertain create/commit work remains untouched.
         if container is not None and not receipt['unknown_outcome']:
             try:
-                current = images.inspect('container', container); verify_builder(current, run, container, labels, limits, mounts)
-                if current['State']['Running']:
-                    intent(); images.docker(('stop', '--time', '2', container)); receipt['unknown_outcome'] = False; save()
-                verify_builder(images.inspect('container', container), run, container, labels, limits, mounts)
-                intent(); images.docker(('rm', container)); require(images.inspect('container', container, missing=True) is None, 'candidate_cleanup_unknown')
-                lease.reconcile_resource('container', container); receipt['unknown_outcome'] = False; save()
+                current = images.inspect('container', container, missing=True)
+                if current is None:
+                    require(any(item['kind'] == 'container' and item['id'] == container and item['outcome'] == 'absent'
+                        for item in lease.record['resources']), 'candidate_cleanup_unknown')
+                else:
+                    verify_builder(current, run, container, labels, limits, mounts)
+                    if current['State']['Running']:
+                        intent(); images.docker(('stop', '--time', '2', container)); receipt['unknown_outcome'] = False; save()
+                    verify_builder(images.inspect('container', container), run, container, labels, limits, mounts)
+                    intent(); images.docker(('rm', container)); require(images.inspect('container', container, missing=True) is None, 'candidate_cleanup_unknown')
+                    lease.reconcile_resource('container', container); receipt['unknown_outcome'] = False; save()
             except Exception:
                 receipt['unknown_outcome'] = True; save()
         raise

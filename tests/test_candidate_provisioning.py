@@ -49,5 +49,19 @@ class CandidateProvisioning(unittest.TestCase):
         self.assertEqual(result['cleanup'], 'completed')
         self.assertEqual(self.lease.record['resources'][0]['outcome'], 'retained')
 
+    def test_retained_candidate_cleanup_revalidates_explicit_binding_without_candidate_data_execution(self):
+        with self.patches():
+            self.session.provision(); self.running[base.CONTROLLER] = False
+            self.lease._reconciliation_only = True
+            (self.session.state / 'operations').mkdir(mode=0o700)
+            with patch.object(c, 'validate_binding', return_value=deepcopy(self.binding)) as validation:
+                resumed = p.ProvisioningSession.resume_destroy(self.run, self.lease)
+            validation.assert_called_once_with(self.run, self.binding, artifacts=False)
+            self.assertEqual(resumed.target_image_id, DERIVED); self.assertTrue(resumed.destroy_only)
+            with patch.object(resumed, 'operation', side_effect=self.operation): result = resumed.destroy()
+        self.assertEqual(result['cleanup'], 'completed')
+        self.assertEqual(result['target_binding'], self.binding)
+        self.assertEqual(self.lease.record['resources'][0]['outcome'], 'retained')
+
 
 if __name__ == '__main__': unittest.main()

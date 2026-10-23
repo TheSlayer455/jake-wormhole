@@ -2,6 +2,7 @@
 from contextlib import ExitStack
 from copy import deepcopy
 import io
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -68,6 +69,20 @@ class Bundle(CandidateFixture, unittest.TestCase):
         program = "import importlib.util,time\ns=importlib.util.spec_from_file_location('installer'," + repr(str(c.CONTEXT / 'install.py')) + ")\nm=importlib.util.module_from_spec(s);s.loader.exec_module(m)\nm.enable_deadline(1)\ntry: time.sleep(5)\nexcept TimeoutError: raise SystemExit(0)\nraise SystemExit(3)"
         result = subprocess.run([sys.executable, '-I', '-B', '-c', program], timeout=3, capture_output=True)
         self.assertEqual(result.returncode, 0)
+
+    @unittest.skipUnless(os.name == 'posix', 'POSIX private-umask/public-target-data modes')
+    def test_original_installer_copies_exact_files_readable_under_private_umask(self):
+        spec = importlib.util.spec_from_file_location('fixed_candidate_installer_fixture', c.CONTEXT / 'install.py')
+        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+        module.INPUT = self.bundle['directory']; module.OUTPUT = self.root / 'reference'
+        previous = os.umask(0o077)
+        try: value = module.install_files()
+        finally: os.umask(previous)
+        self.assertEqual(value['candidate_sha256'], self.bundle['candidate_sha256'])
+        self.assertEqual(module.OUTPUT.stat().st_mode & 0o777, 0o755)
+        for path in module.OUTPUT.iterdir():
+            self.assertEqual(path.stat().st_mode & 0o777, 0o444)
+            self.assertEqual(path.read_bytes(), (self.bundle['directory'] / path.name).read_bytes())
 
 
 @unittest.skipUnless(os.name == 'posix', 'Linux builder policy fixtures; all Docker calls mocked')
@@ -190,6 +205,19 @@ class Build(CandidateFixture, unittest.TestCase):
         with self.patches(), patch.object(images, 'docker', side_effect=drift), self.assertRaises(c.CandidateError):
             c.build_candidate(self.run, self.lease)
         self.assertFalse(self.committed); self.assertFalse(self.run.file('evidence/candidate-binding.json').exists())
+
+    def test_late_source_failure_after_reconciled_absence_is_known_not_unknown(self):
+        original = self.docker
+        def drift(args, **options):
+            result = original(args, **options)
+            if args[0] == 'rm': (self.bundle['directory'] / 'config.json').write_bytes(b'{"changed":true}')
+            return result
+        with self.patches(), patch.object(images, 'docker', side_effect=drift), self.assertRaises(c.CandidateError):
+            c.build_candidate(self.run, self.lease)
+        receipt = read_json(self.run.file('evidence/candidate-build.json'))
+        self.assertEqual(receipt['primary_failure']['code'], 'candidate_file_changed')
+        self.assertFalse(receipt['unknown_outcome']); self.assertTrue(self.removed)
+        self.assertFalse(any(item['outcome'] == 'pending' for item in self.lease.record['resources']))
 
 
 if __name__ == '__main__': unittest.main()

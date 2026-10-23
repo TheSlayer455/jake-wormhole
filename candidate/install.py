@@ -23,17 +23,14 @@ def enable_deadline(seconds=45):
     signal.alarm(seconds)
 
 
-def main():
-    enable_deadline()
-    if not Path('/.dockerenv').is_file() or os.getuid() != 0 or Path('/etc/wormhole/role').read_text().strip() != 'target' or any(
-        Path(path).exists() for path in ('/var/run/docker.sock', '/run/docker.sock')):
-        raise ValueError('Fixed container builder required')
+def install_files():
     raw = (INPUT / 'manifest.json').read_bytes()
     if len(raw) > 16384: raise ValueError('Manifest bound')
     manifest = json.loads(raw)
     if set(os.listdir(INPUT)) != {'manifest.json', 'source.synthetic.bin', 'payload.py', 'version.txt', 'config.json'}:
         raise ValueError('Exact candidate file set required')
     OUTPUT.mkdir(mode=0o755)
+    OUTPUT.chmod(0o755)  # Public synthetic target data, independent of private host umask.
     checked = []
     for item in manifest['files']:
         if item['path'] not in {'source.synthetic.bin', 'payload.py', 'version.txt', 'config.json'}:
@@ -43,6 +40,7 @@ def main():
             raise ValueError('Ordinary bounded candidate input required')
         digest = hashlib.sha256(); size = 0
         descriptor = os.open(OUTPUT / item['path'], os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o444)
+        os.fchmod(descriptor, 0o444)
         with source.open('rb') as incoming, os.fdopen(descriptor, 'wb') as outgoing:
             while chunk := incoming.read(65536):
                 size += len(chunk)
@@ -55,6 +53,15 @@ def main():
     with (OUTPUT / 'manifest.json').open('xb') as stream: stream.write(raw)
     (OUTPUT / 'manifest.json').chmod(0o444)
     record = {'status': 'installed', 'candidate_sha256': hashlib.sha256(raw).hexdigest(), 'files': checked}
+    return record
+
+
+def main():
+    enable_deadline()
+    if not Path('/.dockerenv').is_file() or os.getuid() != 0 or Path('/etc/wormhole/role').read_text().strip() != 'target' or any(
+        Path(path).exists() for path in ('/var/run/docker.sock', '/run/docker.sock')):
+        raise ValueError('Fixed container builder required')
+    record = install_files()
     with Path('/opt/wormhole/candidate-installed.json').open('x') as stream: json.dump(record, stream, sort_keys=True)
     # Leave a short observation window for the host to inspect actual cgroups.
     time.sleep(1)
