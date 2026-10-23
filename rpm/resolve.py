@@ -5,14 +5,19 @@ import json
 import os
 from pathlib import Path
 import re
+import select
+import signal
 import sys
+import time
 import xml.etree.ElementTree as ET
 
 ROOT = Path('/metadata')
 LOCK = Path('/recipe/lock.json')
 REQUEST = Path('/request/resolve.json')
-BASE = 'sha256:9be18d9ba921714e79e390694315e3341047fe758ac79b62e671d92d4217c3fb'
+BASE = 'sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1'
+BASE_CONFIG = 'sha256:9be18d9ba921714e79e390694315e3341047fe758ac79b62e671d92d4217c3fb'
 MAX_JSON = 262144
+RESOLVER_SECONDS = 60
 
 
 def require(value):
@@ -120,18 +125,78 @@ def resolve(request, lock, dnf_module, rpm_module):
         'requested_packages':request['requested_packages'],'packages':packages,'remove_packages':[]}
 
 
-def main():
+def emit_output(raw):
+    sys.stdout.buffer.write(raw);sys.stdout.buffer.flush()
+
+
+def supervise(action, seconds=RESOLVER_SECONDS, *, grace_seconds=.2):
+    """PID1 owns a finite fixed solver child; this is not a general sandbox."""
+    sys.stdout.flush();sys.stderr.flush()
+    reader,writer=os.pipe();interrupted=[False];child=os.fork()
+    if child==0:
+        os.close(reader);os.dup2(writer,1);os.dup2(writer,2);os.close(writer)
+        try:
+            os.setsid();signal.signal(signal.SIGTERM,signal.SIG_DFL)
+            code=action()
+        except BaseException:
+            print('{"operation":"ubi-offline-resolution-v1","status":"failed","code":"rpm_resolution_refused"}',flush=True);code=2
+        sys.stdout.flush();sys.stderr.flush();os._exit(code if type(code) is int and 0<=code<=255 else 2)
+    os.close(writer);os.set_blocking(reader,False)
+    previous=signal.signal(signal.SIGTERM,lambda *_:interrupted.__setitem__(0,True))
+    deadline=time.monotonic()+seconds;reaped=False;status=None;output=bytearray();eof=False;overflow=False
+    def collect():
+        nonlocal reaped,status
+        if not reaped:
+            pid,value=os.waitpid(child,os.WNOHANG)
+            if pid:reaped,status=True,value
+    def terminate(number):
+        try:os.killpg(child,number)
+        except (ProcessLookupError,PermissionError):
+            if not reaped:
+                try:os.kill(child,number)
+                except (ProcessLookupError,PermissionError):pass
+    try:
+        while not interrupted[0] and time.monotonic()<deadline:
+            collect()
+            if select.select([reader],[],[],min(.02,max(0,deadline-time.monotonic())))[0]:
+                try:raw=os.read(reader,65536)
+                except BlockingIOError:raw=None
+                if raw==b'':eof=True
+                elif raw:
+                    if len(output)+len(raw)>MAX_JSON+1:overflow=True;break
+                    output.extend(raw)
+            if reaped and eof:break
+        outcome=143 if interrupted[0] else 2 if overflow else 124 if not (reaped and eof) or time.monotonic()>=deadline else os.waitstatus_to_exitcode(status)
+        terminate(signal.SIGTERM);end=time.monotonic()+grace_seconds
+        while not reaped and time.monotonic()<end:collect();time.sleep(.01)
+        terminate(signal.SIGKILL);end=time.monotonic()+1
+        while not reaped and time.monotonic()<end:collect();time.sleep(.01)
+        if not overflow and reaped and eof:emit_output(bytes(output))
+        else:emit_output(b'{"operation":"ubi-offline-resolution-v1","status":"failed","code":"rpm_resolution_bound"}\n')
+        return outcome if outcome>=0 else 128-outcome
+    finally:
+        os.close(reader);signal.signal(signal.SIGTERM,previous)
+
+
+def solver_main():
     require(len(sys.argv)==1 and Path('/.dockerenv').is_file() and os.geteuid()==0 and
         not any(Path(p).exists() for p in ('/var/run/docker.sock','/run/docker.sock')))
     lock_raw=read(LOCK,65536);request_raw=read(REQUEST);lock=json.loads(lock_raw,object_pairs_hook=unique);request=json.loads(request_raw,object_pairs_hook=unique)
     require(request['lock_sha256']==sha(lock_raw) and request['run_id']==os.environ.get('WORMHOLE_RUN_ID') and
-        lock['base']['image_id']==BASE and lock['target_family']=='ubi9-rpm' and lock['platform']=='linux/amd64')
+        lock['base']['image_id']==BASE and lock['base']['config_digest']==BASE_CONFIG and
+        lock['target_family']=='ubi9-rpm' and lock['platform']=='linux/amd64')
     import dnf,rpm
     result=resolve(request,lock,dnf,rpm)
     raw=canonical(result);require(len(raw)<=MAX_JSON);print(raw.decode())
+    return 0
+
+
+def main():
+    require(os.getpid()==1 and os.environ.get('WORMHOLE_ROLE')=='rpm-resolver')
+    return supervise(solver_main)
 
 
 if __name__=='__main__':
-    try:main()
+    try:raise SystemExit(main())
     except Exception:
         print(json.dumps({'operation':'ubi-offline-resolution-v1','status':'failed','code':'rpm_resolution_refused'}));raise SystemExit(2)

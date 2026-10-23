@@ -87,11 +87,24 @@ class PublicSources(unittest.TestCase):
     def test_source_lock_preserves_fixed_baseos_only_policy_and_rejects_typed_aliases(self):
         lock=s.load_lock();self.assertEqual(lock['sources']['base_url'],s.URL)
         self.assertEqual(len(lock['sources']['metadata']),8)
+        self.assertEqual(lock['base']['image_id'],s.BASE_IMAGE);self.assertEqual(lock['base']['config_digest'],s.BASE_CONFIG)
         for field,bad in (('worker_seconds',True),('allow_erasing',0),('plugins',0)):
             changed=deepcopy(lock);changed['sources']['policy'][field]=bad
             with self.assertRaises(s.SourceError):s.load_lock(changed)
         changed=deepcopy(lock);changed['sources']['base_url']='https://example.invalid/'
         with self.assertRaises(s.SourceError):s.load_lock(changed)
+
+    def test_lock_and_retained_resolution_reads_have_preparse_bounds(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'lock.json';path.write_bytes(b' '*65537)
+            with patch.object(s,'LOCK',path),self.assertRaises(s.SourceError) as caught:s.load_lock()
+            self.assertEqual(caught.exception.code,'rpm_lock_bound')
+            run=create_run(Path(folder)/'runs',fixture=False,identity=(SHA,False));root=run.file('private/rpm-sources');root.mkdir(mode=0o700)
+            (root/'resolution.json').write_bytes(b' '*(s.POLICY['resolution_bytes']+1))
+            atomic_json(root/'resolve-request.json',{})
+            with patch.object(s,'guard'),patch.object(s,'validate_metadata'),patch.object(s,'validate_resolution',side_effect=lambda _r,raw,*_a: s.parse(raw)),\
+                 self.assertRaises(s.SourceError) as caught:s._worker(run,'packages')
+            self.assertEqual(caught.exception.code,'rpm_resolution_bound')
 
     def test_fixed_https_has_no_redirect_proxy_or_partial_acceptance(self):
         raw=b'synthetic public bytes';item={'path':'Packages/p/python.rpm','bytes':len(raw),'sha256':s.sha(raw)}
@@ -171,6 +184,34 @@ class PublicSources(unittest.TestCase):
 
 
 class OfflineResolution(unittest.TestCase):
+    @unittest.skipUnless(os.name=='posix','Finite resolver supervisor requires POSIX')
+    def test_actual_fixed_resolver_child_has_finite_lifetime_and_is_reaped(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'child.pid'
+            def fixed_child():
+                path.write_text(str(os.getpid()));time.sleep(5);return 0
+            with patch.object(resolver,'emit_output') as emit:
+                began=time.monotonic();code=resolver.supervise(fixed_child,.15,grace_seconds=.05)
+            self.assertEqual(code,124);self.assertLess(time.monotonic()-began,2)
+            self.assertLess(len(emit.call_args.args[0]),200)
+            child=int(path.read_text())
+            with self.assertRaises(ChildProcessError):os.waitpid(child,os.WNOHANG)
+
+    @unittest.skipUnless(os.name=='posix','Bounded resolver output fixture requires POSIX')
+    def test_fixed_resolver_output_overflow_is_terminated_and_never_forwarded(self):
+        def noisy_child():
+            while True:os.write(1,b'x'*65536)
+        with patch.object(resolver,'emit_output') as emit:
+            began=time.monotonic();code=resolver.supervise(noisy_child,1,grace_seconds=.05)
+        self.assertEqual(code,2);self.assertLess(time.monotonic()-began,2)
+        self.assertLess(len(emit.call_args.args[0]),200);self.assertNotIn(b'xxxxx',emit.call_args.args[0])
+
+    @unittest.skipUnless(os.name=='posix','Resolver output drain fixture requires POSIX')
+    def test_fixed_resolver_complete_bounded_output_is_preserved(self):
+        def child():os.write(1,b'{"status":"passed"}\n');return 0
+        with patch.object(resolver,'emit_output') as emit:code=resolver.supervise(child,1)
+        self.assertEqual(code,0);emit.assert_called_once_with(b'{"status":"passed"}\n')
+
     def test_rpm_snapshot_retains_virtual_key_null_architecture(self):
         rpm=Mock();rpm.TransactionSet.return_value.dbMatch.return_value=[{'name':'gpg-pubkey','epoch':None,'version':'abcdef01','release':'12345678','arch':None}]
         self.assertEqual(resolver.installed_packages(rpm),[{'name':'gpg-pubkey','epoch':0,'version':'abcdef01','release':'12345678','arch':None}])

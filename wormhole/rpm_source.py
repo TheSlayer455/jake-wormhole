@@ -17,7 +17,8 @@ from .stages import _run_process
 
 LOCK = SOURCE_ROOT / 'rpm/lock.json'
 URL = 'https://cdn-ubi.redhat.com/content/public/ubi/dist/ubi9/9/x86_64/baseos/os/'
-BASE_IMAGE = 'sha256:9be18d9ba921714e79e390694315e3341047fe758ac79b62e671d92d4217c3fb'
+BASE_IMAGE = 'sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1'
+BASE_CONFIG = 'sha256:9be18d9ba921714e79e390694315e3341047fe758ac79b62e671d92d4217c3fb'
 TIMEOUT = 180
 CHUNK = 65536
 POLICY = {'worker_seconds': TIMEOUT, 'metadata_file_bytes': 16*1024*1024,
@@ -78,13 +79,20 @@ def digest_pin(value):
     return type(value) is str and re.fullmatch('[a-f0-9]{64}', value) is not None
 
 
-def load_lock(supplied=None):
+def lock_bytes():
     _owned_source = LOCK
     require(not any(p.is_symlink() for p in (_owned_source,*_owned_source.parents)), 'rpm_lock_path')
-    raw = LOCK.read_bytes(); require(len(raw) <= 65536, 'rpm_lock_bound')
-    value = parse(raw); sources = value['sources']
+    require(LOCK.is_file() and LOCK.stat().st_size<=65536,'rpm_lock_bound')
+    with LOCK.open('rb') as stream:raw=stream.read(65537)
+    require(len(raw)<=65536,'rpm_lock_bound')
+    return raw
+
+
+def load_lock(supplied=None):
+    value = parse(lock_bytes()); sources = value['sources']
     require(value['schema_version'] == '1.0' and value['target_family'] == 'ubi9-rpm' and
         value['platform'] == 'linux/amd64' and value['base']['image_id'] == BASE_IMAGE and
+        value['base']['config_digest'] == BASE_CONFIG and
         sources['base_url'] == URL and sources['repository_id'] == 'wormhole-ubi9-baseos' and
         canonical(sources['policy']) == canonical(POLICY) and canonical(sources['requested_packages']) == canonical(REQUESTED), 'rpm_source_lock_invalid')
     require(supplied is None or canonical(supplied) == canonical(value), 'rpm_source_lock_changed')
@@ -222,7 +230,8 @@ def _worker(run, operation):
         for item in metadata_items(lock):fetch(item,folder/item['path'])
         validate_metadata(run,lock)
     elif operation=='packages':
-        request=read_json(root/'resolve-request.json');raw=(root/'resolution.json').read_bytes()
+        request=read_json(root/'resolve-request.json')
+        with (root/'resolution.json').open('rb') as stream:raw=stream.read(POLICY['resolution_bytes']+1)
         result=validate_resolution(run,raw,request,lock)
         folder=root/'packages';folder.mkdir(mode=0o700)
         for item in result['packages']:fetch(item,folder/Path(item['path']).name)
@@ -231,12 +240,12 @@ def _worker(run, operation):
 
 def supervised(run, operation):
     require(operation in ('metadata','packages'),'rpm_worker_operation')
-    guard(run);lock=load_lock();identity=sha(LOCK.read_bytes())
+    guard(run);lock=load_lock();identity=sha(lock_bytes())
     result=_run_process((sys.executable,'-c',WORKER,str(run.workspace),run.id,operation),cwd=SOURCE_ROOT,timeout=TIMEOUT)
     atomic_bytes(run.file('private/rpm-'+operation+'-preparation.log'),result['log'],limit=65536)
     require(result['status']=='pass' and not result['log_truncated'],
         'rpm_source_timeout' if result['status']=='timeout' else 'rpm_source_preparation_failed')
-    guard(run);require(sha(LOCK.read_bytes())==identity,'rpm_source_lock_changed')
+    guard(run);require(sha(lock_bytes())==identity,'rpm_source_lock_changed')
     return lock
 
 
@@ -272,7 +281,7 @@ def resolve_request(run, lock, base_observation, *, base_run=None):
     packages=validate_observation(observed)
     receipt=read_json(base_run.file('evidence/rpm-base-probe.json'))
     value={**common(run.manifest()),'operation':'ubi-offline-resolution-request-v1','base_image_id':BASE_IMAGE,
-        'lock_sha256':sha(LOCK.read_bytes()),'base_observation_sha256':sha(canonical(base_observation)),
+        'lock_sha256':sha(lock_bytes()),'base_observation_sha256':sha(canonical(base_observation)),
         'base_packages_sha256':sha(canonical(packages)),'installed_packages':packages,
         'base_probe':{key:receipt[key] for key in ('run_id','source_revision','recipe_sha256','capture_sha256')},
         'sources_sha256':sha(canonical(lock['sources'])),'requested_packages':REQUESTED}
@@ -293,7 +302,7 @@ def validate_resolution(run, raw, request, lock=None):
         all(digest_pin(reference[k]) for k in ('recipe_sha256','capture_sha256')) and digest_pin(request['base_observation_sha256']),
         'rpm_resolution_request_changed')
     require(canonical({k:request[k] for k in base})==canonical(base) and request['operation']=='ubi-offline-resolution-request-v1' and
-        request['base_image_id']==BASE_IMAGE and request['lock_sha256']==sha(LOCK.read_bytes()) and
+        request['base_image_id']==BASE_IMAGE and request['lock_sha256']==sha(lock_bytes()) and
         request['base_packages_sha256']==sha(canonical(request['installed_packages'])) and
         request['sources_sha256']==sha(canonical(lock['sources'])) and canonical(request['requested_packages'])==canonical(REQUESTED),'rpm_resolution_request_changed')
     fields={'operation','status','base_image_id','request_sha256','base_packages_sha256','sources_sha256','requested_packages','packages','remove_packages'}

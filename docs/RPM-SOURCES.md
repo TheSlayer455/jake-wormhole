@@ -21,6 +21,9 @@ expanded metadata 32 MiB per file/128 MiB total, RPMs 64 MiB per file/512 MiB to
 128 selected RPMs and 256 KiB resolution JSON. Downloaded RPMs remain inert bytes.
 Package signature verification and installation must happen separately inside
 the reviewed offline builder; SHA256 metadata checks do not claim GPG validation.
+The lock separates the actual Docker image ID (the pinned platform manifest on
+the observed Docker 29 engine) from the original OCI configuration digest.
+Both remain exact pins; a config digest is not assumed to be Docker's image ID.
 
 ## APIs and mounts
 
@@ -48,6 +51,13 @@ validated metadata directory read-only at `/metadata`. It sets the exact
 no Docker socket, no capabilities and bounded writable tmpfs. No path or code
 is accepted through an argument. Runtime DNF/RPM availability remains a probe
 fact; the module does not install missing tooling.
+The driver also sets `WORMHOLE_ROLE=rpm-resolver` and launches this file as PID1.
+Its fixed supervisor bounds the solver child to sixty seconds, then terminates
+and reaps it before PID1 exits. Controller loss cannot leave an indefinitely
+running solver. Its combined output is drained through a private pipe within a
+256 KiB plus newline ceiling; overflow fails and terminates the child. An
+external TERM returns 143; lifetime expiry returns 124. This
+does not claim a generic process sandbox or permission to run arbitrary code.
 
 The resolver creates `dnf.Base` without reading ambient config/repository files
 or initializing plugins. It explicitly disables weak dependencies, registers
