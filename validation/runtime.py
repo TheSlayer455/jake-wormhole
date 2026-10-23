@@ -220,6 +220,71 @@ print(json.dumps({'schema_version':'1.0','os':{'id':release.get('ID'),'version_i
 '''
 
 
+RPM_PROGRAM = r'''import hashlib,json,os,stat,sys,types,rpm
+from pathlib import Path
+root=Path('/opt/wormhole/reference')
+def read(name,limit):
+ path=root/name
+ if any(p.is_symlink() for p in (path,*path.parents)): raise ValueError('linked candidate')
+ info=path.lstat()
+ if not stat.S_ISREG(info.st_mode) or info.st_nlink!=1 or not 1<=info.st_size<=limit: raise ValueError('candidate bound')
+ with path.open('rb') as stream: raw=stream.read(limit+1)
+ if len(raw)!=info.st_size or len(raw)>limit: raise ValueError('candidate changed')
+ return raw
+manifest=read('manifest.json',32768);value=json.loads(manifest)
+source=read('source.synthetic.bin',8388608);payload=read('payload.py',16384)
+version_raw=read('version.txt',128);config_raw=read('config.json',4096)
+version=version_raw.decode('ascii').strip();configuration=json.loads(config_raw)
+source_sha=hashlib.sha256(source).hexdigest();payload_sha=hashlib.sha256(payload).hexdigest()
+function={'status':'unverified','value':None}
+if payload_sha==sys.argv[1]:
+ module=types.ModuleType('verified_reference_payload');exec(compile(payload,'/opt/wormhole/reference/payload.py','exec'),module.__dict__)
+ result=module.describe(configuration,source_sha)
+ if hashlib.sha256(read('payload.py',16384)).hexdigest()!=payload_sha: raise ValueError('payload changed')
+ function={'status':'observed','value':result}
+release={}
+with Path('/usr/lib/os-release').open('rb') as stream: raw=stream.read(4097)
+if len(raw)>4096: raise ValueError('os release bound')
+for line in raw.decode().splitlines():
+ if line.startswith(('ID=','VERSION_ID=')):
+  key,item=line.split('=',1);release[key]=item.strip('"')
+packages={};transaction=rpm.TransactionSet('/')
+try:
+ for name in ('python3','openssh','openssh-server','shadow-utils','openssh-clients'):
+  records=[]
+  for header in transaction.dbMatch('name',name):
+   if records: raise ValueError('ambiguous RPM package')
+   row={'epoch':0 if header['epoch'] is None else header['epoch'],'version':header['version'],'release':header['release'],'arch':header['arch']}
+   if type(row['epoch']) is not int or not 0<=row['epoch']<=2147483647 or any(type(row[k]) is not str or not 1<=len(row[k])<=160 or any(ord(c)<32 or ord(c)==127 for c in row[k]) for k in ('version','release','arch')): raise ValueError('RPM header bound')
+   records.append(row)
+  packages[name]=records[0] if records else None
+finally: transaction.closeDB()
+files=value.get('files');names=('source.synthetic.bin','payload.py','version.txt','config.json')
+if type(files) is not list or len(files)!=4 or [x.get('path') for x in files]!=list(names): raise ValueError('content file set')
+actual=[{'path':name,'size':len(raw),'sha256':hashlib.sha256(raw).hexdigest()} for name,raw in zip(names,(source,payload,version_raw,config_raw))]
+content=hashlib.sha256(json.dumps({'files':actual},sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
+print(json.dumps({'schema_version':'1.0','os':{'id':release.get('ID'),'version_id':release.get('VERSION_ID')},
+ 'candidate_sha256':hashlib.sha256(manifest).hexdigest(),'content_sha256':content,'source_sha256':source_sha,'payload_sha256':payload_sha,
+ 'version':version,'configuration':configuration,'function':function,'packages':packages,'shared_kernel_release':os.uname().release},sort_keys=True))
+'''
+
+
+def rpm_observation(value):
+    require(type(value) is dict and set(value) == {'schema_version','os','candidate_sha256','content_sha256','source_sha256',
+        'payload_sha256','version','configuration','function','packages','shared_kernel_release'})
+    candidate_observation({key:item for key,item in value.items() if key not in {'content_sha256','packages','shared_kernel_release'}})
+    require(type(value['content_sha256']) is str and re.fullmatch('[a-f0-9]{64}',value['content_sha256']) and
+        type(value['shared_kernel_release']) is str and 1<=len(value['shared_kernel_release'])<=256 and
+        not any(ord(c)<32 or ord(c)==127 for c in value['shared_kernel_release']) and type(value['packages']) is dict and
+        set(value['packages'])=={'python3','openssh','openssh-server','shadow-utils','openssh-clients'})
+    for package in value['packages'].values():
+        require(package is None or type(package) is dict and set(package)=={'epoch','version','release','arch'} and
+            type(package['epoch']) is int and 0<=package['epoch']<=2**31-1 and
+            all(type(package[key]) is str and 1<=len(package[key])<=160 and not any(ord(c)<32 or ord(c)==127 for c in package[key])
+                for key in ('version','release','arch')))
+    return value
+
+
 def candidate_observation(value):
     require(type(value) is dict and set(value) == {'schema_version', 'os', 'candidate_sha256', 'source_sha256',
         'payload_sha256', 'version', 'configuration', 'function'} and value['schema_version'] == '1.0' and
@@ -244,7 +309,7 @@ def decode(raw):
     value = json.loads(raw, object_pairs_hook=unique, parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
     fields = {'schema_version', 'run_id', 'source_revision', 'target_id', 'address', 'scenario', 'plan_sha256',
               'expected_payload_sha256', 'readiness_source_sha256', 'timeout_seconds'}
-    candidate = type(value) is dict and value.get('operation') == 'candidate-functional-v1'
+    candidate = type(value) is dict and value.get('operation') in {'candidate-functional-v1','rpm-functional-v1'}
     if candidate: fields |= {'operation'}
     require(type(value) is dict and set(value) == fields and value['schema_version'] == '1.0' and
         type(value['run_id']) is str and str(UUID(value['run_id'])) == value['run_id'] and
@@ -305,7 +370,8 @@ def collect(value, rr=None):
     inventory = attempt / 'inventory.json'
     inventory.write_text(json.dumps({'all': {'hosts': {'target-001': variables}}})); inventory.chmod(0o600)
     candidate = value.get('operation') == 'candidate-functional-v1'
-    command = ['/usr/bin/python3', '-I', '-B', '-c', CANDIDATE_PROGRAM if candidate else TARGET_PROGRAM, value['expected_payload_sha256']]
+    rpm_candidate = value.get('operation') == 'rpm-functional-v1'
+    command = ['/usr/bin/python3', '-I', '-B', '-c', RPM_PROGRAM if rpm_candidate else CANDIDATE_PROGRAM if candidate else TARGET_PROGRAM, value['expected_payload_sha256']]
     arguments = ['/opt/wormhole/venv/bin/ansible', '-i', str(inventory), 'target-001', '-m', 'ansible.builtin.command',
         '-a', json.dumps({'argv': command, 'expand_argument_vars': False}), '--forks', '1', '--timeout', '3']
     if value['scenario'] == 'unexpected-skip':
@@ -359,7 +425,7 @@ def collect(value, rr=None):
             tree.get('stderr') == '' and tree.get('msg', '') == '' and type(tree.get('stdout')) is str and
             len(tree['stdout'].encode()) <= 16384 and
             all(tree.get(key, False) is False for key in ('failed', 'unreachable', 'skipped')))
-        observed = (candidate_observation if candidate else observation)(json.loads(tree['stdout'], object_pairs_hook=unique))
+        observed = (rpm_observation if rpm_candidate else candidate_observation if candidate else observation)(json.loads(tree['stdout'], object_pairs_hook=unique))
         status, category = 'pass', None
     if time.monotonic() - began >= value['timeout_seconds']:
         status, category, observed = 'error', 'validation_timeout', None

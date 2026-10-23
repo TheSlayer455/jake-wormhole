@@ -6,17 +6,21 @@ from unittest.mock import patch
 
 import test_provisioning as base
 from test_candidate import DERIVED
-from wormhole import candidate as c, provisioning as p, images
+from wormhole import candidate as c, rpm_candidate as rc, provisioning as p, images
 from wormhole.runs import read_json
 
 
 @unittest.skipUnless(os.name == 'posix', 'Linux provisioning policy fixture; Docker/Terraform mocked')
 class CandidateProvisioning(unittest.TestCase):
+    policy = c
+    operation_name = 'candidate-image-binding'
+    expected_binding_version = 1
+
     def setUp(self):
         base.Controller.setUp(self)
-        self.binding = {'image_id': DERIVED, 'image_labels': {**self.image_labels, images.LABEL + '.candidate_sha256': 'e' * 64}}
+        self.binding = {'operation': self.operation_name, 'image_id': DERIVED, 'image_labels': {**self.image_labels, images.LABEL + '.candidate_sha256': 'e' * 64}}
         self.lease.record['resources'].append({'kind': 'image', 'id': DERIVED, 'outcome': 'retained'})
-        with patch.object(c, 'validate_binding', return_value=deepcopy(self.binding)), patch.object(c, 'verify_image'), patch.object(images, 'inspect'):
+        with patch.object(self.policy, 'validate_binding', return_value=deepcopy(self.binding)), patch.object(self.policy, 'verify_image'), patch.object(images, 'inspect'):
             self.session = p.ProvisioningSession(self.run, self.lease, toolchain=self.tools, target_binding=self.binding)
 
     def container(self, identity):
@@ -42,7 +46,7 @@ class CandidateProvisioning(unittest.TestCase):
             self.assertEqual(self.session.variables['image'], DERIVED)
             self.assertEqual(inventory['targets'][0]['image_digest'], DERIVED)
             context = read_json(self.run.file('private/terraform/controller.json'))
-            self.assertEqual(context['target_binding_version'], 1); self.assertEqual(context['target_binding'], self.binding)
+            self.assertEqual(context['target_binding_version'], self.expected_binding_version); self.assertEqual(context['target_binding'], self.binding)
             wrong = deepcopy(target); wrong['Image'] = p.TARGET_IMAGE
             with self.assertRaises(p.ProvisioningError): self.session.verify_target(wrong)
             result = self.session.destroy()
@@ -54,7 +58,7 @@ class CandidateProvisioning(unittest.TestCase):
             self.session.provision(); self.running[base.CONTROLLER] = False
             self.lease._reconciliation_only = True
             (self.session.state / 'operations').mkdir(mode=0o700)
-            with patch.object(c, 'validate_binding', return_value=deepcopy(self.binding)) as validation:
+            with patch.object(self.policy, 'validate_binding', return_value=deepcopy(self.binding)) as validation:
                 resumed = p.ProvisioningSession.resume_destroy(self.run, self.lease)
             validation.assert_called_once_with(self.run, self.binding, artifacts=False)
             self.assertEqual(resumed.target_image_id, DERIVED); self.assertTrue(resumed.destroy_only)
@@ -62,6 +66,12 @@ class CandidateProvisioning(unittest.TestCase):
         self.assertEqual(result['cleanup'], 'completed')
         self.assertEqual(result['target_binding'], self.binding)
         self.assertEqual(self.lease.record['resources'][0]['outcome'], 'retained')
+
+
+class RpmCandidateProvisioning(CandidateProvisioning):
+    policy = rc
+    operation_name = 'ubi9-candidate-image-binding'
+    expected_binding_version = 2
 
 
 if __name__ == '__main__': unittest.main()

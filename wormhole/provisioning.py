@@ -319,6 +319,23 @@ def unavailable_diagnostic(raw):
         b'in resource "docker_network" "run":' in raw
 
 
+def target_binding_policy(binding, *, version=None):
+    """Two fixed contracts; no caller-selected image policy or module imports."""
+    require(type(binding) is dict, 'candidate_scope', 'An explicit typed candidate binding is required.')
+    operation = binding.get('operation')
+    if operation == 'candidate-image-binding':
+        from . import candidate as policy
+        expected = 1
+    elif operation == 'ubi9-candidate-image-binding':
+        from . import rpm_candidate as policy
+        expected = 2
+    else:
+        raise ProvisioningError('candidate_scope', 'Unsupported explicit target platform binding.')
+    require(version is None or type(version) is int and version == expected,
+        'recovery_scope', 'The retained platform binding version cannot be reinterpreted.')
+    return policy, expected
+
+
 class ProvisioningSession:
     """Caller owns run.locked(), docker_scope(run) and the canonical held lease."""
     def __init__(self, run, lease, *, toolchain=None, scenario='healthy', target_binding=None):
@@ -337,10 +354,10 @@ class ProvisioningSession:
         self.run, self.lease, self.toolchain = run, lease, toolchain
         self.target_binding = None
         if target_binding is not None:
-            from .candidate import validate_binding, verify_image
-            self.target_binding = validate_binding(run, target_binding)
-            require(self.target_plan.profile == 'smoke' and scenario == 'healthy', 'candidate_scope', 'Candidate qualification starts at one Ubuntu target.')
-            verify_image(images.inspect('image', self.target_binding['image_id']), self.target_binding)
+            policy, _ = target_binding_policy(target_binding)
+            self.target_binding = policy.validate_binding(run, target_binding)
+            require(self.target_plan.profile == 'smoke' and scenario == 'healthy', 'candidate_scope', 'Candidate qualification starts at one explicitly bound userland target.')
+            policy.verify_image(images.inspect('image', self.target_binding['image_id']), self.target_binding)
             require(any(item['kind'] == 'image' and item['id'] == self.target_binding['image_id'] and item['outcome'] == 'retained'
                 for item in lease.record['resources']), 'candidate_scope', 'The derived candidate must be retained by this held run journal.')
         self.scenario = scenario
@@ -410,7 +427,7 @@ class ProvisioningSession:
                 'uid': self.uid, 'gid': self.gid, 'groups': self.socket_groups, 'mounts': self.mounts,
                 'image_labels': self.image_labels, 'inputs': self.inputs, 'scenario': self.scenario,
                 **({'resource_layout': LAYOUT, 'target_plan': self.target_plan.record()} if getattr(self, 'target_plan', None) is not None else {}),
-                **({'target_binding_version': 1, 'target_binding': self.target_binding} if getattr(self, 'target_binding', None) is not None else {})})
+                **({'target_binding_version': target_binding_policy(self.target_binding)[1], 'target_binding': self.target_binding} if getattr(self, 'target_binding', None) is not None else {})})
 
     def failure(self, error):
         if self.receipt['primary_failure'] is None:
@@ -1025,10 +1042,10 @@ class ProvisioningSession:
         session.scenario = record['scenario']
         session.target_binding = None
         if candidate_layout:
-            from .candidate import validate_binding
-            require(new_layout and record['target_binding_version'] == 1 and session.target_plan.profile == 'smoke' and
+            policy, _ = target_binding_policy(record['target_binding'], version=record['target_binding_version'])
+            require(new_layout and session.target_plan.profile == 'smoke' and
                 session.scenario == 'healthy', 'recovery_scope', 'Unsupported candidate layout cannot be reinterpreted.')
-            session.target_binding = validate_binding(run, record['target_binding'], artifacts=False)
+            session.target_binding = policy.validate_binding(run, record['target_binding'], artifacts=False)
         session.provisioner, session.uid, session.gid = record['id'], record['uid'], record['gid']
         session.socket_groups, session.image_labels, session.inputs = record['groups'], record['image_labels'], record['inputs']
         require((session.uid, session.gid, session.socket_groups) == provisioner_identity(),

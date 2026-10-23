@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "operation": "offline-ubi9-candidate-assembly",
+  "seconds": 600,
+  "tmpfs_bytes": 134217728,
+  "eula": {
+    "url": "https://www.redhat.com/licenses/EULA_Red_Hat_Universal_Base_Image_English_20190422.pdf",
+    "bytes": 248785,
+    "sha256": "a07025b9f5b71a816febe6ac76f21c9f759c806fa0a66874af90a50c3293f1b6",
+    "destination": "/licenses/ubi9-container/UBI-EULA-20190422.pdf"
+  },
+  "trusted_primary_fingerprints": [
+    "567E347AD0044ADE55BA8A5F199E2F91FD431D51",
+    "7E4624258C406535D56D6F135054E4A45A6340B3"
+  ],
+  "key_sources": [
+    "https://access.redhat.com/security/team/key",
+    "https://security.access.redhat.com/data/fd431d51.txt",
+    "https://security.access.redhat.com/data/5a6340b3.txt"
+  ],
+  "signature_policy": "Dedicated container-local RPM database; every selected RPM requires an actual valid signature from only the observed and pinned official key file. No signature bypass.",
+  "production_iso_eligible": false
+}

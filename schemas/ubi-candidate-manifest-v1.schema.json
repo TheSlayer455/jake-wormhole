@@ -1,0 +1,518 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:jake-wormhole:ubi-candidate-manifest:1.0",
+  "title": "Fixed UBI9 reference installation manifest v1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 36,
+      "format": "uuid",
+      "pattern": "^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$(?![\\s\\S])"
+    },
+    "source_revision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "pattern": "^(?:[0-9a-f]{40})$(?![\\s\\S])"
+    },
+    "source_dirty": {
+      "type": "boolean"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "fixture",
+        "container-reference"
+      ]
+    },
+    "operation": {
+      "type": "string",
+      "const": "ubi9-reference-candidate"
+    },
+    "synthetic": {
+      "const": true,
+      "type": "boolean"
+    },
+    "version": {
+      "const": "1.0.0-reference",
+      "type": "string"
+    },
+    "source_sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[a-f0-9]{64}$(?![\\s\\S])"
+    },
+    "chunk_plan_sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[a-f0-9]{64}$(?![\\s\\S])"
+    },
+    "chunk_manifest_sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[a-f0-9]{64}$(?![\\s\\S])"
+    },
+    "applicability": {
+      "type": "object",
+      "properties": {
+        "distribution": {
+          "type": "string",
+          "const": "Red Hat Universal Base Image"
+        },
+        "family": {
+          "type": "string",
+          "const": "ubi9"
+        },
+        "os_id": {
+          "type": "string",
+          "const": "rhel"
+        },
+        "os_version": {
+          "type": "string",
+          "const": "9.8"
+        },
+        "platform": {
+          "type": "string",
+          "const": "linux/amd64"
+        },
+        "container_only": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "distribution",
+        "family",
+        "os_id",
+        "os_version",
+        "platform",
+        "container_only"
+      ],
+      "additionalProperties": false
+    },
+    "configuration": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "wormhole-reference-v1"
+        },
+        "greeting": {
+          "type": "string",
+          "const": "reference-ready"
+        }
+      },
+      "required": [
+        "format",
+        "greeting"
+      ],
+      "additionalProperties": false
+    },
+    "files": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "x-uniqueBy": [
+        "path"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "enum": [
+              "source.synthetic.bin",
+              "payload.py",
+              "version.txt",
+              "config.json"
+            ]
+          },
+          "sha256": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64,
+            "pattern": "^[a-f0-9]{64}$(?![\\s\\S])"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8388608
+          }
+        },
+        "required": [
+          "path",
+          "sha256",
+          "size"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "test_contract_sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[a-f0-9]{64}$(?![\\s\\S])"
+    },
+    "production_iso_eligible": {
+      "type": "boolean",
+      "const": false
+    },
+    "source_candidate_manifest": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "const": "1.0"
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 36,
+          "format": "uuid",
+          "pattern": "^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$(?![\\s\\S])"
+        },
+        "source_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "pattern": "^(?:[0-9a-f]{40})$(?![\\s\\S])"
+        },
+        "source_dirty": {
+          "type": "boolean"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "fixture",
+            "container-reference"
+          ]
+        },
+        "operation": {
+          "const": "synthetic-reference-candidate",
+          "type": "string"
+        },
+        "synthetic": {
+          "const": true,
+          "type": "boolean"
+        },
+        "version": {
+          "const": "1.0.0-reference",
+          "type": "string"
+        },
+        "source_sha256": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64,
+          "pattern": "^[a-f0-9]{64}$(?![\\s\\S])"
+        },
+        "chunk_plan_sha256": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64,
+          "pattern": "^[a-f0-9]{64}$(?![\\s\\S])"
+        },
+        "chunk_manifest_sha256": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64,
+          "pattern": "^[a-f0-9]{64}$(?![\\s\\S])"
+        },
+        "applicability": {
+          "type": "object",
+          "properties": {
+            "os_id": {
+              "type": "string",
+              "const": "ubuntu"
+            },
+            "os_version": {
+              "type": "string",
+              "const": "24.04"
+            },
+            "platform": {
+              "type": "string",
+              "const": "linux/amd64"
+            }
+          },
+          "required": [
+            "os_id",
+            "os_version",
+            "platform"
+          ],
+          "additionalProperties": false
+        },
+        "configuration": {
+          "type": "object",
+          "properties": {
+            "format": {
+              "type": "string",
+              "const": "wormhole-reference-v1"
+            },
+            "greeting": {
+              "type": "string",
+              "const": "reference-ready"
+            }
+          },
+          "required": [
+            "format",
+            "greeting"
+          ],
+          "additionalProperties": false
+        },
+        "files": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "x-uniqueBy": [
+            "path"
+          ],
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "enum": [
+                  "source.synthetic.bin",
+                  "payload.py",
+                  "version.txt",
+                  "config.json"
+                ]
+              },
+              "sha256": {
+                "type": "string",
+                "minLength": 64,
+                "maxLength": 64,
+                "pattern": "^[a-f0-9]{64}$(?![\\s\\S])"
+              },
+              "size": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 8388608
+              }
+            },
+            "required": [
+              "path",
+              "sha256",
+              "size"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "test_contract_sha256": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64,
+          "pattern": "^[a-f0-9]{64}$(?![\\s\\S])"
+        },
+        "production_iso_eligible": {
+          "type": "boolean",
+          "const": false
+        }
+      },
+      "required": [
+        "schema_version",
+        "run_id",
+        "source_revision",
+        "source_dirty",
+        "mode",
+        "operation",
+        "synthetic",
+        "version",
+        "source_sha256",
+        "chunk_plan_sha256",
+        "chunk_manifest_sha256",
+        "applicability",
+        "configuration",
+        "files",
+        "test_contract_sha256",
+        "production_iso_eligible"
+      ],
+      "additionalProperties": false
+    },
+    "source_candidate_sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[a-f0-9]{64}$(?![\\s\\S])"
+    },
+    "content_sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[a-f0-9]{64}$(?![\\s\\S])"
+    },
+    "base_reference": {
+      "type": "string",
+      "const": "registry.access.redhat.com/ubi9/ubi@sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1"
+    },
+    "base_image": {
+      "type": "string",
+      "const": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1"
+    },
+    "packages": {
+      "type": "object",
+      "properties": {
+        "python3": {
+          "type": "object",
+          "properties": {
+            "epoch": {
+              "type": "integer",
+              "const": 0,
+              "minimum": 0,
+              "maximum": 0
+            },
+            "version": {
+              "type": "string",
+              "const": "3.9.25"
+            },
+            "release": {
+              "type": "string",
+              "const": "7.el9_8.3"
+            },
+            "arch": {
+              "type": "string",
+              "const": "x86_64"
+            }
+          },
+          "required": [
+            "epoch",
+            "version",
+            "release",
+            "arch"
+          ],
+          "additionalProperties": false
+        },
+        "openssh": {
+          "type": "object",
+          "properties": {
+            "epoch": {
+              "type": "integer",
+              "const": 0,
+              "minimum": 0,
+              "maximum": 0
+            },
+            "version": {
+              "type": "string",
+              "const": "9.9p1"
+            },
+            "release": {
+              "type": "string",
+              "const": "13.el9_8"
+            },
+            "arch": {
+              "type": "string",
+              "const": "x86_64"
+            }
+          },
+          "required": [
+            "epoch",
+            "version",
+            "release",
+            "arch"
+          ],
+          "additionalProperties": false
+        },
+        "openssh-server": {
+          "type": "object",
+          "properties": {
+            "epoch": {
+              "type": "integer",
+              "const": 0,
+              "minimum": 0,
+              "maximum": 0
+            },
+            "version": {
+              "type": "string",
+              "const": "9.9p1"
+            },
+            "release": {
+              "type": "string",
+              "const": "13.el9_8"
+            },
+            "arch": {
+              "type": "string",
+              "const": "x86_64"
+            }
+          },
+          "required": [
+            "epoch",
+            "version",
+            "release",
+            "arch"
+          ],
+          "additionalProperties": false
+        },
+        "shadow-utils": {
+          "type": "object",
+          "properties": {
+            "epoch": {
+              "type": "integer",
+              "const": 2,
+              "minimum": 2,
+              "maximum": 2
+            },
+            "version": {
+              "type": "string",
+              "const": "4.9"
+            },
+            "release": {
+              "type": "string",
+              "const": "16.el9"
+            },
+            "arch": {
+              "type": "string",
+              "const": "x86_64"
+            }
+          },
+          "required": [
+            "epoch",
+            "version",
+            "release",
+            "arch"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "python3",
+        "openssh",
+        "openssh-server",
+        "shadow-utils"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "run_id",
+    "source_revision",
+    "source_dirty",
+    "mode",
+    "operation",
+    "synthetic",
+    "version",
+    "source_sha256",
+    "chunk_plan_sha256",
+    "chunk_manifest_sha256",
+    "applicability",
+    "configuration",
+    "files",
+    "test_contract_sha256",
+    "production_iso_eligible",
+    "source_candidate_manifest",
+    "source_candidate_sha256",
+    "content_sha256",
+    "base_reference",
+    "base_image",
+    "packages"
+  ],
+  "additionalProperties": false
+}
