@@ -72,7 +72,7 @@ class FunctionalOperatorBoundaries(unittest.TestCase):
 
     def test_unreachable_injection_requires_exact_identity_before_stop(self):
         session = SimpleNamespace(held=Mock(), receipt={'unknown_outcome': False},
-            owned={'docker_container.target': 'a' * 64}, verify_target=Mock(
+            target_resources={'target-001': 'a' * 64}, verify_target=Mock(
                 side_effect=RunError('ownership_mismatch', 'Wrong object.')), save=Mock())
         with patch.object(operator.images, 'inspect', return_value={}), patch.object(operator.images, 'docker') as docker, \
                 self.assertRaises(RunError) as error:
@@ -85,13 +85,24 @@ class FunctionalOperatorBoundaries(unittest.TestCase):
     def test_lost_stop_response_keeps_durable_unknown_intent(self):
         captures = []
         session = SimpleNamespace(held=Mock(), receipt={'unknown_outcome': False},
-            owned={'docker_container.target': 'a' * 64}, verify_target=Mock())
+            target_resources={'target-001': 'a' * 64}, verify_target=Mock())
         session.save = lambda: captures.append(deepcopy(session.receipt))
         with patch.object(operator.images, 'inspect', return_value={'State': {'Running': True, 'Pid': 10}}), \
                 patch.object(operator.images, 'docker', side_effect=OSError('Lost response')), self.assertRaises(OSError):
             operator.stop_owned_target(session)
         self.assertTrue(session.receipt['unknown_outcome'])
         self.assertEqual(captures, [{'unknown_outcome': True}])
+
+    def test_single_target_stop_cannot_choose_a_member_of_a_fleet(self):
+        session = SimpleNamespace(held=Mock(), receipt={'unknown_outcome': False},
+            target_resources={'target-001': 'a' * 64, 'target-002': 'b' * 64}, save=Mock())
+        with patch.object(operator.images, 'inspect') as inspect, patch.object(operator.images, 'docker') as docker, \
+                self.assertRaises(RunError) as error:
+            operator.stop_owned_target(session)
+        self.assertEqual(error.exception.code, 'single_target_required')
+        inspect.assert_not_called()
+        docker.assert_not_called()
+        session.save.assert_not_called()
 
 
 if __name__ == '__main__':

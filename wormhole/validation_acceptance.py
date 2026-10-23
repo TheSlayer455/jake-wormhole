@@ -50,7 +50,9 @@ def stop_owned_target(session):
     """One fixed owned-target stop after successful readiness, before SSH validation."""
     session.held()
     require(session.receipt['unknown_outcome'] is False, 'daemon_outcome_unknown')
-    target = session.owned['docker_container.target']
+    targets = session.target_resources
+    require(type(targets) is dict and set(targets) == {'target-001'}, 'single_target_required')
+    target = targets['target-001']
     before = images.inspect('container', target)
     session.verify_target(before)
     require(before['State']['Running'] is True and before['State']['Pid'] > 0, 'target_not_running')
