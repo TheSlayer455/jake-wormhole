@@ -1,5 +1,34 @@
 # Engineering checkpoint
 
+## Current: WORM-009, October 23 at 16:19 UTC
+
+The Minx API confirms WORM-002 through WORM-008 are Done. WORM-007 is version23,
+WORM-008 version21, both approved revision2 with no claim. Each has passing
+criterion evidence, a solution comment and normal delegated Owner decisions.
+These are owner-directed automated decisions, not independent human examination.
+
+WORM-007's nine real readiness cases passed at clean9db5f24; its final evidence
+commitd1f81615 is pushed to private PR6 and both exact-source hosted checks passed
+(PR39985403378, push39985393324). WORM-008's four real cleanup/cancellation/
+interruption cases passed at clean68bd82d; publishedb4c021a8 in private PR7 passed
+PR39984558906 and push39984553593. See [007 evidence](../handoff/evidence/WORM-007.json)
+and [008 evidence](../handoff/evidence/WORM-008.json). All those runs and three
+earlier failed readiness attempts have reconciled exact owned resources; failures
+remain historical failures. Qualified images and private state/evidence remain.
+
+WORM-009 revision2 is approved and claimed in session
+`codex-WORM-009-20261023-functional`, initially version4 and expiry16:33:43 UTC.
+Retrieve Minx for the current lease. Root integration is
+`codex/WORM-009-integration` in jake-wormhole-cli, starting from combined1d6bda5.
+The UI writer owns its new functional module/runtime/tests/docs in the isolated
+jake-wormhole-validation worktree. Root owns CLI, actual acceptance and delivery.
+No functional acceptance or WORM-009 completion is claimed yet.
+
+The baked runtime file hash is the initial smoke payload revision. Candidate
+bundle/image binding remains WORM-013. Full pipeline, scale, SVD/assessment and
+publication remain unfinished; production ISO eligibility stays false. No PR is
+merged. No host packages, daemon, sshd, authentication, routing or storage changed.
+
 ## WORM-006 complete; WORM-007/008 in progress, October23
 
 Minx confirms WORM-006 Done at version22, approved revision2, claim released.

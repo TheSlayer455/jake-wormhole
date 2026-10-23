@@ -1,4 +1,37 @@
-# Current continuation point, October23: WORM-007/008
+# Current continuation point: WORM-009, October 23 at 16:19 UTC
+
+WORM-002 through WORM-008 are Done in Minx, with passing evidence and solution
+comments. WORM-007 is v23, WORM-008 v21, both revision2 and no active claim.
+Jake's explicit delegation authorizes normal Owner browser decisions; keep their
+automated nature visible and never claim independent human examination.
+
+- WORM-007: all nine real readiness cases passed at9db5f24. Final private PR6
+  d1f81615 passed both exact-source hosted checks. [Evidence](evidence/WORM-007.json).
+- WORM-008: all four real cleanup/recovery cases passed at68bd82d. Private PR7
+  b4c021a8 passed both checks. [Evidence](evidence/WORM-008.json).
+- Exact containers/networks from those qualifications and earlier failed attempts
+  are reconciled. Private state/keys/evidence, images and public tool cache remain.
+  Do not delete retained state or treat failed historical attempts as passing.
+- WORM-009 is approved r2 and claimed under
+  `codex-WORM-009-20261023-functional`, initially expiry16:33:43 UTC. Refresh it
+  through the scoped API before work. Root jake-wormhole-cli is on
+  `codex/WORM-009-integration`; UI jake-wormhole-validation is on
+  `codex/WORM-009-validation`. Both started at combined1d6bda5.
+- UI owns the fixed read-only functional helper, plan/result policy, tests and
+  docs. Root owns CLI, actual acceptance, publishing and delegated Owner controls.
+  Do not concurrently edit provisioning/recovery/readiness or overwrite worktrees.
+- Next: freeze a source-bound package/configuration/runtime smoke payload check
+  plan; execute real SSH Ansible observations; prove fresh negative attempts and
+  strict completeness; perform normal scoped cleanup. The baked runtime SHA is
+  the smoke payload revision, with candidate-derived binding explicitly left013.
+  No WORM-009 acceptance has been tested yet.
+
+Read [STATE](../docs/STATE.md), [009's current Minx contract](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-009),
+[readiness](../docs/READINESS.md), [recovery](../docs/RECOVERY.md) and the source
+before continuing. The full pipeline, five/twenty-target runs, SVD/assessment and
+publication remain unfinished. Production ISO eligibility is always false.
+
+## Historical continuation point, October23: WORM-007/008
 
 Minx: WORM-002 through006 Done;007 and008 revision2 approved and claimed under
 distinct sessions. Parent001 remains Draft. Jake delegated normal Owner workflow

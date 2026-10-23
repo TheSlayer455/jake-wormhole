@@ -11,14 +11,15 @@ installation laboratory. Read [architecture](ARCHITECTURE.md),
 | Repository | Private GitHub repository, pushed baseline, passing baseline CI and separately identified Codex engineering review | Release qualification or independent human review |
 | Host discovery/admission | Actual allowed-host capacity collection, refreshed plans, canonical shared flock and actual image/runtime cgroup checks | Reserved disk space, hard caps on shared-daemon pull/commit work or twenty-target execution |
 | CLI/stages | Local CLI, bounded stage execution and explicitly synthetic fixture subset; six published artifact contracts; separate real image operations | A complete Terraform/SSH/Ansible runtime pipeline |
-| Terraform | Authored bounded provisioner; actual pinned Terraform1.17/provider4.6 initialization and h1 verification, one real target/network apply, inspected confinement and exact Terraform destruction | Completed two-run/failure/ownership acceptance, host installation or complete pipeline |
-| Images/SSH | Two actual Ubuntu images, pinned tool doctors and two fresh strict SSH qualifications as UID10001; wrong host key/root/unknown user rejected; unique keys and exact cleanup | Terraform lifecycle, functional Ansible checks, candidate binding or VM fidelity |
-| Ansible | Core2.21.5 and dependency versions observed inside the Docker-free helper image | Host Ansible installation, Ansible connectivity/check execution or observed target inventories |
+| Terraform | Actual pinned Terraform1.17/provider4.6, h1 verification, two isolated lifecycles, provider-failure and ownership negatives, real inventories and saved destruction | Host tool installation, multi-target lifecycle or complete pipeline |
+| Images/SSH | Two actual Ubuntu images, strict SSH as UID10001, separate trust/authentication negatives, unique keys and exact cleanup | Candidate binding or VM fidelity |
+| Ansible | Actual Core2.21.5 wait_for_connection and remote ping through strict SSH, nine readiness scenarios with per-state evidence | Host installation or functional package/configuration/payload validation (WORM-009) |
+| Recovery | Actual normal, failed, cooperative-cancelled and interrupted teardown cases; exact original-source reconciliation, readable/JSON agreement and unchanged sentinel | General resolution of unknown daemon outcomes or overlapping admitted runs |
 | Source/candidate | Synthetic chunks and an attributable payload are planned | Implemented reconstruction, candidate build or validated image mapping |
 | SVD | Observed-target collection is planned | A generated inventory or version-preservation result |
 | Assessment | Synthetic checklist processing and reference policy are planned | Real Evaluate-STIG integration or a production acceptance threshold |
 | Publication | Separate tested-byte publication is planned | A complete reference release or private package/image publication |
-| CI and scale | Shared CLI, negative tests and 1/5/20 profiles are planned | Actual CI execution, parity, twenty-target capacity or recovery acceptance |
+| CI and scale | Hosted fixture CI and measured 1/5/20 planning profiles; actual one-target qualifications | Manual/CI runtime parity, five/twenty-target execution or a homelab CI runner |
 
 ## Evidence labels for future work
 
