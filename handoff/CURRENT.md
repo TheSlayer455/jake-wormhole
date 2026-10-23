@@ -1,4 +1,37 @@
-# Current continuation point
+# Current continuation point, October23 at15:25UTC
+
+WORM-006 actual qualification passed at exact clean source
+06c19f16d45fe66cd0ebde0432372b2d060f7226. See [evidence](evidence/WORM-006.json),
+[review](reviews/WORM-006.md), [state](../docs/STATE.md) and
+[Terraform operations](../docs/TERRAFORM.md). All three fresh acceptance cases
+passed, with exact cleanup and an unchanged unrelated sentinel. Negative partial
+operations and earlier failed attempts retain their failed status. No active
+target/network/provisioner remains from these qualifications. Images, public base,
+private cache/state/keys/evidence remain intentionally retained outside Git.
+
+1. Retrieve Minx's actual006 status/version/claim before a mutation. WORM-002
+   through005 are Done. At this checkpoint006 remains In Progress pending final
+   source publication, hosted CI, evidence/comment and delegated normal Owner
+   decisions. The source commit containing this record adds documentation and
+   sanitized evidence; actual runtime source is recorded separately above.
+2. Publish final006 branch/PR5, verify exact hosted CI, attach all three criterion
+   results and a solution comment, submit In Review/release, then use Jake's
+   delegated Owner controls on passing evidence. Record automated delegation,
+   never independent human examination. No security policy or role grant changes.
+3. After006 is Done, approve/claim007 and008 with distinct session IDs and isolated
+   worktrees.007 owns genuine SSH/Ansible readiness;008 owns scoped cleanup,
+   cancellation and interrupted teardown recovery. Serialize shared provisioning
+   refactors and assign one writer per file. Discovery plans are not implementations.
+4. Keep one held Run lock, Docker scope and canonical admission lease across a
+   lifecycle. Existing exact-source recovery never allocates a replacement or
+   clears unknown daemon work from elapsed time/empty sweeps. The fixed missing
+   endpoint proof is specific; no general reviewed flag exists.
+5. Continue the recorded dependency graph through all remaining child tickets and
+   parent001. A complete pipeline, candidate binding, functional Ansible, scale,
+   SVD/assessment and publication remain unfinished. Production ISO eligibility
+   stays false. No PR has been merged or remote image/release published.
+
+## Historical continuation point, October23 at14:52UTC
 
 Read [AGENTS](../AGENTS.md), [STATE](../docs/STATE.md),
 [architecture](../docs/ARCHITECTURE.md), [fidelity](../docs/FIDELITY.md),

@@ -1,0 +1,1214 @@
+{
+  "schema_version": "1.0",
+  "ticket_key": "WORM-006",
+  "requirements_revision": 2,
+  "evidence_kind": "actual authorized homelab runtime plus separately labeled fixture tests",
+  "tested_source_revision": "06c19f16d45fe66cd0ebde0432372b2d060f7226",
+  "observed_at": "2026-10-23T15:25:13.968436+00:00",
+  "command": "python3 -B -m wormhole.provisioning_acceptance --sentinel-id <existing unrelated exact container ID>",
+  "exit_status": 0,
+  "suite": {
+    "cases": [
+      {
+        "checks": {
+          "cleanup": {
+            "primary_error": null,
+            "status": "pass",
+            "underlying_operation_status": "completed",
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan_after_cleanup": {
+            "bytes_scanned": 260133,
+            "files_scanned": 48,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "credential_scan_before_cleanup": {
+            "bytes_scanned": 226636,
+            "files_scanned": 37,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "real_provisioning": {
+            "actual_provider_inventory": true,
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T15:23:59.187Z",
+        "disk_samples": [
+          {
+            "hard_quota": false,
+            "logical_file_bytes": 266222358,
+            "ordinary_files": 58,
+            "phase": "after-provision-or-expected-provider-failure",
+            "sampled_at": "2026-10-23T15:24:20.811Z",
+            "unfollowed_links": 1
+          },
+          {
+            "hard_quota": false,
+            "logical_file_bytes": 266222358,
+            "ordinary_files": 58,
+            "phase": "before-cleanup",
+            "sampled_at": "2026-10-23T15:24:20.815Z",
+            "unfollowed_links": 1
+          },
+          {
+            "hard_quota": false,
+            "logical_file_bytes": 266255855,
+            "ordinary_files": 69,
+            "phase": "after-cleanup",
+            "sampled_at": "2026-10-23T15:24:28.056Z",
+            "unfollowed_links": 1
+          }
+        ],
+        "mode": "container-reference",
+        "operation": "terraform-acceptance-case",
+        "production_iso_eligible": false,
+        "run_id": "f88f2e95-e195-4154-b9f5-fdd9646f6437",
+        "runtime_pipeline_complete": false,
+        "scenario": "healthy",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "06c19f16d45fe66cd0ebde0432372b2d060f7226",
+        "status": "pass",
+        "updated_at": "2026-10-23T15:24:28.067Z"
+      },
+      {
+        "checks": {
+          "cleanup": {
+            "primary_error": "ownership_mismatch",
+            "status": "pass",
+            "underlying_operation_status": "failed",
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan_after_cleanup": {
+            "bytes_scanned": 266615,
+            "files_scanned": 50,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "credential_scan_before_cleanup": {
+            "bytes_scanned": 226642,
+            "files_scanned": 37,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "ownership_negative": {
+            "check": "expected-ownership-ID negative",
+            "destroy_plan_or_delete_ran": false,
+            "expected_id_memory_restored": true,
+            "observed_error": "ownership_mismatch",
+            "stable_object_fingerprints": {
+              "network": "baed181fd934f2d06ec6ed674e45e1f92a5b8bb87645da0d5083c1adda1b85f5",
+              "sentinel": "d35248cd9fa092a7323df9a70760714bd5101025a615b07ea40fb8528ff3d07b",
+              "target": "77c5668d89553d733a52742c941ea84d14a66bc865e9dc683f1e9cdc0029c76d"
+            },
+            "status": "pass",
+            "terraform_state_modified": false
+          },
+          "real_provisioning": {
+            "actual_provider_inventory": true,
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T15:24:28.087Z",
+        "disk_samples": [
+          {
+            "hard_quota": false,
+            "logical_file_bytes": 266222364,
+            "ordinary_files": 58,
+            "phase": "after-provision-or-expected-provider-failure",
+            "sampled_at": "2026-10-23T15:24:49.718Z",
+            "unfollowed_links": 1
+          },
+          {
+            "hard_quota": false,
+            "logical_file_bytes": 266228838,
+            "ordinary_files": 60,
+            "phase": "before-cleanup",
+            "sampled_at": "2026-10-23T15:24:50.307Z",
+            "unfollowed_links": 1
+          },
+          {
+            "hard_quota": false,
+            "logical_file_bytes": 266262337,
+            "ordinary_files": 71,
+            "phase": "after-cleanup",
+            "sampled_at": "2026-10-23T15:24:57.572Z",
+            "unfollowed_links": 1
+          }
+        ],
+        "mode": "container-reference",
+        "operation": "terraform-acceptance-case",
+        "production_iso_eligible": false,
+        "run_id": "891c412a-e1d5-45ba-9c2d-eca49d0c226d",
+        "runtime_pipeline_complete": false,
+        "scenario": "healthy",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "06c19f16d45fe66cd0ebde0432372b2d060f7226",
+        "status": "pass",
+        "updated_at": "2026-10-23T15:24:57.581Z"
+      },
+      {
+        "checks": {
+          "cleanup": {
+            "primary_error": "terraform_failed",
+            "status": "pass",
+            "underlying_operation_status": "failed",
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan_after_cleanup": {
+            "bytes_scanned": 177029,
+            "files_scanned": 44,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "credential_scan_before_cleanup": {
+            "bytes_scanned": 166488,
+            "files_scanned": 33,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "provider_unavailable": {
+            "observed_error": "terraform_failed",
+            "proof_retained_in_private_run": true,
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T15:24:57.599Z",
+        "disk_samples": [
+          {
+            "hard_quota": false,
+            "logical_file_bytes": 266160764,
+            "ordinary_files": 53,
+            "phase": "after-provision-or-expected-provider-failure",
+            "sampled_at": "2026-10-23T15:25:11.287Z",
+            "unfollowed_links": 1
+          },
+          {
+            "hard_quota": false,
+            "logical_file_bytes": 266160764,
+            "ordinary_files": 53,
+            "phase": "before-cleanup",
+            "sampled_at": "2026-10-23T15:25:11.291Z",
+            "unfollowed_links": 1
+          },
+          {
+            "hard_quota": false,
+            "logical_file_bytes": 266171305,
+            "ordinary_files": 64,
+            "phase": "after-cleanup",
+            "sampled_at": "2026-10-23T15:25:13.939Z",
+            "unfollowed_links": 1
+          }
+        ],
+        "mode": "container-reference",
+        "operation": "terraform-acceptance-case",
+        "production_iso_eligible": false,
+        "run_id": "590105e7-8ac5-42a3-b604-2ee281dba09a",
+        "runtime_pipeline_complete": false,
+        "scenario": "provider-unavailable",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "06c19f16d45fe66cd0ebde0432372b2d060f7226",
+        "status": "pass",
+        "updated_at": "2026-10-23T15:25:13.949Z"
+      }
+    ],
+    "criteria": {
+      "AC-01": "pass: two actual provider lifecycles and attributed inventories",
+      "AC-02": "pass: isolated Runs, bounded credential scans and policy-controlled exposure",
+      "AC-03": "pass: expected-ID guard, fixed provider failure proof and scoped cleanup"
+    },
+    "existing_sentinel_modified": false,
+    "isolation": {
+      "distinct_run_ids_state_inputs_names_ids_inventory": true,
+      "endpoint_addresses_required_unique": false,
+      "same_clean_source": true,
+      "status": "pass"
+    },
+    "operation": "terraform-acceptance",
+    "production_iso_eligible": false,
+    "runtime_pipeline_complete": false,
+    "schema_version": "1.0",
+    "source_revision": "06c19f16d45fe66cd0ebde0432372b2d060f7226",
+    "status": "pass"
+  },
+  "core_receipts": [
+    {
+      "run_id": "f88f2e95-e195-4154-b9f5-fdd9646f6437",
+      "source_revision": "06c19f16d45fe66cd0ebde0432372b2d060f7226",
+      "scenario": "healthy",
+      "status": "completed",
+      "cleanup": "completed",
+      "primary_failure": null,
+      "secondary_failures": [],
+      "resources": [
+        {
+          "address": "docker_container.target",
+          "id": "79fb52f415ca13f1e7490f9e3d4404b3db25ced5f49beaa4ec1fdc5cf9db2df3"
+        },
+        {
+          "address": "docker_network.run",
+          "id": "6b5fe51ddd6b6802599c06d7fec3158f31c5eca876873e1842818097f2a11126"
+        }
+      ],
+      "inventory": {
+        "mode": "container-reference",
+        "run_id": "f88f2e95-e195-4154-b9f5-fdd9646f6437",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "06c19f16d45fe66cd0ebde0432372b2d060f7226",
+        "status": "pass",
+        "targets": [
+          {
+            "host": "192.168.144.2",
+            "image_digest": "sha256:6d15eb2c495d48c1eb6485a74d1adaef3e0e3a6e7c83063ba8459f90c27c683e",
+            "resource_id": "79fb52f415ca13f1e7490f9e3d4404b3db25ced5f49beaa4ec1fdc5cf9db2df3",
+            "ssh_port": 2222,
+            "ssh_user": "wormhole",
+            "status": "started",
+            "target_id": "target-001"
+          }
+        ]
+      },
+      "actual_tools": {
+        "offline_readonly_lock_h1_confirmed": "h1:1jD5QVpeLkdxKEWWJpTzNdxtR0WNNFq28Po4yq9w+VM=",
+        "platform": "linux_amd64",
+        "provider_schema_observed": true,
+        "provider_version": "4.6.0",
+        "terraform_version": "1.17.0"
+      },
+      "provisioner_cgroups": {
+        "cpu.max": "50000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "target_cgroups": {
+        "cpu.max": "25000 100000",
+        "memory.max": "268435456",
+        "memory.swap.max": "0",
+        "pids.max": "64"
+      },
+      "target_before_pid_update": {
+        "pids_limit": null,
+        "started_at": "0001-01-01T00:00:00Z",
+        "status": "created"
+      },
+      "operations": [
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.06598320207558572,
+          "evidence": "private/terraform/operations/version-1.out",
+          "operation": "version",
+          "output_bytes": 211,
+          "output_sha256": "afa6547f52ab2ab4f3491e3dcd890951c26612f437b10513b8f19049583960b5",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.22550374292768538,
+          "evidence": "private/terraform/operations/init-1.out",
+          "operation": "init",
+          "output_bytes": 416,
+          "output_sha256": "8ef419682bce17b53c7e823b0b28bfdb9bd01354532bd1998f093ef4d2c5ad19",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.26716964202933013,
+          "evidence": "private/terraform/operations/schema-1.out",
+          "operation": "schema",
+          "output_bytes": 119436,
+          "output_sha256": "89da2fa4efefa8c32d337e43743d067fe7a7b08702261512b2fc02499d34298e",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.5524992430582643,
+          "evidence": "private/terraform/operations/plan-1.out",
+          "operation": "plan",
+          "output_bytes": 6218,
+          "output_sha256": "c504ee2f7a677a8ec767c0111085381cb325f9f7f8fcc1aa8e2a9cf101da69ce",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.2989460921380669,
+          "evidence": "private/terraform/operations/show-plan-1.out",
+          "operation": "show-plan",
+          "output_bytes": 12500,
+          "output_sha256": "3123fe91f7f280cfad825e85688427182166b4b39b9ac2a547c9bb9d9fbc420f",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 2.687505149981007,
+          "evidence": "private/terraform/operations/apply-1.out",
+          "operation": "apply",
+          "output_bytes": 1039,
+          "output_sha256": "734448d554aaba4b6e2bb2843a433b6cac76a254765c26fb492076a5615f93f6",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.33057291503064334,
+          "evidence": "private/terraform/operations/show-state-1.out",
+          "operation": "show-state",
+          "output_bytes": 5450,
+          "output_sha256": "d46465b2710a25e2418e6f156e544493543395c94977a12213fc722296e7a88e",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 2.587310979841277,
+          "evidence": "private/terraform/operations/refresh-plan-1.out",
+          "operation": "refresh-plan",
+          "output_bytes": 3909,
+          "output_sha256": "b2a753f99842acc97e85bd4069837ace31cf9eb178e68ba4823e94a5ca25c193",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.3041204661130905,
+          "evidence": "private/terraform/operations/show-refresh-plan-1.out",
+          "operation": "show-refresh-plan",
+          "output_bytes": 20396,
+          "output_sha256": "f686c08e2cbfe84f59c412c3b1e378fc3cfd2adf98ff90b32a54cfdc3c83df5b",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.3910549050197005,
+          "evidence": "private/terraform/operations/refresh-apply-1.out",
+          "operation": "refresh-apply",
+          "output_bytes": 762,
+          "output_sha256": "554bfaf6ae6ead14965317b286a2d8d8ce14a16ca7ce29cf139bb1d367a0019f",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.17032822198234499,
+          "evidence": "private/terraform/operations/output-1.out",
+          "operation": "output",
+          "output_bytes": 1437,
+          "output_sha256": "e41da95c1826e8e4a9b57d95720c7a9a7e17625f7661f358ccfe0da9abd37d0e",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 2,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.34453419502824545,
+          "evidence": "private/terraform/operations/show-state-2.out",
+          "operation": "show-state",
+          "output_bytes": 5648,
+          "output_sha256": "94da910efa1f60ead99a910b9c505f501d540873175773cee430e8f013c4a0f9",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 2.6598439030349255,
+          "evidence": "private/terraform/operations/destroy-plan-1.out",
+          "operation": "destroy-plan",
+          "output_bytes": 8682,
+          "output_sha256": "b80b6fa6f4328db6874b6214d5b94e0d6be8caccc7bcc50940d64a51e58cfd05",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.28668898809701204,
+          "evidence": "private/terraform/operations/show-destroy-plan-1.out",
+          "operation": "show-destroy-plan",
+          "output_bytes": 14912,
+          "output_sha256": "abecc5f1bb206111b9b820a0517a9f6d513b9a71f9bb69a600e7cca29776cbd6",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 2.7146393300499767,
+          "evidence": "private/terraform/operations/destroy-1.out",
+          "operation": "destroy",
+          "output_bytes": 379,
+          "output_sha256": "359bfe616f629145f7f0b3490383a56e2038a93a63985947dfaca559f53eb650",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.34973419713787735,
+          "evidence": "private/terraform/operations/final-state-1.out",
+          "operation": "final-state",
+          "output_bytes": 25,
+          "output_sha256": "66082969f6dd7b41eb2ad3dc839b912e7ba334082d0b9cc187d5117bb9c5ecea",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        }
+      ],
+      "updated_at": "2026-10-23T15:24:28.028Z"
+    },
+    {
+      "run_id": "891c412a-e1d5-45ba-9c2d-eca49d0c226d",
+      "source_revision": "06c19f16d45fe66cd0ebde0432372b2d060f7226",
+      "scenario": "healthy",
+      "status": "failed",
+      "cleanup": "completed",
+      "primary_failure": {
+        "code": "ownership_mismatch",
+        "recorded_at": "2026-10-23T15:24:50.249Z"
+      },
+      "secondary_failures": [],
+      "resources": [
+        {
+          "address": "docker_container.target",
+          "id": "ef5b5906d8614437bd4618f93c57b245257b968982419a4674cb66374f1e5c36"
+        },
+        {
+          "address": "docker_network.run",
+          "id": "58225d3b210f21770a8ba866dd72af6b73f9315d8f304f03c90ba3ab6e399588"
+        }
+      ],
+      "inventory": {
+        "mode": "container-reference",
+        "run_id": "891c412a-e1d5-45ba-9c2d-eca49d0c226d",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "06c19f16d45fe66cd0ebde0432372b2d060f7226",
+        "status": "pass",
+        "targets": [
+          {
+            "host": "192.168.144.2",
+            "image_digest": "sha256:6d15eb2c495d48c1eb6485a74d1adaef3e0e3a6e7c83063ba8459f90c27c683e",
+            "resource_id": "ef5b5906d8614437bd4618f93c57b245257b968982419a4674cb66374f1e5c36",
+            "ssh_port": 2222,
+            "ssh_user": "wormhole",
+            "status": "started",
+            "target_id": "target-001"
+          }
+        ]
+      },
+      "actual_tools": {
+        "offline_readonly_lock_h1_confirmed": "h1:1jD5QVpeLkdxKEWWJpTzNdxtR0WNNFq28Po4yq9w+VM=",
+        "platform": "linux_amd64",
+        "provider_schema_observed": true,
+        "provider_version": "4.6.0",
+        "terraform_version": "1.17.0"
+      },
+      "provisioner_cgroups": {
+        "cpu.max": "50000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "target_cgroups": {
+        "cpu.max": "25000 100000",
+        "memory.max": "268435456",
+        "memory.swap.max": "0",
+        "pids.max": "64"
+      },
+      "target_before_pid_update": {
+        "pids_limit": null,
+        "started_at": "0001-01-01T00:00:00Z",
+        "status": "created"
+      },
+      "operations": [
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.08619883703067899,
+          "evidence": "private/terraform/operations/version-1.out",
+          "operation": "version",
+          "output_bytes": 211,
+          "output_sha256": "afa6547f52ab2ab4f3491e3dcd890951c26612f437b10513b8f19049583960b5",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.2716675130650401,
+          "evidence": "private/terraform/operations/init-1.out",
+          "operation": "init",
+          "output_bytes": 416,
+          "output_sha256": "8ef419682bce17b53c7e823b0b28bfdb9bd01354532bd1998f093ef4d2c5ad19",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.23814027989283204,
+          "evidence": "private/terraform/operations/schema-1.out",
+          "operation": "schema",
+          "output_bytes": 119436,
+          "output_sha256": "89da2fa4efefa8c32d337e43743d067fe7a7b08702261512b2fc02499d34298e",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.5198278629686683,
+          "evidence": "private/terraform/operations/plan-1.out",
+          "operation": "plan",
+          "output_bytes": 6218,
+          "output_sha256": "65f3e05ce74116c53a9eaa2c64c289fc972a7727f6833747a32cbc0b5ce71c57",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.29817735799588263,
+          "evidence": "private/terraform/operations/show-plan-1.out",
+          "operation": "show-plan",
+          "output_bytes": 12500,
+          "output_sha256": "5c0c002f30cc180c0f4d627b42d473f8ff26b9890c9cee66caa06e67f64d59e9",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 2.6650644298642874,
+          "evidence": "private/terraform/operations/apply-1.out",
+          "operation": "apply",
+          "output_bytes": 1039,
+          "output_sha256": "d4b95becacb87192ce2515b6404e040558f01c033bec0cc1ad9175324b345713",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.32764195487834513,
+          "evidence": "private/terraform/operations/show-state-1.out",
+          "operation": "show-state",
+          "output_bytes": 5450,
+          "output_sha256": "1b8f15be655138b3f931f543630faa9096d5362b6ba621c44764d84950878c01",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 2.5455636479891837,
+          "evidence": "private/terraform/operations/refresh-plan-1.out",
+          "operation": "refresh-plan",
+          "output_bytes": 3909,
+          "output_sha256": "3e5e931a2f02c0f348686574b5aa562d70d684128d7a2e73609ac239cfaf5164",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.3055441239848733,
+          "evidence": "private/terraform/operations/show-refresh-plan-1.out",
+          "operation": "show-refresh-plan",
+          "output_bytes": 20396,
+          "output_sha256": "68cb721fc851bc577a5383b65cf65111033fd8e6c51c71f4e3bba46f00113f5e",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.3875380919780582,
+          "evidence": "private/terraform/operations/refresh-apply-1.out",
+          "operation": "refresh-apply",
+          "output_bytes": 762,
+          "output_sha256": "42647a5a950381cf5fbd498b62c1150a651f9bc7bf4d518d37a362927b0d763f",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.17723119794391096,
+          "evidence": "private/terraform/operations/output-1.out",
+          "operation": "output",
+          "output_bytes": 1437,
+          "output_sha256": "2e771c1f07fb68bcfb4d218aec754a1c8a7d0907a38184f6755d758895c3ab37",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 2,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.32496838294900954,
+          "evidence": "private/terraform/operations/show-state-2.out",
+          "operation": "show-state",
+          "output_bytes": 5648,
+          "output_sha256": "8161f6540783d944aac5bb642a0cee5d5e23bb8a8c243442b5a2782017e288cd",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 3,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.369328442029655,
+          "evidence": "private/terraform/operations/show-state-3.out",
+          "operation": "show-state",
+          "output_bytes": 5648,
+          "output_sha256": "8161f6540783d944aac5bb642a0cee5d5e23bb8a8c243442b5a2782017e288cd",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 2.650571946054697,
+          "evidence": "private/terraform/operations/destroy-plan-1.out",
+          "operation": "destroy-plan",
+          "output_bytes": 8682,
+          "output_sha256": "d1414a3b5593ff1eddf1c585bc6df0ac5e6e14ed04f1a58090b41405385355c2",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.2892947639338672,
+          "evidence": "private/terraform/operations/show-destroy-plan-1.out",
+          "operation": "show-destroy-plan",
+          "output_bytes": 14912,
+          "output_sha256": "444a16d3b13165eeedf21665f730e6fe48491083b284ff8459f0c32ede51b779",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 2.7230766469147056,
+          "evidence": "private/terraform/operations/destroy-1.out",
+          "operation": "destroy",
+          "output_bytes": 379,
+          "output_sha256": "fbfcb6e7124c13bfede9c0f1b3774d39946474cc338b52c657c5c307c93796ed",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.3379917158745229,
+          "evidence": "private/terraform/operations/final-state-1.out",
+          "operation": "final-state",
+          "output_bytes": 25,
+          "output_sha256": "66082969f6dd7b41eb2ad3dc839b912e7ba334082d0b9cc187d5117bb9c5ecea",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        }
+      ],
+      "updated_at": "2026-10-23T15:24:57.546Z"
+    },
+    {
+      "run_id": "590105e7-8ac5-42a3-b604-2ee281dba09a",
+      "source_revision": "06c19f16d45fe66cd0ebde0432372b2d060f7226",
+      "scenario": "provider-unavailable",
+      "status": "failed",
+      "cleanup": "completed",
+      "primary_failure": {
+        "code": "terraform_failed",
+        "recorded_at": "2026-10-23T15:25:09.961Z"
+      },
+      "secondary_failures": [],
+      "resources": [],
+      "inventory": null,
+      "actual_tools": {
+        "offline_readonly_lock_h1_confirmed": "h1:1jD5QVpeLkdxKEWWJpTzNdxtR0WNNFq28Po4yq9w+VM=",
+        "platform": "linux_amd64",
+        "provider_schema_observed": true,
+        "provider_version": "4.6.0",
+        "terraform_version": "1.17.0"
+      },
+      "provisioner_cgroups": {
+        "cpu.max": "50000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "provider_unavailable_proof": {
+        "actual_saved_apply_failed": true,
+        "before_and_after_enoent": true,
+        "endpoint": "unix:///run/wormhole/provider-unavailable.sock",
+        "recorded_at": "2026-10-23T15:25:11.280Z",
+        "run_resources": [
+          {
+            "count": 1,
+            "kind": "container"
+          },
+          {
+            "count": 0,
+            "kind": "network"
+          }
+        ],
+        "scenario": "provider-unavailable",
+        "source_sha256": "e4c56217324b994cd9c965b944c10a910232e02feb89d1e6052e36acca2942b8",
+        "status": "proved-zero-contact",
+        "terraform_state_empty": true
+      },
+      "operations": [
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.03528517996892333,
+          "evidence": "private/terraform/operations/version-1.out",
+          "operation": "version",
+          "output_bytes": 211,
+          "output_sha256": "afa6547f52ab2ab4f3491e3dcd890951c26612f437b10513b8f19049583960b5",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.2429240809287876,
+          "evidence": "private/terraform/operations/init-1.out",
+          "operation": "init",
+          "output_bytes": 416,
+          "output_sha256": "8ef419682bce17b53c7e823b0b28bfdb9bd01354532bd1998f093ef4d2c5ad19",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.30491112102754414,
+          "evidence": "private/terraform/operations/schema-1.out",
+          "operation": "schema",
+          "output_bytes": 119436,
+          "output_sha256": "89da2fa4efefa8c32d337e43743d067fe7a7b08702261512b2fc02499d34298e",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.567713210824877,
+          "evidence": "private/terraform/operations/plan-1.out",
+          "operation": "plan",
+          "output_bytes": 6218,
+          "output_sha256": "ccc8777ab0240f865c0d9da8e4f834b5ac4f6ac0ed98b061aba766deb1abdeb3",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.2966303920838982,
+          "evidence": "private/terraform/operations/show-plan-1.out",
+          "operation": "show-plan",
+          "output_bytes": 12519,
+          "output_sha256": "939c7882ef9a9291e43f231643829468755eab5218eb12ea1cf9b7f117b8f9f4",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.03714275103993714,
+          "evidence": "private/terraform/operations/probe-unavailable-1.out",
+          "operation": "probe-unavailable",
+          "output_bytes": 111,
+          "output_sha256": "8bc6bdad058d29ea53e48f07eb5ba736484eda3069dac19682e0f3be63072e21",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 2,
+          "client_status": "fail",
+          "duration_seconds": 0.3871877121273428,
+          "evidence": "private/terraform/operations/apply-1.out",
+          "operation": "apply",
+          "output_bytes": 463,
+          "output_sha256": "720ee5e006c68dc81c703890000106e820076616b5ce72c099491c03f8b4c5f7",
+          "passed": false,
+          "returncode": 1,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.39052606583572924,
+          "evidence": "private/terraform/operations/show-state-1.out",
+          "operation": "show-state",
+          "output_bytes": 25,
+          "output_sha256": "66082969f6dd7b41eb2ad3dc839b912e7ba334082d0b9cc187d5117bb9c5ecea",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 2,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.07545535708777606,
+          "evidence": "private/terraform/operations/probe-unavailable-2.out",
+          "operation": "probe-unavailable",
+          "output_bytes": 111,
+          "output_sha256": "8bc6bdad058d29ea53e48f07eb5ba736484eda3069dac19682e0f3be63072e21",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 2,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.39159296196885407,
+          "evidence": "private/terraform/operations/show-state-2.out",
+          "operation": "show-state",
+          "output_bytes": 25,
+          "output_sha256": "66082969f6dd7b41eb2ad3dc839b912e7ba334082d0b9cc187d5117bb9c5ecea",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 3,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.37873224006034434,
+          "evidence": "private/terraform/operations/show-state-3.out",
+          "operation": "show-state",
+          "output_bytes": 25,
+          "output_sha256": "66082969f6dd7b41eb2ad3dc839b912e7ba334082d0b9cc187d5117bb9c5ecea",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.40231924084946513,
+          "evidence": "private/terraform/operations/destroy-plan-1.out",
+          "operation": "destroy-plan",
+          "output_bytes": 158,
+          "output_sha256": "f1125d6716106f6647e1732b4f740790676efcce571781b67b6c2af4abc6b6e9",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.28672737814486027,
+          "evidence": "private/terraform/operations/show-destroy-plan-1.out",
+          "operation": "show-destroy-plan",
+          "output_bytes": 3529,
+          "output_sha256": "32afb3c3ed1a82e1b0d6ce3f33af110c565e0505a15df438b4e39deb5515e085",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.284312155097723,
+          "evidence": "private/terraform/operations/destroy-1.out",
+          "operation": "destroy",
+          "output_bytes": 61,
+          "output_sha256": "11f74fbc62e8d8b34de9029b6f891c3a6172d1e9af3b695a92bcb6fbf4704540",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        },
+        {
+          "attempt": 1,
+          "client_log_truncated": false,
+          "client_returncode": 0,
+          "client_status": "pass",
+          "duration_seconds": 0.38391680316999555,
+          "evidence": "private/terraform/operations/final-state-1.out",
+          "operation": "final-state",
+          "output_bytes": 25,
+          "output_sha256": "66082969f6dd7b41eb2ad3dc839b912e7ba334082d0b9cc187d5117bb9c5ecea",
+          "passed": true,
+          "returncode": 0,
+          "timed_out": false,
+          "truncated": false
+        }
+      ],
+      "updated_at": "2026-10-23T15:25:13.913Z"
+    }
+  ],
+  "tests": [
+    {
+      "environment": "Actual homelab Linux CPython3.12.3",
+      "command": "python3 -m unittest discover -s tests -v",
+      "cases": 146,
+      "passed": 144,
+      "skipped": 2,
+      "skip_reason": "Windows-only junction cases",
+      "seconds": 6.524
+    },
+    {
+      "environment": "Windows CPython3.12.14",
+      "command": "python -m unittest discover -s tests",
+      "cases": 146,
+      "passed": 79,
+      "skipped": 67,
+      "skip_reason": "POSIX/Linux process/private-mode/Docker fixtures",
+      "seconds": 3.975
+    }
+  ],
+  "sampled_peak_logical_run_bytes": 266262337,
+  "limits": [
+    "Disk samples are checkpoint logical bytes, not a continuously observed peak, allocated blocks or a hard filesystem quota.",
+    "Fixture Docker operations are mocked; actual Terraform/cgroups/ownership/failure results above are separate.",
+    "Two serial runs may reuse an address; their state, names, resource IDs and inventory identities are disjoint.",
+    "No SSH/Ansible functional acceptance, complete pipeline, production ISO eligibility, independent human examination, automatic merge or remote image/release publication is claimed."
+  ],
+  "prior_failed_attempts": [
+    {
+      "run_id": "4620b7d2-33b4-463b-bd05-ec60f7ffafc7",
+      "source_revision": "2431de34d2ead79f9e2100976acd99b2d1df12b4",
+      "failure": "HCL initialization syntax before provider/resource mutation",
+      "recovery": "fixed exact initialization-only proof, sole controller removed",
+      "operator_sha256": "0290332c1bef7b31eb0e787536a34a73d559160673e26c031908d84626eb83bc"
+    },
+    {
+      "run_id": "ac84bfd7-435e-4567-a9c7-44c24a53a58b",
+      "source_revision": "94c35cc8a589050da64c0881c92e8eace7606701",
+      "failure": "unknown startup command refused before apply",
+      "recovery": "normal retained-controller saved empty Terraform destroy"
+    },
+    {
+      "run_id": "7938710b-431e-4101-b07f-7494d8d1c2a6",
+      "source_revision": "6e4c3028564cf8b1fd7618542c96d817c80fef25",
+      "failure": "refresh-only JSON shape rejected after actual apply",
+      "recovery": "normal retained-controller saved Terraform destroy"
+    },
+    {
+      "run_id": "d91c9797-55e8-4eed-a793-6754d76a402b",
+      "source_revision": "9dad731b65e5d843ec1c9dfb99190fe690584a0a",
+      "failure": "fixed provider failed as intended; old proof refused SDK diagnostic wrapper",
+      "recovery": "fixed zero-contact proof then normal saved empty Terraform destroy",
+      "operator_sha256": "112f6fd2e53e2b3fa0b0fa843bfd3e8065c5977996076d9461776927a49e5903"
+    }
+  ],
+  "prior_attempt_outcomes_preserved": "failed; resources reconciled separately",
+  "private_material_exported": false,
+  "runtime_pipeline_complete": false,
+  "production_iso_eligible": false
+}

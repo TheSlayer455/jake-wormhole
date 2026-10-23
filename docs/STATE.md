@@ -1,5 +1,29 @@
 # Engineering checkpoint
 
+## WORM-006 qualification passed, October23 at15:25UTC
+
+Exact clean controller06c19f16d45fe66cd0ebde0432372b2d060f7226 passed the full
+actual three-case [acceptance](../handoff/evidence/WORM-006.json). Healthy run
+f88f2e95-e195-4154-b9f5-fdd9646f6437, ownership-negative run
+891c412a-e1d5-45ba-9c2d-eca49d0c226d and provider-unavailable run
+590105e7-8ac5-42a3-b604-2ee281dba09a all passed their acceptance checks and exact
+cleanup. The negative partial operations retain failed outcomes. Actual provider
+inventory, stopped-before-PID/start checks, cgroups, offline h1 verification,
+credential scans, separate state/IDs and unchanged unrelated sentinel are recorded.
+
+Linux146 tests:144passed,two Windows-only skips,6.524s. Windows146:79passed,
+67 platform skips,3.975s. Sampled logical run bytes reached266,262,337; this is
+neither a hard quota nor a continuously measured peak. All prior failed attempts
+were separately reconciled without changing their failure outcomes. Public base,
+two qualified images and private tools/state/evidence remain intentionally retained.
+
+Source review found no material remaining blocker. Publishing the evidence,
+exact-source hosted CI and the normal delegated Owner completion are the next
+delivery operations; retrieve Minx and GitHub for their current authoritative
+states. After006 is Done,007 readiness and008 cleanup/recovery become eligible.
+No complete pipeline, functional Ansible, production ISO eligibility, automatic
+merge or independent human examination is claimed. Historical checkpoints follow.
+
 ## WORM-006 runtime qualification, October23 at15:16UTC
 
 WORM-002 through005 remain Done. WORM-006 r2 remains In Progress under the

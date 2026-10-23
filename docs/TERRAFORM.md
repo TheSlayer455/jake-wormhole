@@ -1,8 +1,10 @@
 # Terraform smoke lifecycle (WORM-006)
 
 This source implements the one-target provisioning adapter. Fixture tests mock
-every Docker operation; actual Terraform/container acceptance must be recorded
-separately by the authorized Linux operator. A successful partial operation does
+every Docker operation. Separate actual homelab qualification passed at clean
+source06c19f16d45fe66cd0ebde0432372b2d060f7226; see the
+[three-case evidence](../handoff/evidence/WORM-006.json) and
+[engineering review](../handoff/reviews/WORM-006.md). A successful partial operation does
 not establish SSH/Ansible readiness, a complete pipeline or reference eligibility.
 
 Use the exact reviewed clean source and existing authorized Linux Docker access:
@@ -160,7 +162,14 @@ command or destroy, including within the original session. A captured nonzero
 provider failure at the real socket remains unresolved; the fixed absent-endpoint
 proof cannot authorize its cleanup.
 
-Acceptance still requires two actual serial runs with disjoint state/names and
+The explicit acceptance command uses an already existing unrelated container as
+a read-only sentinel; it creates none for that purpose:
+
+```text
+python -m wormhole.provisioning_acceptance --sentinel-id EXISTING_EXACT_CONTAINER_ID
+```
+
+Acceptance exercises two actual serial runs with disjoint state/names and
 inventory, actual saved-plan Terraform lifecycle and cgroups, a provider failure,
 an ownership-negative destroy attempt with an unchanged unrelated sentinel,
 state/configuration/evidence checks for key contents/exposure, and final exact
