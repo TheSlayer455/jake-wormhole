@@ -84,6 +84,18 @@ container/network is inspected and removed by exact ID before admission finishes
 unknown allocations preserve the journal. Failure output identifies the run UUID.
 These are image tests, not Terraform/Ansible pipeline acceptance.
 
+Build and qualification revisions have separate provenance. Each assembly still
+requires its exact clean source revision. Qualification may use a target built at
+revision A and helper built at B while the clean controller is revision C, provided
+both original clean container-reference Runs match their immutable completed,
+reconciled build receipts and all seven recipe-file hashes plus the combined
+recipe identity exactly match C. Actual immutable image IDs, platform, absence of
+declared volumes and original build/run/role/recipe labels are rechecked. Images
+are never relabeled to C. The qualification receipt retains C as source_revision,
+records target_build_source_revision and helper_build_source_revision separately,
+and records the common recipe_sha256/source_files. Controller-only fixes do not
+qualify changed image recipes. See [decision 0003](decisions/0003-image-build-and-controller-provenance.md).
+
 Admission-entry refusal records a failed-before-allocation receipt and makes no Docker request. After any mutating Docker request, failure stops a known owned running builder where possible, retains bounded private logs, and leaves the journal unresolved. Missing/changed ownership, a failed stop, or an unknown pull/commit result stays explicitly unverified. Do not edit/delete admission.json, remove its stable lock file, create a second infrastructure root or retry allocation to bypass this state.
 
 Reconciliation must take the same flock for the same run and source, inspect each exact journaled resource and run-label leftovers, and act only on ownership-verified resources. An assembly failure can be reconciled by stopping/removing its exact builder and empty network and accounting for retained images. A timed-out pull/commit requires separately established daemon completion and exact image/tag outcomes before resolution; elapsed client time or an empty container list is insufficient. The WORM-005 assembly driver intentionally does not auto-clear these unknown outcomes. A supported reconciliation adapter is required before unattended retries; no generic infrastructure cleanup or later lifecycle implementation is implied.

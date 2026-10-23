@@ -13,7 +13,8 @@ import unittest
 from unittest.mock import patch
 
 from wormhole.admission import load_profile, _projection
-from wormhole.images import ImageError, LABEL
+from wormhole.images import ImageError, LABEL, recipe_identity, expected_labels
+from wormhole.runs import atomic_json, create_run, read_json
 
 SPEC = importlib.util.spec_from_file_location('qualification', Path(__file__).resolve().parents[1] / 'scripts/qualify_images.py')
 qualification = importlib.util.module_from_spec(SPEC)
@@ -24,6 +25,111 @@ class FakeRun:
     id = '01234567-0123-4123-8123-012345678901'
     def __init__(self, root): self.root = root
     def file(self, relative): return self.root / relative
+
+
+class BuildProvenance(unittest.TestCase):
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory()
+        self.addCleanup(self.folder.cleanup)
+        self.workspace = Path(self.folder.name) / 'runs'
+        self.recipe, self.hashes = recipe_identity()
+        self.target, self.target_receipt, self.target_image = self.build('target', 'a' * 40, 'sha256:' + 'd' * 64)
+        self.helper, self.helper_receipt, self.helper_image = self.build('helper', 'b' * 40, 'sha256:' + 'e' * 64)
+
+    def build(self, role, revision, image_id):
+        run = create_run(self.workspace, fixture=False, identity=(revision, False))
+        value = {'schema_version': '1.0', 'operation': 'ubuntu-image-assembly', 'status': 'completed',
+                 'resources_reconciled': True, 'role': role, 'run_id': run.id, 'source_revision': revision,
+                 'recipe_sha256': self.recipe, 'source_files': self.hashes, 'image_id': image_id}
+        atomic_json(run.file('evidence/image-build-' + role + '.json'), value)
+        image = {'Id': image_id, 'Os': 'linux', 'Architecture': 'amd64',
+                 'Config': {'Volumes': None, 'Labels': expected_labels(run, role, self.recipe, self.hashes['images.lock.json'])}}
+        return run, value, image
+
+    def reference(self, value=None, image=None):
+        if value is not None:
+            atomic_json(self.target.file('evidence/image-build-target.json'), value)
+        with patch.object(qualification, 'RUNS_ROOT', self.workspace), \
+             patch.object(qualification, 'inspect', return_value=self.target_image if image is None else image):
+            return qualification.build_reference(self.target.id, 'target')
+
+    def test_distinct_target_helper_and_controller_sources_keep_original_provenance(self):
+        controller_revision = 'c' * 40
+        run = create_run(self.workspace, fixture=False, identity=(controller_revision, False))
+        def inspect(kind, image_id):
+            self.assertEqual(kind, 'image')
+            return deepcopy({self.target_receipt['image_id']: self.target_image,
+                             self.helper_receipt['image_id']: self.helper_image}[image_id])
+        with patch.object(qualification, 'RUNS_ROOT', self.workspace), patch.object(qualification.sys, 'platform', 'linux'), \
+             patch.object(qualification, 'source_identity', return_value=(controller_revision, False)), \
+             patch.object(qualification, 'create_run', return_value=run), patch.object(qualification, 'inspect', side_effect=inspect), \
+             patch.object(qualification, 'create_auth', side_effect=ImageError('fixture_stop', 'Stop before credential generation or allocation')), \
+             patch.object(qualification, 'AdmissionLease') as lease:
+            with self.assertRaisesRegex(ImageError, 'Stop before'):
+                qualification.qualify(self.target.id, self.helper.id)
+        lease.assert_not_called()
+        receipt = read_json(run.file('evidence/image-qualification.json'))
+        self.assertEqual(receipt['source_revision'], controller_revision)
+        self.assertEqual(receipt['target_build_source_revision'], 'a' * 40)
+        self.assertEqual(receipt['helper_build_source_revision'], 'b' * 40)
+        self.assertEqual(receipt['source_files'], self.hashes)
+        self.assertEqual(len(receipt['source_files']), 7)
+        self.assertEqual(receipt['recipe_sha256'], self.recipe)
+        self.assertEqual(self.target_image['Config']['Labels'][LABEL + '.source_revision'], 'a' * 40)
+        self.assertEqual(self.helper_image['Config']['Labels'][LABEL + '.source_revision'], 'b' * 40)
+
+    def test_dirty_controller_is_rejected_before_new_run_or_image_inspection(self):
+        with patch.object(qualification.sys, 'platform', 'linux'), \
+             patch.object(qualification, 'source_identity', return_value=('c' * 40, True)), \
+             patch.object(qualification, 'create_run') as create, patch.object(qualification, 'inspect') as inspect:
+            with self.assertRaises(ImageError): qualification.qualify(self.target.id, self.helper.id)
+        create.assert_not_called()
+        inspect.assert_not_called()
+
+    def test_only_completed_reconciled_canonical_role_build_receipts_are_accepted(self):
+        self.assertEqual(self.reference()['source_revision'], 'a' * 40)
+        for field, value in (('schema_version', '2.0'), ('operation', 'image-ssh-qualification'),
+                             ('status', 'pending'), ('status', 'unresolved'), ('resources_reconciled', False),
+                             ('resources_reconciled', 1), ('role', 'helper'), ('run_id', self.helper.id),
+                             ('source_revision', 'f' * 40), ('source_revision', 'A' * 40),
+                             ('source_revision', 'abc123'), ('image_id', 'sha256:short')):
+            candidate = deepcopy(self.target_receipt); candidate[field] = value
+            with self.subTest(field=field, value=value), self.assertRaises(ImageError): self.reference(candidate)
+
+    def test_original_run_must_be_clean_real_and_match_its_build_revision(self):
+        original = self.target.manifest()
+        for field, value in (('source_dirty', True), ('source_revision', 'f' * 40), ('mode', 'fixture')):
+            manifest = deepcopy(original); manifest[field] = value
+            self.target.save_manifest(manifest)
+            with self.subTest(field=field), self.assertRaises(ImageError): self.reference()
+        self.target.save_manifest(original)
+
+    def test_every_recipe_file_and_combined_identity_must_match_current_controller(self):
+        for name in self.hashes:
+            candidate = deepcopy(self.target_receipt)
+            candidate['source_files'][name] = 'f' * 64
+            with self.subTest(file=name), self.assertRaises(ImageError): self.reference(candidate)
+        for change in ('missing', 'extra', 'combined'):
+            candidate = deepcopy(self.target_receipt)
+            if change == 'missing': candidate['source_files'].pop('runtime.py')
+            if change == 'extra': candidate['source_files']['unapproved.sh'] = 'f' * 64
+            if change == 'combined': candidate['recipe_sha256'] = 'f' * 64
+            with self.subTest(change=change), self.assertRaises(ImageError): self.reference(candidate)
+
+    def test_actual_immutable_image_platform_volumes_and_original_build_labels_are_checked(self):
+        for field, value in (('Id', self.helper_receipt['image_id']), ('Os', 'windows'),
+                             ('Architecture', 'arm64'), ('Config.Volumes', {'/unapproved': {}}),
+                             ('Config.Labels.' + LABEL + '.source_revision', 'c' * 40),
+                             ('Config.Labels.' + LABEL + '.run_id', self.helper.id),
+                             ('Config.Labels.' + LABEL + '.role', 'helper'),
+                             ('Config.Labels.' + LABEL + '.recipe_sha256', 'f' * 64),
+                             ('Config.Labels.' + LABEL + '.lock_sha256', 'f' * 64)):
+            candidate = deepcopy(self.target_image)
+            if field.startswith('Config.Labels.'):
+                candidate['Config']['Labels'][field.removeprefix('Config.Labels.')] = value
+            elif field == 'Config.Volumes': candidate['Config']['Volumes'] = value
+            else: candidate[field] = value
+            with self.subTest(field=field), self.assertRaises(ImageError): self.reference(image=candidate)
 
 
 class RuntimeBoundary(unittest.TestCase):

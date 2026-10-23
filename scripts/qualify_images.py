@@ -48,19 +48,27 @@ def remote_probe():
     return '/usr/bin/python3 -c ' + shlex.quote(source)
 
 
-def build_reference(identifier, role, revision):
+def build_reference(identifier, role):
+    """Bind an immutable build to its original Run and the current recipe bytes.
+
+    Controller-only fixes need not rebuild unchanged image recipes. They cannot
+    replace the build's original source attribution or accept changed recipes.
+    """
     run = Run(RUNS_ROOT, identifier)
     value = read_json(run.file('evidence/image-build-' + role + '.json'))
     recipe, hashes = recipe_identity()
-    require(value['status'] == 'completed' and value['resources_reconciled'] is True
-            and value['role'] == role and value['run_id'] == identifier
-            and value['source_revision'] == revision and value['recipe_sha256'] == recipe
-            and value['source_files'] == hashes, 'build_not_qualified',
-            'Use completed reconciled builds from this exact clean source and recipe.')
-    require(type(value['image_id']) is str and re.fullmatch(r'sha256:[a-f0-9]{64}', value['image_id'])
-            and run.manifest()['source_revision'] == revision
-            and run.manifest()['source_dirty'] is False
-            and run.manifest()['mode'] == 'container-reference',
+    require(type(value) is dict and value.get('schema_version') == '1.0'
+            and value.get('operation') == 'ubuntu-image-assembly'
+            and value.get('status') == 'completed' and value.get('resources_reconciled') is True
+            and value.get('role') == role and value.get('run_id') == identifier
+            and value.get('recipe_sha256') == recipe and value.get('source_files') == hashes,
+            'build_not_qualified', 'Use completed reconciled role builds with the exact current image recipe files.')
+    build_revision = value.get('source_revision')
+    manifest = run.manifest()
+    require(type(build_revision) is str and re.fullmatch(r'[a-f0-9]{40}', build_revision)
+            and type(value.get('image_id')) is str and re.fullmatch(r'sha256:[a-f0-9]{64}', value['image_id'])
+            and manifest['source_revision'] == build_revision
+            and manifest['source_dirty'] is False and manifest['mode'] == 'container-reference',
             'build_not_qualified', 'Expected an exact image ID and real clean-source build run.')
     image = inspect('image', value['image_id'])
     labels = expected_labels(run, role, recipe, hashes['images.lock.json'])
@@ -68,7 +76,8 @@ def build_reference(identifier, role, revision):
             and image['Architecture'] == 'amd64' and not image['Config'].get('Volumes')
             and all(image['Config'].get('Labels', {}).get(k) == v for k, v in labels.items()),
             'image_identity_mismatch', 'Actual image differs from its completed build identity.')
-    return value['image_id']
+    return {'image_id': value['image_id'], 'source_revision': build_revision,
+            'recipe_sha256': recipe, 'source_files': hashes}
 
 
 def owned_runtime(identifier, role, image, run, *, missing=False):
@@ -231,9 +240,16 @@ def qualify(target_build, helper_build):
     resources, network = [], None
     unknown = False
     with report_failures(receipt, destination), docker_scope(run):
-        target_image = build_reference(target_build, 'target', revision)
-        helper_image = build_reference(helper_build, 'helper', revision)
-        receipt.update(target_image=target_image, helper_image=helper_image)
+        target_reference = build_reference(target_build, 'target')
+        helper_reference = build_reference(helper_build, 'helper')
+        require(target_reference['recipe_sha256'] == helper_reference['recipe_sha256']
+                and target_reference['source_files'] == helper_reference['source_files'],
+                'recipe_changed', 'The controller recipe changed while validating build references.')
+        target_image, helper_image = target_reference['image_id'], helper_reference['image_id']
+        receipt.update(target_image=target_image, helper_image=helper_image,
+                       target_build_source_revision=target_reference['source_revision'],
+                       helper_build_source_revision=helper_reference['source_revision'],
+                       recipe_sha256=target_reference['recipe_sha256'], source_files=target_reference['source_files'])
         receipt['authentication'] = create_auth(run)
         with run.locked(), AdmissionLease(INFRASTRUCTURE, run.id, revision, 'smoke') as lease:
             try:
