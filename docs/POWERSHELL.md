@@ -103,7 +103,17 @@ python -m wormhole.powershell missing-package-fixture --run-id RUN_UUID
 python -m wormhole.powershell powershell-helper --run-id BUILD_RUN_UUID
 python -m wormhole.powershell powershell-helper --run-id SMOKE_RUN_UUID --build-run BUILD_RUN_UUID
 python -m wormhole.powershell recover --run-id FAILED_RUN_UUID
+python -m wormhole.powershell_acceptance --sentinel-id EXACT_EXISTING_64_HEX_CONTAINER_ID
 ```
+
+The acceptance operator records four fresh, serial operations: missing package,
+ordinary real Terraform/SSH/Ansible functional diagnostics, optional offline
+build, then a fresh optional PowerShell smoke. It checks the unchanged unrelated
+sentinel and exact clean source between every stage, requires distinct Run IDs,
+and stops before the next allocation after an unexpected or uncertain outcome.
+Its compound checkpoint is `evidence/powershell-acceptance.json` in a separate
+coordinator Run. A negative case can pass acceptance while its component remains
+failed. This operator must be reviewed before actual host execution.
 
 Each command uses its own Run. Exit0 means a completed optional build/smoke;
 exit1 means the expected dependency-unavailable operation is still failed;
