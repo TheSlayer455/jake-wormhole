@@ -1,5 +1,27 @@
 # Engineering checkpoint
 
+## WORM-009 actual acceptance passed, October 23
+
+Cleande745a6ee7f80cddb2007ced380e2f67f79395f5 passed six real one-target cases:
+healthy, controlled version/function expectation mismatch, configured interpreter
+unavailable, unexpected Ansible skip and stopped-target unreachable. Ten frozen
+checks per case retain actual observations, original raw-capture binding and
+readable/JSON agreement. Each fresh Run used the same Terraform inventory,
+strict SSH, Docker-free Ansible helper and exact scoped cleanup. Negative
+underlying operations remain failed. The unrelated sentinel stayed unchanged.
+
+Actual homelab source fixtures:237 cases,235pass/2 Windows-only skips,10.592s.
+Windows:237 cases,131pass/106platform skips,8.497s. Independent source review
+found no remaining material blocker. [Evidence](../handoff/evidence/WORM-009.json)
+records exact run IDs, timings, checks and resource samples. Private state, keys
+and captures remain outside Git; owned qualification containers/networks are
+reconciled. Qualified images and public tool cache remain intentionally retained.
+
+Final private publication, exact-source hosted CI and delegated normal Owner
+completion are next. Retrieve Minx/GitHub for their current state. Candidate
+binding remains013; complete pipeline and production ISO eligibility remain
+false. No independent human examination or PR merge is claimed.
+
 ## WORM-009 first actual acceptance, October 23 at16:42UTC
 
 Source9756277 passed233 Linux fixtures (two Windows-only skips) and132 Windows

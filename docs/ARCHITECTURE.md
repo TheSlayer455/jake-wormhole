@@ -7,9 +7,11 @@ reviewed profiles and a canonical Linux shared lock/durable journal.
 WORM-005 adds [qualified Ubuntu target/helper images](IMAGES.md), per-run keys,
 strict SSH qualification, actual cgroup inspection and exact owned cleanup.
 WORM-006 adds the [Terraform adapter](TERRAFORM.md), fixed provisioner and bounded
-acceptance operator. An actual one-target apply and retained-controller destroy
-have run; complete acceptance remains pending. There is no functional Ansible
-playbook or complete runtime pipeline yet. Minx owns requirements,
+acceptance operator. WORM-007 provides strict SSH/Ansible readiness; WORM-008
+provides cancellation and exact-source recovery. WORM-009 adds actual read-only
+SSH/Ansible functional observations with frozen checks and capture-backed results.
+Their actual acceptance records are linked in the current checkpoint. Candidate
+binding, multi-target execution and the complete runtime pipeline remain unfinished. Minx owns requirements,
 assignment and review. The [owner-delegated workflow decision](decisions/0002-owner-delegated-workflow.md)
 describes authorized browser operations without changing Minx permissions.
 
@@ -70,8 +72,9 @@ Versioned JSON contracts are published under `schemas/` for these record familie
 - Decision and cleanup: completeness failures, reference eligibility, production
   ineligibility, primary error, owned resources and separate cleanup outcomes.
 
-The initial schemas and validators cover current local records. Runtime candidate,
-image, readiness, SVD, assessment and publication implementations remain separate
+The initial schemas and validators cover current local records. Images,
+Terraform, readiness, recovery and functional observations have actual one-target
+acceptance. Candidate binding, SVD, assessment and publication remain separate
 tickets; schema availability is not evidence that those operations ran. A real
 run must bind candidate hash, derived image, test plan and evidence; validating an
 unrelated stock image cannot validate the candidate. Text, JSON and JUnit reports

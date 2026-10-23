@@ -13,7 +13,7 @@ installation laboratory. Read [architecture](ARCHITECTURE.md),
 | CLI/stages | Local CLI, bounded stage execution and explicitly synthetic fixture subset; six published artifact contracts; separate real image operations | A complete Terraform/SSH/Ansible runtime pipeline |
 | Terraform | Actual pinned Terraform1.17/provider4.6, h1 verification, two isolated lifecycles, provider-failure and ownership negatives, real inventories and saved destruction | Host tool installation, multi-target lifecycle or complete pipeline |
 | Images/SSH | Two actual Ubuntu images, strict SSH as UID10001, separate trust/authentication negatives, unique keys and exact cleanup | Candidate binding or VM fidelity |
-| Ansible | Actual Core2.21.5 wait_for_connection and remote ping through strict SSH, nine readiness scenarios with per-state evidence | Host installation or functional package/configuration/payload validation (WORM-009) |
+| Ansible | Actual Core2.21.5 readiness plus ten frozen package/configuration/baked payload checks through strict SSH; six fresh functional scenarios with capture-backed results | Host installation, candidate-derived image binding or complete runtime pipeline |
 | Recovery | Actual normal, failed, cooperative-cancelled and interrupted teardown cases; exact original-source reconciliation, readable/JSON agreement and unchanged sentinel | General resolution of unknown daemon outcomes or overlapping admitted runs |
 | Source/candidate | Synthetic chunks and an attributable payload are planned | Implemented reconstruction, candidate build or validated image mapping |
 | SVD | Observed-target collection is planned | A generated inventory or version-preservation result |

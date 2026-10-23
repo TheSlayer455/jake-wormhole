@@ -151,3 +151,22 @@ and [configuration](https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/
 establish aggregate loading and final-stats dispatch; the
 [tree callback source](https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/plugins/callback/tree.py)
 establishes its missing skipped handler. Actual host acceptance is recorded separately.
+
+## Actual reproduction and acceptance
+
+From an immutable clean tested checkout on the authorized Linux host, with the
+existing qualified target/helper build references, private tools cache and
+canonical infrastructure root available, run:
+
+```text
+python3 -B -m wormhole.validation_acceptance --scenario all --sentinel-id EXISTING_EXACT_UNRELATED_CONTAINER_ID
+```
+
+This bounded operator admits each fresh run against measured host capacity,
+holds its canonical lease and Run lock, and performs normal exact cleanup.
+The sentinel is observed read-only. It refuses identity/uncertainty/ownership
+conflicts; do not replace missing prerequisites or clear another run's state.
+Private results are retained under each Run. The final JSON summarizes all six
+cases without exporting keys or raw private captures. Re-run only when canonical
+admission reports no unreconciled prior work. Actual qualification evidence is
+in [WORM-009](../handoff/evidence/WORM-009.json).

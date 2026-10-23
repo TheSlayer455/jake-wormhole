@@ -2,7 +2,7 @@
 
 Private, container-only reference automation for source integrity, Terraform-managed targets, SSH/Ansible checks and attributable engineering evidence.
 
-Minx tracks the work under [WORM-001](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-001). The CLI, Linux admission, pinned Ubuntu images, real Terraform lifecycle, strict SSH/Ansible readiness and scoped cancellation/recovery work. Their actual acceptance evidence is recorded separately. WORM-002 through WORM-008 are Done under Jake's delegated Owner workflow. WORM-009 now owns functional package, configuration and smoke payload checks; those checks and the candidate pipeline remain unfinished. A complete container pipeline is not yet available.
+Minx tracks the work under [WORM-001](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-001). The CLI, Linux admission, pinned Ubuntu images, real Terraform lifecycle, strict SSH/Ansible readiness and scoped cancellation/recovery work. Their actual acceptance evidence is recorded separately. WORM-002 through WORM-008 are Done under Jake's delegated Owner workflow. WORM-009 functional package, configuration and baked smoke payload checks passed six actual one-target acceptance cases. Delivery status is in the current checkpoint; the candidate pipeline remains unfinished. A complete container pipeline is not yet available.
 
 Start with [AGENTS.md](AGENTS.md), [current state](docs/STATE.md) and [handoff](handoff/CURRENT.md). The [fidelity record](docs/FIDELITY.md) separates actual behavior from planned or simulated capabilities. [Repository controls](docs/REPOSITORY.md) records publication and CI observations.
 
