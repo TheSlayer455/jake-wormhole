@@ -52,6 +52,9 @@ no Docker socket, no capabilities and bounded writable tmpfs. No path or code
 is accepted through an argument. Runtime DNF/RPM availability remains a probe
 fact; the module does not install missing tooling.
 The driver also sets `WORMHOLE_ROLE=rpm-resolver` and launches this file as PID1.
+The solver waits at most fifteen seconds for one fixed private release marker;
+only the driver publishes its exact bytes after stopped-container inspection,
+start and actual live cgroup verification. The marker is published atomically.
 Its fixed supervisor bounds the solver child to sixty seconds, then terminates
 and reaps it before PID1 exits. Controller loss cannot leave an indefinitely
 running solver. Its combined output is drained through a private pipe within a
@@ -74,6 +77,32 @@ original pins before use. The parent must also bind the resolver capture to its
 exact owned container/source/request and refuse incomplete or unknown daemon
 outcomes. A structurally valid JSON object alone does not authorize allocation,
 prove a successful DNF execution or establish a complete package transaction.
+
+## Explicit resolver qualification
+
+The library `rpm_resolution.resolve_packages(run, lease, base_run=old_run)`
+requires a held canonical smoke lease, Run lock and scoped Docker configuration.
+It leaves the caller's lease held in the assembly phase and returns only the
+validated selection after its exact resolver container is absent. It does not
+download the selected RPMs or install them. The current root-owned host cache
+and a UID0 container without capabilities require this driver to run through
+the already approved root host operator; no host permissions are changed.
+
+The public fixed operator creates its own fresh Run and finishes its lease:
+
+```sh
+python3 -B -m wormhole.rpm_resolution qualify --base-run ORIGINAL_PROBE_UUID --sentinel-id EXACT_UNRELATED_CONTAINER_ID
+```
+
+The resolver runs with network `none`, a read-only root filesystem, zero
+capabilities, no additional swap, 2 GiB memory, 2 CPUs and 256 PIDs from the
+reviewed build budget. Only the two exact source files, request and metadata
+cache are mounted read-only. Bounded tmpfs and rotating Docker logs supplement
+its finite PID1 and 70-second controller observation deadline. The receipt at
+`evidence/rpm-resolution.json` binds the current source, original base probe,
+request, complete private capture, selected NEVRAs and cleanup. It preserves
+primary failures; an uncertain daemon operation retains admission and refuses
+cleanup. It never claims RPM signature verification or full pipeline success.
 
 ## Verification limits
 

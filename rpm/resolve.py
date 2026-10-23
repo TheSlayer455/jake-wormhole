@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import select
 import signal
+import stat
 import sys
 import time
 import xml.etree.ElementTree as ET
@@ -18,6 +19,7 @@ BASE = 'sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1'
 BASE_CONFIG = 'sha256:9be18d9ba921714e79e390694315e3341047fe758ac79b62e671d92d4217c3fb'
 MAX_JSON = 262144
 RESOLVER_SECONDS = 60
+START_MARKER = Path('/run/wormhole-rpm-resolve.start')
 
 
 def require(value):
@@ -181,6 +183,7 @@ def supervise(action, seconds=RESOLVER_SECONDS, *, grace_seconds=.2):
 def solver_main():
     require(len(sys.argv)==1 and Path('/.dockerenv').is_file() and os.geteuid()==0 and
         not any(Path(p).exists() for p in ('/var/run/docker.sock','/run/docker.sock')))
+    wait_for_start()
     lock_raw=read(LOCK,65536);request_raw=read(REQUEST);lock=json.loads(lock_raw,object_pairs_hook=unique);request=json.loads(request_raw,object_pairs_hook=unique)
     require(request['lock_sha256']==sha(lock_raw) and request['run_id']==os.environ.get('WORMHOLE_RUN_ID') and
         lock['base']['image_id']==BASE and lock['base']['config_digest']==BASE_CONFIG and
@@ -189,6 +192,24 @@ def solver_main():
     result=resolve(request,lock,dnf,rpm)
     raw=canonical(result);require(len(raw)<=MAX_JSON);print(raw.decode())
     return 0
+
+
+def wait_for_start(seconds=15):
+    """Fixed release after the caller verifies this live container's cgroups."""
+    deadline=time.monotonic()+seconds
+    while time.monotonic()<deadline:
+        require(not START_MARKER.is_symlink())
+        if START_MARKER.exists():
+            before=START_MARKER.lstat()
+            require(stat.S_ISREG(before.st_mode) and before.st_nlink==1 and before.st_uid==os.geteuid() and stat.S_IMODE(before.st_mode)==0o600 and before.st_size==2)
+            descriptor=os.open(START_MARKER,os.O_RDONLY|os.O_NOFOLLOW)
+            try:
+                actual=os.fstat(descriptor)
+                require((actual.st_dev,actual.st_ino)==(before.st_dev,before.st_ino) and os.read(descriptor,3)==b'1\n')
+            finally:os.close(descriptor)
+            require(time.monotonic()<deadline);return
+        time.sleep(.02)
+    require(False)
 
 
 def main():

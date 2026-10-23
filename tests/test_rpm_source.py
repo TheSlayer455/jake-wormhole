@@ -197,6 +197,21 @@ class PublicSources(unittest.TestCase):
 
 
 class OfflineResolution(unittest.TestCase):
+    @unittest.skipUnless(os.name=='posix','Resolver release marker permission fixture requires POSIX')
+    def test_fixed_release_marker_is_exact_private_bounded_and_required(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'marker'
+            with patch.object(resolver,'START_MARKER',path):
+                with self.assertRaises(ValueError):resolver.wait_for_start(.03)
+                path.write_bytes(b'1\n');path.chmod(0o600);resolver.wait_for_start(.1)
+                for fault in (b'2\n',b'1\nextra'):
+                    path.write_bytes(fault)
+                    with self.assertRaises(ValueError):resolver.wait_for_start(.1)
+                path.write_bytes(b'1\n');path.chmod(0o644)
+                with self.assertRaises(ValueError):resolver.wait_for_start(.1)
+                path.unlink();path.symlink_to(Path(folder)/'missing')
+                with self.assertRaises(ValueError):resolver.wait_for_start(.1)
+
     @unittest.skipUnless(os.name=='posix','Finite resolver supervisor requires POSIX')
     def test_actual_fixed_resolver_child_has_finite_lifetime_and_is_reaped(self):
         with tempfile.TemporaryDirectory() as folder:
