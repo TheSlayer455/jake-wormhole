@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:jake-wormhole:schema:release-decision:1.0",
+  "title": "Jake Wormhole release-decision v1",
+  "$comment": "Generated from wormhole/contracts.py. Fixed-contract validation also enforces x-uniqueBy and the declared size/depth bounds; schema validity alone is not runtime acceptance or release eligibility. Version 1 cannot declare a complete runtime pipeline or an eligible release.",
+  "x-maxEncodedBytes": 1048576,
+  "x-maxDepth": 16,
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 36,
+      "format": "uuid",
+      "pattern": "^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$(?![\\s\\S])"
+    },
+    "source_revision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "pattern": "^(?:[0-9a-f]{40})$(?![\\s\\S])"
+    },
+    "source_dirty": {
+      "type": "boolean"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "fixture",
+        "container-reference"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail",
+        "error",
+        "unsupported",
+        "unverified"
+      ]
+    },
+    "reference_eligible": {
+      "type": "boolean",
+      "const": false
+    },
+    "production_iso_eligible": {
+      "type": "boolean",
+      "const": false
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      },
+      "maxItems": 100,
+      "uniqueItems": true,
+      "minItems": 1
+    }
+  },
+  "required": [
+    "schema_version",
+    "run_id",
+    "source_revision",
+    "source_dirty",
+    "mode",
+    "status",
+    "reference_eligible",
+    "production_iso_eligible",
+    "reasons"
+  ],
+  "additionalProperties": false
+}
