@@ -313,13 +313,30 @@ class AdmissionLease:
         self.plan = None
         self.record = None
         self.finished = False
+        self._reconciliation_only = False
+        self._lease_pid = None
+        self._completion_archive = None
+
+    @classmethod
+    def resume(cls, infrastructure_root, run_id, source_revision, profile="smoke", *, allow_synthetic=False):
+        """Reopen exactly one existing admission for adapter-proven cleanup only.
+
+        This never refreshes capacity, initializes storage, adopts unknown IDs or
+        clears uncertain daemon work. The caller still owes the same exact-ID,
+        ownership and complete-outcome proof required by ordinary reconciliation.
+        """
+        lease = cls(infrastructure_root, run_id, source_revision, profile,
+                    allow_synthetic=allow_synthetic)
+        lease._reconciliation_only = True
+        return lease
 
     def __enter__(self):
         _require(sys.platform.startswith("linux"), "linux_required", "Shared infrastructure leases require Linux flock.")
         import fcntl
-        self.root = workspace_path(self.root, create=True)
+        self.root = workspace_path(self.root, create=not self._reconciliation_only)
         lock = self.root / "infrastructure.lock"
-        self.descriptor = os.open(lock, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+        flags = os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC
+        self.descriptor = os.open(lock, flags if self._reconciliation_only else flags | os.O_CREAT, 0o600)
         try:
             _owned(lock)
             identity = os.fstat(self.descriptor)
@@ -329,18 +346,36 @@ class AdmissionLease:
             except BlockingIOError:
                 raise AdmissionError("infrastructure_busy", "Another process holds the infrastructure lock; no takeover is permitted.") from None
             _require((identity.st_dev, identity.st_ino) == (lock.stat().st_dev, lock.stat().st_ino), "unsafe_lock")
+            self._lease_pid = os.getpid()
             marker = self.root / "owner.json"
             expected = {"application": PROJECT, "schema_version": "1.0", "kind": "shared-infrastructure-root"}
             if marker.exists():
                 _require(read_json(marker) == expected, "ownership_mismatch")
             else:
+                _require(not self._reconciliation_only, "ownership_mismatch", "Reconciliation requires an existing owned infrastructure root.")
                 _require(all(x.name == "infrastructure.lock" for x in self.root.iterdir()), "ownership_mismatch", "Refusing an existing unowned infrastructure directory.")
                 _sync_json(marker, expected)
             history = self.root / "history"
             if not history.exists():
+                _require(not self._reconciliation_only, "invalid_archive", "Reconciliation requires the existing history directory.")
                 history.mkdir(mode=0o700)
             _owned(history, directory=True)
             journal = self.root / "admission.json"
+            if self._reconciliation_only:
+                self.record = _journal(read_json(journal))
+                self.plan = deepcopy(self.record["plan"])
+                selected = load_profile(self.profile)
+                _require(self.record["run_id"] == self.run_id and self.record["source_revision"] == self.source_revision and
+                         self.plan.get("profile") == selected["profile"] and self.plan.get("synthetic") is self.allow_synthetic,
+                         "resume_mismatch", "Reconciliation requires the exact current run, source, profile and real/synthetic mode.")
+                _require(type(self.plan.get("requirements")) is dict and
+                         _number(self.plan["requirements"].get("disk_bytes"), minimum=1, integer=True), "invalid_journal")
+                archive = history / (self.run_id + ".json")
+                if archive.exists():
+                    self._completion_archive = self._matching_archive(read_json(archive))
+                else:
+                    _require(self.record["state"] == "active", "invalid_archive", "Finished admission requires its exact durable archive.")
+                return self
             if journal.exists():
                 previous = _journal(read_json(journal))
                 _require(previous["run_id"] != self.run_id, "run_id_reused", "A previous admission run ID cannot be reused.")
@@ -363,16 +398,24 @@ class AdmissionLease:
             self.__exit__(None, None, None)
             raise
 
-    def _active(self):
+    def _active(self, *, finalizing=False):
         _require(self.descriptor is not None and self.record is not None and not self.finished,
                  "lease_inactive", "An active owned infrastructure lease is required.")
-        _require(os.getpid() == self.record["owner_pid"], "lease_owner_changed", "A forked or different process cannot use another process's lease.")
+        _require(os.getpid() == self._lease_pid, "lease_owner_changed", "A forked or different process cannot use another process's lease.")
         lock = self.root / "infrastructure.lock"
         _owned(lock)
         identity = os.fstat(self.descriptor)
         _require((identity.st_dev, identity.st_ino) == (lock.stat().st_dev, lock.stat().st_ino), "unsafe_lock", "The stable infrastructure lock inode changed.")
         current = _journal(read_json(self.root / "admission.json"))
         _require(current == self.record, "journal_changed", "The active journal changed; preserve it and stop allocation.")
+        archive = self.root / "history" / (self.run_id + ".json")
+        if archive.exists():
+            completed = self._matching_archive(read_json(archive))
+            _require(self._completion_archive is None or self._completion_archive == completed, "invalid_archive", "The durable completion archive changed; preserve state for reviewed recovery.")
+            self._completion_archive = completed
+        else:
+            _require(self._completion_archive is None, "invalid_archive", "The durable completion archive disappeared; preserve state for reviewed recovery.")
+        _require(finalizing or self._completion_archive is None, "finalization_pending", "An archived completion can only be explicitly finalized.")
 
     def _save(self):
         self.record["updated_at"] = now()
@@ -381,6 +424,7 @@ class AdmissionLease:
 
     def set_phase(self, phase):
         self._active()
+        _require(not self._reconciliation_only or phase == "reconciling", "reconciliation_only", "A resumed lease cannot enter an allocation or execution phase.")
         _require(type(phase) is str and phase in PHASES and phase != "reserved", "invalid_phase")
         current = self.record["phase"]
         allowed = {"reserved": {"assembling", "provisioning", "reconciling"},
@@ -400,6 +444,7 @@ class AdmissionLease:
     def refresh(self):
         """Remeasure before allocation; refusal keeps existing resources journaled."""
         self._active()
+        _require(not self._reconciliation_only, "reconciliation_only", "A resumed lease cannot refresh or alter its admitted plan.")
         refreshed = build_plan(self.profile, self.collector(self.root))
         _require(refreshed["synthetic"] is self.allow_synthetic, "synthetic_observation")
         unchanged = ("profile", "target_count", "controller_concurrency", "build_concurrency", "requirements", "limits", "headroom", "materialization")
@@ -412,6 +457,7 @@ class AdmissionLease:
 
     def register_resource(self, kind, resource_id):
         self._active()
+        _require(not self._reconciliation_only, "reconciliation_only", "A resumed lease cannot allocate or register additional resources.")
         phase = self.record["phase"]
         _require(phase in {"assembling", "materializing", "provisioning"}, "intent_required", "Journal the allocation phase before creating any resource.")
         _resource_identity(kind, resource_id)
@@ -439,18 +485,37 @@ class AdmissionLease:
         found[0].update(outcome=outcome, size_bytes=size_bytes)
         self._save()
 
+    def _matching_archive(self, value):
+        """Accept only this record's already-durable, complete final projection."""
+        archive = _journal(value)
+        expected = deepcopy(self.record)
+        expected.update(state="finished", phase="reconciling", updated_at=archive["updated_at"])
+        try:
+            stamps = [datetime.fromisoformat(x.replace("Z", "+00:00")) for x in
+                      (self.record["updated_at"], archive["updated_at"])]
+            chronological = all(x.tzinfo is not None for x in stamps) and stamps[1] >= stamps[0]
+        except (AttributeError, TypeError, ValueError):
+            chronological = False
+        _require(archive == expected and chronological and
+                 (self.record["state"] != "finished" or archive == self.record),
+                 "invalid_archive", "The completion archive does not exactly match this admission; preserve it for reviewed recovery.")
+        return archive
+
     def finish(self, *, reconciliation_complete=False):
-        self._active()
+        self._active(finalizing=True)
         _require(reconciliation_complete is True, "reconciliation_required", "Explicit completed reconciliation is required; context exit never implies cleanup.")
         _require(all(x["outcome"] != "pending" for x in self.record["resources"]), "unreconciled_resources")
-        self.record["state"] = "finished"
-        self.record["phase"] = "reconciling"
-        self.record["updated_at"] = now()
-        _journal(self.record)
         archive = self.root / "history" / (self.run_id + ".json")
-        _require(not archive.exists(), "run_id_reused")
-        _sync_json(archive, self.record)
-        _sync_json(self.root / "admission.json", self.record)
+        if archive.exists():
+            completed = self._matching_archive(read_json(archive))
+        else:
+            _require(self._completion_archive is None, "invalid_archive", "The durable completion archive disappeared; preserve state for reviewed recovery.")
+            completed = deepcopy(self.record)
+            completed.update(state="finished", phase="reconciling", updated_at=now())
+            _journal(completed)
+            _sync_json(archive, completed)
+        _sync_json(self.root / "admission.json", completed)
+        self.record = completed
         self.finished = True
 
     def __exit__(self, exc_type, exc, traceback):

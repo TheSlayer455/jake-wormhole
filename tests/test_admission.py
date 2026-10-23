@@ -184,6 +184,9 @@ class Leases(unittest.TestCase):
         return a.AdmissionLease(self.root, identifier or str(uuid4()), SHA,
                                 collector=lambda _: observed(), allow_synthetic=True, **kwargs)
 
+    def resume(self, identifier, **kwargs):
+        return a.AdmissionLease.resume(self.root, identifier, SHA, allow_synthetic=True, **kwargs)
+
     def child(self, code, *args, cwd=None):
         prefix = "import sys; sys.path.insert(0," + repr(str(SOURCE)) + "); "
         return subprocess.Popen([sys.executable, "-B", "-u", "-c", prefix + code, *map(str, args)],
@@ -218,6 +221,14 @@ class Leases(unittest.TestCase):
             with self.lease():
                 self.fail("Crash leftovers authorized duplicate allocation")
         self.assertEqual(blocked.exception.code, "unreconciled_run")
+        with self.resume(record["run_id"]) as resumed:
+            self.assertEqual(resumed.record["owner_pid"], process.pid)  # Original provenance survives resume.
+            self.assertEqual(resumed.plan, record["plan"])
+            resumed.set_phase("reconciling")
+            # Synthetic adapter proof: the exact fixture ID was accounted for, not a Docker observation.
+            resumed.reconcile_resource("container", "c" * 64)
+            resumed.finish(reconciliation_complete=True)
+        self.assertEqual(read_json(self.root / "admission.json")["state"], "finished")
 
     def test_cancellation_never_auto_completes_and_empty_allocation_intent_still_blocks(self):
         with self.assertRaises(KeyboardInterrupt):
@@ -329,6 +340,176 @@ class Leases(unittest.TestCase):
             with a.AdmissionLease(unowned, str(uuid4()), SHA, collector=lambda _: observed(), allow_synthetic=True):
                 pass
         self.assertEqual((unowned / "unrelated.txt").read_text(), "Preserve this fixture")
+
+    def test_resume_requires_existing_owned_root_lock_marker_history_and_journal_without_initialization(self):
+        missing = Path(self.temporary.name) / "never-initialized"
+        with self.assertRaises((a.AdmissionError, RunError, OSError)):
+            with a.AdmissionLease.resume(missing, str(uuid4()), SHA, allow_synthetic=True):
+                pass
+        self.assertFalse(missing.exists())
+        for component in ("infrastructure.lock", "owner.json", "history", "admission.json"):
+            root = Path(self.temporary.name) / component.replace(".", "-")
+            with a.AdmissionLease(root, str(uuid4()), SHA, collector=lambda _: observed(), allow_synthetic=True) as lease:
+                identifier = lease.run_id
+            path = root / component
+            if path.is_dir():
+                path.rmdir()  # Disposable empty fixture, never operator state.
+            else:
+                path.unlink()
+            before = {x.relative_to(root): x.read_bytes() for x in root.rglob("*") if x.is_file()}
+            with self.subTest(missing=component), self.assertRaises((a.AdmissionError, RunError, OSError)):
+                with a.AdmissionLease.resume(root, identifier, SHA, allow_synthetic=True):
+                    pass
+            self.assertFalse(path.exists())
+            self.assertEqual(before, {x.relative_to(root): x.read_bytes() for x in root.rglob("*") if x.is_file()})
+
+    def test_resume_requires_exact_current_run_source_profile_and_synthetic_mode(self):
+        with self.lease() as original:
+            identifier = original.run_id
+        journal = self.root / "admission.json"
+        before = journal.read_bytes()
+        cases = ((str(uuid4()), SHA, "smoke", True), (identifier, "b" * 40, "smoke", True),
+                 (identifier, SHA, "five-targets", True), (identifier, SHA, "smoke", False))
+        for run, source, profile, synthetic in cases:
+            with self.subTest(case=(run, source, profile, synthetic)), self.assertRaises(a.AdmissionError):
+                with a.AdmissionLease.resume(self.root, run, source, profile, allow_synthetic=synthetic):
+                    pass
+            self.assertEqual(journal.read_bytes(), before)
+        with self.resume(identifier):
+            pass
+        self.assertEqual(journal.read_bytes(), before)
+        self.assertEqual(read_json(journal)["state"], "active")
+
+    def test_resume_does_not_measure_allocate_register_adopt_or_complete_unknown_intent(self):
+        with self.lease() as lease:
+            lease.set_phase("assembling")
+            lease.register_resource("container", "a" * 64)
+            identifier = lease.run_id
+        before = read_json(self.root / "admission.json")
+        with patch.object(a, "build_plan", side_effect=AssertionError("No capacity refresh during cleanup")), \
+             patch.object(a, "_read_command", side_effect=AssertionError("No Docker observations from resume")):
+            with self.resume(identifier) as resumed:
+                self.assertEqual(resumed.plan, before["plan"])
+                for operation in (lambda: resumed.set_phase("assembling"), lambda: resumed.set_phase("materializing"),
+                                  lambda: resumed.set_phase("provisioning"), lambda: resumed.set_phase("validating"),
+                                  resumed.refresh, lambda: resumed.register_resource("container", "b" * 64)):
+                    with self.assertRaises(a.AdmissionError) as error:
+                        operation()
+                    self.assertEqual(error.exception.code, "reconciliation_only")
+                with self.assertRaises(a.AdmissionError):
+                    resumed.reconcile_resource("container", "b" * 64)
+                with self.assertRaises(a.AdmissionError) as error:
+                    resumed.finish(reconciliation_complete=True)
+                self.assertEqual(error.exception.code, "unreconciled_resources")
+                resumed.set_phase("reconciling")
+                resumed.reconcile_resource("container", "a" * 64)
+                with self.assertRaises(a.AdmissionError):
+                    resumed.finish()
+        # No automatic completion even after every recorded resource was reconciled.
+        self.assertEqual(read_json(self.root / "admission.json")["state"], "active")
+        with self.resume(identifier) as resumed:
+            self.assertEqual(resumed.plan, before["plan"])
+            resumed.finish(reconciliation_complete=True)
+        # A matching archived completion is idempotent, but still requires confirmation.
+        final = (self.root / "admission.json").read_bytes()
+        with self.resume(identifier) as resumed:
+            with self.assertRaises(a.AdmissionError):
+                resumed.finish()
+            resumed.finish(reconciliation_complete=True)
+        self.assertEqual((self.root / "admission.json").read_bytes(), final)
+
+    def test_empty_uncertain_materialization_stays_active_until_adapter_explicitly_confirms(self):
+        with self.lease() as lease:
+            lease.set_phase("assembling")
+            lease.set_phase("materializing")
+            identifier = lease.run_id
+        before = (self.root / "admission.json").read_bytes()
+        with self.resume(identifier) as resumed:
+            self.assertEqual(resumed.record["resources"], [])
+            with self.assertRaises(a.AdmissionError):
+                resumed.finish()
+        self.assertEqual((self.root / "admission.json").read_bytes(), before)
+        with self.assertRaises(a.AdmissionError):
+            with self.lease():
+                pass
+        # Only an adapter that independently proves the uncertain daemon outcome may do this.
+        with self.resume(identifier) as resumed:
+            resumed.finish(reconciliation_complete=True)
+
+    def test_resume_uses_same_exclusive_flock_and_cannot_take_over_a_live_process(self):
+        with self.lease() as lease:
+            identifier = lease.run_id
+            code = "from wormhole.admission import AdmissionLease,AdmissionError;\ntry:\n with AdmissionLease.resume(sys.argv[1],sys.argv[2],'a'*40,allow_synthetic=True): pass\nexcept AdmissionError as e: print(e.code)"
+            process = self.child(code, self.root, identifier)
+            output, error = process.communicate(timeout=5)
+            self.assertEqual(process.returncode, 0, error)
+            self.assertEqual(output.strip(), "infrastructure_busy")
+        inode = (self.root / "infrastructure.lock").stat().st_ino
+        with self.resume(identifier):
+            process = self.child(code, self.root, identifier)
+            output, error = process.communicate(timeout=5)
+            self.assertEqual(process.returncode, 0, error)
+            self.assertEqual(output.strip(), "infrastructure_busy")
+        self.assertEqual((self.root / "infrastructure.lock").stat().st_ino, inode)
+
+    def test_resume_finishes_interrupted_archive_first_commit_without_replacing_archive(self):
+        with self.lease() as lease:
+            identifier = lease.run_id
+            original = a._sync_json
+            def fail_current(path, value):
+                if path.name == "admission.json":
+                    raise OSError("Synthetic failure after archive commit")
+                return original(path, value)
+            with patch.object(a, "_sync_json", side_effect=fail_current), self.assertRaises(OSError):
+                lease.finish(reconciliation_complete=True)
+            self.assertEqual(lease.record["state"], "active")
+            for operation in (lambda: lease.set_phase("assembling"), lease.refresh,
+                              lambda: lease.register_resource("container", "b" * 64)):
+                with self.assertRaises(a.AdmissionError) as error:
+                    operation()
+                self.assertEqual(error.exception.code, "finalization_pending")
+        archive = self.root / "history" / (identifier + ".json")
+        archived = archive.read_bytes()
+        before = (self.root / "admission.json").read_bytes()
+        with self.resume(identifier) as resumed:
+            for operation in (lambda: resumed.set_phase("reconciling"),
+                              lambda: resumed.reconcile_resource("container", "a" * 64), resumed.finish):
+                with self.assertRaises(a.AdmissionError):
+                    operation()
+        self.assertEqual((self.root / "admission.json").read_bytes(), before)
+        with self.resume(identifier) as resumed:
+            resumed.finish(reconciliation_complete=True)
+        self.assertEqual(archive.read_bytes(), archived)
+        self.assertEqual(read_json(self.root / "admission.json"), read_json(archive))
+        with self.lease() as next_lease:
+            next_lease.finish(reconciliation_complete=True)
+
+    def test_resume_refuses_mismatched_or_missing_completion_archive_and_forked_use(self):
+        with self.lease() as lease:
+            identifier = lease.run_id
+            lease.finish(reconciliation_complete=True)
+        archive = self.root / "history" / (identifier + ".json")
+        value = read_json(archive)
+        value["source_revision"] = "b" * 40
+        a._sync_json(archive, value)  # Disposable corruption fixture.
+        before = (self.root / "admission.json").read_bytes()
+        with self.assertRaises(a.AdmissionError) as error:
+            with self.resume(identifier):
+                pass
+        self.assertEqual(error.exception.code, "invalid_archive")
+        self.assertEqual((self.root / "admission.json").read_bytes(), before)
+        archive.unlink()
+        with self.assertRaises(a.AdmissionError):
+            with self.resume(identifier):
+                pass
+        # A resumed descriptor, like an ordinary lease, belongs only to its acquiring process.
+        other = Path(self.temporary.name) / "fork-fixture"
+        with a.AdmissionLease(other, str(uuid4()), SHA, collector=lambda _: observed(), allow_synthetic=True) as lease:
+            other_id = lease.run_id
+        with a.AdmissionLease.resume(other, other_id, SHA, allow_synthetic=True) as resumed:
+            with patch.object(a.os, "getpid", return_value=os.getpid() + 1), self.assertRaises(a.AdmissionError) as error:
+                resumed.set_phase("reconciling")
+            self.assertEqual(error.exception.code, "lease_owner_changed")
 
 
 if __name__ == "__main__":

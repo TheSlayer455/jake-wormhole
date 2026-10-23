@@ -103,7 +103,7 @@ Context exit never declares success or cleanup. Cancellation, failed operations,
 unknown commit results, stale owner PIDs and reboot do not clear the active
 journal. Although the kernel releases flock on process death, the next admission
 refuses unreconciled state, including an empty resource list after an uncertain
-create. Explicit owned-resource reconciliation is a later recovery adapter's
+create. Explicit owned-resource reconciliation is a trusted adapter's
 responsibility; do not delete a journal or guess that expiry makes resources safe.
 No PID killing, broad cleanup or daemon setting changes are implemented here.
 
@@ -112,6 +112,35 @@ accounted for. The immutable run-ID archive is durably written before the active
 journal becomes finished. A missing/mismatched archive or reused run ID blocks
 admission. Interrupted finalization therefore remains a visible recovery boundary.
 Application records are not tamper-proof against the host administrator.
+
+## Reconciliation-only resume (WORM-005)
+
+`AdmissionLease.resume(root, run_id, source_revision, profile="smoke")` reopens
+only the current exact run/source/profile under the same exclusive flock. It
+requires the existing owned root, stable lock, marker, history and journal; it
+initializes none of them. Real mode remains pinned to the canonical root.
+Synthetic resume requires `allow_synthetic=True` and an already synthetic plan.
+The original PID, source and immutable admitted plan remain provenance; a resumed
+descriptor belongs to the process that acquired it. No PID takeover occurs.
+
+The resumed context permits `set_phase("reconciling")`, reconciliation of exact
+already-recorded resources, and `finish(reconciliation_complete=True)`. Allocation
+or execution phases, registration of additional/adopted resources and capacity
+refresh refuse. Stale measurements or current headroom do not obstruct cleanup.
+The library performs no Docker operation and cannot supply the adapter's proof.
+Before finalization the adapter must inspect exact IDs/ownership and establish
+the complete daemon outcome, including a run-scoped sweep for any uncertain
+create, pull or commit. An empty resource list is not that proof. Unknown outcomes
+remain active even after context exit. General recovery is outside this slice.
+
+If interruption left a durable completion archive and the old active journal,
+resume accepts only the archive's exact completed projection, preserving every
+resource, plan and identity field. Only an explicit `finish` may commit that
+archive to the current journal; allocation/reconciliation mutations remain
+blocked. A matching already-finished record can also be explicitly finalized
+idempotently. The existing archive is never replaced. Missing, changed or
+mismatched archives fail closed, and completed run IDs cannot be reused for new
+admission. This is a supported adapter boundary, not a journal-edit workaround.
 
 ## Applied-limit and materialization boundaries
 
