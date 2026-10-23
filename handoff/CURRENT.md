@@ -1,19 +1,12 @@
 # Current continuation point
 
-WORM-002 baseline assembly is in progress. Read [AGENTS.md](../AGENTS.md), [README](../README.md), [STATE](../docs/STATE.md), [ARCHITECTURE](../docs/ARCHITECTURE.md), [FIDELITY](../docs/FIDELITY.md) and [repository controls](../docs/REPOSITORY.md). Confirm the files exist in the integrated checkout; several are being supplied by parallel isolated writers.
+WORM-002's baseline is implemented and published in [draft PR 1](https://github.com/TheSlayer455/jake-wormhole/pull/1), branch `codex/WORM-002-baseline`. Read [AGENTS](../AGENTS.md), [STATE](../docs/STATE.md), [ARCHITECTURE](../docs/ARCHITECTURE.md), [FIDELITY](../docs/FIDELITY.md) and [repository controls](../docs/REPOSITORY.md). Assembly is complete; the source contains the linked files and verifier.
 
-The source baseline is `7e715be454d57a4b61129bd42f4b2758d8d7b060`, followed by root instructions at `ca6c203d47c98ce4232e0368b87ccdddc51c2cd0`. This documentation writer uses `codex/WORM-002-continuity`; the primary implementer owns integration and Minx updates. Its reported WORM-002 contract is r2 and claim session is `codex-WORM-002-20261023-primary`. Verify current claim authority directly before any ticket mutation; do not borrow this session identifier to impersonate the holder.
+The verified/reviewed baseline is `39e86d3a61b6550044308103b8f9b20854617afd`. STATE links the actual passing local, negative and GitHub CI observations; this documentation follow-up must pass verification too. No merge, human acceptance or runtime pipeline success is implied.
 
-Immediate steps for the primary implementer:
+1. Inspect Git status/log and preserve other writers' files. Use a real Python 3.12+ executable and Git, then run `python scripts/verify_repository.py`; the observed Windows alias needs replacement with the installed bundled executable.
+2. Retrieve WORM-002's live approved revision, status and claim. The primary implementer's recorded session was `codex-WORM-002-20261023-primary`; do not borrow it to impersonate the holder. Renew only an owned active claim. If In Review, inspect its solution comment and criterion evidence instead of repeating submission.
+3. If submission is still pending, attach the final exact source/PR/check results through the scoped API, leave the solution comment, submit In Review and release the claim. Do not approve requirements or acceptance using an Agent credential.
+4. Retrieve WORM-003 and its dependencies. WORM-002 must be Done and the next contract must be approved before an Agent claim can proceed. Report the exact enforced boundary if it remains blocked; do not disguise a status failure or weaken criteria.
 
-1. Inspect `git status --short`, the current branch/log and integrated diff. Preserve other writers' changes. Record the final integration SHA; it is unknown here.
-2. With Python 3.12+ and Git, run `python scripts/verify_repository.py` after that script and the required files have been integrated. Record actual versions, exit status, exact tested commit and any failure. The check is intended to be local and must not provision or contact remote services. No passing result is claimed here.
-3. Check repository/private publication and actual CI/protection observations in `docs/REPOSITORY.md`. Distinguish configured, enforced, unavailable and untested controls.
-4. In the supported Minx interface, renew/checkpoint the owned claim as needed. Append WORM-002 criterion-specific evidence and a solution comment. Submit In Review and release the claim. Never impersonate human acceptance.
-5. Retrieve WORM-003 and its live prerequisites. Start it only against its approved current revision after blocking work is Done; otherwise record the exact blocker and next eligible action.
-
-There is no application CLI or working pipeline at this checkpoint. No Terraform, Docker, SSH, Ansible, image, capacity, gate or publication runtime check has run here. There are no owned runtime resources from this documentation work; no claim is made about unrelated host inventory. No external model was invoked or independent review completed.
-
-Keep credentials, private state and unsanitized evidence outside Git. Commit only sanitized examples. Container and synthetic results never establish ISO boot/install, production STIG acceptance or a fix to Lightspeed; production ISO eligibility remains false. Do not message Luna or launch another model automatically.
-
-At the next checkpoint, replace pending facts with observed ones and record: ticket/approved revision, branch and tested SHA, commands/exit statuses, evidence references, failed/unverified checks, owned resources left, review status and exact next bounded action. Do not copy changing ticket contracts into this handoff.
+There are no Wormhole runtime resources from this baseline. Application CLI and target execution start in later ticket scopes; proposed command names remain unavailable. Raw resource snapshots, credentials and unsanitized evidence stay outside Git. No model handoff was sent and no external model was invoked. Container/synthetic results cannot establish production ISO eligibility or another system's compliance.

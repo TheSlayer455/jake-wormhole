@@ -1,27 +1,17 @@
 # Engineering checkpoint
 
-Checkpoint: October 23, 2026. This is the WORM-002 repository baseline, with integration and verification still pending. Minx owns current requirements, dependencies, assignments and review decisions; this file records source observations only.
+October 23, 2026. WORM-002's repository baseline is implemented on `codex/WORM-002-baseline`, in the verified private [TheSlayer455/jake-wormhole](https://github.com/TheSlayer455/jake-wormhole) repository. [Draft PR 1](https://github.com/TheSlayer455/jake-wormhole/pull/1) contains the changes; no merge or Owner acceptance is claimed. Minx remains authoritative for live ticket status.
 
-| Item | Recorded state |
-|---|---|
-| Repository | [TheSlayer455/jake-wormhole](https://github.com/TheSlayer455/jake-wormhole), verified private by the primary implementer |
-| Initial main revision | `7e715be454d57a4b61129bd42f4b2758d8d7b060` |
-| Root instructions revision | `ca6c203d47c98ce4232e0368b87ccdddc51c2cd0` |
-| Active work | [WORM-002](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-002), approved contract r2; primary implementer reports a successful In Progress claim |
-| Primary claim session | `codex-WORM-002-20261023-primary`; retrieve Minx to verify its current holder, contact and expiry |
-| Documentation writer branch | `codex/WORM-002-continuity`, isolated from the primary integration worktree |
-| Integrated/tested revision | Pending; neither a final integration SHA nor a passing baseline result is known at this checkpoint |
+The baseline tested and reviewed was `39e86d3a61b6550044308103b8f9b20854617afd`, after initial main `7e715be454d57a4b61129bd42f4b2758d8d7b060`. This checkpoint corrects the earlier parallel-writer notes; final documentation revisions must also pass the repository check.
 
-README and root AGENTS establish the reference-only scope. This work adds continuity documents. The primary implementer is preparing the architecture, fidelity and repository-control notes and `scripts/verify_repository.py`; those files were absent from this writer's initial checkout. Read their integrated versions before proceeding.
+- Local check: Python 3.12.14 at the actual bundled executable, Git 2.55.0.windows.3, exit 0; 17 tracked files and 34 local link targets checked at that revision.
+- Disposable negative checks: broken local link, tracked runtime state, a synthetic private-key marker and wrong origin each produced the expected nonzero failure. No real credentials or runtime resources were used.
+- Actual [pull-request CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/39954750131) and [push CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/39954750253) passed for that commit.
+- A separate Codex engineering subagent reviewed that exact commit. Its checkpoint-freshness finding is addressed here; see the [review record](../handoff/reviews/2026-10-23-baseline.md). This is not human acceptance or an Opus/Fable review.
+- Required private-branch protection could not be configured: GitHub returned 403 for the account plan. CI is available but is not an enforced branch gate. Privacy and billing were unchanged; see [repository controls](REPOSITORY.md).
 
-The intended baseline check is:
+Run `python scripts/verify_repository.py` with Python 3.12+ and Git. On the observed Windows machine, `python` resolves to a Store alias, so verification used the installed bundled executable explicitly. Select a real Python executable rather than assuming the alias works. The verifier is read-only and uses no external service.
 
-```sh
-python scripts/verify_repository.py
-```
+No application CLI, Terraform lifecycle, images, SSH/Ansible path, admission controller, assessment or publication pipeline has been implemented by WORM-002. No project runtime resources need cleanup. Production ISO eligibility remains false.
 
-It requires Python 3.12 or later and Git, uses only the Python standard library, and must perform no network or provisioning operation. The primary implementer must record its actual command, Python/Git versions, exit status and tested commit after integration. It has not been run in this documentation checkpoint. See [repository controls](REPOSITORY.md) for actual CI/protection observations; a documented workflow does not establish an enforced check.
-
-No application CLI, Terraform target lifecycle, helper/target image, SSH/Ansible path, resource admission, assessment, publication or pipeline runtime has been implemented or tested by this baseline. Proposed command names are not working commands. No project runtime resources were created by this documentation work; existing host resources were not inventoried here.
-
-Next: integrate WORM-002, run the baseline check, review the final diff and record exact evidence in Minx. Submit In Review with a solution comment; human verification and acceptance remain separate. [WORM-003](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-003) is the next implementation candidate only when its live contract and blocking prerequisites permit it. See [current handoff](../handoff/CURRENT.md) and [ticket index](TASKS.md).
+Next: record the final checked source, criterion evidence and solution comment in [WORM-002](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-002), then submit In Review and release the claim. Human acceptance and approval of the next eligible contract remain separate. WORM-003 depends on WORM-002 Done; use the [live ticket index](TASKS.md) and [handoff](../handoff/CURRENT.md).
