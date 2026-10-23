@@ -209,6 +209,7 @@ class FixtureServer(HTTPServer):
     def __init__(self, address, handler, deadline):
         self.deadline = deadline
         self.closing = False
+        self.handler_errors = 0
         self.active = set()
         self.active_lock = threading.Lock()
         super().__init__(address, handler)
@@ -229,6 +230,13 @@ class FixtureServer(HTTPServer):
         with self.active_lock:
             self.active.discard(request)
         super().shutdown_request(request)
+
+    def handle_error(self, request, client_address):
+        # Deadline/exit shutdown can abort a parser blocked on our socket.
+        # Keep expected socket failures quiet; unexpected handler errors still
+        # invalidate the component, without an unbounded traceback on stdout.
+        if not isinstance(sys.exception(), OSError):
+            self.handler_errors += 1
 
     def abort_owned_connections(self):
         with self.active_lock:
@@ -285,6 +293,7 @@ class LoopbackFixture:
         stopper.start(); stopper.join(timeout=1)
         self.server.server_close(); self.thread.join(timeout=1); self.watchdog.join(timeout=1)
         require(not any(thread.is_alive() for thread in (stopper, self.thread, self.watchdog)), 'chunk_http_shutdown')
+        require(self.server.handler_errors == 0, 'chunk_http_server')
 
     def validate_set(self, names):
         require(set(names) == self.names, 'chunk_set_mismatch')
