@@ -30,8 +30,10 @@ resource "docker_network" "run" {
   ipv6       = false
   dynamic "labels" {
     for_each = merge(local.common, { "io.jake-wormhole.role" = "network" })
-    content { label = labels.key
-              value = labels.value }
+    content {
+      label = labels.key
+      value = labels.value
+    }
   }
 }
 resource "docker_container" "target" {
@@ -57,20 +59,26 @@ resource "docker_container" "target" {
   destroy_grace_seconds = 2
   security_opts     = ["no-new-privileges:true"]
   env = ["WORMHOLE_RUN_ID=${var.run_id}", "WORMHOLE_RUNTIME_TTL_SECONDS=300"]
-  capabilities { drop = ["ALL"]
-                 add = ["SETGID", "SETUID", "SYS_CHROOT"] }
+  capabilities {
+    drop = ["ALL"]
+    add  = ["SETGID", "SETUID", "SYS_CHROOT"]
+  }
   tmpfs = {
     "/run" = "rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0"
     "/tmp" = "rw,nosuid,nodev,noexec,size=16m,mode=1777"
   }
-  volumes { host_path = var.public_input
-            container_path = "/run/input"
-            read_only = true }
+  volumes {
+    host_path      = var.public_input
+    container_path = "/run/input"
+    read_only      = true
+  }
   networks_advanced { name = docker_network.run.name }
   dynamic "labels" {
     for_each = merge(local.common, { "io.jake-wormhole.role" = "target" })
-    content { label = labels.key
-              value = labels.value }
+    content {
+      label = labels.key
+      value = labels.value
+    }
   }
 }
 output "run" {
