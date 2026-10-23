@@ -223,9 +223,13 @@ def runtime_arguments(run, role, image, network, limits, *, helper_wait=300):
     require(role in {"target", "helper"} and re.fullmatch(r"sha256:[a-f0-9]{64}", image)
             and re.fullmatch(r"[a-f0-9]{64}", network), "invalid_runtime_spec", "Exact image/network identities and a supported role are required.")
     user = "10001:10001" if role == "helper" else "0:0"
+    ttl = limits["timeout_seconds"]
+    require(type(ttl) is int and 1 <= ttl <= (300 if role == "target" else 600),
+            "invalid_runtime_spec", "Runtime lifetime must stay inside its admitted role bound.")
     arguments = ["create", "--name", "wormhole-" + run.id + "-" + role, "--network", network,
                  "--user", user, "--read-only", *limits_arguments(limits),
-                 "--env", "WORMHOLE_RUN_ID=" + run.id, "--label", LABEL + ".run_id=" + run.id,
+                 "--env", "WORMHOLE_RUN_ID=" + run.id, "--env", "WORMHOLE_RUNTIME_TTL_SECONDS=" + str(ttl),
+                 "--label", LABEL + ".run_id=" + run.id,
                  "--label", LABEL + ".role=" + role]
     uid = "10001" if role == "helper" else "0"
     arguments.extend(("--tmpfs", "/run:rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=" + uid + ",gid=" + uid,

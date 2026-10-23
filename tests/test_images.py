@@ -212,9 +212,23 @@ class ImagePolicy(unittest.TestCase):
             self.assertNotIn("--pid", args)
             self.assertNotIn("docker.sock", " ".join(args))
             self.assertNotIn("credentials", " ".join(args))
+            self.assertIn("WORMHOLE_RUNTIME_TTL_SECONDS=" + str(plan()["limits"][role]["timeout_seconds"]), args)
         (folder / "private-key").write_text("not a real key")
         with self.assertRaises(images.ImageError):
             images.runtime_arguments(run, "target", IMAGE, NETWORK, plan()["limits"]["target"])
+
+    def test_runtime_ttl_defaults_and_limits_and_non_pid1_dispatch(self):
+        with patch.dict(runtime.os.environ, {}, clear=True):
+            self.assertEqual(runtime.runtime_ttl("target"), 300)
+            self.assertEqual(runtime.runtime_ttl("helper"), 600)
+        for role, value in (("target", "301"), ("helper", "601"), ("target", "0"), ("helper", "-1"), ("helper", "NaN")):
+            with patch.dict(runtime.os.environ, {"WORMHOLE_RUNTIME_TTL_SECONDS": value}), self.assertRaises(runtime.RuntimeFailure):
+                runtime.runtime_ttl(role)
+        with patch.object(runtime, "guard"), patch.object(runtime.os, "getpid", return_value=2), \
+             patch.object(runtime, "execute_role", return_value=0) as execute, patch.object(runtime, "supervise") as supervise:
+            self.assertEqual(runtime.main(["helper", "doctor"]), 0)
+        execute.assert_called_once_with("helper", ["doctor"])
+        supervise.assert_not_called()
 
     @unittest.skipUnless(os.name == "posix" and shutil.which("ssh-keygen"), "Requires existing POSIX ssh-keygen; never installed by tests")
     def test_auth_is_unique_per_run_private_and_not_exported(self):
@@ -267,6 +281,44 @@ class ImagePolicy(unittest.TestCase):
 @unittest.skipUnless(os.name == "posix", "Linux-only driver; all Docker operations mocked")
 class BuildOrchestration(unittest.TestCase):
     setUp = ImagePolicy.setUp
+
+    def test_actual_supervisor_timeout_terminates_and_reaps_fixed_child(self):
+        marker = self.root / "timeout-child"
+        script = '''import os, sys, time
+from pathlib import Path
+from images.runtime import supervise
+def child():
+    Path(sys.argv[1]).write_text(str(os.getpid()))
+    time.sleep(10)
+    return 0
+raise SystemExit(supervise(child, .2, grace_seconds=.05))
+'''
+        result = subprocess.run([images.sys.executable, "-c", script, str(marker)], cwd=images.SOURCE_ROOT, capture_output=True, timeout=3)
+        self.assertEqual(result.returncode, 124)
+        with self.assertRaises(ProcessLookupError): os.kill(int(marker.read_text()), 0)
+
+    def test_actual_supervisor_term_retains_143_and_reaps_fixed_child(self):
+        marker = self.root / "term-child"
+        script = '''import os, sys, time
+from pathlib import Path
+from images.runtime import supervise
+def child():
+    Path(sys.argv[1]).write_text(str(os.getpid()))
+    time.sleep(10)
+    return 0
+raise SystemExit(supervise(child, 10, grace_seconds=.05))
+'''
+        process = subprocess.Popen([images.sys.executable, "-c", script, str(marker)], cwd=images.SOURCE_ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            deadline = time.monotonic() + 2
+            while not marker.exists() and time.monotonic() < deadline: time.sleep(.01)
+            self.assertTrue(marker.exists())
+            process.terminate()
+            process.communicate(timeout=3)
+            self.assertEqual(process.returncode, 143)
+            with self.assertRaises(ProcessLookupError): os.kill(int(marker.read_text()), 0)
+        finally:
+            if process.poll() is None: process.kill(); process.wait(timeout=2)
 
     def test_slow_progress_read_is_terminated_by_real_parent_deadline(self):
         run = create_run(self.root / "runs", fixture=False, identity=(SHA, False))

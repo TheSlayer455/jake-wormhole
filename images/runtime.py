@@ -58,6 +58,93 @@ def identity():
     return value
 
 
+def runtime_ttl(role):
+    maximum = 300 if role == "target" else 600
+    value = os.environ.get("WORMHOLE_RUNTIME_TTL_SECONDS", str(maximum))
+    if not value.isascii() or not value.isdigit() or not 1 <= int(value) <= maximum:
+        raise RuntimeFailure("Runtime lifetime is outside the reviewed role bound.")
+    return int(value)
+
+
+def supervise(action, timeout, *, grace_seconds=1):
+    """Container PID1 retains a finite lifetime instead of exec'ing the service.
+
+    The child owns a new process group. On expiry/TERM, terminate that group,
+    reap the fixed role child, then exit PID1 so Linux tears down any remaining
+    descendants in this container's PID namespace. This is not a host sandbox.
+    """
+    interrupted = [False]
+    child = os.fork()
+    if child == 0:
+        try:
+            os.setsid()
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            signal.signal(signal.SIGINT, signal.SIG_DFL)
+            code = action()
+        except SystemExit as result:
+            code = result.code if type(result.code) is int else 2
+        except BaseException:
+            print(json.dumps({"error": {"code": "image_role_child_failed", "message": "The fixed image role child failed."}}), flush=True)
+            code = 2
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(code if type(code) is int and 0 <= code <= 255 else 2)
+    previous = signal.signal(signal.SIGTERM, lambda *_: interrupted.__setitem__(0, True))
+    deadline = time.monotonic() + timeout
+    reaped = False
+    status = None
+
+    def send(number):
+        try:
+            os.killpg(child, number)
+        except (ProcessLookupError, PermissionError):
+            if not reaped:
+                try:
+                    os.kill(child, number)
+                except (ProcessLookupError, PermissionError):
+                    pass
+
+    def collect():
+        nonlocal reaped, status
+        while True:
+            try:
+                pid, result = os.waitpid(-1, os.WNOHANG)
+            except ChildProcessError:
+                return
+            if pid == 0:
+                return
+            if pid == child:
+                reaped, status = True, result
+
+    try:
+        while not reaped and not interrupted[0] and time.monotonic() < deadline:
+            collect()
+            if not reaped:
+                time.sleep(min(0.02, max(0, deadline - time.monotonic())))
+        outcome = 143 if interrupted[0] else 124 if not reaped else os.waitstatus_to_exitcode(status)
+        # The child may have exited while leaving same-group descendants alive.
+        send(signal.SIGTERM)
+        stopped_by = time.monotonic() + grace_seconds
+        while time.monotonic() < stopped_by:
+            collect()
+            try:
+                os.killpg(child, 0)
+            except (ProcessLookupError, PermissionError):
+                if reaped:
+                    break
+            time.sleep(0.01)
+        send(signal.SIGKILL)
+        reap_by = time.monotonic() + 1
+        while not reaped and time.monotonic() < reap_by:
+            collect()
+            if not reaped:
+                time.sleep(0.01)
+        collect()
+        return outcome if outcome >= 0 else 128 - outcome
+    finally:
+        signal.signal(signal.SIGTERM, previous)
+
+
 def ordinary(path, *, private=False):
     if any(parent.is_symlink() for parent in (path, *path.parents)) or not path.is_file():
         raise RuntimeFailure("Runtime input must be an ordinary provisioned file with no symlink traversal.")
@@ -170,6 +257,17 @@ def helper(arguments):
     os.execvp(arguments[0], arguments)
 
 
+def execute_role(role, args):
+    if args == ["doctor"]:
+        value = doctor(role); print(json.dumps(value, sort_keys=True)); return 0 if value["passed"] else 1
+    if role == "target":
+        if args:
+            raise RuntimeFailure("Target entrypoint arguments are unsupported.")
+        target()
+        return 0
+    return helper(args)
+
+
 def main(arguments=None):
     args = list(sys.argv[1:] if arguments is None else arguments)
     role = args.pop(0) if args else ""
@@ -177,14 +275,10 @@ def main(arguments=None):
         if role not in {"target", "helper"}:
             raise RuntimeFailure("A supported image role is required.")
         guard(role)
-        if args == ["doctor"]:
-            value = doctor(role); print(json.dumps(value, sort_keys=True)); return 0 if value["passed"] else 1
-        if role == "target":
-            if args:
-                raise RuntimeFailure("Target entrypoint arguments are unsupported.")
-            target()
-            return 0
-        return helper(args)
+        ttl = runtime_ttl(role)
+        if os.getpid() == 1:
+            return supervise(lambda: execute_role(role, args), ttl)
+        return execute_role(role, args)
     except (RuntimeFailure, OSError, ValueError, subprocess.SubprocessError):
         print(json.dumps({"error": {"location": role, "code": "image_runtime_refused", "message": "Image runtime inputs, identity, dependencies or execution location failed validation."}}))
         return 2
