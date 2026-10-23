@@ -86,6 +86,12 @@ def runtime_inspection(identifier, role, image, network, run, limits):
     value = owned_runtime(identifier, role, image, run)
     host, config = value['HostConfig'], value['Config']
     expected = limits['docker_create']
+    python = '/usr/bin/python3' if role == 'target' else '/opt/wormhole/venv/bin/python'
+    require(config['Entrypoint'] == [python, '/opt/wormhole/runtime.py', role]
+            and (config['Cmd'] in (None, []) if role == 'target' else config['Cmd'] == ['wait', '180'])
+            and [v for v in config['Env'] if v.startswith('WORMHOLE_RUNTIME_TTL_SECONDS=')]
+                == ['WORMHOLE_RUNTIME_TTL_SECONDS=' + str(limits['timeout_seconds'])],
+            'unsafe_runtime', 'Runtime entrypoint or finite admitted lifetime changed.')
     require(value['Id'] == identifier and value['Image'] == image
             and config['Labels'].get(LABEL + '.run_id') == run.id
             and config['Labels'].get(LABEL + '.role') == role,

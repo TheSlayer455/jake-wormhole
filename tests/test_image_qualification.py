@@ -37,7 +37,9 @@ class RuntimeBoundary(unittest.TestCase):
         self.limits = _projection(load_profile('smoke')['limits']['helper'])
         expected = self.limits['docker_create']
         self.value = {'Id': self.identifier, 'Image': self.image,
-                      'Config': {'Labels': {LABEL + '.run_id': self.run.id, LABEL + '.role': 'helper'}, 'User': '10001:10001'},
+                      'Config': {'Labels': {LABEL + '.run_id': self.run.id, LABEL + '.role': 'helper'}, 'User': '10001:10001',
+                                 'Entrypoint': ['/opt/wormhole/venv/bin/python', '/opt/wormhole/runtime.py', 'helper'],
+                                 'Cmd': ['wait', '180'], 'Env': ['WORMHOLE_RUNTIME_TTL_SECONDS=600']},
                       'HostConfig': {'Memory': expected['memory_bytes'], 'MemorySwap': expected['memory_swap_bytes'],
                                      'NanoCpus': expected['nano_cpus'], 'PidsLimit': expected['pids_limit'],
                                      'LogConfig': {'Type': expected['log_driver'], 'Config': expected['log_opts']},
@@ -63,6 +65,7 @@ class RuntimeBoundary(unittest.TestCase):
                    ('HostConfig.NetworkMode', 'host'), ('HostConfig.CapAdd', ['SYS_ADMIN']),
                    ('HostConfig.PublishAllPorts', True), ('HostConfig.PortBindings', {'2222/tcp': [{'HostPort': '2222'}]}),
                    ('HostConfig.SecurityOpt', ['seccomp=unconfined']), ('Config.User', '0:0'),
+                   ('Config.Env', ['WORMHOLE_RUNTIME_TTL_SECONDS=9999']), ('Config.Entrypoint', ['/bin/sh']),
                    ('Mounts', [{'Type': 'bind', 'Source': '/var/run/docker.sock'}])]
         for name, new in changes:
             with self.subTest(name=name):
