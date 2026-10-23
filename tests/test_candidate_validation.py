@@ -26,7 +26,7 @@ def binding_for(fixture):
         'installer_sha256': c.sha((c.CONTEXT / 'install.py').read_bytes()), 'test_contract_sha256': fixture.bundle['manifest']['test_contract_sha256'],
         'runtime_pipeline_complete': False, 'production_iso_eligible': False}
     atomic_json(fixture.run.file('evidence/candidate-binding.json'), value)
-    atomic_json(fixture.run.file('evidence/candidate-build.json'), {**common(fixture.run.manifest()), 'status': 'built',
+    atomic_json(fixture.run.file('evidence/candidate-build.json'), {**common(fixture.run.manifest()), 'operation': 'candidate-image-build', 'status': 'built',
         'builder_id': BUILDER, 'image_id': DERIVED, 'unknown_outcome': False, 'candidate_sha256': value['candidate_sha256']})
     return c.validate_binding(fixture.run)
 

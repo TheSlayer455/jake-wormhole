@@ -70,3 +70,23 @@ synthetic source bundle copied into a derived Ubuntu reference image. The full
 pipeline and production ISO eligibility remain false; reference publication is
 a separate later gate. Private generated inputs, authentication, state, logs and
 images are retained according to their explicit ownership and evidence records.
+
+## Explicit qualification operator
+
+After exact source review, the approved-host operator may invoke
+`python -m wormhole.candidate_acceptance --sentinel EXACT_UNRELATED_CONTAINER_ID --all`.
+`--case` selects only one of the four fixed cases: healthy, wrong-candidate,
+wrong-image or version-expectation-mismatch. It accepts no URL, image override,
+command, public registry destination or arbitrary input bundle.
+
+Each case creates fresh generated chunks/bundle/image/Run under the same measured
+canonical lease. Identity negatives demonstrate refusal before Terraform/helper
+allocation, then prove exact builder absence/retained image plus empty Run
+container/network sweeps. Full healthy/version cases use genuine Terraform,
+strict SSH readiness and Ansible, then normal WORM-008 cleanup. Negative
+underlying outcomes remain failed. Private captures/state, retained candidate
+images, credential scans, disk samples and unchanged unrelated sentinel checks
+are recorded. Unexpected failure stops the suite and preserves unresolved
+resources; existing exact-source recovery may safely reconcile known established
+provisioning, while unknown image/daemon work remains blocked. The operator's
+presence and mocked tests are not an actual acceptance result.

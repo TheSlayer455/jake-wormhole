@@ -182,7 +182,8 @@ def validate_binding(run, value=None, *, artifacts=True):
     from .provisioning import TARGET_IMAGE
     require(saved['base_image'] == TARGET_IMAGE and saved['image_id'] != TARGET_IMAGE, 'candidate_binding_invalid')
     built = read_json(run.file('evidence/candidate-build.json'))
-    require(bound_common(built, run.manifest()) and built.get('status') == 'built' and built.get('unknown_outcome') is False and
+    require(bound_common(built, run.manifest()) and built.get('operation') == 'candidate-image-build' and
+        built.get('status') == 'built' and built.get('unknown_outcome') is False and
         built.get('image_id') == saved['image_id'] and built.get('candidate_sha256') == saved['candidate_sha256'] and
         type(built.get('builder_id')) is str and IDENTIFIER.fullmatch(built['builder_id']), 'candidate_binding_invalid')
     if artifacts: require(validate_bundle(run)['candidate_sha256'] == saved['candidate_sha256'], 'candidate_binding_invalid')
