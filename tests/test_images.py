@@ -42,9 +42,10 @@ def builder(labels, limits, mounts):
         "HostConfig": {"Memory": c["memory_bytes"], "MemorySwap": c["memory_swap_bytes"],
             "NanoCpus": c["nano_cpus"], "PidsLimit": c["pids_limit"],
             "LogConfig": {"Type": c["log_driver"], "Config": c["log_opts"]}, "Privileged": False,
-            "ReadonlyRootfs": False, "CapDrop": ["ALL"], "CapAdd": list(images.BUILD_CAPS),
+            # Actual allowed-host Docker29 inspection uses CAP_ and '=' spellings.
+            "ReadonlyRootfs": False, "CapDrop": ["ALL"], "CapAdd": ["CAP_" + x for x in images.BUILD_CAPS],
             "PidMode": "", "NetworkMode": NETWORK, "IpcMode": "private", "UTSMode": "",
-            "SecurityOpt": ["no-new-privileges:true"]},
+            "SecurityOpt": ["no-new-privileges=true"]},
         "Mounts": [{"Type": "bind", "RW": False, "Destination": k, "Source": v} for k, v in mounts.items()],
         "State": {"Status": "created", "Running": False, "ExitCode": 0, "Pid": 1234}, "SizeRw": 12345}
 

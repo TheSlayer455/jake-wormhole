@@ -98,6 +98,17 @@ class RuntimeBoundary(unittest.TestCase):
                 qualification.inject_helper_inputs(self.run, self.identifier, public, '172.30.0.2')
             command.assert_not_called()
 
+    def test_docker_cap_prefix_and_security_boolean_spelling_preserve_same_policy(self):
+        value = deepcopy(self.value)
+        value['HostConfig']['CapDrop'] = ['CAP_ALL']
+        value['HostConfig']['SecurityOpt'] = ['no-new-privileges=true']
+        self.inspect(value)
+        value['HostConfig']['CapAdd'] = ['CAP_SYS_ADMIN']
+        with self.assertRaises(ImageError): self.inspect(value)
+        value['HostConfig']['CapAdd'] = []
+        value['HostConfig']['SecurityOpt'] = ['no-new-privileges=false']
+        with self.assertRaises(ImageError): self.inspect(value)
+
     def test_remote_probe_is_one_fixed_valid_python_program(self):
         argv = shlex.split(qualification.remote_probe())
         self.assertEqual(argv[:2], ['/usr/bin/python3', '-c'])

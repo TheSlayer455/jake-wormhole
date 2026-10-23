@@ -20,7 +20,7 @@ from wormhole.admission import AdmissionLease
 from wormhole.images import (INFRASTRUCTURE, RUNS_ROOT, LABEL, SOCKET, TARGET_CAPS,
                              ImageError, cgroup_limits, create_auth, docker, inspect,
                              require, runtime_arguments, recipe_identity, expected_labels,
-                             docker_scope, docker_configuration)
+                             docker_scope, docker_configuration, capability_names)
 from wormhole.runs import (Run, atomic_json, create_run, now, read_json, source_identity)
 from wormhole.stages import _run_process
 from images.runtime import public_key
@@ -108,9 +108,9 @@ def runtime_inspection(identifier, role, image, network, run, limits):
             and not host.get('PortBindings') and not host.get('PublishAllPorts')
             and host['RestartPolicy']['Name'] == 'no'
             and config['User'] == ('0:0' if role == 'target' else '10001:10001')
-            and set(host.get('CapDrop') or []) == {'ALL'}
-            and set(host.get('CapAdd') or []) == (set(TARGET_CAPS) if role == 'target' else set())
-            and set(host.get('SecurityOpt') or []) in ({'no-new-privileges:true'}, {'no-new-privileges'}),
+            and capability_names(host.get('CapDrop')) == {'ALL'}
+            and capability_names(host.get('CapAdd')) == (set(TARGET_CAPS) if role == 'target' else set())
+            and set(host.get('SecurityOpt') or []) in ({'no-new-privileges:true'}, {'no-new-privileges=true'}, {'no-new-privileges'}),
             'unsafe_runtime', 'Runtime privilege/namespace settings were changed.')
     binds = [m for m in value['Mounts'] if m['Type'] != 'tmpfs']
     if role == 'target':

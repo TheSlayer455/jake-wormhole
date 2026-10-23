@@ -57,6 +57,14 @@ def require(value, code, message):
         raise ImageError(code, message)
 
 
+def capability_names(value):
+    """Docker may report either CHOWN or its equivalent CAP_CHOWN spelling."""
+    require(value is None or type(value) is list and len(value) <= 64
+            and all(type(v) is str and re.fullmatch(r'(?:CAP_)?[A-Z][A-Z_]*', v) for v in value),
+            'unsafe_capabilities', 'Docker capabilities have an unsupported representation.')
+    return {v.removeprefix('CAP_') for v in value or []}
+
+
 def safe_bind(path):
     path = Path(path)
     require(path.is_absolute() and not any(x in str(path) for x in (",", "\n", "\r")),
@@ -302,13 +310,13 @@ def verify_builder(value, *, identifier, labels, limits, mounts, network):
             "limits_not_enforced", "Docker did not retain the admitted CPU/memory/swap/PID limits.")
     require(host["LogConfig"] == {"Type": expected["log_driver"], "Config": expected["log_opts"]}, "limits_not_enforced", "Rotated Docker log bounds differ from the admitted plan.")
     require(host["Privileged"] is False and host["ReadonlyRootfs"] is False and config["User"] == "0:0"
-            and set(host["CapDrop"] or []) == {"ALL"} and set(host["CapAdd"] or []) == set(BUILD_CAPS)
+            and capability_names(host["CapDrop"]) == {"ALL"} and capability_names(host["CapAdd"]) == set(BUILD_CAPS)
             and host["PidMode"] == "" and host["NetworkMode"] == network
             and host.get("IpcMode") in ("", "private") and host.get("UTSMode", "") == "",
             "unsafe_builder", "Builder privilege or namespace settings differ from the reviewed recipe.")
     require(config["Entrypoint"] == ["/bin/sh"] and config["Cmd"] == ["/recipe/assemble.sh", labels[LABEL + ".role"]],
             "unsafe_builder", "The builder must execute only the reviewed fixed role recipe.")
-    require(set(host.get("SecurityOpt") or []) in ({"no-new-privileges:true"}, {"no-new-privileges"}), "unsafe_builder", "Builder security confinement was changed.")
+    require(set(host.get("SecurityOpt") or []) in ({"no-new-privileges:true"}, {"no-new-privileges=true"}, {"no-new-privileges"}), "unsafe_builder", "Builder security confinement was changed.")
     actual = value["Mounts"]
     require(len(actual) == len(mounts) and all(item["Type"] == "bind" and item["RW"] is False and mounts.get(item["Destination"]) == item["Source"] for item in actual), "unsafe_builder", "Only the exact reviewed read-only recipe/artifact mounts are permitted.")
 
