@@ -104,10 +104,10 @@ def capture(arguments, timeout, environment):
                     eof = True
             except BlockingIOError:
                 pass
-            if eof and process.poll() is not None:
-                break
             if time.monotonic() >= began + timeout:
                 expired = True
+                break
+            if eof and process.poll() is not None:
                 break
             time.sleep(0.01)
     finally:

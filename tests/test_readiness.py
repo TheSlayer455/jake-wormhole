@@ -15,12 +15,13 @@ from unittest.mock import Mock, patch
 
 from readiness import runtime
 from wormhole import admission, images, readiness as r
-from wormhole.runs import atomic_json, common, create_run, read_json
+from wormhole.runs import atomic_bytes, atomic_json, common, create_run, read_json
 from test_admission import observed
 
 SHA = 'a' * 40
 TARGET, NETWORK, CONTROLLER, HELPER = ('b' * 64, 'c' * 64, 'd' * 64, 'e' * 64)
 HOST_KEY = 'ssh-ed25519 ' + base64.b64encode(struct.pack('>I', 11) + b'ssh-ed25519' + struct.pack('>I', 32) + bytes(range(32))).decode()
+REAL_INJECT = r.ReadinessSession.inject_inputs
 
 
 class Lease:
@@ -58,11 +59,11 @@ class ReadinessPolicy(unittest.TestCase):
                 {'target_id': 'target-001', 'resource_id': TARGET, 'host': '172.31.77.2', 'ssh_port': 2222, 'ssh_user': 'wormhole'}]}},
             variables={'image': 'sha256:' + '1' * 64}, verify_target=Mock())
         self.identity = patch.object(r, 'source_identity', return_value=(SHA, False)); self.identity.start(); self.addCleanup(self.identity.stop)
-        for module, name, arguments in ((r.qualification, 'build_reference', {'return_value': {'image_id': r.HELPER_IMAGE}}),
+        for module, name, arguments in ((r.ReadinessSession, 'helper_reference', {'return_value': self.image_labels}),
             (images, 'inspect', {'side_effect': self.inspect}), (images, 'docker', {'side_effect': self.docker}),
             (images, 'cgroup_limits', {'return_value': {'synthetic': True}}),
-            (r.qualification, 'copied_public_key', {'return_value': HOST_KEY}),
-            (r.qualification, 'inject_helper_inputs', {}), (images, 'docker_configuration', {'return_value': '/synthetic/empty-config'})):
+            (r.ReadinessSession, 'public_key', {'return_value': HOST_KEY}),
+            (r.ReadinessSession, 'inject_inputs', {}), (images, 'docker_configuration', {'return_value': '/synthetic/empty-config'})):
             mocked = patch.object(module, name, **arguments); mocked.start(); self.addCleanup(mocked.stop)
         self.session = r.ReadinessSession(self.provisioning)
 
@@ -104,6 +105,7 @@ class ReadinessPolicy(unittest.TestCase):
         if arguments[0] == 'create':
             self.assertIn(str(r.RUNTIME), ' '.join(arguments))
             return {'log': (HELPER + '\n').encode(), 'log_truncated': False}
+        if arguments[0] == 'ps': return {'log': b'', 'log_truncated': False}
         self.assertEqual(arguments[-1], HELPER, 'Only the exact helper may be mutated')
         if arguments[0] == 'start': self.helper_started = True
         if arguments[0] == 'stop': self.helper_started = False
@@ -140,6 +142,8 @@ class ReadinessPolicy(unittest.TestCase):
         with patch.object(self, 'target', return_value=target), patch.object(r, '_run_process', side_effect=self.output):
             result = self.session.wait_ready()
             self.assertTrue(self.session.require_ready())
+            self.session.deadline = time.monotonic() - 1
+            self.assertTrue(self.session.require_ready(), 'Existing readiness gets a fresh bounded live-identity check, not a new establishment window')
         self.assertEqual([x['check_id'] for x in result['transitions']], list(r.EXPECTED))
         self.assertEqual([x[1] for x in self.calls if x[0] == 'probe'], ['tcp', 'ssh', 'python', 'ansible-wait', 'ansible-ping'])
         self.assertFalse(result['runtime_pipeline_complete']); self.assertFalse(result['production_iso_eligible'])
@@ -231,7 +235,7 @@ class ReadinessPolicy(unittest.TestCase):
         self.session.start_helper()
         self.assertTrue(self.session.pin_trust())
         changed = 'ssh-ed25519 ' + base64.b64encode(struct.pack('>I', 11) + b'ssh-ed25519' + struct.pack('>I', 32) + bytes(reversed(range(32)))).decode()
-        with patch.object(r.qualification, 'copied_public_key', return_value=changed):
+        with patch.object(self.session, 'public_key', return_value=changed):
             observation = self.session.observe_hostkey()
             self.assertTrue(self.session.pin_trust())
         self.assertFalse(observation['matches_original_pin'])
@@ -253,6 +257,53 @@ class ReadinessPolicy(unittest.TestCase):
         changed = read_json(self.run.file('evidence/readiness.json')); changed['source_revision'] = '9' * 40
         atomic_json(self.run.file('evidence/readiness.json'), changed)
         with self.assertRaises(r.ReadinessError): r.readiness_status(self.run)
+
+    def test_known_precreate_failure_can_resume_no_helper_cleanup_without_allocation_or_adoption(self):
+        with patch.object(self.session, 'helper_reference', side_effect=images.ImageError('helper_image_mismatch', 'Synthetic precreate refusal')), \
+             self.assertRaises(images.ImageError): self.session.start_helper()
+        self.assertIsNone(self.session.helper)
+        self.assertFalse(self.session.receipt['unknown_outcome'])
+        atomic_json(self.run.file('private/terraform/controller.json'),
+            {'schema_version': '1.0', 'run_id': self.run.id, 'source_revision': SHA, 'id': CONTROLLER})
+        self.lease._reconciliation_only = True
+        before = len(self.calls)
+        resumed = r.ReadinessSession.resume_cleanup(self.run, self.lease)
+        result = resumed.cleanup()
+        self.assertEqual(result['cleanup'], 'completed')
+        self.assertEqual(result['primary_failure']['code'], 'helper_image_mismatch')
+        self.assertFalse(any(x[:2] in (('docker', 'create'), ('docker', 'start'), ('docker', 'stop'), ('docker', 'rm')) for x in self.calls[before:]))
+        self.lease.record['resources'].append({'kind': 'container', 'id': '9' * 64, 'outcome': 'pending'})
+        with self.assertRaises(r.ReadinessError): r.ReadinessSession.resume_cleanup(self.run, self.lease)
+
+    def test_late_inspect_receiver_and_final_probe_cannot_declare_new_readiness(self):
+        self.session.start_helper()
+        self.session.deadline = time.monotonic() + .04
+        def late_inspect(*args, **kwargs):
+            self.assertLessEqual(kwargs['timeout'], .04)
+            time.sleep(.05)
+            return self.target()
+        with patch.object(images, 'inspect', side_effect=late_inspect), self.assertRaises(r.ReadinessError): self.session.poll()
+        self.assertNotEqual(self.session.receipt['status'], 'ready')
+        self.session.receipt['primary_failure'] = None; self.session.deadline = time.monotonic() + .04
+        self.session.helper_started = True
+        atomic_bytes(self.run.file('private/credentials/id_ed25519'), b'Synthetic bounded private input, never a real key')
+        other = 'ssh-ed25519 ' + base64.b64encode(struct.pack('>I', 11) + b'ssh-ed25519' + struct.pack('>I', 32) + bytes(reversed(range(32)))).decode()
+        atomic_bytes(self.run.file('private/credentials/id_ed25519.pub'), other.encode())
+        def late_receiver(*args, **kwargs):
+            self.assertLessEqual(kwargs['timeout'], .04)
+            time.sleep(.05)
+            return SimpleNamespace(returncode=0, stdout=b'', stderr=b'')
+        with patch.object(r.subprocess, 'run', side_effect=late_receiver), self.assertRaises(r.ReadinessError):
+            REAL_INJECT(self.session, HOST_KEY, '172.31.77.2')
+        self.assertIsNone(self.session.pinned_key)
+        self.session.receipt.update(primary_failure=None, transitions=[], status='waiting')
+        self.session.deadline = time.monotonic() + .04
+        def late_ping(operation, address):
+            if operation == 'ansible-ping': time.sleep(.05)
+            return {'status': 'pass'}
+        with patch.object(self.session, 'probe', side_effect=late_ping), patch.object(self.session, 'pin_trust', return_value=True), \
+             self.assertRaises(r.ReadinessError): self.session.poll()
+        self.assertNotEqual(self.session.receipt['status'], 'ready')
 
 
 class HelperProtocol(unittest.TestCase):

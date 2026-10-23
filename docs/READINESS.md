@@ -69,12 +69,19 @@ it. Missing, duplicate/wrong-identity, skipped, truncated, malformed and fabrica
 `pong` results cannot establish readiness.
 
 The coordinator has one absolute90s readiness deadline, bounded attempts and
-short connection timeouts. Child capture limits memory/output and terminates its
+short connection timeouts. Control-plane inspections, public-key reads and private
+input delivery use the remaining budget; late replies cannot establish readiness.
+Trusted in-process callbacks and admission refresh retain their own bounded
+operation timeouts, and the deadline is checked again when they return. This is
+not preemption of arbitrary Python callbacks. Child capture limits memory/output and terminates its
 owned process group. Ansible's own waits have explicit smaller limits plus the
 outer deadline; their defaults are not a wall-clock guarantee. The actual Docker
 StartedAt timestamp must leave target lifetime300s sufficient for remaining
 readiness and20s cleanup reserve. Target restart invalidates an already accepted
 ready record. There is no automatic TTL extension or retry that replaces targets.
+Later `require_ready()` revalidates the already accepted live identities under a
+separate20s check budget without reopening the establishment window. Cleanup also
+keeps independent bounded operations so expiry never prevents owned teardown.
 
 Fixed scenarios `wrong-key`, `wrong-user` and
 `configured-interpreter-unavailable` select only reviewed inputs. Wrong-key
@@ -105,6 +112,10 @@ journal identity. It allocates/restarts/executes nothing. Missing context, chang
 identity/source, unknown create/mutation or a lost outer exec result stays blocked.
 A complete inner probe timeout is a known failed probe and does not imply unknown
 Docker allocation. Legacy state or elapsed time never authorizes adoption.
+A known pre-create failure can recover a bound null-helper context only when no
+helper intent is unknown, the journal contains only the known Terraform resources,
+and an exact run/role observation finds no helper. It does not invent an ID or
+remove an unregistered object.
 The read-only `readiness_status(run)` returns validated retained primary failure,
 unknown outcome and cleanup metadata before recovery, including when cleanup must
 refuse. Recovery must preserve this outcome before trying another component.

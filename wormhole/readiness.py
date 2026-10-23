@@ -4,15 +4,19 @@ from copy import deepcopy
 from datetime import datetime, timezone
 import hashlib
 import ipaddress
+import io
 import json
 import math
+import os
 from pathlib import Path
 import re
+import subprocess
+import tarfile
 import time
 
 from scripts import qualify_images as qualification
 from . import images
-from .runs import RunError, SOURCE_ROOT, atomic_json, common, now, read_json, source_identity
+from .runs import Run, RunError, SOURCE_ROOT, atomic_json, common, now, read_json, source_identity
 from .stages import _run_process
 
 HELPER_BUILD = '9e864d00-ea9f-4a85-bdb5-f5873166e4d7'
@@ -113,6 +117,34 @@ class ReadinessSession:
             self.lease.plan['synthetic'] is False and self.lease._reconciliation_only is self.reconciliation_only,
             'readiness_scope')
 
+    def timeout(self, maximum=20):
+        remaining = self.deadline - time.monotonic()
+        require(remaining > .05, self.last_pending)
+        return min(maximum, remaining)
+
+    def inspect(self, kind, identifier, **options):
+        value = images.inspect(kind, identifier, timeout=self.timeout(), **options)
+        self.timeout()  # A late response is never accepted as within the deadline.
+        return value
+
+    def helper_reference(self):
+        build = Run(images.RUNS_ROOT, HELPER_BUILD)
+        value = read_json(build.file('evidence/image-build-helper.json'))
+        manifest = build.manifest()
+        recipe, hashes = images.recipe_identity()
+        require(value.get('schema_version') == '1.0' and value.get('operation') == 'ubuntu-image-assembly' and
+            value.get('status') == 'completed' and value.get('resources_reconciled') is True and
+            value.get('role') == 'helper' and value.get('run_id') == HELPER_BUILD and value.get('image_id') == HELPER_IMAGE and
+            value.get('recipe_sha256') == recipe and value.get('source_files') == hashes and
+            value.get('source_revision') == manifest['source_revision'] and manifest['source_dirty'] is False and
+            manifest['mode'] == 'container-reference', 'helper_image_mismatch')
+        image = self.inspect('image', HELPER_IMAGE)
+        labels = images.expected_labels(build, 'helper', recipe, hashes['images.lock.json'])
+        require(image.get('Id') == HELPER_IMAGE and image.get('Os') == 'linux' and image.get('Architecture') == 'amd64' and
+            not image['Config'].get('Volumes') and all(image['Config'].get('Labels', {}).get(k) == v for k, v in labels.items()),
+            'helper_image_mismatch')
+        return image['Config'].get('Labels') or {}
+
     def save(self):
         self.receipt['updated_at'] = now()
         self.receipt['helper_id'] = self.helper
@@ -183,43 +215,44 @@ class ReadinessSession:
         self.held()
         require(self.helper is None and not self.receipt['unknown_outcome'] and not self.reconciliation_only, 'helper_attempt_reused')
         try:
-            reference = qualification.build_reference(HELPER_BUILD, 'helper')
-            require(reference['image_id'] == HELPER_IMAGE, 'helper_image_mismatch')
-            self.image_labels = images.inspect('image', HELPER_IMAGE)['Config']['Labels'] or {}
+            self.image_labels = self.helper_reference()
             arguments = images.runtime_arguments(self.run, 'helper', HELPER_IMAGE, self.network,
                                                 self.lease.plan['limits']['helper'], helper_wait=180)
             arguments[-3:-3] = ['--mount', 'type=bind,source=' + str(images.safe_bind(RUNTIME)) + ',target=' + SOURCE_MOUNT + ',readonly',
                                '--label', images.LABEL + '.source_revision=' + self.run.manifest()['source_revision']]
             self.lease.set_phase('provisioning')  # Fresh capacity under the same canonical flock.
+            self.timeout()
             self.receipt['unknown_outcome'] = True
             self.save()
-            result = images.docker(arguments)
+            result = images.docker(arguments, timeout=self.timeout())
             text = result['log'].decode('ascii').strip()
             require(not result['log_truncated'] and ID.fullmatch(text), 'helper_create_unknown')
             self.helper = text
             self.lease.register_resource('container', text)
             self.receipt['unknown_outcome'] = False
             self.save()
-            self.verify_helper(images.inspect('container', text), stopped=True)
+            self.verify_helper(self.inspect('container', text), stopped=True)
             self.receipt['unknown_outcome'] = True
             self.save()
-            images.docker(('start', text))
+            images.docker(('start', text), timeout=self.timeout())
             self.receipt['unknown_outcome'] = False
             self.save()
-            actual = images.inspect('container', text)
+            actual = self.inspect('container', text)
             self.verify_helper(actual)
             self.receipt['cgroups'] = images.cgroup_limits(actual['State']['Pid'], self.lease.plan['limits']['helper']['docker_create'])
             self.receipt['unknown_outcome'] = False
             self.receipt['status'] = 'waiting'
             self.save()
             self.lease.set_phase('validating')
+            self.timeout()
         except BaseException as error:
             self.failure(error)
             raise
 
     def endpoint(self):
-        target = images.inspect('container', self.target)
-        self.provisioning.verify_target(target, stopped=target.get('State', {}).get('Status') == 'created')
+        target = self.inspect('container', self.target)
+        self.provisioning.verify_target(target, stopped=target.get('State', {}).get('Status') == 'created', inspection_timeout=self.timeout())
+        self.timeout()
         self.transition('created')
         if target['State']['Status'] == 'created':
             self.last_pending = 'target_not_started'
@@ -254,21 +287,21 @@ class ReadinessSession:
     def pin_trust(self):
         self.held()
         require(self.helper is not None and not self.reconciliation_only, 'helper_missing')
-        self.verify_helper(images.inspect('container', self.helper))
+        self.verify_helper(self.inspect('container', self.helper))
         address = self.endpoint()
         if address is None:
             return False
         if self.pinned_key is not None:
             return True  # Never replace an established pin after an identity change.
         try:
-            key = qualification.copied_public_key(self.target, self.provisioning.variables['image'], self.run, self.receipt)
+            key = self.public_key()
         except images.ImageError as error:
             if error.code == 'qualification_attempt_failed':
                 self.last_pending = 'hostkey_not_available'
                 self.save()
                 return False
             raise
-        qualification.inject_helper_inputs(self.run, self.helper, HELPER_IMAGE, key, address, self.receipt)
+        self.inject_inputs(key, address)
         self.pinned_key, self.trust_address = key, address
         blob = base64.b64decode(key.split()[1], validate=True)
         self.receipt['hostkey_fingerprint'] = 'SHA256:' + base64.b64encode(hashlib.sha256(blob).digest()).decode().rstrip('=')
@@ -276,11 +309,60 @@ class ReadinessSession:
         self.save()
         return True
 
+    def public_key(self):
+        actual = self.inspect('container', self.target)
+        self.provisioning.verify_target(actual, inspection_timeout=self.timeout())
+        require(actual['State']['Running'] is True, 'target_exited')
+        result = _run_process(('docker', '--config', images.docker_configuration(), '--host', images.SOCKET,
+            'exec', '--user', '0:0', self.target, '/usr/bin/python3', '-I', '-S', '-c', qualification.PUBLIC_KEY_READER),
+            cwd=SOURCE_ROOT, timeout=self.timeout(5))
+        qualification.attempt_record(self.run, self.receipt, 'target', 'public-hostkey', result)
+        if result['status'] == 'timeout':
+            self.receipt['unknown_outcome'] = True; self.save()
+            raise ReadinessError('helper_probe_incomplete', 'Public identity reader did not finish before its deadline.')
+        self.timeout()
+        if result['status'] == 'fail':
+            raise images.ImageError('qualification_attempt_failed', 'Public identity is not available yet.')
+        require(result['status'] == 'pass' and not result['log_truncated'] and 1 <= len(result['log']) <= 512, 'invalid_hostkey')
+        try:
+            return qualification.public_key(result['log'].decode('ascii'))
+        except (ValueError, UnicodeError, qualification.RuntimeFailure):
+            raise ReadinessError('invalid_hostkey', 'Expected one ordinary bounded Ed25519 public host key.') from None
+
+    def inject_inputs(self, key, address):
+        self.verify_helper(self.inspect('container', self.helper))
+        path = self.run.file('private/credentials/id_ed25519')
+        with path.open('rb') as stream: private = stream.read(16385)
+        require(1 <= len(private) <= 16384, 'invalid_auth')
+        with path.with_name('id_ed25519.pub').open('rb') as stream:
+            other_key = qualification.public_key(stream.read(513).decode('ascii'))
+        require(other_key != key, 'invalid_trust_fixture')
+        known = ('[' + address + ']:2222 ' + key + '\n').encode()
+        wrong = ('[' + address + ']:2222 ' + other_key + '\n').encode()
+        data = io.BytesIO()
+        with tarfile.open(fileobj=data, mode='w') as archive:
+            for name, raw in (('id_ed25519', private), ('known_hosts', known), ('wrong_known_hosts', wrong)):
+                member = tarfile.TarInfo(name); member.uid = member.gid = 10001; member.mode = 0o600; member.size = len(raw)
+                archive.addfile(member, io.BytesIO(raw))
+        try:
+            result = subprocess.run(['docker', '--config', images.docker_configuration(), '--host', images.SOCKET,
+                'exec', '-i', '--user', '10001:10001', self.helper, '/opt/wormhole/venv/bin/python', '-I', '-S', '-c',
+                qualification.INPUT_RECEIVER_COMMAND], input=data.getvalue(), capture_output=True, timeout=self.timeout(15),
+                env={key: os.environ[key] for key in ('PATH', 'SYSTEMROOT', 'WINDIR') if key in os.environ})
+        except subprocess.TimeoutExpired:
+            self.receipt['unknown_outcome'] = True; self.save()
+            raise ReadinessError('helper_auth_injection_unknown', 'The fixed receiver exceeded the remaining deadline.') from None
+        qualification.attempt_record(self.run, self.receipt, 'helper', 'auth-input', {'status': 'pass' if result.returncode == 0 else 'fail',
+            'returncode': result.returncode, 'log': (result.stdout + result.stderr)[:65536],
+            'log_truncated': len(result.stdout) + len(result.stderr) > 65536})
+        self.timeout()
+        require(result.returncode == 0 and len(result.stdout) + len(result.stderr) <= 65536, 'helper_auth_injection_failed')
+
     def observe_hostkey(self):
         """Record the current public identity without changing an earlier pin."""
         self.held()
         require(self.pinned_key is not None and self.endpoint() is not None, 'hostkey_pin_required')
-        key = qualification.copied_public_key(self.target, self.provisioning.variables['image'], self.run, self.receipt)
+        key = self.public_key()
         blob = base64.b64decode(key.split()[1], validate=True)
         result = {'fingerprint': 'SHA256:' + base64.b64encode(hashlib.sha256(blob).digest()).decode().rstrip('='),
                   'matches_original_pin': key == self.pinned_key, 'observed_at': now()}
@@ -292,7 +374,7 @@ class ReadinessSession:
 
     def probe(self, operation, address):
         require(operation in {'tcp', 'ssh', 'python', 'ansible-wait', 'ansible-ping'}, 'unexpected_readiness_operation')
-        self.verify_helper(images.inspect('container', self.helper))
+        self.verify_helper(self.inspect('container', self.helper))
         remaining = self.deadline - time.monotonic()
         require(remaining > 3, self.last_pending)
         budget = min({'tcp': 3, 'ssh': 8, 'python': 8, 'ansible-wait': 25, 'ansible-ping': 12}[operation], remaining - 2)
@@ -369,7 +451,9 @@ class ReadinessSession:
                     confirmation = self.probe('ansible-wait', address)
                     require(confirmation['status'] == 'fail', 'interpreter_fault_inconsistent')
                 raise ReadinessError(code, 'The actual helper probe failed; retain its private bounded diagnostic.')
+            self.timeout()
             self.transition(check)
+        self.timeout()
         self.receipt['status'] = 'ready'
         self.receipt['ready_started_at'] = self.last_started_at
         self.save()
@@ -389,6 +473,7 @@ class ReadinessSession:
             while True:
                 if on_poll is not None:
                     on_poll(time.monotonic() - self.began)
+                self.timeout()
                 if self.poll():
                     self.require_ready()
                     return deepcopy(self.receipt)
@@ -403,9 +488,17 @@ class ReadinessSession:
         require(self.receipt['status'] == 'ready' and self.receipt['primary_failure'] is None and
             not self.receipt['unknown_outcome'] and [x['check_id'] for x in self.receipt['transitions']] == list(EXPECTED),
             'readiness_required')
-        self.verify_helper(images.inspect('container', self.helper))
-        self.endpoint()
-        require(self.receipt['ready_started_at'] == self.last_started_at, 'readiness_stale')
+        # Revalidate an existing snapshot later without resetting the original
+        # window for establishing new readiness. No checks are added here.
+        original_deadline = self.deadline
+        self.deadline = time.monotonic() + 20
+        try:
+            self.verify_helper(self.inspect('container', self.helper))
+            self.endpoint()
+            require(self.receipt['ready_started_at'] == self.last_started_at, 'readiness_stale')
+            self.timeout()
+        finally:
+            self.deadline = original_deadline
         return True
 
     def cleanup(self):
@@ -457,18 +550,31 @@ class ReadinessSession:
                                        'source_path', 'source_sha256', 'unknown_outcome', 'cleanup'}
         require(type(context) is dict and set(context) == fields and common(context) == common(manifest) and
             context['operation'] == 'readiness-helper' and context['helper_image'] == HELPER_IMAGE and
-            type(context['helper_id']) is str and ID.fullmatch(context['helper_id']) and
+            (context['helper_id'] is None or type(context['helper_id']) is str and ID.fullmatch(context['helper_id'])) and
             type(context['network_id']) is str and ID.fullmatch(context['network_id']) and
             type(context['target_resource_id']) is str and ID.fullmatch(context['target_resource_id']) and
             context['source_path'] == str(RUNTIME) and context['source_sha256'] == runtime_hash() and
-            type(context['image_labels']) is dict and context['unknown_outcome'] is False, 'helper_recovery_scope')
-        require(images.inspect('image', HELPER_IMAGE)['Config'].get('Labels') == context['image_labels'], 'helper_recovery_scope')
+            (context['image_labels'] is None or type(context['image_labels']) is dict) and
+            context['unknown_outcome'] is False, 'helper_recovery_scope')
+        if context['helper_id'] is not None:
+            require(images.inspect('image', HELPER_IMAGE)['Config'].get('Labels') == context['image_labels'], 'helper_recovery_scope')
         receipt = read_json(run.file('evidence/readiness.json'))
         require(common(receipt) == common(manifest) and receipt.get('operation') == 'ssh-ansible-readiness' and
             receipt.get('helper_id') == context['helper_id'] and receipt.get('unknown_outcome') is False and
             receipt.get('cleanup') == context['cleanup'], 'helper_recovery_scope')
-        matches = [x for x in lease.record['resources'] if x['kind'] == 'container' and x['id'] == context['helper_id']]
-        require(len(matches) == 1 and matches[0]['outcome'] in {'pending', 'absent'}, 'helper_recovery_scope')
+        if context['helper_id'] is None:
+            controller = read_json(run.file('private/terraform/controller.json'))
+            require(controller.get('schema_version') == '1.0' and controller.get('run_id') == run.id and
+                controller.get('source_revision') == revision and type(controller.get('id')) is str and ID.fullmatch(controller['id']),
+                'helper_recovery_scope')
+            allowed = {('container', controller['id']), ('container', context['target_resource_id']), ('network', context['network_id'])}
+            require(all((item['kind'], item['id']) in allowed for item in lease.record['resources']), 'helper_recovery_scope')
+            observed = images.docker(('ps', '-a', '--no-trunc', '--filter', 'label=' + images.LABEL + '.run_id=' + run.id,
+                '--filter', 'label=' + images.LABEL + '.role=helper', '--format', '{{.ID}}'))
+            require(not observed['log_truncated'] and not observed['log'].strip(), 'helper_recovery_scope')
+        else:
+            matches = [x for x in lease.record['resources'] if x['kind'] == 'container' and x['id'] == context['helper_id']]
+            require(len(matches) == 1 and matches[0]['outcome'] in {'pending', 'absent'}, 'helper_recovery_scope')
         session = cls.__new__(cls)
         session.run, session.lease, session.provisioning = run, lease, None
         session.helper, session.network, session.target = context['helper_id'], context['network_id'], context['target_resource_id']
