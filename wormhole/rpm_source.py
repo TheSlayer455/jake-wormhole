@@ -231,7 +231,8 @@ def _worker(run, operation):
         validate_metadata(run,lock)
     elif operation=='packages':
         request=read_json(root/'resolve-request.json')
-        with (root/'resolution.json').open('rb') as stream:raw=stream.read(POLICY['resolution_bytes']+1)
+        resolution_path=root/'resolution.json';_owned(resolution_path)
+        with resolution_path.open('rb') as stream:raw=stream.read(POLICY['resolution_bytes']+1)
         result=validate_resolution(run,raw,request,lock)
         folder=root/'packages';folder.mkdir(mode=0o700)
         for item in result['packages']:fetch(item,folder/Path(item['path']).name)

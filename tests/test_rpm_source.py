@@ -100,11 +100,24 @@ class PublicSources(unittest.TestCase):
             with patch.object(s,'LOCK',path),self.assertRaises(s.SourceError) as caught:s.load_lock()
             self.assertEqual(caught.exception.code,'rpm_lock_bound')
             run=create_run(Path(folder)/'runs',fixture=False,identity=(SHA,False));root=run.file('private/rpm-sources');root.mkdir(mode=0o700)
-            (root/'resolution.json').write_bytes(b' '*(s.POLICY['resolution_bytes']+1))
+            resolution=root/'resolution.json';resolution.write_bytes(b' '*(s.POLICY['resolution_bytes']+1));resolution.chmod(0o600)
             atomic_json(root/'resolve-request.json',{})
             with patch.object(s,'guard'),patch.object(s,'validate_metadata'),patch.object(s,'validate_resolution',side_effect=lambda _r,raw,*_a: s.parse(raw)),\
                  self.assertRaises(s.SourceError) as caught:s._worker(run,'packages')
             self.assertEqual(caught.exception.code,'rpm_resolution_bound')
+
+    def test_linked_retained_resolution_is_refused_before_fetch(self):
+        for kind in ('hardlink','symlink') if os.name=='posix' else ('hardlink',):
+            with self.subTest(kind=kind),tempfile.TemporaryDirectory() as folder:
+                run=create_run(Path(folder)/'runs',fixture=False,identity=(SHA,False));root=run.file('private/rpm-sources');root.mkdir(mode=0o700)
+                original=Path(folder)/'original.json';original.write_bytes(b'{}');original.chmod(0o600)
+                destination=root/'resolution.json'
+                if kind=='hardlink':os.link(original,destination)
+                else:destination.symlink_to(original)
+                atomic_json(root/'resolve-request.json',{})
+                with patch.object(s,'guard'),patch.object(s,'fetch',side_effect=AssertionError('No fetch')),\
+                     self.assertRaises(s.RunError) as caught:s._worker(run,'packages')
+                self.assertEqual(caught.exception.code,'unsafe_path')
 
     def test_fixed_https_has_no_redirect_proxy_or_partial_acceptance(self):
         raw=b'synthetic public bytes';item={'path':'Packages/p/python.rpm','bytes':len(raw),'sha256':s.sha(raw)}
