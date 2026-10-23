@@ -62,6 +62,13 @@ Its PID1 becomes a fixed 580-second timeout with a five-second kill grace.
 Actual cgroups, sampled storage headroom and stopped writable-layer size are
 checked before commit. Shared-daemon commit work remains admitted overhead,
 not a claimed hard-capped daemon. The immutable variant is retained separately.
+Commit completion is bound to a previously absent unique Run tag and actual
+immutable image inspection. Bounded Docker diagnostics are retained privately;
+they are not parsed as the image ID. Truncation or an incomplete request keeps
+the outcome unknown. Later smoke selection derives original build labels from
+the clean build Run and current recipe hashes, then checks linux/amd64, the exact
+ordinary-helper parent, unique tag, non-root entrypoint/configuration and telemetry
+opt-out. Receipt-supplied labels cannot establish that provenance.
 
 Smoke and missing-package probes use the helper budget of 512 MiB, 1 CPU and
 128 PIDs, no network, UID10001, a read-only root, dropped capabilities, no socket
@@ -91,6 +98,10 @@ Acceptance must additionally run fresh ordinary Terraform/SSH/Ansible functional
 diagnostics and retain their distinct Run IDs/evidence after the isolated failure.
 Unit fixtures simulate those subprocess responses and do not claim a real image
 build, PowerShell smoke, APT/container execution or SSH acceptance.
+Known-ID cleanup can resume after durable absence reconciliation or an interrupted
+archive-first lease finish. It re-proves actual absence before skipping an already
+absent journal entry, preserving the original failure. An absent entry with a live
+container, dirty/fixture original Run, or unknown outcome is refused.
 
 ## Operator interface
 

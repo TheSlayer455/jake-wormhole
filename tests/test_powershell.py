@@ -27,6 +27,104 @@ class Response:
 
 
 class OptionalPolicy(unittest.TestCase):
+    def qualified_image(self, run):
+        recipe,files=p.recipe_identity();tag='jake-wormhole-helper-powershell:run-'+run.id
+        return {'Id':'sha256:'+'d'*64,'Parent':p.BASE,'Os':'linux','Architecture':'amd64','RepoTags':[tag],'Size':123456,
+            'Config':{'Labels':images.expected_labels(run,'helper-powershell',recipe,files['lock.json']),
+                'Volumes':None,'User':'10001:10001','Entrypoint':['/opt/wormhole/venv/bin/python','/opt/wormhole/runtime.py','helper'],
+                'Cmd':[],'Env':['POWERSHELL_TELEMETRY_OPTOUT=1']}}
+
+    def test_completed_commit_uses_preabsent_tag_identity_not_combined_diagnostic_text(self):
+        with tempfile.TemporaryDirectory(prefix='wormhole-ps-commit-synthetic-') as folder:
+            run=create_run(Path(folder)/'runs',fixture=False,identity=(SHA,False));image=self.qualified_image(run)
+            recipe,files=p.recipe_identity();receipt={'unknown_outcome':False}
+            lease=Mock();lease.plan={'materialization':{'client_timeout_seconds':60}}
+            output=b'DEPRECATED: reviewed synthetic Docker diagnostic\n'+image['Id'].encode()+b'\n'
+            with patch.object(images,'inspect',side_effect=[None,image]),patch.object(images,'docker',return_value={'log':output,'log_truncated':False}):
+                p.commit_image(run,receipt,lease,'c'*64,recipe=recipe,files=files)
+            self.assertEqual(receipt['image_id'],image['Id']);self.assertIs(receipt['unknown_outcome'],False)
+            self.assertEqual(run.file('private/powershell-commit.log').read_bytes(),output)
+            lease.register_resource.assert_called_once_with('image',image['Id'])
+            for fault in ('timeout','truncated','labels'):
+                with self.subTest(fault=fault):
+                    receipt={'unknown_outcome':False};lease.reset_mock();bad=deepcopy(image);bad['Config']['Labels']={}
+                    error=images.ImageError('docker_request_unknown','synthetic timeout')
+                    with patch.object(images,'inspect',side_effect=[None,bad if fault=='labels' else image]),\
+                         patch.object(images,'docker',**({'side_effect':error} if fault=='timeout' else
+                            {'return_value':{'log':output,'log_truncated':fault=='truncated'}})):
+                        with self.assertRaises((p.CapabilityError,images.ImageError)):
+                            p.commit_image(run,receipt,lease,'c'*64,recipe=recipe,files=files)
+                    self.assertIs(read_json(run.file('evidence/powershell-capability.json'))['unknown_outcome'],True)
+                    lease.register_resource.assert_not_called()
+
+    def test_optional_image_derives_original_labels_and_rejects_base_or_changed_configuration(self):
+        with tempfile.TemporaryDirectory(prefix='wormhole-ps-image-synthetic-') as folder:
+            run=create_run(Path(folder)/'runs',fixture=False,identity=(SHA,False));image=self.qualified_image(run)
+            recipe,files=p.recipe_identity();original={**p.common(run.manifest()),'component':'optional-powershell','operation':'build',
+                'status':'completed','resources_reconciled':True,'unknown_outcome':False,'selection':'powershell-helper',
+                'base_image':p.BASE,'base_build_run':p.BASE_RUN,'image':p.BASE,'recipe_sha256':recipe,'source_files':files,
+                'image_id':image['Id'],'local_tag':image['RepoTags'][0],'labels':image['Config']['Labels']}
+            destination=run.file('evidence/powershell-capability.json')
+            atomic_json(destination,original)
+            with patch.object(images,'RUNS_ROOT',run.workspace),patch.object(images,'inspect',return_value=image):
+                self.assertEqual(p.optional_image(run.id),image['Id'])
+                for fault in ('empty-labels','base','platform','parent','tag','user','entrypoint','env','volume','common-type'):
+                    with self.subTest(fault=fault):
+                        receipt=deepcopy(original);actual=deepcopy(image)
+                        if fault=='empty-labels':receipt['labels']={};actual['Config']['Labels']={}
+                        if fault=='base':receipt['image_id']=p.BASE;actual['Id']=p.BASE
+                        if fault=='platform':actual['Architecture']='arm64'
+                        if fault=='parent':actual['Parent']='sha256:'+'e'*64
+                        if fault=='tag':actual['RepoTags']=['unrelated:latest']
+                        if fault=='user':actual['Config']['User']='0:0'
+                        if fault=='entrypoint':actual['Config']['Entrypoint']=['/bin/sh']
+                        if fault=='env':actual['Config']['Env']=[]
+                        if fault=='volume':actual['Config']['Volumes']={'/ambient':{}}
+                        if fault=='common-type':receipt['source_dirty']=0
+                        atomic_json(destination,receipt)
+                        with patch.object(images,'inspect',return_value=actual),self.assertRaises(p.CapabilityError):p.optional_image(run.id)
+
+    @unittest.skipUnless(os.name=='posix','Durable archive interruption fixture requires Linux flock')
+    def test_recovery_finishes_after_reconciliation_and_matching_archive_interruptions(self):
+        from wormhole import admission as a
+        from test_admission import observed
+        for fault in ('after-reconcile','after-archive'):
+            with self.subTest(fault=fault),tempfile.TemporaryDirectory(prefix='wormhole-ps-recovery-synthetic-') as folder:
+                run=create_run(Path(folder)/'runs',fixture=False,identity=(SHA,False));root=Path(folder)/'infrastructure'
+                receipt={'unknown_outcome':False,'container_id':'c'*64,'resources_reconciled':False,'primary_failure':{'code':'retained_synthetic_failure'}}
+                with a.AdmissionLease(root,run.id,SHA,allow_synthetic=True,collector=lambda _:observed()) as lease:
+                    lease.set_phase('provisioning');lease.register_resource('container','c'*64)
+                    real_finish=lease.finish
+                    def interrupt(**options):
+                        if fault=='after-archive':
+                            original=a._sync_json
+                            def sync(path,value):
+                                if path==root/'admission.json' and value['state']=='finished':raise OSError('synthetic interrupted after archive')
+                                return original(path,value)
+                            with patch.object(a,'_sync_json',side_effect=sync):real_finish(**options)
+                        raise OSError('synthetic interrupted after reconciliation')
+                    with patch.object(images,'inspect',return_value=None),patch.object(images,'docker',return_value={'log':b'','log_truncated':False}),\
+                         patch.object(lease,'finish',side_effect=interrupt),self.assertRaises(OSError):p.cleanup(run,receipt,lease)
+                    self.assertEqual(lease.record['resources'][0]['outcome'],'absent')
+                with a.AdmissionLease.resume(root,run.id,SHA,allow_synthetic=True) as resumed,\
+                     patch.object(images,'inspect',return_value=None),patch.object(images,'docker',return_value={'log':b'','log_truncated':False}),\
+                     patch.object(resumed,'reconcile_resource',side_effect=AssertionError('Already absent must not reconcile twice')):
+                    p.cleanup(run,receipt,resumed)
+                    self.assertTrue(resumed.finished);self.assertIs(receipt['resources_reconciled'],True)
+                    self.assertEqual(receipt['primary_failure'],{'code':'retained_synthetic_failure'})
+
+    def test_recovery_rejects_dirty_or_fixture_original_manifest_before_docker(self):
+        with tempfile.TemporaryDirectory(prefix='wormhole-ps-recovery-synthetic-') as folder:
+            run=create_run(Path(folder)/'runs',fixture=False,identity=(SHA,False));recipe,files=p.recipe_identity()
+            for fault in ('dirty','fixture'):
+                manifest=run.manifest();manifest['source_dirty']=fault=='dirty';manifest['mode']='fixture' if fault=='fixture' else 'container-reference'
+                receipt={**p.common(manifest),'component':'optional-powershell','operation':'probe','selection':'missing-package-fixture',
+                    'unknown_outcome':False,'resources_reconciled':False,'recipe_sha256':recipe,'source_files':files,'container_id':'c'*64}
+                atomic_json(run.file('evidence/powershell-capability.json'),receipt)
+                with patch.object(run,'manifest',return_value=manifest),patch.object(p.sys,'platform','linux'),\
+                     patch.object(images,'RUNS_ROOT',run.workspace),patch.object(p,'source_identity',return_value=(SHA,False)),\
+                     patch.object(images,'docker',side_effect=AssertionError('No Docker')),self.assertRaises(p.CapabilityError):p.recover(run)
+
     def test_separate_source_pins_leave_original_image_policy_unchanged(self):
         lock=p.load_lock();recipe,files=images.recipe_identity()
         self.assertEqual(lock['base_recipe_sha256'],recipe);self.assertEqual(lock['base_source_files'],files)

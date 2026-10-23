@@ -248,22 +248,62 @@ def mutation(run, receipt, arguments, *, keep_unknown=False, **options):
 
 def cleanup(run, receipt, lease):
     require(receipt['unknown_outcome'] is False, 'capability_outcome_unknown')
-    lease.set_phase('reconciling')
+    # A matching archive may already be durable after an interrupted finish.
+    # In that case only read-only absence proofs and finish() are permitted.
+    if lease.record['phase'] != 'reconciling': lease.set_phase('reconciling')
     identifier = receipt['container_id']
     if identifier is not None:
+        entries = [item for item in lease.record['resources'] if item['kind'] == 'container' and item['id'] == identifier]
+        require(len(entries) == 1 and entries[0]['outcome'] in ('pending', 'absent'), 'capability_cleanup_unverified')
         value = images.inspect('container', identifier, missing=True)
         if value is not None:
+            require(entries[0]['outcome'] == 'pending', 'capability_cleanup_unverified')
             owned(run, receipt, value)
             if value['State']['Running']:
                 mutation(run, receipt, ('kill', identifier), timeout=10)
                 require(images.inspect('container', identifier)['State']['Running'] is False, 'capability_cleanup_unverified')
             mutation(run, receipt, ('rm', identifier))
         require(images.inspect('container', identifier, missing=True) is None, 'capability_cleanup_unverified')
-        lease.reconcile_resource('container', identifier)
+        if entries[0]['outcome'] == 'pending': lease.reconcile_resource('container', identifier)
     leftovers = images.docker(('ps', '-a', '--no-trunc', '--filter', 'label=' + images.LABEL + '.run_id=' + run.id, '--format', '{{.ID}}'))
     require(not leftovers['log_truncated'] and not leftovers['log'].strip(), 'capability_cleanup_unverified')
     lease.finish(reconciliation_complete=True)
     receipt['resources_reconciled'] = True; save(run, receipt)
+
+
+def verify_optional_image(build, image, *, recipe, files, image_id, tag):
+    labels = images.expected_labels(build, 'helper-powershell', recipe, files['lock.json'])
+    require(type(image_id) is str and re.fullmatch('sha256:[a-f0-9]{64}', image_id) and image_id != BASE and
+        image['Id'] == image_id and image['Os'] == 'linux' and image['Architecture'] == 'amd64' and
+        image.get('Parent') == BASE and image.get('RepoTags') == [tag] and not image['Config'].get('Volumes') and
+        image['Config']['User'] == '10001:10001' and image['Config']['Entrypoint'] ==
+            ['/opt/wormhole/venv/bin/python', '/opt/wormhole/runtime.py', 'helper'] and
+        image['Config'].get('Cmd') in (None, []) and
+        (image['Config'].get('Env') or []).count('POWERSHELL_TELEMETRY_OPTOUT=1') == 1 and
+        all(image['Config'].get('Labels', {}).get(key) == value for key, value in labels.items()), 'capability_image_unqualified')
+    return labels
+
+
+def commit_image(run, receipt, lease, identifier, *, recipe, files):
+    tag = 'jake-wormhole-helper-powershell:run-' + run.id
+    require(images.inspect('image', tag, missing=True) is None, 'capability_tag_exists')
+    changes = ['USER 10001:10001', 'ENTRYPOINT ["/opt/wormhole/venv/bin/python","/opt/wormhole/runtime.py","helper"]',
+        'CMD []', 'ENV POWERSHELL_TELEMETRY_OPTOUT=1']
+    command = ['commit', '--no-pause']
+    for change in changes: command.extend(('--change', change))
+    command.extend((identifier, tag))
+    result = mutation(run, receipt, command, keep_unknown=True, timeout=lease.plan['materialization']['client_timeout_seconds'])
+    atomic_bytes(run.file('private/powershell-commit.log'), result['log'], limit=65536)
+    require(not result['log_truncated'], 'capability_commit_unknown')
+    # Docker may emit diagnostics alongside its ID. A completed request and the
+    # unique pre-absent tag bind the result; output text is never an ID oracle.
+    image = images.inspect('image', tag)
+    image_id = image['Id']
+    verify_optional_image(run, image, recipe=recipe, files=files, image_id=image_id, tag=tag)
+    lease.register_resource('image', image_id)
+    lease.reconcile_resource('image', image_id, outcome='retained', size_bytes=image['Size'])
+    receipt.update(image_id=image_id, local_tag=tag, image_size_bytes=image['Size'], status='completed', unknown_outcome=False)
+    save(run, receipt)
 
 
 def optional_image(build_id):
@@ -274,11 +314,14 @@ def optional_image(build_id):
         canonical({key: receipt[key] for key in common(build.manifest())}) == canonical(common(build.manifest())) and
         build.manifest()['source_dirty'] is False and build.manifest()['mode'] == 'container-reference' and
         receipt['component'] == 'optional-powershell' and receipt['selection'] == 'powershell-helper' and
+        receipt['base_image'] == BASE and receipt['base_build_run'] == BASE_RUN and receipt['image'] == BASE and
         receipt['recipe_sha256'] == recipe and receipt['source_files'] == files and
         type(receipt['image_id']) is str and re.fullmatch('sha256:[a-f0-9]{64}', receipt['image_id']), 'capability_image_unqualified')
+    tag = 'jake-wormhole-helper-powershell:run-' + build.id
+    labels = images.expected_labels(build, 'helper-powershell', recipe, files['lock.json'])
+    require(canonical(receipt['labels']) == canonical(labels) and receipt['local_tag'] == tag, 'capability_image_unqualified')
     image = images.inspect('image', receipt['image_id'])
-    require(image['Id'] == receipt['image_id'] and not image['Config'].get('Volumes') and
-        all(image['Config'].get('Labels', {}).get(key) == value for key, value in receipt['labels'].items()), 'capability_image_unqualified')
+    verify_optional_image(build, image, recipe=recipe, files=files, image_id=receipt['image_id'], tag=tag)
     return receipt['image_id']
 
 
@@ -372,21 +415,7 @@ def execute(run, *, selection, build_run=None):
                     receipt['installed'] = installed_record(identifier)
                     require(source_identity() == (base['source_revision'], False) and recipe_identity() == (recipe, files), 'capability_source_changed')
                     lease.set_phase('materializing')
-                    tag = 'jake-wormhole-helper-powershell:run-' + run.id
-                    require(images.inspect('image', tag, missing=True) is None, 'capability_tag_exists')
-                    changes = ['USER 10001:10001', 'ENTRYPOINT ["/opt/wormhole/venv/bin/python","/opt/wormhole/runtime.py","helper"]',
-                        'CMD []', 'ENV POWERSHELL_TELEMETRY_OPTOUT=1']
-                    command = ['commit']
-                    for change in changes: command.extend(('--change', change))
-                    command.extend((identifier, tag))
-                    result = mutation(run, receipt, command, keep_unknown=True, timeout=lease.plan['materialization']['client_timeout_seconds'])
-                    image_id = result['log'].decode().strip(); require(re.fullmatch('sha256:[a-f0-9]{64}', image_id), 'capability_commit_unknown')
-                    image = images.inspect('image', tag)
-                    require(image['Id'] == image_id and not image['Config'].get('Volumes') and
-                        all(image['Config'].get('Labels', {}).get(k) == v for k, v in labels.items()), 'capability_commit_unknown')
-                    lease.register_resource('image', image_id); lease.reconcile_resource('image', image_id, outcome='retained', size_bytes=image['Size'])
-                    receipt['unknown_outcome'] = False; save(run, receipt)
-                    receipt.update(image_id=image_id, local_tag=tag, image_size_bytes=image['Size'], status='completed')
+                    commit_image(run, receipt, lease, identifier, recipe=recipe, files=files)
                 else:
                     observed = json.loads(logs['log'])
                     require(type(observed) is dict and observed.get('production_iso_eligible') is False and
@@ -430,6 +459,7 @@ def recover(run):
         receipt = read_json(run.file('evidence/powershell-capability.json'))
         base = common(run.manifest()); recipe, files = recipe_identity()
         require(source_identity() == (base['source_revision'], False) and
+            base['source_dirty'] is False and run.manifest()['mode'] == 'container-reference' and
             canonical({key: receipt[key] for key in base}) == canonical(base) and receipt['component'] == 'optional-powershell' and
             receipt['operation'] in ('build', 'probe') and receipt['selection'] in CHOICES and
             receipt['unknown_outcome'] is False and receipt['resources_reconciled'] is False and
@@ -449,7 +479,7 @@ def recover(run):
         with AdmissionLease.resume(images.INFRASTRUCTURE, run.id, base['source_revision']) as lease:
             expected = lease.plan['limits']['build' if receipt['operation'] == 'build' else 'helper']
             require(canonical(receipt['limits']) == canonical(expected) and any(item['kind'] == 'container' and
-                item['id'] == receipt['container_id'] and item['outcome'] == 'pending' for item in lease.record['resources']) and
+                item['id'] == receipt['container_id'] and item['outcome'] in ('pending', 'absent') for item in lease.record['resources']) and
                 all(item['outcome'] != 'pending' or item['kind'] == 'container' and item['id'] == receipt['container_id']
                     for item in lease.record['resources']), 'capability_recovery_refused')
             cleanup(run, receipt, lease)
