@@ -1,0 +1,40 @@
+{
+  "allocated_resources_at_failure": [],
+  "finding": "Pinned Ubuntu base carried the observed org.opencontainers.image.version=24.04 label; exact trusted-label validation initially omitted it.",
+  "kind": "Historical failed attempt, excluded from passing acceptance cases.",
+  "limits": [
+    "This recovered attempt remains failed and is not one of the four passing fresh case harnesses.",
+    "The new public candidate_recovery adapter at dfff72be has fixture coverage; this historical actual recovery did not execute it."
+  ],
+  "primary_failure": "candidate_base_invalid",
+  "recovery": {
+    "adapter": "Reviewed private exact-original-source operator using the public AdmissionLease API.",
+    "candidate_acceptance_sha256": "8da17699eb1f113e69bd40141371922d84c94e31fc992bbf4a3158605c18f7be",
+    "candidate_build_sha256": "679bc34277379cc7a4d7b9a3eff87719ddd3a2d59974e984e925bc0408a2ecf9",
+    "docker_mutations": false,
+    "journal_finalized_through": "AdmissionLease.resume/finish",
+    "mode": "container-reference",
+    "observed_at": "2026-10-23T17:48:44.721Z",
+    "operation": "exact-original-source-zero-allocation-recovery",
+    "primary_failure_preserved": "candidate_base_invalid",
+    "private_operator_sha256": "6a3b239e9d0585f044ece9ea3f4c200035350c0d89fb2f7b30206a637b8367be",
+    "resources_adopted": false,
+    "run_id": "15893599-88bf-4f06-9230-b33ff049123f",
+    "schema_version": "1.0",
+    "source_dirty": false,
+    "source_revision": "baaf2f62cad29f7581ead0355346b07762b4ffe1",
+    "status": "completed",
+    "sweeps": {
+      "container": "none",
+      "image": "none",
+      "network": "none",
+      "volume": "none"
+    },
+    "unknown_outcome_cleared": false
+  },
+  "run_id": "15893599-88bf-4f06-9230-b33ff049123f",
+  "schema_version": "1.0",
+  "source_revision": "baaf2f62cad29f7581ead0355346b07762b4ffe1",
+  "ticket": "WORM-013",
+  "underlying_status": "failed"
+}
