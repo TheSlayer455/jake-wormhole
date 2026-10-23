@@ -59,6 +59,26 @@ Known-host trust must come from exact-owned target control-plane public host-key
 
 ## Failure and recovery boundaries
 
+The repository qualification adapter is available after both builds complete at
+the same clean source revision:
+
+```text
+python scripts/qualify_images.py --target-build-run TARGET_BUILD_UUID --helper-build-run HELPER_BUILD_UUID
+```
+
+Each invocation creates a fresh qualification run, client key and private internal
+network. It rechecks completed build receipts against actual image identity, holds
+the canonical admission lease, inspects stopped runtime limits before start and
+reads actual cgroups. It provisions the helper's private tmpfs through a bounded
+stdin-only archive, obtains the exact-owned target's public host key through the
+trusted Docker control plane, then uses strict authenticated SSH as UID10001.
+Root and nonexistent-user login must fail specifically at authentication.
+No private key is printed or placed in evidence. The receipt includes client and
+host public fingerprints so two invocations can prove isolation. Every created
+container/network is inspected and removed by exact ID before admission finishes;
+unknown allocations preserve the journal. Failure output identifies the run UUID.
+These are image tests, not Terraform/Ansible pipeline acceptance.
+
 Admission-entry refusal records a failed-before-allocation receipt and makes no Docker request. After any mutating Docker request, failure stops a known owned running builder where possible, retains bounded private logs, and leaves the journal unresolved. Missing/changed ownership, a failed stop, or an unknown pull/commit result stays explicitly unverified. Do not edit/delete admission.json, remove its stable lock file, create a second infrastructure root or retry allocation to bypass this state.
 
 Reconciliation must take the same flock for the same run and source, inspect each exact journaled resource and run-label leftovers, and act only on ownership-verified resources. An assembly failure can be reconciled by stopping/removing its exact builder and empty network and accounting for retained images. A timed-out pull/commit requires separately established daemon completion and exact image/tag outcomes before resolution; elapsed client time or an empty container list is insufficient. The WORM-005 assembly driver intentionally does not auto-clear these unknown outcomes. A supported reconciliation adapter is required before unattended retries; no generic infrastructure cleanup or later lifecycle implementation is implied.
