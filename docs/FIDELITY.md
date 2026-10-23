@@ -9,11 +9,11 @@ installation laboratory. Read [architecture](ARCHITECTURE.md),
 | Area | Established now | Not established |
 | --- | --- | --- |
 | Repository | Private GitHub repository, pushed baseline, passing baseline CI and separately identified Codex engineering review | Release qualification or independent human review |
-| Host discovery | Saved memory, disk, Docker and executable-availability observations | Current admission capacity, enforced limits or absence of impact under load |
-| CLI/stages | Local CLI, bounded stage execution and explicitly synthetic fixture subset; six published artifact contracts | A complete Terraform/SSH/Ansible runtime pipeline |
+| Host discovery/admission | Actual allowed-host capacity collection, refreshed plans, canonical shared flock and actual image/runtime cgroup checks | Reserved disk space, hard caps on shared-daemon pull/commit work or twenty-target execution |
+| CLI/stages | Local CLI, bounded stage execution and explicitly synthetic fixture subset; six published artifact contracts; separate real image operations | A complete Terraform/SSH/Ansible runtime pipeline |
 | Terraform | Docker-provider lifecycle is the planned provisioner | Installed host Terraform, authored infrastructure or a provisioned target |
-| SSH | Host executable availability recorded | Per-run keys, trusted host-key establishment or successful target authentication |
-| Ansible | Required future validation transport | Installed host Ansible, connectivity, checks or observed inventories |
+| Images/SSH | Two actual Ubuntu images, pinned tool doctors and two fresh strict SSH qualifications as UID10001; wrong host key/root/unknown user rejected; unique keys and exact cleanup | Terraform lifecycle, functional Ansible checks, candidate binding or VM fidelity |
+| Ansible | Core2.21.5 and dependency versions observed inside the Docker-free helper image | Host Ansible installation, Ansible connectivity/check execution or observed target inventories |
 | Source/candidate | Synthetic chunks and an attributable payload are planned | Implemented reconstruction, candidate build or validated image mapping |
 | SVD | Observed-target collection is planned | A generated inventory or version-preservation result |
 | Assessment | Synthetic checklist processing and reference policy are planned | Real Evaluate-STIG integration or a production acceptance threshold |

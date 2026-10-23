@@ -2,7 +2,7 @@
 
 Private, container-only reference automation for source integrity, Terraform-managed targets, SSH/Ansible checks and attributable engineering evidence.
 
-Minx tracks the work under [WORM-001](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-001). The repository baseline and a local Python CLI are implemented. Real Terraform, SSH and Ansible target execution belongs to later tickets; a complete container pipeline is not yet available.
+Minx tracks the work under [WORM-001](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-001). The local Python CLI, measured Linux admission, pinned Ubuntu target/helper images and strict SSH image qualification work. Terraform provisioning, functional Ansible checks and the candidate pipeline remain separate unfinished increments. A complete container pipeline is not yet available.
 
 Start with [AGENTS.md](AGENTS.md), [current state](docs/STATE.md) and [handoff](handoff/CURRENT.md). The [fidelity record](docs/FIDELITY.md) separates actual behavior from planned or simulated capabilities. [Repository controls](docs/REPOSITORY.md) records publication and CI observations.
 
@@ -33,5 +33,7 @@ python scripts/verify_repository.py
 ```
 
 This repository check is not a complete secret scanner or a Terraform/SSH/Ansible test.
+
+Approved Linux image operations and their limits are documented in [IMAGES](docs/IMAGES.md) and [ADMISSION](docs/ADMISSION.md). Two fresh actual homelab SSH qualifications, version observations, negative trust/authentication checks and cleanup results are recorded in [WORM-005 evidence](handoff/evidence/WORM-005.json). These image checks do not establish Terraform or Ansible execution.
 
 Container tests cannot establish that an ISO boots or installs, passes an operating-system STIG, or repairs another system. Production ISO eligibility remains false.

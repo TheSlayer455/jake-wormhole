@@ -34,5 +34,25 @@ containers and the network were removed. Docker documents this archive
 The host-side transfer correction and bounded pre-cleanup failure diagnostics
 require their own source review and actual qualification results below.
 
-Final transfer review, two successful fresh SSH qualifications and final hosted
-CI remain pending at this checkpoint. No WORM-005 completion is claimed here.
+The reviewer then inspected clean fix `20c4310ba795350a68d01b7d9e2ec5537d081a78`
+(integrated as b6bd81e), finding no material remaining blocker. Fixed live-exec
+adapters read only the public host key and accept only three bounded ordinary
+helper input files, validating the whole archive before exclusive no-follow
+writes into UID10001 tmpfs. Private role/stage diagnostics now precede cleanup;
+diagnostic errors cannot replace the primary failure or strand other resources.
+The stdin receiver has bounded input, fixed output and a 15-second client timeout;
+its capture_output call is not a generic streaming output limiter.
+
+Exact controller `731eabee3d691404e22c9422e37ff1c6ccddfcf4` passed 93 tests on
+Windows (63 passed,30 platform skips,3.939s) and the actual homelab Linux
+(91 passed,two Windows-only skips,4.417s). Actual live SSH qualification runs
+1272ece0-83ea-4205-993e-3ca44f5b0590 and
+6b5e5606-fa45-496d-9591-d064495d1167 both passed. Client and host public
+fingerprints differ between runs. Each required the exact UID10001/Python3.12.3/
+Ubuntu24.04 observation, strict trust, rejection of wrong known-host key and
+root/unknown-user authentication, actual resource limits and exact cleanup.
+See [sanitized evidence](../evidence/WORM-005.json).
+
+Final publication/hosted CI and Minx decisions are recorded separately. These
+results do not establish Terraform, functional Ansible, a candidate pipeline,
+production eligibility or independent human examination.

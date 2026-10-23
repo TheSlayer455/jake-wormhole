@@ -4,8 +4,10 @@ WORM-002 establishes the repository baseline. WORM-003 adds a standard-library
 Python CLI and isolated local fixture runs, bounded fixed stage adapters and six
 versioned artifact contracts. WORM-004 adds [measured admission](ADMISSION.md),
 reviewed profiles and a canonical Linux shared lock/durable journal.
-There is no Terraform configuration, target image,
-Ansible playbook or complete runtime pipeline yet. Minx owns requirements,
+WORM-005 adds [qualified Ubuntu target/helper images](IMAGES.md), per-run keys,
+strict SSH qualification, actual cgroup inspection and exact owned cleanup.
+There is no Terraform configuration, functional Ansible playbook or complete
+runtime pipeline yet. Minx owns requirements,
 assignment and review. The [owner-delegated workflow decision](decisions/0002-owner-delegated-workflow.md)
 describes authorized browser operations without changing Minx permissions.
 
@@ -39,10 +41,12 @@ See [CLI behavior](CLI.md) and the selected [dependency lock](../dependencies.lo
 | Evidence and gate | Check completeness, identity and reference eligibility | No production ISO approval; no automatic repair during validation |
 | Reference publisher | Publish the already tested bytes after rechecking evidence | Separate operation, unique destination and final completion manifest |
 
-Runtime dependencies and image versions remain unselected. Future implementation must pin
-mutually compatible versions and check their actual documentation. The observed
+Image dependencies are pinned in images/images.lock.json: Ubuntu24.04,
+OpenSSH9.6p1, Python3.12.3 and Ansible Core2.21.5 with hash-pinned helper wheels.
+Actual installation and SSH observations are in the WORM-005 evidence. Future
+components must pin compatible dependencies and inspect their documentation. The observed
 host has no Terraform or Ansible executable in its discovered tool paths; this
-baseline does not install either. No dashboard, Kubernetes deployment, database,
+implementation does not install either on the host. No dashboard, Kubernetes deployment, database,
 broker or inference provider is needed.
 
 ## Planned run contracts

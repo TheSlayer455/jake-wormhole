@@ -1,0 +1,352 @@
+{
+  "schema_version": "1.0",
+  "ticket": "WORM-005",
+  "requirements_revision": 2,
+  "evidence_kind": "actual-host-execution-with-separate-fixture-tests",
+  "observed_at": "2026-10-23T14:31:54.389Z",
+  "tested_controller_revision": "731eabee3d691404e22c9422e37ff1c6ccddfcf4",
+  "platform": {
+    "os": "Linux",
+    "architecture": "amd64",
+    "docker": "29.6.0",
+    "cgroup": "v2",
+    "controller_python": "3.12.3"
+  },
+  "images": {
+    "target": {
+      "run_id": "759b5541-a077-46ca-97a1-1cdfb782ba15",
+      "source_revision": "5c4656c683f02b4dca51ee6e24bd9b476a6c781a",
+      "image_id": "sha256:6d15eb2c495d48c1eb6485a74d1adaef3e0e3a6e7c83063ba8459f90c27c683e",
+      "image_size_bytes": 46922874,
+      "writable_layer_bytes": 56074240,
+      "builder_cgroups": {
+        "cpu.max": "200000 100000",
+        "memory.max": "2147483648",
+        "memory.swap.max": "0",
+        "pids.max": "256"
+      },
+      "resources_reconciled": true,
+      "installed_tools": {
+        "ca-certificates": {
+          "expected": "20260816ubuntu0.24.04.1",
+          "observed": "20260816ubuntu0.24.04.1",
+          "passed": true
+        },
+        "openssh-client": {
+          "expected": "1:9.6p1-3ubuntu13.20",
+          "observed": "1:9.6p1-3ubuntu13.20",
+          "passed": true
+        },
+        "openssh-server": {
+          "expected": "1:9.6p1-3ubuntu13.20",
+          "observed": "1:9.6p1-3ubuntu13.20",
+          "passed": true
+        },
+        "openssh-sftp-server": {
+          "expected": "1:9.6p1-3ubuntu13.20",
+          "observed": "1:9.6p1-3ubuntu13.20",
+          "passed": true
+        },
+        "python": {
+          "expected_series": "3.12",
+          "observed": "3.12.3",
+          "passed": true
+        },
+        "python3": {
+          "expected": "3.12.3-0ubuntu2.1",
+          "observed": "3.12.3-0ubuntu2.1",
+          "passed": true
+        },
+        "python3.12": {
+          "expected": "3.12.3-1ubuntu0.17",
+          "observed": "3.12.3-1ubuntu0.17",
+          "passed": true
+        },
+        "ubuntu": {
+          "observed": "24.04",
+          "passed": true
+        }
+      }
+    },
+    "helper": {
+      "run_id": "9e864d00-ea9f-4a85-bdb5-f5873166e4d7",
+      "source_revision": "244ea4b8961fa3be5ca82c122f95a1bd776c210d",
+      "image_id": "sha256:4f7f306ecd431b4b48169777966d88c1f09f2139506176a6b85203f5bae69a71",
+      "image_size_bytes": 65125956,
+      "writable_layer_bytes": 118050816,
+      "builder_cgroups": {
+        "cpu.max": "200000 100000",
+        "memory.max": "2147483648",
+        "memory.swap.max": "0",
+        "pids.max": "256"
+      },
+      "resources_reconciled": true,
+      "installed_tools": {
+        "MarkupSafe": {
+          "expected": "3.0.4",
+          "observed": "3.0.4",
+          "passed": true
+        },
+        "PyYAML": {
+          "expected": "6.0.3",
+          "observed": "6.0.3",
+          "passed": true
+        },
+        "ansible-core": {
+          "expected": "2.21.5",
+          "observed": "2.21.5",
+          "passed": true
+        },
+        "ca-certificates": {
+          "expected": "20260816ubuntu0.24.04.1",
+          "observed": "20260816ubuntu0.24.04.1",
+          "passed": true
+        },
+        "cffi": {
+          "expected": "2.1.1",
+          "observed": "2.1.1",
+          "passed": true
+        },
+        "cryptography": {
+          "expected": "50.0.2",
+          "observed": "50.0.2",
+          "passed": true
+        },
+        "jinja2": {
+          "expected": "3.1.6",
+          "observed": "3.1.6",
+          "passed": true
+        },
+        "openssh-client": {
+          "expected": "1:9.6p1-3ubuntu13.20",
+          "observed": "1:9.6p1-3ubuntu13.20",
+          "passed": true
+        },
+        "packaging": {
+          "expected": "26.3",
+          "observed": "26.3",
+          "passed": true
+        },
+        "pycparser": {
+          "expected": "3.12",
+          "observed": "3.12",
+          "passed": true
+        },
+        "python": {
+          "expected_series": "3.12",
+          "observed": "3.12.3",
+          "passed": true
+        },
+        "python3": {
+          "expected": "3.12.3-0ubuntu2.1",
+          "observed": "3.12.3-0ubuntu2.1",
+          "passed": true
+        },
+        "python3-pip-whl": {
+          "expected": "24.0+dfsg-1ubuntu1.3",
+          "observed": "24.0+dfsg-1ubuntu1.3",
+          "passed": true
+        },
+        "python3-setuptools-whl": {
+          "expected": "68.1.2-2ubuntu1.2",
+          "observed": "68.1.2-2ubuntu1.2",
+          "passed": true
+        },
+        "python3-venv": {
+          "expected": "3.12.3-0ubuntu2.1",
+          "observed": "3.12.3-0ubuntu2.1",
+          "passed": true
+        },
+        "python3.12": {
+          "expected": "3.12.3-1ubuntu0.17",
+          "observed": "3.12.3-1ubuntu0.17",
+          "passed": true
+        },
+        "python3.12-venv": {
+          "expected": "3.12.3-1ubuntu0.17",
+          "observed": "3.12.3-1ubuntu0.17",
+          "passed": true
+        },
+        "resolvelib": {
+          "expected": "1.2.1",
+          "observed": "1.2.1",
+          "passed": true
+        },
+        "ubuntu": {
+          "observed": "24.04",
+          "passed": true
+        }
+      }
+    }
+  },
+  "recipe_sha256": "f3b03c77e0af5d8c583e1761f236abfd499da9ad935d2f480164a83b2e79a843",
+  "source_files": {
+    "apt-packages.lock": "fe0de1322c82557616d372c076038bee1b3f37002197f778a4dafff7e6cc3dda",
+    "assemble.sh": "c24ef254993b3b3e1d3c12835049bcd9c1210bc75f0eb97f50294b8548566312",
+    "helper-requirements.lock": "15ea873a5a96915d5ebb870cd714d729a360181b5f2f4e61c7fa1a467a40e262",
+    "images.lock.json": "44e7c225a1e13a0b70d0778fb9b3ff12bc99adfaf5083816c90e2b537d26257e",
+    "runtime.py": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+    "ssh_config": "e8593986e36f4476c9410f849e0920f684241c4f7f258ea6e6180b06b9a73717",
+    "sshd_config": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1"
+  },
+  "qualification_runs": [
+    {
+      "run_id": "1272ece0-83ea-4205-993e-3ca44f5b0590",
+      "source_revision": "731eabee3d691404e22c9422e37ff1c6ccddfcf4",
+      "target_build_source_revision": "5c4656c683f02b4dca51ee6e24bd9b476a6c781a",
+      "helper_build_source_revision": "244ea4b8961fa3be5ca82c122f95a1bd776c210d",
+      "started_at": "2026-10-23T14:31:05.927Z",
+      "finished_at": "2026-10-23T14:31:17.125Z",
+      "status": "passed",
+      "ssh": {
+        "observed": {
+          "docker_socket": false,
+          "python": "3.12.3",
+          "ubuntu": true,
+          "uid": 10001
+        },
+        "passed": true,
+        "private_key_exported": false,
+        "public_key_authentication": true,
+        "strict_host_key_checking": true
+      },
+      "negative_hostkey_trust": {
+        "passed": true,
+        "specific_hostkey_refusal_observed": true,
+        "verification_disabled": false
+      },
+      "negative_authentication": {
+        "denied_users": [
+          "root",
+          "wormhole-nonexistent"
+        ],
+        "passed": true,
+        "transport_or_trust_failure_substituted": false
+      },
+      "target_cgroups": {
+        "cpu.max": "25000 100000",
+        "memory.max": "268435456",
+        "memory.swap.max": "0",
+        "pids.max": "64"
+      },
+      "helper_cgroups": {
+        "cpu.max": "100000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "resources_reconciled": true,
+      "cleanup_failures": []
+    },
+    {
+      "run_id": "6b5e5606-fa45-496d-9591-d064495d1167",
+      "source_revision": "731eabee3d691404e22c9422e37ff1c6ccddfcf4",
+      "target_build_source_revision": "5c4656c683f02b4dca51ee6e24bd9b476a6c781a",
+      "helper_build_source_revision": "244ea4b8961fa3be5ca82c122f95a1bd776c210d",
+      "started_at": "2026-10-23T14:31:43.043Z",
+      "finished_at": "2026-10-23T14:31:54.389Z",
+      "status": "passed",
+      "ssh": {
+        "observed": {
+          "docker_socket": false,
+          "python": "3.12.3",
+          "ubuntu": true,
+          "uid": 10001
+        },
+        "passed": true,
+        "private_key_exported": false,
+        "public_key_authentication": true,
+        "strict_host_key_checking": true
+      },
+      "negative_hostkey_trust": {
+        "passed": true,
+        "specific_hostkey_refusal_observed": true,
+        "verification_disabled": false
+      },
+      "negative_authentication": {
+        "denied_users": [
+          "root",
+          "wormhole-nonexistent"
+        ],
+        "passed": true,
+        "transport_or_trust_failure_substituted": false
+      },
+      "target_cgroups": {
+        "cpu.max": "25000 100000",
+        "memory.max": "268435456",
+        "memory.swap.max": "0",
+        "pids.max": "64"
+      },
+      "helper_cgroups": {
+        "cpu.max": "100000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "resources_reconciled": true,
+      "cleanup_failures": []
+    }
+  ],
+  "isolation": {
+    "distinct_client_keys": true,
+    "distinct_host_keys": true,
+    "private_keys_exported": false
+  },
+  "tests": [
+    {
+      "environment": "Windows CPython3.12.14",
+      "command": "python -m unittest discover -s tests -v",
+      "cases": 93,
+      "passed": 63,
+      "skipped": 30,
+      "seconds": 3.939
+    },
+    {
+      "environment": "actual homelab Linux CPython3.12.3",
+      "command": "python -B -m unittest discover -s tests -v",
+      "cases": 93,
+      "passed": 91,
+      "skipped": 2,
+      "seconds": 4.417
+    }
+  ],
+  "review": {
+    "role": "independent Codex engineering subagent brief_and_research",
+    "reviewed_source_revision": "20c4310ba795350a68d01b7d9e2ec5537d081a78",
+    "integrated_runtime_code_revision": "b6bd81e",
+    "material_remaining_findings": [],
+    "independent_human_review": false
+  },
+  "preserved_failures": [
+    {
+      "run_id": "bb52da88-7df3-42f5-8939-017767151e08",
+      "kind": "target-assembly",
+      "failure": "unsafe_builder",
+      "resolution": "Equivalent Docker29 capability/security spelling normalized; never-started exact owned resources reconciled."
+    },
+    {
+      "run_id": "5c3ead3b-9f3f-47ba-ad37-dc04fae90b34",
+      "kind": "target-assembly",
+      "failure": "materialization_unknown",
+      "resolution": "Completed owned-tag image inspected and unused exact image/builder/network removed; commit parser corrected without guessing timed-out outcomes."
+    },
+    {
+      "run_id": "dcc76ebb-ef02-4656-80a8-395eeb8c86ca",
+      "kind": "helper-assembly",
+      "failure": "docker_api_failed",
+      "root_cause": "unknown; original API response not retained",
+      "resolution": "Known stopped exact builder/network reconciled; fresh attempt retained private first-failure diagnostics and succeeded."
+    },
+    {
+      "run_id": "451c2476-3a06-4390-a903-f0121593df2a",
+      "kind": "SSH-qualification",
+      "failure": "docker_api_failed",
+      "resolution": "Docker archive private-tmpfs limitation corrected with fixed owned live-exec adapters; original failed run retained and resources reconciled."
+    }
+  ],
+  "runtime_pipeline_complete": false,
+  "production_iso_eligible": false,
+  "terraform_executed": false,
+  "ansible_checks_executed": false,
+  "publication_performed": false
+}

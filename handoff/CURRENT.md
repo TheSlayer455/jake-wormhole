@@ -2,32 +2,42 @@
 
 Read [AGENTS](../AGENTS.md), [STATE](../docs/STATE.md),
 [architecture](../docs/ARCHITECTURE.md), [fidelity](../docs/FIDELITY.md),
-[admission](../docs/ADMISSION.md), and
+[admission](../docs/ADMISSION.md), [images](../docs/IMAGES.md) and
 [delegation decision](../docs/decisions/0002-owner-delegated-workflow.md).
 
-WORM-002/003 are Done with evidence and solution comments. WORM-004/005 revision 2
-are approved and claimed separately. Retrieve current Minx records; never assume
-an old checkpoint claim is active or borrow another session identifier.
+WORM-002/003/004 are Done. WORM-005 revision 2 has passing actual image/SSH
+results; final publication/CI and Minx decisions are next at this 14:32 UTC
+checkpoint. Retrieve current Minx state. Never reuse expired claims or a different
+session identifier.
 
-1. Verify Git status/source. Admission source tested on Windows and the actual
-   homelab is 576379e0d7a03ccf64d53849bc13939e9981d0a3. This update changes only
-   documentation. STATE records exact outcomes and limitations.
-2. Finish WORM-004 private publication, final hosted CPython 3.12.14 CI and
-   criterion evidence. Submit In Review through the scoped Agent API, releasing
-   its claim. Use normal Owner browser controls under explicit delegation for
-   Verified/Done only on passing evidence. Record automated provenance; do not
-   claim personal examination by Jake or change Minx permissions/server guards.
-3. WORM-005 is authored in its separate image worktree. Review/test exact recipes
-   and driver before real execution. Hold the canonical AdmissionLease throughout
-   measurement, capped owned assembly, bounded materialization and reconciliation.
-   Shared-daemon image commit is not per-operation cgroup capped. Unknown outcomes
-   keep the durable journal active and prevent a new allocation.
-4. After both are actually Done, approve/claim WORM-006 Terraform lifecycle.
-   Create targets stopped, apply PID caps and inspect all limits before start.
-   No host Terraform/Ansible installation or daemon configuration changes.
+1. Verify Git/source. Actual qualified controller is
+   731eabee3d691404e22c9422e37ff1c6ccddfcf4; this follow-up changes only context
+   and sanitized evidence. [Evidence](evidence/WORM-005.json) records exact image
+   IDs/original build revisions, two passing fresh SSH runs, cgroups, negative
+   checks, cleanup and preserved failures. Controller-only fixes cannot relabel
+   images or accept changed recipe files.
+2. Finish WORM-005 private publication/exact-source hosted CI, criterion evidence
+   and solution comment. Submit In Review through Agent API, releasing its claim.
+   Use delegated normal Owner browser Verified/Done on passing evidence; record
+   automated provenance. Never change Minx's roles/revision/evidence guards.
+3. After 005 Done, approve/claim WORM-006. Terraform 1.17.0 and Docker provider
+   4.6.0 archives were verified separately but neither binary has executed.
+   Use a separate capped trusted provisioner, verified readonly tool mirror,
+   fixed local Docker socket and private run state. No host installation.
+   Create targets stopped, apply PID limits and inspect every control before
+   start. Generate endpoints from actual provider refresh/output, never guessed IPs.
+4. Hold one canonical lease across provisioning/readiness/cleanup. Review a narrow
+   exact-provisioner destroy/recovery path before Terraform execution. Existing
+   reconcile-only resume cannot allocate replacements. Do not delete a legacy
+   O_EXCL run lock just because a PID looks dead. Retain unknown outcomes, state
+   and ownership until resources reconcile.
+5. WORM-007 covers endpoint/SSH/Ansible readiness; WORM-008 scoped cleanup/recovery;
+   WORM-009 the first functional Ansible integration. Keep partial real receipts
+   distinct from the still-unsupported complete runtime pipeline. Skips are not
+   success; production ISO eligibility remains false.
 
-Only private source checkouts/bundles exist under /srv/homelab/jake-wormhole.
-No Wormhole containers, images, networks, runtime root, Terraform state or SSH
-material exists at this checkpoint. All profiles admitted one measured planning
-snapshot; no twenty-target execution is established. No unrelated service changed,
-external model invoked, or other chat messaged. Production ISO eligibility is false.
+The two images and public Ubuntu base remain intentionally retained on the allowed
+host. Qualification containers/networks were removed. Private keys/logs and all
+failed-attempt/recovery history remain outside Git on encrypted storage. No
+unrelated service, external model or other chat changed or was contacted. No
+image/release has been remotely published.
