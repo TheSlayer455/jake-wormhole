@@ -393,6 +393,30 @@ class Controller(unittest.TestCase):
             self.session.operation('apply')
         self.assertTrue(json.loads(self.run.file('evidence/provisioning.json').read_text())['unknown_outcome'])
 
+    def test_nonzero_mutating_result_keeps_unknown_daemon_outcome_despite_terminal_capture(self):
+        self.session.prepare()
+        self.session.provisioner = CONTROLLER; self.session.image_labels = self.image_labels
+        self.session.uid, self.session.gid, self.session.socket_groups = 0, 0, []
+        self.session.mounts = {}; self.session.verify_provisioner = lambda _: None
+        operations = self.session.state / 'operations'; operations.mkdir(mode=0o700)
+        def capture(args, **kwargs):
+            attempt = int(args[-1]); passed = attempt == 1
+            raw = b'Synthetic completed Terraform result, not an actual Docker observation'
+            stem = operations / ('apply-' + str(attempt))
+            stem.with_suffix('.out').write_bytes(raw); stem.with_suffix('.out').chmod(0o600)
+            atomic_json(stem.with_suffix('.json'), {'operation': 'apply', 'attempt': attempt, 'returncode': 0 if passed else 1,
+                'duration_seconds': .01, 'output_bytes': len(raw), 'output_sha256': hashlib.sha256(raw).hexdigest(),
+                'truncated': False, 'timed_out': False, 'passed': passed})
+            return {'status': 'pass' if passed else 'fail', 'returncode': 0 if passed else 2,
+                    'log': b'bounded synthetic receipt', 'log_truncated': False}
+        with patch.object(images, 'inspect', return_value={}), patch.object(images, 'docker_configuration', return_value='/synthetic/config'), \
+             patch.object(p, '_run_process', side_effect=capture):
+            self.session.operation('apply')
+            self.assertFalse(self.session.receipt['unknown_outcome'])
+            with self.assertRaises(p.ProvisioningError): self.session.operation('apply')
+            self.assertTrue(self.session.receipt['unknown_outcome'])
+        self.assertTrue(json.loads(self.run.file('evidence/provisioning.json').read_text())['unknown_outcome'])
+
     def test_retained_recovery_revalidates_capacity_before_restart_and_refuses_unknown_or_incomplete(self):
         with self.patches():
             self.session.provision()

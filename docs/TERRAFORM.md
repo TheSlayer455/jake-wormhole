@@ -79,8 +79,9 @@ at120 seconds, and operation attempts at four. Host Docker-exec requests have a
 supplementary135-second deadline. Outputs are exclusive files with size/hash and
 completion receipts. Truncation, timeout or missing receipts never pass. The
 controller durably records an unknown in-flight outcome before each mutating
-Terraform operation; it clears that intent only after a complete terminal receipt
-and matching captured output. Controller interruption cannot silently authorize
+Terraform operation; it clears that intent only after a successful terminal receipt
+and matching captured output. A captured nonzero mutating exit remains unknown:
+the provider may have timed out while the daemon continued. Controller interruption cannot silently authorize
 another command against potentially running Terraform work. The
 600-second provisioner lifetime additionally bounds an abandoned controller.
 Disk budgets remain sampled planning/admission limits, not filesystem quotas.

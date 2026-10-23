@@ -422,7 +422,8 @@ class ProvisioningSession:
             self.receipt['unknown_outcome'] = True
             self.save()
             raise
-        complete = result['status'] in {'pass', 'fail'} and not record['timed_out'] and not record['truncated']
+        complete = result['status'] in {'pass', 'fail'} and not record['timed_out'] and not record['truncated'] and \
+            (not mutating or result['status'] == 'pass' and record['passed'])
         self.receipt['unknown_outcome'] = previous_unknown if complete else True
         self.receipt['operations'].append({**record, 'evidence': 'private/terraform/operations/' + stem.name + '.out'})
         self.save()
