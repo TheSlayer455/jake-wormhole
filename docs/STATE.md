@@ -1,5 +1,22 @@
 # Engineering checkpoint
 
+## WORM-009 first actual acceptance, October 23 at16:42UTC
+
+Source9756277 passed233 Linux fixtures (two Windows-only skips) and132 Windows
+fixtures (103platform skips). Actual healthy, controlled version/function and
+configured missing-interpreter cases passed. Unexpected-skip failed its category
+check: the pinned Ansible tree callback omits skipped events, so actual SKIPPED
+stdout had no structured tree result. The suite correctly stopped and retained
+ansible_result_invalid instead of claiming the expected rejection was proved.
+
+All five attempted Runs completed normal exact cleanup with the unrelated
+sentinel unchanged. Canonical admission is finished and every recorded owned
+resource absent. [Historical evidence](../handoff/evidence/WORM-009-initial-attempts.json)
+retains that failed suite; it cannot qualify delivery. A bounded original
+structured callback correction and six fresh cases are required. WORM-009 is
+still In Progress r2 under codex-WORM-009-20261023-functional. Refresh its claim
+and current source before mutation. No completed full pipeline is claimed.
+
 ## Current: WORM-009, October 23 at 16:19 UTC
 
 The Minx API confirms WORM-002 through WORM-008 are Done. WORM-007 is version23,

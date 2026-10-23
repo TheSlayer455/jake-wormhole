@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "ticket_key": "WORM-009",
+  "tested_source_revision": "9756277388c206621d88591b148f2f002db69749",
+  "suite_status": "failed",
+  "observed_at": "2026-10-23T16:42:23.585641+00:00",
+  "cases": [
+    {
+      "run_id": "1a786278-ce2d-4e05-81f3-2143edf25d98",
+      "scenario": "configured-interpreter-unavailable",
+      "acceptance_status": "pass",
+      "checks": {
+        "cleanup": {
+          "primary_failure": {
+            "code": "configured_interpreter_unavailable",
+            "recorded_at": "2026-10-23T16:40:10.252Z"
+          },
+          "secondary_failures": [],
+          "status": "completed",
+          "terraform_state_retained": true,
+          "unrelated_sentinel_unchanged": true
+        }
+      },
+      "source_revision": "9756277388c206621d88591b148f2f002db69749"
+    },
+    {
+      "run_id": "2970a950-925f-4054-bbc8-6c3d849abbe6",
+      "scenario": "healthy",
+      "acceptance_status": "pass",
+      "checks": {
+        "cleanup": {
+          "primary_failure": null,
+          "secondary_failures": [],
+          "status": "completed",
+          "terraform_state_retained": true,
+          "unrelated_sentinel_unchanged": true
+        }
+      },
+      "source_revision": "9756277388c206621d88591b148f2f002db69749"
+    },
+    {
+      "run_id": "55bb8ef7-f745-4049-9248-6d6a224bfa3a",
+      "scenario": "version-expectation-mismatch",
+      "acceptance_status": "pass",
+      "checks": {
+        "cleanup": {
+          "primary_failure": {
+            "code": "required_check_mismatch",
+            "recorded_at": "2026-10-23T16:38:47.349Z"
+          },
+          "secondary_failures": [],
+          "status": "completed",
+          "terraform_state_retained": true,
+          "unrelated_sentinel_unchanged": true
+        }
+      },
+      "source_revision": "9756277388c206621d88591b148f2f002db69749"
+    },
+    {
+      "run_id": "5f373b39-a8bd-41d1-8ded-27d9c3b7c96e",
+      "scenario": "unexpected-skip",
+      "acceptance_status": "fail",
+      "checks": {
+        "cleanup": {
+          "primary_failure": {
+            "code": "ansible_result_invalid",
+            "recorded_at": "2026-10-23T16:40:51.934Z"
+          },
+          "secondary_failures": [],
+          "status": "completed",
+          "terraform_state_retained": true,
+          "unrelated_sentinel_unchanged": true
+        }
+      },
+      "source_revision": "9756277388c206621d88591b148f2f002db69749"
+    },
+    {
+      "run_id": "b4bf4f93-639c-45a9-81b1-71a8acf2856e",
+      "scenario": "functional-expectation-mismatch",
+      "acceptance_status": "pass",
+      "checks": {
+        "cleanup": {
+          "primary_failure": {
+            "code": "required_check_mismatch",
+            "recorded_at": "2026-10-23T16:39:28.975Z"
+          },
+          "secondary_failures": [],
+          "status": "completed",
+          "terraform_state_retained": true,
+          "unrelated_sentinel_unchanged": true
+        }
+      },
+      "source_revision": "9756277388c206621d88591b148f2f002db69749"
+    }
+  ],
+  "observed_defect": "Pinned Ansible2.21.5 tree callback has no skipped event handler. Actual command check-mode stdout reported SKIPPED, but missing structured tree output was classified ansible_result_invalid. Expected unexpected_skip was not established.",
+  "source_evidence": [
+    "https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/plugins/callback/tree.py",
+    "https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/plugins/callback/minimal.py"
+  ],
+  "all_attempted_exact_owned_resources_reconciled": true,
+  "admission_finished": true,
+  "full_private_captures_exported": false,
+  "fresh_six_case_qualification_required": true,
+  "runtime_pipeline_complete": false,
+  "production_iso_eligible": false
+}
