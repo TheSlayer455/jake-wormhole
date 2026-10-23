@@ -493,22 +493,29 @@ def _build_image_locked(run, role):
             require(type(sized["SizeRw"]) is int and 0 <= sized["SizeRw"] <= lease.plan["materialization"]["writable_layer_limit_bytes"], "writable_layer_too_large", "Stopped builder layer exceeds the admitted materialization ceiling.")
             lease.set_phase("materializing")  # Refreshes actual shared headroom under the same lock.
             tag = "jake-wormhole-" + role + ":run-" + run.id
+            require(inspect('image', tag, missing=True) is None, 'image_tag_exists',
+                    'Refusing to overwrite an existing image tag; preserve this attempt for reconciliation.')
             python = "/opt/wormhole/venv/bin/python" if role == "helper" else "/usr/bin/python3"
             changes = ["USER " + ("10001:10001" if role == "helper" else "0:0"), "WORKDIR /home/wormhole",
                        "ENTRYPOINT " + json.dumps([python, "/opt/wormhole/runtime.py", role]), "CMD []",
                        'ENV PATH=/opt/wormhole/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
                        'ENV PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1']
-            command = ["commit", "--pause=false"]
+            command = ["commit", "--no-pause"]
             for change in changes:
                 command.extend(("--change", change))
             command.extend((container, tag))
             committed = docker(command, timeout=lease.plan["materialization"]["client_timeout_seconds"])
-            image = committed["log"].decode().strip()
-            require(re.fullmatch(r"sha256:[a-f0-9]{64}", image), "materialization_unknown", "Commit did not identify an exact image; keep the active journal for reconciliation.")
+            atomic_bytes(run.file('private/image-commit-' + role + '.log'), committed['log'], limit=65536)
+            require(not committed['log_truncated'], 'materialization_unknown', 'Commit response exceeded its bound; retain admission for reconciliation.')
+            # Docker29 deprecations are stderr diagnostics, not image identities.
+            # A completed request must resolve its unique tag to exact owned data.
+            result = inspect('image', tag)
+            image = result['Id']
+            require(type(image) is str and re.fullmatch(r"sha256:[a-f0-9]{64}", image), "materialization_unknown", "Completed commit tag did not resolve to an exact image; retain admission.")
             lease.register_resource("image", image)
-            result = inspect("image", image)
             require(all(result["Config"].get("Labels", {}).get(k) == v for k, v in labels.items())
                     and result["Architecture"] == "amd64" and result["Os"] == "linux"
+                    and result['RepoTags'] == [tag] and result.get('Parent') == base['Id']
                     and result["Config"]["Entrypoint"] == [python, "/opt/wormhole/runtime.py", role]
                     and result["Config"]["User"] == ("10001:10001" if role == "helper" else "0:0"),
                     "image_identity_mismatch", "Committed image configuration/provenance differs from the reviewed role.")
@@ -528,6 +535,7 @@ def _build_image_locked(run, role):
             require(not leftovers["log"].strip(), "cleanup_unverified", "Run-labeled containers remain; preserve admission for reconciliation.")
             lease.finish(reconciliation_complete=True)
             receipt.update(status="completed", image_id=image, local_tag=tag, image_size_bytes=result["Size"],
+                           image_identity_source='completed-request-unique-tag-inspection',
                            writable_layer_bytes=sized["SizeRw"], builder_cgroups=observed,
                            assembly_log_truncated=logs["log_truncated"], finished_at=now(), resources_reconciled=True)
             atomic_json(destination, receipt)

@@ -381,7 +381,7 @@ exec(images._PREPARE_WORKER)
         labels = images.expected_labels(run, "target", recipe, hashes["images.lock.json"])
         mounts = {"/recipe": str(images.CONTEXT.resolve()), "/artifacts": str(cache.resolve())}
         value = builder(labels, config["limits"]["build"], mounts)
-        state = {"started": False, "polls": 0, "removed": False, "network_removed": False, "verified_stopped": False}
+        state = {"started": False, "polls": 0, "removed": False, "network_removed": False, "verified_stopped": False, 'committed': False}
         calls = []
         class Lease:
             def __init__(self, *_args):
@@ -404,8 +404,11 @@ exec(images._PREPARE_WORKER)
         def inspect(kind, identifier, **kwargs):
             calls.append(("inspect", kind))
             if kind == "image":
-                if identifier == IMAGE:
+                tag = 'jake-wormhole-target:run-' + run.id
+                if identifier == tag and not state['committed']: return None
+                if identifier in (IMAGE, tag):
                     return {"Id": IMAGE, "Size": 300000, "Architecture": "amd64", "Os": "linux",
+                        'RepoTags': [tag], 'Parent': 'sha256:' + 'e' * 64,
                         "Config": {"Labels": labels, "User": "0:0", "Entrypoint": ["/usr/bin/python3", "/opt/wormhole/runtime.py", "target"]}}
                 return {"Id": "sha256:" + "e" * 64, "Size": 100000, "Architecture": "amd64", "Os": "linux", "Config": {}}
             if kind == "network":
@@ -432,7 +435,9 @@ exec(images._PREPARE_WORKER)
             elif args[0] == "commit":
                 if commit_timeout:
                     raise images.ImageError("docker_request_unknown", "Synthetic unknown commit outcome.")
-                raw = IMAGE.encode()
+                self.assertIn('--no-pause', args)
+                state['committed'] = True
+                raw = b'non-authoritative CLI diagnostic\n' + IMAGE.encode()
             elif args[0] == "rm": state["removed"] = True
             elif args[:2] == ["network", "rm"]: state["network_removed"] = True
             elif args[0] == "logs": raw = b"synthetic bounded assembly log"
