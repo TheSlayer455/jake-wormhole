@@ -1,3 +1,40 @@
+# Current continuation: WORM-010/012/016
+
+## Current: WORM-010/012/016, October23 at17:02UTC
+
+Minx confirms WORM-002 through009 Done. WORM-009 is v23/r2 with no claim;
+all six real cases passed atde745a6, final privatePR8 delivery1979e7e passed
+hosted push39990286859 and PR39990291097. Its six AC records and solution
+comment are saved. Decisions are owner-directed automation under Jake's explicit
+delegation, not independent human examination. All009 owned containers/networks
+are reconciled; original failed skip attempt stays historical. Private state,
+keys, cache and qualified images remain intentionally retained.
+
+WORM-010,012 and016 are approved r2 and claimed with distinct session IDs.
+Refresh Minx rather than relying on these expiring checkpoint observations:
+
+-010: codex-WORM-010-20261023-scale. Contracts owns indexed Terraform/provisioning/
+recovery in jake-wormhole-provisioner; UI owns one-helper fleet readiness and
+validation in jake-wormhole-validation. Root owns jake-wormhole-scale-integration
+and actual qualification. Reviewed API agreement uses exact target maps and an
+explicit TargetPlan. New metadata profile commitc45f7bc has two passing fixtures.
+No five-target execution is claimed yet; twenty-target runtime remains020.
+-012: codex-WORM-012-20261023-chunks. Brief/research agent owns chunks worktree.
+First sourceaa07117 is under review; absolute HTTP header/shutdown deadline
+findings require correction before qualification/completion.
+-016: codex-WORM-016-20261023-assessments. Root owns jake-wormhole-cli on
+codex/WORM-016-assessments. Source9360014 passed actual five local generated
+checklist cases and identical separate-process reports. Linux252cases250pass/
+two Windows-only skips10.833s; Windows252cases145pass/107platformskips8.521s.
+Independent engineering source review and final publication remain pending.
+
+016 freezes complete expected IDs/applicability, preserves original bytes/hash,
+strictly parses four statuses and replays counts/policy from the original.
+Policy pass/reject is separate from release eligibility; both flags remain
+false. Existing fixture records and v1 gates are unchanged. No scanner, VM/ISO,
+production threshold or Lightspeed compatibility is claimed. Full candidate
+pipeline, scale, SVD, complete gate and publication remain unfinished.
+
 # Current continuation point: WORM-009 delivery
 
 ## WORM-009 actual acceptance passed, October 23
