@@ -119,7 +119,7 @@ class PlanPolicy(unittest.TestCase):
                                      'AWS_SECRET_ACCESS_KEY': 'synthetic-not-real', 'HOME': '/personal'}):
             environment = runtime.environment()
         self.assertEqual(environment['HOME'], '/run/wormhole/home')
-        self.assertTrue(all(key not in environment for key in ('TF_CLI_ARGS', 'TF_REATTACH_PROVIDERS', 'DOCKER_CONTEXT', 'AWS_SECRET_ACCESS_KEY')))
+        self.assertTrue(all(key not in environment for key in ('TF_CLI_ARGS', 'TF_REATTACH_PROVIDERS', 'DOCKER_CONTEXT', 'AWS_SECRET_ACCESS_KEY', 'WORMHOLE_ROLE')))
         self.assertEqual(runtime.OPERATIONS['apply'][-1], 'apply.tfplan')
         self.assertIn('-lockfile=readonly', runtime.OPERATIONS['init'])
         for operation in ('../destroy', 'shell', 'apply -auto-approve'):
@@ -553,6 +553,29 @@ class Controller(unittest.TestCase):
 
 @unittest.skipUnless(os.name == 'posix', 'Actual bounded synthetic subprocess requires POSIX process groups')
 class RuntimeCapture(unittest.TestCase):
+    def test_probe_child_receives_only_fixed_role_after_parent_guard_and_actual_bounded_capture(self):
+        with tempfile.TemporaryDirectory(prefix='wormhole-probe-child-synthetic-') as temporary:
+            root = Path(temporary)
+            original = runtime.subprocess.Popen
+            def synthetic_child(arguments, **kwargs):
+                self.assertEqual(arguments, [sys.executable, str(Path(runtime.__file__).resolve()), 'probe-unavailable-internal'])
+                self.assertEqual(kwargs['env']['WORMHOLE_ROLE'], 'provisioner')
+                self.assertNotIn('DOCKER_CONTEXT', kwargs['env'])
+                # The real child process verifies environment transport only. Its
+                # execution-location guard is a labeled fixture, not container proof.
+                return original([sys.executable, '-c', 'import json,os;print(json.dumps({"role":os.environ.get("WORMHOLE_ROLE")}))'], **kwargs)
+            with patch.object(runtime, 'STATE', root), patch.object(runtime, 'guard') as guard, \
+                 patch.object(runtime.subprocess, 'Popen', side_effect=synthetic_child), \
+                 patch.dict(os.environ, {'WORMHOLE_ROLE': 'untrusted-ambient-role', 'DOCKER_CONTEXT': 'synthetic-remote'}):
+                self.assertEqual(runtime.operation('probe-unavailable', 1), 0)
+                guard.assert_called_once()
+            self.assertEqual(json.loads((root / 'operations/probe-unavailable-1.out').read_text()), {'role': 'provisioner'})
+            with patch.object(runtime, 'STATE', root), patch.object(runtime, 'guard', side_effect=ValueError('Synthetic invalid parent boundary')), \
+                 patch.object(runtime.subprocess, 'Popen') as execute, self.assertRaises(ValueError):
+                runtime.operation('probe-unavailable', 2)
+            execute.assert_not_called()
+            self.assertFalse((root / 'operations/probe-unavailable-2.out').exists())
+
     def test_capture_bounds_timeout_and_attempt_immutability_without_terraform(self):
         with tempfile.TemporaryDirectory(prefix='wormhole-runtime-synthetic-') as temporary:
             root = Path(temporary)

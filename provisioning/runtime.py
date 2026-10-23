@@ -78,6 +78,10 @@ def guard():
 def operation(name, attempt):
     if name not in OPERATIONS or type(attempt) is not int or not 1 <= attempt <= 4:
         raise ValueError('Unsupported fixed operation')
+    child_environment = environment()
+    if name == 'probe-unavailable':
+        guard()
+        child_environment['WORMHOLE_ROLE'] = 'provisioner'
     folder = STATE / 'operations'
     folder.mkdir(mode=0o700, exist_ok=True)
     if folder.is_symlink():
@@ -99,7 +103,7 @@ def operation(name, attempt):
             command = [sys.executable, str(Path(__file__).resolve()), 'probe-unavailable-internal'] if name == 'probe-unavailable' else \
                 [TOOL, '-chdir=/state', *OPERATIONS[name]]
             process = subprocess.Popen(command, cwd=STATE,
-                env=environment(), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                env=child_environment, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT, start_new_session=True, close_fds=True, bufsize=0)
             os.set_blocking(process.stdout.fileno(), False)
             deadline = started + OPERATION_TIMEOUT
