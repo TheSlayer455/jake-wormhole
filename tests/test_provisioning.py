@@ -123,11 +123,14 @@ class PlanPolicy(unittest.TestCase):
         for operation in ('../destroy', 'shell', 'apply -auto-approve'):
             with self.assertRaises(ValueError): runtime.operation(operation, 1)
 
-    def test_unavailable_scenario_is_fixed_and_probe_never_accepts_an_existing_endpoint(self):
+    def test_unavailable_scenario_accepts_only_the_fixed_reviewed_enum(self):
         healthy, unavailable = p.scenario_source('healthy'), p.scenario_source('provider-unavailable')
         self.assertEqual(unavailable, healthy.replace(b'unix:///var/run/docker.sock', p.UNAVAILABLE_ENDPOINT.encode()))
         for value in ('remote', 'unix:///tmp/arbitrary.sock', '', None):
             with self.assertRaises(p.ProvisioningError): p.scenario_source(value)
+
+    @unittest.skipUnless(hasattr(runtime.socket, 'AF_UNIX'), 'Unix endpoint probe requires Linux AF_UNIX; socket calls are mocked')
+    def test_fixed_unix_probe_never_accepts_an_existing_or_wrong_failure_endpoint(self):
         with patch.object(runtime.os, 'lstat', side_effect=FileNotFoundError), patch.object(runtime.socket, 'socket') as factory:
             client = factory.return_value.__enter__.return_value
             client.connect.side_effect = FileNotFoundError(errno.ENOENT, 'Synthetic absent endpoint')
