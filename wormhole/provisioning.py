@@ -752,44 +752,94 @@ class ProvisioningSession:
     def destroy(self):
         """Terraform owns deletion. Every current state ID is inspected before planning it."""
         try:
+            self.held()
             require(self.receipt['unknown_outcome'] is False, 'daemon_outcome_unknown',
                     'Unknown daemon work must be resolved by a specific reviewed proof before destroy.')
             require(self.provisioner is not None, 'provisioner_missing', 'Retained exact provisioner is required for Terraform destroy.')
+            controller = images.inspect('container', self.provisioner, missing=True)
+            if controller is None:
+                self._final_state_proof()
+                for address, identifier in self.owned.items():
+                    self._reconcile_absent('container' if address.startswith('docker_container.') else 'network', identifier)
+                self._reconcile_absent('container', self.provisioner)
+                return self._cleanup_complete()
+            self.verify_provisioner(controller)
             state = resources(self.operation('show-state'))
-            require(set(state) == set(self.owned) and all(x.get('id') == self.owned[key] for key, x in state.items()),
+            require(set(state) <= set(self.owned) and all(x.get('id') == self.owned[key] for key, x in state.items()),
                     'ownership_mismatch', 'State resources changed; destructive operations are refused.')
+            remaining = {}
             for address, identifier in self.owned.items():
                 role = 'target' if address.startswith('docker_container.') else 'network'
-                self.verify_owned(images.inspect('container' if role == 'target' else 'network', identifier), role, identifier)
+                actual = images.inspect('container' if role == 'target' else 'network', identifier, missing=True)
+                if actual is None: continue
+                require(address in state, 'ownership_mismatch', 'A surviving owned object is missing from Terraform state; no native deletion or adoption is permitted.')
+                self.verify_owned(actual, role, identifier)
+                remaining[address] = identifier
                 if role == 'network':
-                    network = images.inspect('network', identifier)
-                    require(set(network.get('Containers', {})) <= {self.owned.get('docker_container.target')},
+                    require(set(actual.get('Containers', {})) <= {self.owned.get('docker_container.target')},
                             'ownership_mismatch', 'An unexpected endpoint is attached; refuse network destruction.')
             self.operation('destroy-plan')
-            validate_plan(self.operation('show-destroy-plan'), self.variables, operation='destroy', owned=self.owned)
+            validate_plan(self.operation('show-destroy-plan'), self.variables, operation='destroy', owned=remaining)
             self.operation('destroy')
             require(not resources(self.operation('final-state')), 'destroy_incomplete', 'Terraform still records managed resources after destroy.')
+            self.receipt.setdefault('cleanup_progress', {})['terraform_final_state_empty'] = True
+            self.save()  # Durable before absence acknowledgements or controller removal.
             for address, identifier in self.owned.items():
                 kind = 'container' if address.startswith('docker_container.') else 'network'
-                require(images.inspect(kind, identifier, missing=True) is None, 'destroy_incomplete', 'A destroyed exact resource still exists.')
-                self.lease.reconcile_resource(kind, identifier)
+                self._reconcile_absent(kind, identifier)
             self.verify_provisioner(images.inspect('container', self.provisioner))
             images.docker(('stop', '--time', '2', self.provisioner))
             self.verify_provisioner(images.inspect('container', self.provisioner), stopped=True)
-            images.docker(('rm', self.provisioner))
-            require(images.inspect('container', self.provisioner, missing=True) is None, 'destroy_incomplete', 'The exact provisioner still exists.')
-            self.lease.reconcile_resource('container', self.provisioner)
-            for arguments in (('ps', '-a', '--no-trunc', '--filter', 'label=' + images.LABEL + '.run_id=' + self.run.id, '--format', '{{.ID}}'),
-                              ('network', 'ls', '--no-trunc', '--filter', 'label=' + images.LABEL + '.run_id=' + self.run.id, '--format', '{{.ID}}')):
-                sweep = images.docker(arguments)
-                require(not sweep['log_truncated'] and not sweep['log'].strip(), 'cleanup_unresolved', 'Run-label leftovers remain; no automatic deletion is authorized.')
-            self.receipt['cleanup'] = 'completed'
-            self.receipt['status'] = 'completed' if self.receipt['primary_failure'] is None else 'failed'
+            self.receipt['cleanup_progress']['controller_remove_requested'] = True
             self.save()
-            return deepcopy(self.receipt)
+            images.docker(('rm', self.provisioner))
+            self._reconcile_absent('container', self.provisioner)
+            return self._cleanup_complete()
         except BaseException as error:
             self.receipt['cleanup'] = 'failed'; self.failure(error)
             raise
+
+    def _reconcile_absent(self, kind, identifier):
+        require(images.inspect(kind, identifier, missing=True) is None, 'destroy_incomplete', 'An exact cleanup resource still exists.')
+        entries = [x for x in self.lease.record['resources'] if (x['kind'], x['id']) == (kind, identifier)]
+        require(len(entries) == 1 and entries[0]['outcome'] in {'pending', 'absent'},
+                'recovery_scope', 'Historical cleanup identity differs from the exact journal.')
+        if entries[0]['outcome'] == 'pending': self.lease.reconcile_resource(kind, identifier)
+
+    def _final_state_proof(self):
+        require(self.receipt.get('cleanup_progress', {}).get('terraform_final_state_empty') is True and
+                self.receipt['cleanup_progress'].get('controller_remove_requested') is True,
+                'recovery_scope', 'A missing controller requires recorded completed Terraform teardown and exact removal intent.')
+        records = [x for x in self.receipt['operations'] if x['operation'] == 'final-state']
+        mutations = [x for x in self.receipt['operations'] if x['operation'] in {'apply', 'refresh-apply', 'destroy'}]
+        require(mutations and mutations[-1]['operation'] == 'destroy' and mutations[-1]['passed'] is True and
+                mutations[-1].get('client_status') == 'pass' and mutations[-1]['returncode'] == 0,
+                'recovery_scope', 'The last mutation must be a bound successful saved Terraform destroy.')
+        require(records and records[-1]['passed'] is True and records[-1].get('client_status') == 'pass' and
+                records[-1].get('client_log_truncated') is False and records[-1]['timed_out'] is False and records[-1]['truncated'] is False,
+                'recovery_scope', 'A missing controller requires its bound successful empty final-state observation.')
+        for record in (mutations[-1], records[-1]):
+            require(type(record.get('attempt')) is int and 1 <= record['attempt'] <= 4 and record.get('client_returncode') == 0 and
+                    record.get('client_log_truncated') is False and record.get('timed_out') is False and record.get('truncated') is False,
+                    'recovery_scope', 'The completed teardown needs bound successful client and runtime results.')
+            stem = self.state / 'operations' / (record['operation'] + '-' + str(record['attempt']))
+            digest, size = file_digest(stem.with_suffix('.out'))
+            require(digest == record['output_sha256'] and size == record['output_bytes'] and
+                    read_json(stem.with_suffix('.json')) == {key: value for key, value in record.items()
+                        if key not in {'client_status', 'client_returncode', 'client_log_truncated', 'evidence'}},
+                    'recovery_scope', 'The completed teardown captures are missing or changed.')
+        require(not resources(bounded_json(stem.with_suffix('.out'))),
+                'recovery_scope', 'The completed final-state capture is nonempty.')
+
+    def _cleanup_complete(self):
+        for arguments in (('ps', '-a', '--no-trunc', '--filter', 'label=' + images.LABEL + '.run_id=' + self.run.id, '--format', '{{.ID}}'),
+                          ('network', 'ls', '--no-trunc', '--filter', 'label=' + images.LABEL + '.run_id=' + self.run.id, '--format', '{{.ID}}')):
+            sweep = images.docker(arguments)
+            require(not sweep['log_truncated'] and not sweep['log'].strip(), 'cleanup_unresolved', 'Run-label leftovers remain; no automatic deletion is authorized.')
+        self.receipt['cleanup'] = 'completed'
+        self.receipt['status'] = 'completed' if self.receipt['primary_failure'] is None else 'failed'
+        self.save()
+        return deepcopy(self.receipt)
 
     @classmethod
     def resume_destroy(cls, run, lease):
@@ -832,7 +882,13 @@ class ProvisioningSession:
         pending = {(x['kind'], x['id']) for x in lease.record['resources'] if x['outcome'] == 'pending'}
         required = {('container', session.provisioner)} | {('container' if address.startswith('docker_container.') else 'network', identifier)
                        for address, identifier in session.owned.items()}
-        require(pending == required, 'recovery_scope', 'The retained context must exactly match existing pending admission resources.')
+        recorded = {(x['kind'], x['id']) for x in lease.record['resources']}
+        require(pending <= required <= recorded and len(required) == len(session.owned) + 1,
+                'recovery_scope', 'The retained historical IDs must match the journal and no unexplained pending resource may exist.')
+        for item in lease.record['resources']:
+            if (item['kind'], item['id']) in required and item['outcome'] == 'absent':
+                require(images.inspect(item['kind'], item['id'], missing=True) is None,
+                        'recovery_scope', 'A reconciled exact resource unexpectedly exists; refuse recovery.')
         session.attempts = {}
         operation_files = list((session.state / 'operations').iterdir())
         require(all(x.suffix in {'.json', '.out'} and x.is_file() for x in operation_files) and
@@ -856,7 +912,10 @@ class ProvisioningSession:
                 session.mounts['/state'] == (str(session.state), True) and session.mounts['/var/run/docker.sock'] == ('/var/run/docker.sock', True) and
                 session.mounts['/opt/toolchain'] == (str(session.toolchain['root']), False),
                 'recovery_scope', 'Retained mounts do not match the exact fixed reviewed source/state/toolchain/socket boundaries.')
-        actual = images.inspect('container', session.provisioner)
+        actual = images.inspect('container', session.provisioner, missing=True)
+        if actual is None:
+            session._final_state_proof()
+            return session  # No replacement or restart; destroy only acknowledges proven absence.
         session.verify_provisioner(actual)
         lease.set_phase('reconciling')
         capacity = lease.check_destroy_recovery_capacity(session.provisioner)
