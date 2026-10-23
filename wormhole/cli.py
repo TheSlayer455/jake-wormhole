@@ -1,4 +1,4 @@
-"""Local CLI. No command provisions targets, publishes bytes or executes imported text."""
+"""Local fixtures and explicitly scoped real-run recovery; no imported execution."""
 import argparse
 import json
 from pathlib import Path
@@ -34,12 +34,21 @@ def parser():
     for name, help_text in (
         ("report", "Read validated portable records; never export private logs/state."),
         ("verify", "Validate artifact identity and the declared fixture subset, not runtime eligibility."),
-        ("cleanup", "Remove only completed fixture-owned private local state; retain evidence."),
+        ("cleanup", "Clean a completed fixture, or reconcile exact real-run infrastructure; retain evidence."),
         ("publish-reference", "Refuse publication: qualification/publication are not implemented."),
     ):
         command = commands.add_parser(name, help=help_text)
         command.add_argument("run_id", help="Exact UUID returned by run.")
         command.add_argument("--workspace", default=workspace)
+    from .images import RUNS_ROOT
+    for name, help_text in (
+        ("cancel", "Request cooperative cancellation; the active coordinator acknowledges at a safe checkpoint."),
+        ("recover", "Resume only exact owned real-run teardown, without new allocation."),
+        ("cleanup-status", "Read the real run's recovery and pending-resource observations."),
+    ):
+        command = commands.add_parser(name, help=help_text)
+        command.add_argument("run_id", help="Exact existing run UUID.")
+        command.add_argument("--workspace", default=str(RUNS_ROOT))
     return root
 
 
@@ -55,21 +64,34 @@ def main(arguments=None):
             status = 0 if value["outcome"] == "passed" else 1
         else:
             run = Run(options.workspace, options.run_id)
-            with run.locked():
-                if options.command == "report":
-                    value, status = report_run(run), 0
-                elif options.command == "verify":
-                    value = verify_run(run)
-                    status = 0 if value["fixture_subset_passed"] else 1
-                elif options.command == "cleanup":
-                    value, status = cleanup_run(run), 0
+            if options.command in {"cancel", "recover", "cleanup-status"} or (
+                    options.command == "cleanup" and run.manifest()["mode"] == "container-reference"):
+                from .recovery import inspect_recovery, recover_run, request_cancel
+                # Cancellation must remain available while the coordinator owns
+                # the Run lock. Recovery itself acquires the exact normal locks.
+                if options.command == "cancel":
+                    value, status = request_cancel(run), 0
+                elif options.command == "cleanup-status":
+                    value, status = inspect_recovery(run), 0
                 else:
-                    raise RunError("publication_unsupported", "Reference qualification/publication is not implemented; no bytes were published.")
+                    value = recover_run(run)
+                    status = 0 if value["status"] == "completed" else 2 if value["status"] == "blocked" else 1
+            else:
+                with run.locked():
+                    if options.command == "report":
+                        value, status = report_run(run), 0
+                    elif options.command == "verify":
+                        value = verify_run(run)
+                        status = 0 if value["fixture_subset_passed"] else 1
+                    elif options.command == "cleanup":
+                        value, status = cleanup_run(run), 0
+                    else:
+                        raise RunError("publication_unsupported", "Reference qualification/publication is not implemented; no bytes were published.")
         print(json.dumps(value, allow_nan=False, sort_keys=True, indent=2))
         return status
     except (RunError, ContractError) as error:
         print(json.dumps({"error": {"code": getattr(error, "code", "invalid_contract"), "message": str(error)}}, sort_keys=True))
         return 2
     except OSError:
-        print(json.dumps({"error": {"code": "local_io_error", "message": "Local state could not be accessed safely; no infrastructure action occurred."}}))
+        print(json.dumps({"error": {"code": "local_io_error", "message": "Local state could not be accessed safely; preserve the run and inspect its cleanup record before retrying."}}))
         return 2
