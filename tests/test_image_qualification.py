@@ -9,6 +9,8 @@ import shlex
 import subprocess
 import tarfile
 import tempfile
+import os
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -189,20 +191,57 @@ class RuntimeBoundary(unittest.TestCase):
         path.with_name('id_ed25519.pub').write_text('ssh-ed25519 ' + base64.b64encode(b'\x00\x00\x00\x0bssh-ed25519\x00\x00\x00\x20' + b'\x00' * 32).decode())
         public = 'ssh-ed25519 AAAA'
         with patch.object(qualification, 'docker_configuration', return_value='/private/empty-docker'), \
+             patch.object(qualification, 'owned_runtime', return_value={'State': {'Running': True}, 'Config': {'User': '10001:10001'}}), \
              patch.object(qualification.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, b'', b'')) as command:
-            qualification.inject_helper_inputs(self.run, self.identifier, public, '172.30.0.2')
+            qualification.inject_helper_inputs(self.run, self.identifier, self.image, public, '172.30.0.2', {})
         args, kwargs = command.call_args
-        self.assertEqual(args[0], ['docker', '--config', '/private/empty-docker', '--host', 'unix:///var/run/docker.sock', 'cp', '-a', '-', self.identifier + ':/run/input'])
+        self.assertEqual(args[0], ['docker', '--config', '/private/empty-docker', '--host', 'unix:///var/run/docker.sock',
+            'exec', '-i', '--user', '10001:10001', self.identifier, '/opt/wormhole/venv/bin/python', '-I', '-S', '-c', qualification.INPUT_RECEIVER_COMMAND])
         self.assertFalse({'DOCKER_CONTEXT', 'DOCKER_HOST', 'HOME', 'AWS_SECRET_ACCESS_KEY'} & set(kwargs['env']))
         with tarfile.open(fileobj=io.BytesIO(kwargs['input'])) as archive:
             self.assertEqual([m.name for m in archive], ['id_ed25519', 'known_hosts', 'wrong_known_hosts'])
             for member in archive:
                 self.assertEqual((member.uid, member.gid, member.mode), (10001, 10001, 0o600))
         path.write_bytes(b'x' * 16385)
-        with patch.object(qualification.subprocess, 'run') as command:
+        with patch.object(qualification, 'owned_runtime', return_value={'State': {'Running': True}, 'Config': {'User': '10001:10001'}}), patch.object(qualification.subprocess, 'run') as command:
             with self.assertRaises(ImageError):
-                qualification.inject_helper_inputs(self.run, self.identifier, public, '172.30.0.2')
+                qualification.inject_helper_inputs(self.run, self.identifier, self.image, public, '172.30.0.2', {})
             command.assert_not_called()
+
+    def test_public_key_observation_uses_owned_live_exec_and_rejects_bad_outputs(self):
+        raw = 'ssh-ed25519 ' + base64.b64encode(b'\x00\x00\x00\x0bssh-ed25519\x00\x00\x00\x20' + b'\x00' * 32).decode()
+        Path(self.folder.name, 'private').mkdir(mode=0o700)
+        result = {'status': 'pass', 'returncode': 0, 'duration_seconds': .01, 'log': raw.encode(), 'log_truncated': False}
+        with patch.object(qualification, 'owned_runtime', return_value={'State': {'Running': True}}), \
+             patch.object(qualification, 'docker_configuration', return_value='/empty'), \
+             patch.object(qualification, '_run_process', return_value=result) as command:
+            self.assertEqual(qualification.copied_public_key(self.identifier, self.image, self.run, {}), raw)
+        argv = command.call_args.args[0]
+        self.assertEqual(argv[5:12], ('exec', '--user', '0:0', self.identifier, '/usr/bin/python3', '-I', '-S'))
+        self.assertNotIn('cp', argv)
+        self.assertIn('/run/wormhole/hostkeys/ssh_host_ed25519_key.pub', argv[-1])
+        for bad, truncated in ((b'not a public key', False), (b'x' * 513, False), (raw.encode(), True)):
+            candidate = {**result, 'log': bad, 'log_truncated': truncated}
+            with patch.object(qualification, 'owned_runtime', return_value={'State': {'Running': True}}), \
+                 patch.object(qualification, 'docker_configuration', return_value='/empty'), \
+                 patch.object(qualification, '_run_process', return_value=candidate), self.assertRaises(ImageError):
+                qualification.copied_public_key(self.identifier, self.image, self.run, {})
+
+    def test_failed_attempt_keeps_private_role_stage_and_timeout_metadata(self):
+        Path(self.folder.name, 'private').mkdir(mode=0o700)
+        receipt = {}
+        result = {'status': 'timeout', 'returncode': None, 'log': b'synthetic dependency failure',
+                  'log_truncated': False, 'duration_seconds': 5}
+        with patch.object(qualification, 'docker_configuration', return_value='/empty'), \
+             patch.object(qualification, '_run_process', return_value=result), self.assertRaises(ImageError):
+            qualification.attempted_docker(self.run, receipt, 'helper', 'doctor', ('exec', self.identifier, 'fixed-tool'))
+        self.assertEqual(receipt['attempts'][0]['role'], 'helper')
+        self.assertEqual(receipt['attempts'][0]['stage'], 'doctor')
+        self.assertEqual(receipt['attempts'][0]['status'], 'timeout')
+        self.assertEqual(self.run.file(receipt['attempts'][0]['private_log']).read_bytes(), result['log'])
+        with patch.object(qualification, 'atomic_bytes', side_effect=OSError('synthetic full storage')):
+            qualification.attempt_record(self.run, receipt, 'target', 'runtime-failure', result)
+        self.assertTrue(receipt['attempts'][-1]['diagnostic_write_failed'])
 
     def test_docker_cap_prefix_and_security_boolean_spelling_preserve_same_policy(self):
         value = deepcopy(self.value)
@@ -259,6 +298,75 @@ class RuntimeBoundary(unittest.TestCase):
         self.assertEqual(saved['status'], 'failed-before-allocation')
         self.assertEqual(saved['failure_code'], 'capacity_refused')
         self.assertTrue(saved['resources_reconciled'])
+
+
+@unittest.skipUnless(sys.platform.startswith('linux') and Path('/dev/shm').is_dir(), 'Actual receiver fixtures require existing Linux tmpfs; no mounts are created')
+class LiveTmpfsReceiver(unittest.TestCase):
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory(prefix='wormhole-receiver-fixture-', dir='/dev/shm')
+        self.addCleanup(self.folder.cleanup)
+        self.root = Path(self.folder.name)
+        namespace = {}
+        exec(qualification.INPUT_RECEIVER, namespace)
+        self.receive = namespace['receive_inputs']
+        self.uid, self.gid = os.getuid(), os.getgid()
+        self.contents = {'id_ed25519': b'synthetic fixture, not a private key',
+                         'known_hosts': b'synthetic public trust', 'wrong_known_hosts': b'synthetic negative public trust'}
+
+    def archive(self, entries=None):
+        data = io.BytesIO()
+        with tarfile.open(fileobj=data, mode='w') as archive:
+            for name, content, changes in (entries if entries is not None else [(n, c, {}) for n, c in self.contents.items()]):
+                item = tarfile.TarInfo(name)
+                item.uid, item.gid = self.uid, self.gid
+                item.mode, item.size = 0o600, len(content)
+                for key, value in changes.items(): setattr(item, key, value)
+                archive.addfile(item, io.BytesIO(content) if item.isfile() else None)
+        return data.getvalue()
+
+    def destination(self, name):
+        root = self.root / name
+        root.mkdir(mode=0o700)
+        return root
+
+    def test_actual_receiver_creates_only_expected_uid_owned_private_files_without_overwrite(self):
+        root = self.destination('valid')
+        self.receive(io.BytesIO(self.archive()), root, self.uid, self.gid)
+        self.assertEqual({p.name for p in root.iterdir()}, set(self.contents))
+        for name, raw in self.contents.items():
+            path = root / name
+            self.assertEqual(path.read_bytes(), raw)
+            self.assertEqual(path.stat().st_uid, self.uid)
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+        with self.assertRaises(ValueError): self.receive(io.BytesIO(self.archive()), root, self.uid, self.gid)
+        self.assertEqual((root / 'id_ed25519').read_bytes(), self.contents['id_ed25519'])
+
+    def test_receiver_rejects_malformed_archive_before_writing_any_entry(self):
+        original = [(n, c, {}) for n, c in self.contents.items()]
+        invalid = [original[:-1], original + [original[0]],
+                   [('unapproved', b'x', {})] + original,
+                   [('../id_ed25519', b'x', {})] + original[1:],
+                   [('id_ed25519', b'x', {'type': tarfile.SYMTYPE, 'linkname': '/etc/passwd'})] + original[1:],
+                   [('id_ed25519', b'x', {'uid': self.uid + 1})] + original[1:],
+                   [('id_ed25519', b'x', {'mode': 0o644})] + original[1:],
+                   [('id_ed25519', b'x' * 16385, {})] + original[1:],
+                   [('id_ed25519', b'x', {'pax_headers': {'comment': 'unapproved'}})] + original[1:]]
+        for index, entries in enumerate(invalid):
+            root = self.destination('rejected-' + str(index))
+            with self.subTest(index=index), self.assertRaises((ValueError, tarfile.TarError)):
+                self.receive(io.BytesIO(self.archive(entries)), root, self.uid, self.gid)
+            self.assertFalse(list(root.iterdir()))
+        root = self.destination('oversized')
+        with self.assertRaises(ValueError): self.receive(io.BytesIO(b'x' * 65537), root, self.uid, self.gid)
+        self.assertFalse(list(root.iterdir()))
+
+    def test_receiver_refuses_linked_or_nonprivate_destination(self):
+        root = self.destination('ordinary')
+        alias = self.root / 'alias'; alias.symlink_to(root, target_is_directory=True)
+        with self.assertRaises(ValueError): self.receive(io.BytesIO(self.archive()), alias, self.uid, self.gid)
+        root.chmod(0o755)
+        with self.assertRaises(ValueError): self.receive(io.BytesIO(self.archive()), root, self.uid, self.gid)
+        self.assertFalse(list(root.iterdir()))
 
 
 if __name__ == '__main__': unittest.main()

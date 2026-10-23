@@ -84,6 +84,30 @@ container/network is inspected and removed by exact ID before admission finishes
 unknown allocations preserve the journal. Failure output identifies the run UUID.
 These are image tests, not Terraform/Ansible pipeline acceptance.
 
+The running target's public host key is read by a fixed bounded Python program
+through ownership-checked Docker exec, never by reading its private key. Helper
+authentication is sent only on stdin to a fixed Python receiver executed as
+UID10001 inside the live helper. The receiver requires an ordinary private tmpfs
+directory, exactly three bounded ordinary archive entries with the expected names,
+UID/GID and mode, validates the whole archive before writing, and uses exclusive
+nofollow file creation. It prints no input content and refuses replacement.
+Its stdin subprocess has a 15-second client deadline; this fixed receiver emits
+zero stdout and only a constant refusal message. Captured diagnostic storage is
+bounded, but that stdin call is not a general streaming-output sandbox for
+arbitrary programs.
+Docker's [copy documentation](https://docs.docker.com/reference/cli/docker/container/cp/)
+describes tmpfs copy limitations; Engine29.6's
+[filesystem-view implementation](https://github.com/moby/moby/blob/docker-v29.6.0/daemon/containerfs_linux.go)
+creates independent tmpfs views for archive operations. Docker cp therefore does
+not establish runtime tmpfs delivery or observation.
+
+Doctor and SSH attempts retain bounded private logs with stage, execution role,
+return code, timeout/status and truncation metadata. Parsed failing doctor checks
+remain in the receipt. On failure, best-effort runtime logs are collected only
+after exact resource ownership checks, before cleanup. Diagnostic-write or
+log-collection errors cannot replace the primary failure or prevent cleanup.
+No environment or private-key file is collected as a diagnostic.
+
 Build and qualification revisions have separate provenance. Each assembly still
 requires its exact clean source revision. Qualification may use a target built at
 revision A and helper built at B while the clean controller is revision C, provided
