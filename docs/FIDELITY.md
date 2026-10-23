@@ -15,7 +15,7 @@ installation laboratory. Read [architecture](ARCHITECTURE.md),
 | Images/SSH | Two actual Ubuntu images, strict SSH as UID10001, separate trust/authentication negatives, unique keys and exact cleanup | Candidate binding or VM fidelity |
 | Ansible | Actual Core2.21.5 readiness plus ten frozen package/configuration/baked payload checks through strict SSH; six fresh functional scenarios with capture-backed results | Host installation, candidate-derived image binding or complete runtime pipeline |
 | Recovery | Actual normal, failed, cooperative-cancelled and interrupted teardown cases; exact original-source reconciliation, readable/JSON agreement and unchanged sentinel | General resolution of unknown daemon outcomes or overlapping admitted runs |
-| Source/candidate | Synthetic chunks and an attributable payload are planned | Implemented reconstruction, candidate build or validated image mapping |
+| Source/candidate | Actual generated binary chunk reconstruction and ten negative cases across local/loopback transports | Candidate build or validated image mapping |
 | SVD | Observed-target collection is planned | A generated inventory or version-preservation result |
 | Assessment | Synthetic checklist processing and reference policy are planned | Real Evaluate-STIG integration or a production acceptance threshold |
 | Publication | Separate tested-byte publication is planned | A complete reference release or private package/image publication |

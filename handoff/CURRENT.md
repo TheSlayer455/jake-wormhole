@@ -1,3 +1,21 @@
+# Current continuation: WORM-012 delivery
+
+## WORM-012 component qualified, October23 at17:10UTC
+
+Exact72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3 passed independent source review
+and twelve actual generated local/loopback HTTP cases on Windows and Linux.
+Ten negative operations per environment remain failed and block candidate
+consumption. Missing/duplicate/reordered/truncated/corrupted chunks, unsafe paths,
+partial outputs and absolute HTTP header/body/shutdown bounds are tested.
+Windows252cases145pass/107platform skips11.886s; nonrootWSL Linux252cases249pass/
+three explicit skips10.250s. [Evidence](evidence/WORM-012.json) records
+exact Runs and limits. No Docker infrastructure or proprietary access occurred.
+
+Final private publication, hosted exact-source CI and normal delegated Owner
+completion are next. Source reconstruction does not establish candidate-image
+binding (013), complete pipeline, ISO boot or production eligibility. Private
+generated files remain outside Git. Retrieve Minx for current claims/status.
+
 # Current continuation point: WORM-009 delivery
 
 ## WORM-009 actual acceptance passed, October 23
