@@ -86,12 +86,25 @@ checks do not extend either lifetime. The trusted unreachable-test callback has
 its own root-owned bounded operations; the validation deadline is checked on
 return and cannot establish late success.
 
-The fixed per-target tree result must identify the exact command and contain a
+The fixed per-target callback result must identify the exact command and contain a
 successful terminal exit and complete typed observation. Missing results, wrong
 Run/source/plan/target, duplicates, malformed JSON, timeout, truncation, required
 skip, unreachable or error cannot become success because zero failures were
 recorded. Every terminal attempt has all ten required rows with expected,
 observed, status and evidence references. No irrelevant check is silently dropped.
+
+The pinned 2.21.5 `tree` callback does not implement skipped events. Validation
+therefore uses an original fixed aggregate callback embedded in the hash-bound
+read-only helper source. Its sole plugin file is written 0600 in the helper's
+private tmpfs, with fixed callback-path/enabled/loading environment settings;
+there is no extra host mount or caller-supplied plugin. It handles actual ok,
+failed, unreachable and skipped Ansible events, validates the one host/action,
+and writes bounded exclusive result files. Final statistics produce a separate
+completion record only after exactly one valid event with actual installed
+ansible-core 2.21.5. Missing, duplicate, foreign, oversized, censored or no-log
+events cannot complete. Python bytecode writing is disabled. Runtime requires
+both exact private files and their completion/event identities; console text such
+as `SKIPPED` is never treated as a structured result.
 
 The private bounded original helper response is retained with size, SHA256 and
 relative path. Execution, `require_passed()` and `report_validation()` share the
@@ -131,4 +144,10 @@ Primary implementation evidence: pinned Ansible
 [command module](https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/modules/command.py)
 for argv/no-shell, disabled argument expansion and check-mode skips, and the
 [SSH plugin](https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/plugins/connection/ssh.py)
-for no-TTY/piped transport. Actual host acceptance is recorded separately.
+for no-TTY/piped transport. The pinned
+[ad-hoc CLI](https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/cli/adhoc.py),
+[task queue manager](https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/executor/task_queue_manager.py)
+and [configuration](https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/config/base.yml)
+establish aggregate loading and final-stats dispatch; the
+[tree callback source](https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/plugins/callback/tree.py)
+establishes its missing skipped handler. Actual host acceptance is recorded separately.

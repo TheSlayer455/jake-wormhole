@@ -4,12 +4,14 @@ from copy import deepcopy
 from datetime import datetime, timezone
 import hashlib
 import importlib.util
+import importlib.metadata
 import io
 import json
 import os
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
+from types import ModuleType
 import unittest
 from unittest.mock import Mock, patch
 
@@ -19,6 +21,25 @@ from wormhole import validation as v
 from wormhole.runs import atomic_json, common, create_run, read_json
 
 SHA, TARGET, NETWORK, HELPER = 'a' * 40, 'b' * 64, 'c' * 64, 'e' * 64
+
+
+def callback_module(results):
+    """Exercise the original callback source without installing Ansible locally."""
+    class Base:
+        def _dump_results(self, value): return json.dumps(value)
+    modules = {name: ModuleType(name) for name in ('ansible', 'ansible.plugins', 'ansible.plugins.callback')}
+    modules['ansible'].__path__ = []; modules['ansible.plugins'].__path__ = []
+    modules['ansible.plugins.callback'].CallbackBase = Base
+    namespace = {'__name__': 'fixed_callback_fixture'}
+    with patch.dict('sys.modules', modules):
+        exec(compile(runtime.CALLBACK_SOURCE, '<fixed-validation-callback>', 'exec'), namespace)
+    namespace['RESULTS'] = results
+    with patch.object(importlib.metadata, 'version', return_value='2.21.5'):
+        return namespace['CallbackModule']()
+
+
+def callback_event(tree, *, host='target-001', action='ansible.builtin.command', no_log=False):
+    return SimpleNamespace(host=SimpleNamespace(get_name=lambda: host), task=SimpleNamespace(action=action, no_log=no_log), result=tree)
 
 
 def observed():
@@ -256,14 +277,16 @@ class RuntimeProtocol(unittest.TestCase):
         with self.assertRaises(ValueError): runtime.observation(bad)
         with self.assertRaises(ValueError): runtime.decode(b'{"schema_version":"1.0","schema_version":"1.0"}')
 
+    @unittest.skipUnless(os.name == 'posix', 'Private callback filesystem fixtures require Linux')
     def test_fixed_ansible_argv_ssh_options_and_terminal_flags(self):
         for scenario, kind in (('healthy', 'pass'), ('unexpected-skip', 'skipped'), ('unreachable', 'unreachable'),
                                ('healthy', 'missing'), ('healthy', 'nonzero'), ('healthy', 'truncated')):
             with self.subTest(kind=kind), tempfile.TemporaryDirectory(prefix='wormhole-validation-helper-synthetic-') as temporary:
                 root = Path(temporary)
-                fake = SimpleNamespace(ROOT=root, qualified_runtime=lambda: SimpleNamespace(identity=lambda: self.request()['run_id']),
+                def write_private(path, raw): path.write_bytes(raw); path.chmod(0o600)
+                fake = SimpleNamespace(ROOT=root, qualified_runtime=lambda: SimpleNamespace(identity=lambda: self.request()['run_id'], write_private=write_private),
                     prepare_auth=Mock(), ssh_options=rr.ssh_options, environment=rr.environment)
-                def capture(argv, *_):
+                def capture(argv, _, environment):
                     self.assertEqual(argv[argv.index('-m') + 1], 'ansible.builtin.command')
                     args = json.loads(argv[argv.index('-a') + 1]); command = args['argv']
                     self.assertIs(args['expand_argument_vars'], False)
@@ -273,18 +296,62 @@ class RuntimeProtocol(unittest.TestCase):
                     self.assertFalse(inventory['ansible_ssh_use_tty']); self.assertEqual(inventory['ansible_ssh_transfer_method'], 'piped')
                     self.assertIn('StrictHostKeyChecking=yes', inventory['ansible_ssh_args'])
                     self.assertNotIn('ansible_password', inventory)
+                    self.assertNotIn('--tree', argv)
+                    self.assertEqual(environment['ANSIBLE_CALLBACKS_ENABLED'], 'wormhole_validation')
+                    self.assertEqual(environment['ANSIBLE_LOAD_CALLBACK_PLUGINS'], '1')
+                    self.assertEqual(Path(environment['ANSIBLE_CALLBACK_PLUGINS']).name, 'callbacks')
+                    self.assertEqual((Path(environment['ANSIBLE_CALLBACK_PLUGINS']) / 'wormhole_validation.py').read_text(), runtime.CALLBACK_SOURCE)
                     if scenario == 'unexpected-skip': self.assertIn('--check', argv)
-                    results = root / 'functional-validation/results'; results.mkdir()
+                    results = root / 'functional-validation/results'
                     tree = {'cmd': command, 'rc': 0, 'stdout': json.dumps(observed()), 'stderr': '', 'msg': '', 'changed': True}
                     if kind == 'skipped': tree.update(skipped=True)
                     if kind == 'unreachable': tree = {'unreachable': True, 'msg': 'Connection refused'}
-                    if kind != 'missing': (results / 'target-001').write_text(json.dumps(tree))
+                    callback = callback_module(results)
+                    event = callback_event(tree)
+                    if kind == 'skipped': callback.v2_runner_on_skipped(event)
+                    elif kind == 'unreachable': callback.v2_runner_on_unreachable(event)
+                    elif kind != 'missing': callback.v2_runner_on_ok(event)
+                    callback.v2_playbook_on_stats(None)
                     return {'returncode': 2 if kind in ('unreachable', 'nonzero') else 0, 'timed_out': False,
                         'truncated': kind == 'truncated', 'log': '', 'duration_seconds': .01}
                 fake.capture = capture
                 result = runtime.collect(self.request(scenario), fake)
                 self.assertEqual(result['status'], kind if kind in ('pass', 'skipped', 'unreachable') else 'fail' if kind == 'nonzero' else 'error')
                 self.assertEqual(result['observation'] is not None, kind == 'pass')
+
+
+@unittest.skipUnless(os.name == 'posix', 'Private callback filesystem fixtures require Linux')
+class CallbackEvents(unittest.TestCase):
+    def test_four_actual_event_handlers_and_final_manifest_bind_one_host_action_and_version(self):
+        for event in ('ok', 'failed', 'unreachable', 'skipped'):
+            with self.subTest(event=event), tempfile.TemporaryDirectory(prefix='wormhole-callback-synthetic-') as temporary:
+                root = Path(temporary); root.chmod(0o700)
+                callback = callback_module(root)
+                getattr(callback, 'v2_runner_on_' + event)(callback_event({'skipped': event == 'skipped'}))
+                self.assertFalse((root / 'complete.json').exists(), 'A terminal event without final stats is incomplete')
+                callback.v2_playbook_on_stats(None)
+                record = json.loads((root / 'target-001.json').read_text())
+                self.assertEqual(record['host'], 'target-001'); self.assertEqual(record['event'], event)
+                self.assertEqual(json.loads((root / 'complete.json').read_text())['ansible_core_version'], '2.21.5')
+                self.assertEqual(set(os.listdir(root)), {'target-001.json', 'complete.json'})
+                self.assertEqual((root / 'target-001.json').stat().st_mode & 0o777, 0o600)
+
+    def test_missing_duplicate_foreign_censored_and_oversized_events_never_complete(self):
+        for fault in ('missing', 'duplicate', 'foreign', 'wrong-action', 'no-log', 'censored', 'large', 'stats-duplicate'):
+            with self.subTest(fault=fault), tempfile.TemporaryDirectory(prefix='wormhole-callback-refusal-synthetic-') as temporary:
+                root = Path(temporary); root.chmod(0o700)
+                callback = callback_module(root)
+                value = callback_event({})
+                if fault == 'foreign': value = callback_event({}, host='foreign')
+                if fault == 'wrong-action': value = callback_event({}, action='ansible.builtin.shell')
+                if fault == 'no-log': value = callback_event({}, no_log=True)
+                if fault == 'censored': value = callback_event({'censored': 'hidden'})
+                if fault == 'large': value = callback_event({'msg': 'x' * 65536})
+                if fault != 'missing': callback.v2_runner_on_ok(value)
+                if fault == 'duplicate': callback.v2_runner_on_skipped(value)
+                callback.v2_playbook_on_stats(None)
+                if fault == 'stats-duplicate': callback.v2_playbook_on_stats(None)
+                self.assertFalse((root / 'complete.json').exists())
 
 
 @unittest.skipUnless(os.name == 'posix', 'Real read-only dpkg collector fixture requires Linux')

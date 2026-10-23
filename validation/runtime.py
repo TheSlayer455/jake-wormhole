@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import re
 import shlex
+import stat
 import sys
 import time
 from uuid import UUID
@@ -18,6 +19,67 @@ PACKAGES = ('ca-certificates', 'python3', 'python3.12', 'openssh-client', 'opens
 SCENARIOS = ('healthy', 'version-expectation-mismatch', 'functional-expectation-mismatch',
              'configured-interpreter-unavailable', 'unexpected-skip', 'unreachable')
 MAX_TREE = 65536
+
+# Original fixed callback, embedded in this hash-bound helper source. Ansible's
+# pinned tree callback has no skipped handler. No imported callback code/path.
+CALLBACK_SOURCE = r'''import importlib.metadata,json,os,stat
+from pathlib import Path
+from ansible.plugins.callback import CallbackBase
+DOCUMENTATION = """
+name: wormhole_validation
+type: aggregate
+short_description: Fixed one-target Wormhole validation events
+description: Stores the fixed command event and final completeness record.
+"""
+RESULTS=Path('/run/wormhole/readiness/functional-validation/results')
+class CallbackModule(CallbackBase):
+ CALLBACK_VERSION=2.0
+ CALLBACK_TYPE='aggregate'
+ CALLBACK_NAME='wormhole_validation'
+ CALLBACK_NEEDS_ENABLED=True
+ def __init__(self,*args,**kwargs):
+  super().__init__(*args,**kwargs)
+  self.seen=0;self.invalid=False;self.finished=False
+  self.version=importlib.metadata.version('ansible-core')
+  if self.version!='2.21.5': self.invalid=True
+ def directory(self):
+  if any(p.is_symlink() for p in (RESULTS,*RESULTS.parents)): raise ValueError('linked results')
+  info=RESULTS.lstat()
+  if not stat.S_ISDIR(info.st_mode) or info.st_uid!=os.getuid() or stat.S_IMODE(info.st_mode)!=0o700: raise ValueError('private results required')
+ def fail(self):
+  self.invalid=True
+  try:
+   self.directory()
+   (RESULTS/'complete.json').unlink(missing_ok=True)
+  except Exception: pass
+ def write(self,name,value):
+  self.directory()
+  raw=json.dumps(value,sort_keys=True,allow_nan=False).encode()
+  if not 1<=len(raw)<=65536: raise ValueError('result bound')
+  fd=os.open(RESULTS/name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+  with os.fdopen(fd,'wb') as stream:
+   stream.write(raw);stream.flush();os.fsync(stream.fileno())
+ def record(self,result,event):
+  self.seen+=1
+  try:
+   if self.invalid or self.finished or self.seen!=1 or result.host.get_name()!='target-001' or result.task.action!='ansible.builtin.command' or result.task.no_log is True or result.result.get('_ansible_no_log') is True: raise ValueError('event scope')
+   raw=self._dump_results(result.result)
+   if not isinstance(raw,str) or len(raw.encode())>49152: raise ValueError('event bound')
+   value=json.loads(raw)
+   if not isinstance(value,dict) or 'censored' in value: raise ValueError('censored event')
+   self.write('target-001.json',{'schema_version':'1.0','host':'target-001','action':'ansible.builtin.command','event':event,'result':value})
+  except Exception: self.fail()
+ def v2_runner_on_ok(self,result): self.record(result,'ok')
+ def v2_runner_on_failed(self,result,ignore_errors=False): self.record(result,'failed')
+ def v2_runner_on_unreachable(self,result): self.record(result,'unreachable')
+ def v2_runner_on_skipped(self,result): self.record(result,'skipped')
+ def v2_playbook_on_stats(self,stats):
+  try:
+   if self.invalid or self.finished or self.seen!=1: raise ValueError('incomplete events')
+   self.finished=True
+   self.write('complete.json',{'schema_version':'1.0','host':'target-001','events':1,'ansible_core_version':self.version,'status':'complete'})
+  except Exception: self.fail()
+'''
 
 # Developer-authored fixed command, not a command supplied by a ticket or target.
 # It reads only public OS/package/config/code data. No repairs or main entrypoint.
@@ -144,6 +206,9 @@ def collect(value, rr=None):
     rr.prepare_auth(module, {'run_id': value['run_id'], 'scenario': 'healthy'})
     attempt = rr.ROOT / 'functional-validation'
     attempt.mkdir(mode=0o700)  # An attempt is never silently repeated.
+    callbacks = attempt / 'callbacks'; callbacks.mkdir(mode=0o700)
+    module.write_private(callbacks / 'wormhole_validation.py', CALLBACK_SOURCE.encode())
+    results = attempt / 'results'; results.mkdir(mode=0o700)
     interpreter = '/run/wormhole/no-such-python' if value['scenario'] == 'configured-interpreter-unavailable' else '/usr/bin/python3'
     variables = {'ansible_host': value['address'], 'ansible_port': 2222, 'ansible_user': 'wormhole',
         'ansible_connection': 'ssh', 'ansible_python_interpreter': interpreter,
@@ -153,36 +218,52 @@ def collect(value, rr=None):
     inventory.write_text(json.dumps({'all': {'hosts': {'target-001': variables}}})); inventory.chmod(0o600)
     command = ['/usr/bin/python3', '-I', '-B', '-c', TARGET_PROGRAM, value['expected_payload_sha256']]
     arguments = ['/opt/wormhole/venv/bin/ansible', '-i', str(inventory), 'target-001', '-m', 'ansible.builtin.command',
-        '-a', json.dumps({'argv': command, 'expand_argument_vars': False}), '--tree', str(attempt / 'results'),
-        '--forks', '1', '--timeout', '3']
+        '-a', json.dumps({'argv': command, 'expand_argument_vars': False}), '--forks', '1', '--timeout', '3']
     if value['scenario'] == 'unexpected-skip':
         arguments.append('--check')  # Pinned command.py explicitly returns skipped without creates/removes.
     budget = value['timeout_seconds'] - (time.monotonic() - began)
     require(budget > .05)
-    result = rr.capture(arguments, budget, rr.environment())
+    env = {**rr.environment(), 'ANSIBLE_CALLBACK_PLUGINS': str(callbacks),
+        'ANSIBLE_CALLBACKS_ENABLED': 'wormhole_validation', 'ANSIBLE_LOAD_CALLBACK_PLUGINS': '1',
+        'PYTHONDONTWRITEBYTECODE': '1'}
+    result = rr.capture(arguments, budget, env)
     tree, observed = None, None
-    path = attempt / 'results/target-001'
-    if path.exists():
-        require(not path.is_symlink() and path.is_file() and path.stat().st_nlink == 1 and path.stat().st_size <= MAX_TREE)
-        with path.open('rb') as stream:
-            raw = stream.read(MAX_TREE + 1)
-        require(len(raw) <= MAX_TREE)
-        tree = json.loads(raw, object_pairs_hook=unique)
-        require(type(tree) is dict)
+    event = None
+    directory = results.lstat()
+    require(stat.S_ISDIR(directory.st_mode) and not results.is_symlink() and directory.st_uid == os.getuid() and
+            stat.S_IMODE(directory.st_mode) == 0o700)
+    if set(os.listdir(results)) == {'target-001.json', 'complete.json'}:
+        records = {}
+        for name in ('target-001.json', 'complete.json'):
+            path = results / name
+            info = path.lstat()
+            require(not path.is_symlink() and path.is_file() and info.st_nlink == 1 and info.st_uid == os.getuid() and
+                stat.S_IMODE(info.st_mode) == 0o600 and info.st_size <= MAX_TREE)
+            with path.open('rb') as stream:
+                raw = stream.read(MAX_TREE + 1)
+            require(len(raw) <= MAX_TREE)
+            records[name] = json.loads(raw, object_pairs_hook=unique)
+        record, complete = records['target-001.json'], records['complete.json']
+        require(complete == {'schema_version': '1.0', 'host': 'target-001', 'events': 1,
+            'ansible_core_version': '2.21.5', 'status': 'complete'} and type(record) is dict and set(record) ==
+            {'schema_version', 'host', 'action', 'event', 'result'} and record['schema_version'] == '1.0' and
+            record['host'] == 'target-001' and record['action'] == 'ansible.builtin.command' and
+            record['event'] in {'ok', 'failed', 'unreachable', 'skipped'} and type(record['result']) is dict)
+        tree, event = record['result'], record['event']
     status, category = 'error', 'ansible_result_invalid'
     if result['timed_out']:
         category = 'validation_timeout'
     elif result['truncated']:
         category = 'output_bound'
-    elif tree is not None and tree.get('unreachable') is True:
+    elif event == 'unreachable':
         status, category = 'unreachable', 'ansible_unreachable'
-    elif tree is not None and tree.get('skipped') is True:
+    elif event == 'skipped':
         status, category = 'skipped', 'unexpected_skip'
-    elif result['returncode'] != 0:
+    elif result['returncode'] != 0 or event == 'failed':
         status, category = 'fail', 'ansible_failed'
         if value['scenario'] == 'configured-interpreter-unavailable' and '/run/wormhole/no-such-python' in result['log'] + json.dumps(tree):
             category = 'configured_interpreter_unavailable'
-    elif tree is not None:
+    elif tree is not None and event == 'ok':
         allowed = {'changed', 'stdout', 'stderr', 'rc', 'cmd', 'start', 'end', 'delta', 'msg',
                    'stdout_lines', 'stderr_lines', 'failed', 'unreachable', 'skipped'}
         require(set(tree) <= allowed and tree.get('cmd') == command and type(tree.get('rc')) is int and tree['rc'] == 0 and
