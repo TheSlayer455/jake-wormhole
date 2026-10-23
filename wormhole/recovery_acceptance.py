@@ -191,6 +191,8 @@ def _worker(run):
 def _checkpoint_proof(run, worker_pid):
     checkpoint = read_json(run.file(CHECKPOINT))
     context = read_json(run.file('private/terraform/controller.json'))
+    require(('resource_layout' not in context and 'target_plan' not in context) or
+        context.get('resource_layout') == 'indexed-targets-v1' and 'target_plan' in context, 'checkpoint_identity')
     target_plan = TargetPlan.from_record(context['target_plan']) if context.get('resource_layout') == 'indexed-targets-v1' else None
     require(target_plan is None or target_plan.profile == run.manifest()['profile'], 'checkpoint_identity')
     require(common(checkpoint) == common(run.manifest()) and checkpoint.get('operation') == 'known-terminal-destroy-before-journal' and

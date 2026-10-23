@@ -24,6 +24,8 @@ class FleetPlanPolicy(unittest.TestCase):
 
     def test_omission_extra_target_substituted_identity_and_unsafe_target_are_rejected(self):
         layout = TargetPlan('five-targets'); variables = base.inputs(); variables['target_ids'] = list(layout.target_ids)
+        for invalid in (None, [], 1, 'plan'):
+            with self.assertRaises(p.ProvisioningError): p.validate_plan(invalid, variables, target_plan=layout)
         for mutate in (
             lambda x: x['resource_changes'].pop(),
             lambda x: x['resource_changes'].append(deepcopy(x['resource_changes'][-1])),
@@ -89,6 +91,8 @@ class FleetLifecycle(unittest.TestCase):
     def test_all_targets_capped_before_first_start_and_exact_five_inventory_destroy(self):
         with self.patches():
             self.session.create_stopped()
+            self.assertEqual(self.session.target_resources, self.identities)
+            copied = self.session.target_resources; copied.clear()
             self.assertEqual(self.session.target_resources, self.identities)
             self.assertEqual(len(self.session.owned), 6)
             self.assertIsNone(self.session.target_inventory('target-005'))

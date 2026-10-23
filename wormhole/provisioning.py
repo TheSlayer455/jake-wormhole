@@ -138,6 +138,7 @@ def validate_refresh(value, variables, owned, target_plan=None):
 def validate_plan(value, variables, *, operation='create', owned=None, target_plan=None):
     """Typed allowlist for actual Terraform JSON, not text matching the plan UI."""
     allowed = layout_addresses(target_plan)
+    require(type(value) is dict, 'unsafe_plan', 'The plan must be a structured supported Terraform record.')
     if target_plan is not None:
         require(value.get('variables') == {key: {'value': item} for key, item in variables.items()}, 'unsafe_plan', 'The indexed plan must contain exact generated input bindings.')
         require(variables.get('target_ids') == list(target_plan.target_ids), 'unsafe_plan', 'Target inputs differ from the immutable layout.')
