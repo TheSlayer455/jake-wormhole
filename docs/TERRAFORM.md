@@ -73,6 +73,15 @@ follow. A saved refresh-only plan/apply and provider output supply the endpoint;
 the controller cross-checks the exact Docker network/container. No guessed IP,
 public port, native-created target or local connection substitutes for this.
 
+Terraform 1.17's actual refresh-only JSON can have an empty planned root module
+while refreshed owned resources appear in `prior_state.values`. The refresh guard
+requires both exact owned IDs there, no infrastructure `resource_changes`, and
+only bounded unique `resource_drift` updates for the same addresses, provider and
+before/after IDs. Each drift result must equal its refreshed prior-state value;
+the run output must retain the exact image/network/target identities. Missing
+resources, creates/deletes/replacements, foreign IDs, unknown drift and modules
+refuse. This observation layout never falls back to creating infrastructure.
+
 Provider 4.6.0 disconnects the default bridge and connects the requested advanced
 network while the target is stopped. `HostConfig.NetworkMode` remains `bridge`;
 the actual endpoint map must contain only this run's network name. A stopped

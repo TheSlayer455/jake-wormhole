@@ -69,6 +69,54 @@ def resources(value):
     return result
 
 
+def validate_refresh(value, variables, owned):
+    """Terraform 1.17 refresh-only records refreshed resources in prior_state.
+
+    Drift describes observations, not infrastructure actions. Empty planned
+    resources must never be interpreted as a new create graph or empty ownership.
+    """
+    require(type(owned) is dict and set(owned) == ADDRESSES and
+            all(type(x) is str and ID.fullmatch(x) for x in owned.values()) and
+            value.get('resource_changes', []) == [] and value.get('complete') is True,
+            'unsafe_plan', 'Refresh requires both exact owned IDs and no infrastructure actions.')
+    prior = value.get('prior_state')
+    require(type(prior) is dict and prior.get('format_version') == '1.0' and prior.get('terraform_version') == '1.17.0',
+            'unsafe_plan', 'Refresh requires the actual supported refreshed prior-state record.')
+    refreshed = resources(prior)
+    require(set(refreshed) == ADDRESSES and all(refreshed[key].get('id') == owned[key] for key in ADDRESSES),
+            'unsafe_plan', 'Refresh must preserve the complete exact managed identities.')
+    planned = resources(value)
+    require(not planned or planned == refreshed, 'unsafe_plan', 'Planned refresh resources contradict the observed prior state.')
+    drift = value.get('resource_drift', [])
+    require(type(drift) is list and len(drift) <= 2, 'unsafe_plan', 'Observed resource drift is bounded to this smoke graph.')
+    seen = set()
+    for item in drift:
+        require(type(item) is dict and item.get('address') in ADDRESSES and item['address'] not in seen and
+                item.get('mode') == 'managed' and item.get('provider_name') == PROVIDER and
+                not any(item.get(key) for key in ('deposed', 'generated_config', 'importing')) and
+                type(item.get('change')) is dict, 'unsafe_plan', 'Unexpected resource drift identity or provider.')
+        address, change = item['address'], item['change']
+        seen.add(address)
+        require(change.get('actions') == ['update'] and type(change.get('before')) is dict and
+                type(change.get('after')) is dict and change['before'].get('id') == owned[address] and
+                change['after'].get('id') == owned[address] and change['after'] == refreshed[address] and
+                change.get('after_unknown', {}) == {},
+                'unsafe_plan', 'Drift may only update observed values for the same exact owned identity.')
+    outputs = value.get('planned_values', {}).get('outputs', {})
+    require(type(outputs) is dict and set(outputs) == {'run'} and type(outputs['run']) is dict and
+            outputs['run'].get('sensitive') is False and type(outputs['run'].get('value')) is dict,
+            'unsafe_plan', 'Refresh requires the one non-sensitive run output.')
+    output = outputs['run']['value']
+    require(output.get('network_id') == owned['docker_network.run'] and output.get('target_id') == owned['docker_container.target'] and
+            output.get('image') == variables['image'] and output.get('network_name') == 'wormhole-' + variables['run_id'] + '-network',
+            'unsafe_plan', 'Refresh output must remain bound to the exact managed run identities.')
+    configuration = value.get('configuration', {}).get('root_module', {})
+    require(type(configuration) is dict and not configuration.get('module_calls') and
+            type(configuration.get('resources', [])) is list and len(configuration.get('resources', [])) <= 2 and
+            all(type(x) is dict and not x.get('provisioners') for x in configuration.get('resources', [])),
+            'unsafe_plan', 'Refresh cannot introduce modules or executable Terraform provisioners.')
+
+
 def validate_plan(value, variables, *, operation='create', owned=None):
     """Typed allowlist for actual Terraform JSON, not text matching the plan UI."""
     require(type(value) is dict and value.get('format_version') == '1.2' and
@@ -77,6 +125,9 @@ def validate_plan(value, variables, *, operation='create', owned=None):
     if 'variables' in value:
         require(value['variables'] == {key: {'value': item} for key, item in variables.items()},
                 'unsafe_plan', 'The plan is not bound to the exact generated inputs.')
+    if operation == 'refresh':
+        validate_refresh(value, variables, owned)
+        return
     changes = value.get('resource_changes', [])
     require(type(changes) is list and len(changes) <= 2, 'unsafe_plan', 'Unexpected resource graph.')
     addresses = set()
@@ -103,8 +154,7 @@ def validate_plan(value, variables, *, operation='create', owned=None):
                     type(change.get('before')) is dict and owned is not None and
                     change['before'].get('id') == owned.get(address), 'unsafe_plan', 'Destroy must contain only the exact verified owned IDs.')
         else:
-            require(operation == 'refresh' and change.get('actions') == ['no-op'],
-                    'unsafe_plan', 'Refresh cannot mutate or replace infrastructure.')
+            raise ProvisioningError('unsafe_plan', 'Only fixed create, refresh and destroy operations are supported.')
     if operation == 'destroy':
         require(addresses == set(owned), 'unsafe_plan', 'Destroy is incomplete or includes an unexpected resource.')
         return
@@ -112,10 +162,6 @@ def validate_plan(value, variables, *, operation='create', owned=None):
         require(addresses == ADDRESSES, 'unsafe_plan', 'Fresh creation requires both exact resource changes.')
     planned = resources(value)
     require(set(planned) == ADDRESSES, 'unsafe_plan', 'The complete smoke graph must be present.')
-    if operation == 'refresh':
-        require(owned is not None and all(planned[key].get('id') == owned.get(key) for key in ADDRESSES),
-                'unsafe_plan', 'Refresh must preserve the exact managed identities.')
-        return
     for item in changes:
         after = item['change'].get('after')
         require(type(after) is dict and all(_same(after.get(key), planned[item['address']].get(key))

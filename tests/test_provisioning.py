@@ -57,6 +57,25 @@ def plan(variables, operation='create'):
         result['resource_changes'].append({key: entry[key] for key in ('address', 'mode', 'provider_name')})
         result['resource_changes'][-1]['change'] = {'actions': [{'create': 'create', 'destroy': 'delete', 'refresh': 'no-op'}[operation]],
             'before': values if operation != 'create' else None, 'after': None if operation == 'destroy' else values, 'after_unknown': {}}
+    if operation == 'refresh':
+        # Labeled synthetic reproduction of actual Terraform 1.17 refresh-only
+        # shape: observations in prior_state; planned root_module is empty.
+        result['complete'] = True
+        result['prior_state'] = {'format_version': '1.0', 'terraform_version': '1.17.0', 'values': deepcopy(result['planned_values'])}
+        result['resource_drift'] = []
+        for entry in entries:
+            before, after = deepcopy(entry['values']), deepcopy(entry['values'])
+            if entry['address'] == 'docker_container.target':
+                before['network_data'] = []
+                after['network_data'] = [{'network_name': prefix + '-network', 'ip_address': '192.0.2.3'}]
+            else:
+                before['ipam_options'], after['ipam_options'] = None, {}
+            next(x for x in result['prior_state']['values']['root_module']['resources'] if x['address'] == entry['address'])['values'] = deepcopy(after)
+            result['resource_drift'].append({key: entry[key] for key in ('address', 'mode', 'provider_name')})
+            result['resource_drift'][-1]['change'] = {'actions': ['update'], 'before': before, 'after': after, 'after_unknown': {}}
+        result['resource_changes'] = []
+        result['planned_values'] = {'root_module': {}, 'outputs': {'run': {'sensitive': False, 'value': {
+            'network_id': NET, 'target_id': CID, 'image': variables['image'], 'network_name': prefix + '-network'}}}}
     return result
 
 
@@ -113,6 +132,30 @@ class PlanPolicy(unittest.TestCase):
         wrong = {'docker_network.run': NET, 'docker_container.target': 'd' * 64}
         with self.assertRaises(p.ProvisioningError): p.validate_plan(plan(values, 'destroy'), values, operation='destroy', owned=wrong)
         with self.assertRaises(p.ProvisioningError): p.validate_plan(plan(values, 'refresh'), values, operation='refresh', owned=wrong)
+
+    def test_actual_refresh_only_layout_uses_owned_prior_state_without_allowing_actions_or_id_drift(self):
+        values = inputs(); owned = {'docker_network.run': NET, 'docker_container.target': CID}
+        actual_shape = plan(values, 'refresh')
+        self.assertEqual(actual_shape['planned_values']['root_module'], {})
+        p.validate_plan(actual_shape, values, operation='refresh', owned=owned)
+        for mutate in (
+            lambda x: x.update(resource_changes=[{'change': {'actions': ['no-op']}}]),
+            lambda x: x.pop('prior_state'),
+            lambda x: x['prior_state']['values']['root_module']['resources'].pop(),
+            lambda x: x['prior_state']['values']['root_module'].update(child_modules=[{}]),
+            lambda x: x['prior_state']['values']['root_module']['resources'][0]['values'].update(id='e' * 64),
+            lambda x: x['resource_drift'][0]['change'].update(actions=['create']),
+            lambda x: x['resource_drift'][0]['change'].update(actions=['delete']),
+            lambda x: x['resource_drift'][0]['change']['before'].update(id='e' * 64),
+            lambda x: x['resource_drift'][0].update(provider_name='registry.terraform.io/other/docker'),
+            lambda x: x['resource_drift'].append(deepcopy(x['resource_drift'][0])),
+            lambda x: x['resource_drift'][0]['change'].update(after_unknown={'id': True}),
+            lambda x: x['planned_values']['outputs']['run']['value'].update(target_id='e' * 64),
+            lambda x: x['configuration']['root_module'].update(module_calls={'unapproved': {}}),
+        ):
+            value = deepcopy(actual_shape); mutate(value)
+            with self.subTest(mutation=mutate), self.assertRaises(p.ProvisioningError):
+                p.validate_plan(value, values, operation='refresh', owned=owned)
 
     def test_fixed_runtime_commands_scrub_ambient_authority_and_never_execute_unknown_input(self):
         with patch.dict(os.environ, {'TF_CLI_ARGS': '-destroy', 'TF_REATTACH_PROVIDERS': 'evil', 'DOCKER_CONTEXT': 'remote',
@@ -258,7 +301,7 @@ class Controller(unittest.TestCase):
         if name.startswith('show-') and name.endswith('plan'):
             return plan(self.session.variables, 'refresh' if name == 'show-refresh-plan' else 'destroy' if name == 'show-destroy-plan' else 'create')
         if name == 'show-state':
-            value = plan(self.session.variables, 'refresh'); return {'values': value['planned_values']}
+            value = plan(self.session.variables, 'refresh'); return value['prior_state']
         if name == 'output': return {'run': {'sensitive': False, 'value': {'network_id': NET, 'target_id': CID,
             'network_name': 'wormhole-' + self.run.id + '-network', 'image': p.TARGET_IMAGE,
             'network_data': [{'network_name': 'wormhole-' + self.run.id + '-network', 'ip_address': '172.31.77.2'}]}}}
