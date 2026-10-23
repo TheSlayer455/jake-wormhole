@@ -20,8 +20,9 @@ from .runs import RunError, SOURCE_ROOT, _owned, atomic_bytes, atomic_json, comm
 
 CONTEXT = SOURCE_ROOT / 'rpm'
 BASE = 'registry.access.redhat.com/ubi9/ubi@sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1'
-BASE_ID = 'sha256:9be18d9ba921714e79e390694315e3341047fe758ac79b62e671d92d4217c3fb'
-BASE_CONTRACT_SHA = 'bf8265c75b7860e0b6ded6e84d35850d4990872c8c635bd8e02af821c87f4b23'
+BASE_ID = 'sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1'
+CONFIG_DIGEST = 'sha256:9be18d9ba921714e79e390694315e3341047fe758ac79b62e671d92d4217c3fb'
+BASE_CONTRACT_SHA = '5d1bb67aabe4f0d844cd5bb5eee7abf230c937730e35c12278896f059c5a16d4'
 SOURCES_SHA = '94d0ab366b6e2993adbdb72e32e18e392c4aecb5cd08e118fdfd7b373f6f308f'
 SECONDS = 45
 MAX_OUTPUT = 49152
@@ -120,7 +121,7 @@ def validate_observation(run, value, probe_sha):
             if key == 'key_files':
                 require(record['signature_verification'] == 'not-performed' and type(record['primary_fingerprints']) is list and
                     1 <= len(record['primary_fingerprints']) <= 8 and record['primary_fingerprints'] == sorted(set(record['primary_fingerprints'])) and
-                    all(type(item) is str and re.fullmatch(r'[A-F0-9]{40}', item) for item in record['primary_fingerprints']), 'rpm_observation_invalid')
+                    all(type(item) is str and re.fullmatch(r'(?:[A-F0-9]{40}|[A-F0-9]{64})', item) for item in record['primary_fingerprints']), 'rpm_observation_invalid')
     return value
 
 
@@ -178,7 +179,9 @@ def _public_source(run, expected):
 def verify_base(value, lock):
     require(value.get('Id') == BASE_ID and value.get('Os') == 'linux' and value.get('Architecture') == 'amd64' and
         BASE in value.get('RepoDigests', []) and value.get('Config', {}).get('Labels') == lock['base']['labels'] and
-        not value['Config'].get('Volumes') and type(value.get('Size')) is int and value['Size'] > 0, 'rpm_base_invalid')
+        not value['Config'].get('Volumes') and type(value.get('Size')) is int and value['Size'] > 0 and
+        value.get('Descriptor') == {'mediaType':'application/vnd.docker.distribution.manifest.v2+json','digest':BASE_ID,'size':429} and
+        lock['base']['config_digest'] == CONFIG_DIGEST, 'rpm_base_invalid')
 
 
 def verify_probe(run, receipt, value, limits, *, stopped=False):
@@ -257,7 +260,7 @@ def probe_base(run, lease):
     receipt = {**common(run.manifest()), 'operation':'ubi-base-probe','status':'pending','started_at':now(),
         'base_reference':BASE,'base_image_id':None,'container_id':None,'recipe_sha256':recipe,'source_files':files,
         'source_binding':_public_source(run,files['probe.py']),'labels':None,'capture_sha256':None,'observation':None,
-        'unknown_outcome':False,'primary_failure':None,'cleanup':'pending','secondary_cleanup_failure':None,
+        'unknown_outcome':False,'primary_failure':None,'cleanup':'pending','secondary_cleanup_failure':None,'pull_result':None,
         'daemon_pull_cgroup_capped':False,'runtime_pipeline_complete':False,'production_iso_eligible':False}
     def source(): require(source_identity() == (receipt['source_revision'],False) and recipe_identity() == (recipe,files) and
         _public_source(run,files['probe.py']) == receipt['source_binding'], 'rpm_probe_source_changed')
@@ -266,7 +269,11 @@ def probe_base(run, lease):
         lease.set_phase('assembling'); base = images.inspect('image',BASE,missing=True)
         lease.set_phase('materializing')
         if base is None:
-            _mutation(run,receipt,('pull','--platform','linux/amd64',BASE),timeout=lease.plan['materialization']['client_timeout_seconds'])
+            pulled = _mutation(run,receipt,('pull','--platform','linux/amd64',BASE),timeout=lease.plan['materialization']['client_timeout_seconds'])
+            require(pulled['status'] == 'pass' and pulled['returncode'] == 0 and not pulled['log_truncated'], 'rpm_pull_incomplete')
+            atomic_bytes(run.file('private/rpm-base-pull.log'),pulled['log'],limit=65536)
+            receipt['pull_result'] = {'reference':BASE,'platform':'linux/amd64','status':'pass','returncode':0,
+                'capture_sha256':sha(pulled['log']),'size_bytes':len(pulled['log']),'recorded_at':now()}; _save(run,receipt)
             base = images.inspect('image',BASE)
         verify_base(base,lock); lease.register_resource('image',BASE_ID)
         lease.reconcile_resource('image',BASE_ID,outcome='retained',size_bytes=base['Size'])

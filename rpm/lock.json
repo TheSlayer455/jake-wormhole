@@ -4,7 +4,7 @@
   "platform": "linux/amd64",
   "base": {
     "reference": "registry.access.redhat.com/ubi9/ubi@sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
-    "image_id": "sha256:9be18d9ba921714e79e390694315e3341047fe758ac79b62e671d92d4217c3fb",
+    "image_id": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
     "manifest_url": "https://registry.access.redhat.com/v2/ubi9/ubi/manifests/sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
     "labels": {
       "architecture": "x86_64",
@@ -30,7 +30,8 @@
       "vcs-type": "git",
       "vendor": "Red Hat, Inc.",
       "version": "9.8"
-    }
+    },
+    "config_digest": "sha256:9be18d9ba921714e79e390694315e3341047fe758ac79b62e671d92d4217c3fb"
   },
   "probe": {
     "operation": "ubi-base-observation-v1",

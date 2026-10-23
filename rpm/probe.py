@@ -52,7 +52,7 @@ def file_bytes(path, maximum=65536):
 
 
 def fingerprints(raw):
-    """Compute v4 OpenPGP primary fingerprints; this is NOT signature verification."""
+    """Compute RFC9580 v4/v6 primary fingerprints; NOT signature verification."""
     blocks = re.findall(rb'-----BEGIN PGP PUBLIC KEY BLOCK-----\s+(.*?)-----END PGP PUBLIC KEY BLOCK-----', raw, re.S)
     require(1 <= len(blocks) <= 8)
     result = []
@@ -80,8 +80,11 @@ def fingerprints(raw):
             require(0 < length <= 65535 and offset + length <= len(binary))
             packet = binary[offset:offset+length]; offset += length
             if tag == 6:
-                require(packet[0] == 4)
-                result.append(hashlib.sha1(b'\x99' + length.to_bytes(2, 'big') + packet).hexdigest().upper())
+                require(packet[0] in (4, 6))
+                if packet[0] == 4:
+                    result.append(hashlib.sha1(b'\x99' + length.to_bytes(2, 'big') + packet).hexdigest().upper())
+                else:
+                    result.append(hashlib.sha256(b'\x9b' + length.to_bytes(4, 'big') + packet).hexdigest().upper())
     require(1 <= len(result) <= 8 and len(result) == len(set(result)))
     return sorted(result)
 

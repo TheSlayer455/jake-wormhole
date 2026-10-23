@@ -40,13 +40,19 @@ class Policy(unittest.TestCase):
 
     def test_pinned_full_inherited_labels_and_original_ubuntu_recipe_are_independent(self):
         lock = r.load_lock(); image = {'Id':r.BASE_ID,'Os':'linux','Architecture':'amd64','RepoDigests':[r.BASE],
-            'Config':{'Labels':deepcopy(lock['base']['labels'])},'Size':200000000}
+            'Config':{'Labels':deepcopy(lock['base']['labels'])},'Size':80416938,
+            'Descriptor':{'mediaType':'application/vnd.docker.distribution.manifest.v2+json','digest':r.BASE_ID,'size':429}}
         r.verify_base(image,lock)
+        self.assertNotEqual(r.BASE_ID,r.CONFIG_DIGEST)
+        self.assertEqual(lock['base']['image_id'],r.BASE_ID)
+        self.assertEqual(lock['base']['config_digest'],r.CONFIG_DIGEST)
         self.assertEqual(lock['base']['labels']['version'],'9.8')
         self.assertEqual(lock['base']['labels']['vendor'],'Red Hat, Inc.')
         image['Config']['Labels']['unexpected']='not trusted'
         with self.assertRaises(r.RpmError): r.verify_base(image,lock)
         image['Config']['Labels']=deepcopy(lock['base']['labels']); image['Id']='sha256:'+'c'*64
+        with self.assertRaises(r.RpmError): r.verify_base(image,lock)
+        image['Id']=r.CONFIG_DIGEST
         with self.assertRaises(r.RpmError): r.verify_base(image,lock)
         self.assertNotIn('rpm',images.FILES)
 
@@ -98,6 +104,16 @@ class Policy(unittest.TestCase):
         for raw in (b'not a key',armored.replace(b'BgAAAAE',b'invalid')):
             if raw != armored:
                 with self.assertRaises((ValueError,TypeError)): module.fingerprints(raw)
+
+    def test_v6_fingerprint_uses_rfc9580_256bit_domain_without_approving_key(self):
+        spec=importlib.util.spec_from_file_location('fixed_rpm_v6_probe',r.CONTEXT/'probe.py')
+        module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+        packet=b'\x06\x00\x00\x00\x01\x1b\x00\x00\x00\x20'+bytes(range(32))
+        armored=b'-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n'+base64.b64encode(bytes([0xc6,len(packet)])+packet)+b'\n-----END PGP PUBLIC KEY BLOCK-----\n'
+        self.assertEqual(module.fingerprints(armored),[hashlib.sha256(b'\x9b'+len(packet).to_bytes(4,'big')+packet).hexdigest().upper()])
+        packet=b'\x05'+packet[1:]
+        unsupported=b'-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n'+base64.b64encode(bytes([0xc6,len(packet)])+packet)+b'\n-----END PGP PUBLIC KEY BLOCK-----\n'
+        with self.assertRaises(ValueError): module.fingerprints(unsupported)
 
     @unittest.skipUnless(sys.platform.startswith('linux'),'Linux explicit PID1 deadline policy')
     def test_explicit_alarm_interrupts_blocked_probe_code_without_parent(self):
@@ -155,7 +171,8 @@ class Driver(unittest.TestCase):
         if kind=='image':
             if not self.cached: return None
             return {'Id':r.BASE_ID,'Os':'linux','Architecture':'amd64','RepoDigests':[r.BASE],
-                'Config':{'Labels':r.load_lock()['base']['labels']},'Size':200000000}
+                'Config':{'Labels':r.load_lock()['base']['labels']},'Size':80416938,
+                'Descriptor':{'mediaType':'application/vnd.docker.distribution.manifest.v2+json','digest':r.BASE_ID,'size':429}}
         if self.removed: return None
         return self.container()
 
@@ -209,6 +226,8 @@ class Driver(unittest.TestCase):
         self.assertIn(('phase','materializing'),self.calls[:pull])
         self.assertEqual(self.lease.record['resources'][0],{'kind':'image','id':r.BASE_ID,'outcome':'retained'})
         self.assertEqual(result['base_image_id'],r.BASE_ID)
+        self.assertEqual(result['pull_result']['status'],'pass')
+        self.assertEqual(result['pull_result']['capture_sha256'],r.sha(self.run.file('private/rpm-base-pull.log').read_bytes()))
 
     def test_malformed_known_result_retains_primary_but_exact_known_cleanup_runs(self):
         self.bad_capture=True

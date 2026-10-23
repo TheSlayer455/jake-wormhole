@@ -57,3 +57,17 @@ license retention, resource observations and SSH/Ansible behavior require later
 review and actual execution. No subscription channel, host package change, VM,
 ISO boot, full RHEL, scanner, STIG or production acceptance is claimed. Production
 ISO eligibility and runtime-pipeline completion remain false.
+
+The first actual probe at01fe92b failed before creating a container: Docker29's
+containerd image store reports the pinned manifest digest as image `Id`, while
+the original lock mistakenly used the upstream config digest. The corrected
+contract distinguishes those identities and checks the exact Docker descriptor,
+repository digest, complete inherited labels and platform. Failed historical
+receipts remain unchanged. Future pulls persist their terminal client result and
+bounded capture before image validation. This does not itself clear an unknown
+operation or authorize adoption in a resumed admission.
+
+The read-only key observer computes v4 (SHA1) and v6 (SHA256) primary fingerprints
+as specified by [RFC9580](https://www.rfc-editor.org/rfc/rfc9580.html#section-5.5.4).
+It does not verify a signature, choose an installation trust anchor, or declare
+that a bundled key was observed until the actual probe returns its facts.
