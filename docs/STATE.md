@@ -1,3 +1,19 @@
+# Current: WORM-015 implementation, October23 19:23UTC
+
+WORM-002 through WORM-014 and WORM-016 are Done in Minx through Jake's explicit
+owner-directed delegated workflow, with criterion evidence and solution comments.
+WORM-014 delivery `50ff7cb5d43840294e2e0674dc3de03f598c22b2` is pushed in private
+draft PR14; both final hosted checks passed. Its actual runtime source is
+`db5d8e74f54483a909faaed963c752962785653c`. PRs remain unmerged.
+
+WORM-015 revision2 is approved and claimed for full observed native software
+inventories and attributable JSON/text reports. Implementation and qualification
+are pending. Root owns the integration worktree, with separate core and records
+writer worktrees and normal reviewed integration. Refresh Minx for claim expiry.
+No complete pipeline, twenty-target runtime or production ISO eligibility follows.
+
+## Preserved historical checkpoints
+
 # Current engineering state: WORM-014 qualified
 
 <!-- WORM-014 actual qualification db5d8e74f54483a909faaed963c752962785653c -->
