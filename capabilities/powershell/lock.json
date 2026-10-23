@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "capability": "powershell-explicit",
+  "platform": "linux/amd64",
+  "release": "7.6.8",
+  "package_version": "7.6.8-1.deb",
+  "observed_date": "2026-10-23",
+  "source_revision": "6e29e4530c5631b6d3d2afacb49c6f1267fb0b42",
+  "release_url": "https://github.com/PowerShell/PowerShell/releases/tag/v7.6.8",
+  "source_license": "MIT plus retained ThirdPartyNotices",
+  "signature_verification": "Not available: tag unsigned and no detached release signature observed. TLS+SHA256 verified.",
+  "base_image": "sha256:4f7f306ecd431b4b48169777966d88c1f09f2139506176a6b85203f5bae69a71",
+  "base_build_run": "9e864d00-ea9f-4a85-bdb5-f5873166e4d7",
+  "base_build_source": "244ea4b8961fa3be5ca82c122f95a1bd776c210d",
+  "base_recipe_sha256": "f3b03c77e0af5d8c583e1761f236abfd499da9ad935d2f480164a83b2e79a843",
+  "base_source_files": {
+    "images.lock.json": "44e7c225a1e13a0b70d0778fb9b3ff12bc99adfaf5083816c90e2b537d26257e",
+    "assemble.sh": "c24ef254993b3b3e1d3c12835049bcd9c1210bc75f0eb97f50294b8548566312",
+    "runtime.py": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+    "sshd_config": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1",
+    "ssh_config": "e8593986e36f4476c9410f849e0920f684241c4f7f258ea6e6180b06b9a73717",
+    "apt-packages.lock": "fe0de1322c82557616d372c076038bee1b3f37002197f778a4dafff7e6cc3dda",
+    "helper-requirements.lock": "15ea873a5a96915d5ebb870cd714d729a360181b5f2f4e61c7fa1a467a40e262"
+  },
+  "policy": {
+    "download_per_file": 67108864,
+    "cache_total": 83886080,
+    "preparation_seconds": 180
+  },
+  "icu_version": "74.2-1ubuntu3.1",
+  "dependency_packages": [
+    "libc6",
+    "libgcc-s1",
+    "libgssapi-krb5-2",
+    "libstdc++6",
+    "zlib1g",
+    "libicu74",
+    "libssl3t64"
+  ],
+  "installed_files": {
+    "pwsh": "873de21f04b6a0269c220f9c8396ff5cd639e8deb058a32cc26df54b69bbff8d",
+    "LICENSE.txt": "7c77a44a8acd9b41fdc209864a8016b3d430b5d0e09309818d5b7444336df744",
+    "ThirdPartyNotices.txt": "275443457d6f9eac61ef2367da89b1420b94f68c1cc94ed305d2591514ea88d1"
+  },
+  "artifacts": [
+    {
+      "filename": "powershell.deb",
+      "url": "https://github.com/PowerShell/PowerShell/releases/download/v7.6.8/powershell_7.6.8-1.deb_amd64.deb",
+      "bytes": 55409518,
+      "sha256": "f687eb1a3ba7b22a1ff35d85893b64aec1045ff718f13ceb8e56c300d60494dc"
+    },
+    {
+      "filename": "libicu74.deb",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/pool/main/i/icu/libicu74_74.2-1ubuntu3.1_amd64.deb",
+      "bytes": 10860078,
+      "sha256": "c9a70989678660eed9a1e904c74fa043da8bec8e2036856fc16e31ced79b04f8"
+    }
+  ]
+}
