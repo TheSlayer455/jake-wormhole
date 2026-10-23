@@ -139,3 +139,13 @@ PowerShell execution does not prove Evaluate-STIG controller, transport or targe
 compatibility. There is no authorized scanner package or documented compatible
 method, and no Lightspeed policy or scanner invocation is invented. Production
 ISO eligibility and complete-pipeline claims remain false for every outcome.
+
+<!-- WORM-011 actual capability 88c8df01c38986fb909b3cfe231a97081f790bc1 -->
+
+## Actual capability qualification
+
+On October 23, 2026, the four-stage operator passed at clean `88c8df01c38986fb909b3cfe231a97081f790bc1`. The isolated missing-package operation remained failed while a fresh ordinary Terraform/strict SSH/Ansible Run passed all ten functional rows. Offline build and a separate no-network, read-only UID 10001 helper smoke observed PowerShell 7.6.8 Core/Unix, .NET 10.0.13 and fixed result 2. Dependency versions and the original helper doctor passed, with all seven original image recipe inputs unchanged.
+
+Retained image: `sha256:7cbb64abd73f3a91b4d8d17a5f825902302e0fa772b88a1c3d66ec8aaa56b737`. Actual builder cgroups were 2 GiB/2 CPU/256 PIDs; probe cgroups 512 MiB/1 CPU/128 PIDs with no extra swap. Known owned containers were reconciled and the suite sentinel unchanged. Linux homelab source fixtures: 258 cases, 256 passed, two Windows-only skips, 11.361 seconds. Windows writer fixtures: 258 cases, 149 passed, 109 platform skips, 8.346 seconds. Source fixtures are separate from actual runtime evidence.
+
+This proves only the explicitly selected fixed PowerShell container command. Scanner compatibility remains unavailable. The [portable evidence](../handoff/evidence/WORM-011.json) records sanitized child receipts and package/file hashes. Raw captures, credentials, state paths and downloaded packages remain private. Publishing, final CI and Owner acceptance are separate facts.
