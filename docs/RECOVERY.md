@@ -91,3 +91,42 @@ failure surviving secondary cleanup failure; exact ownership refusal; and stable
 before/after fingerprints of an unrelated sentinel. Test only Wormhole-owned
 resources. Global prune, ambiguous prefix removal, reboot, host security changes
 and unrelated service mutation are outside these operations.
+
+## Explicit live acceptance operator
+
+The source-controlled operator is authored and fixture-tested; a successful live
+run must be recorded separately. Use only on the authorized Linux host, at its
+exact clean immutable checkout, with an existing unrelated read-only sentinel:
+
+```text
+python -m wormhole.recovery_acceptance --sentinel-id EXACT_EXISTING_CONTAINER_ID
+```
+
+An optional `--case` selects one fixed case and reports that case only. The full
+suite creates four fresh admitted runs: normal cleanup; an actual controlled
+nonzero Python check inside the owned target plus a secondary acknowledgement
+fault; cooperative cancellation while the coordinator retains its run lock; and
+interrupted teardown followed by the normal product recovery command/library.
+The cancel case uses the real readiness helper polling a created target and a
+separate normal CLI request. It needs the separately reviewed readiness module.
+
+The interrupted case starts only its own coordinator subprocess. That child
+pauses after a known successful saved Terraform destroy, bound empty final-state
+capture and positive resource absence, before journal acknowledgement. The parent
+independently verifies these files, exact IDs and pending journal, then sends
+SIGKILL using only its own live `Popen` handle. It never terminates a Docker CLI
+and calls that cancellation. Recovery then acquires the original kernel locks and
+reconciliation-only lease, keeps the original failure, and completes exact
+teardown. A missing, incomplete or uncertain checkpoint cannot authorize a kill
+or cleanup claim. The child pauses at the checkpoint for at most 30 seconds;
+parent observation is bounded to 600 seconds. If that bound fails before a valid
+checkpoint, it preserves the unresolved child/resource evidence instead of
+pretending remote Terraform stopped. Existing finite adapters and container TTLs
+remain in force; no broad process or resource sweep is used.
+
+Each successful case verifies an unchanged sentinel, private-material scans,
+retained artifacts, exact cleanup and admission finish. Unexpected unknown work
+fails the suite and retains the active journal. Private child logs are bounded,
+and public summaries contain neither raw logs nor credentials. The intentionally
+failed underlying operations stay failed even when the acceptance negative
+passes. Fixture tests execute no Docker, Terraform or host resource allocations.
