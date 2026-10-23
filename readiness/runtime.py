@@ -173,8 +173,12 @@ def ansible(value, attempt):
     inventory.chmod(0o600)
     module = 'ansible.builtin.wait_for_connection' if value['operation'] == 'ansible-wait' else 'ansible.builtin.ping'
     args = {'timeout': 15, 'connect_timeout': 3, 'sleep': 1} if value['operation'] == 'ansible-wait' else {}
-    arguments = ['/opt/wormhole/venv/bin/ansible', '-i', str(inventory), 'target-001', '-m', module,
-                 '-a', json.dumps(args), '--tree', str(attempt / 'results'), '--forks', '1', '--timeout', '3']
+    arguments = ['/opt/wormhole/venv/bin/ansible', '-i', str(inventory), 'target-001', '-m', module]
+    # Pinned adhoc.py falls back from falsey decoded {} to raw-parameter parsing.
+    # Ping has no arguments; omit -a instead of submitting the literal "{}".
+    if args:
+        arguments.extend(['-a', json.dumps(args)])
+    arguments.extend(['--tree', str(attempt / 'results'), '--forks', '1', '--timeout', '3'])
     result = capture(arguments, value['timeout_seconds'], environment())
     path = attempt / 'results/target-001'
     observed = None
