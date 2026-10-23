@@ -551,14 +551,244 @@ def collect_batch(value, rr=None):
         'duration_seconds': time.monotonic() - began, 'targets': observations, 'private_diagnostic': result['log']}
 
 
+SVD_RAW_LIMIT = 32768
+SVD_PACKET_LIMIT = 43692
+SVD_VERSION = '1.0'
+
+# Original read-only target program. No caller supplies a package command/path.
+SVD_PROGRAM = r'''import base64,hashlib,json,os,re,signal,stat,subprocess,sys,time
+from pathlib import Path
+ROOT=Path('/opt/wormhole/reference')
+NAMES=('source.synthetic.bin','payload.py','version.txt','config.json')
+def require(value):
+ if not value: raise ValueError('software inventory refused')
+def canonical(value): return json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode()
+def alarm(*_): raise TimeoutError('software inventory deadline')
+signal.signal(signal.SIGALRM,alarm);signal.alarm(20)
+def text(value,maximum=240):
+ require(type(value) is str and 1<=len(value)<=maximum and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9+_.:~^\-]*',value));return value
+def read(path,maximum):
+ require(not any(p.is_symlink() for p in (path,*path.parents)))
+ info=path.lstat();require(stat.S_ISREG(info.st_mode) and info.st_nlink==1 and 0<info.st_size<=maximum)
+ with path.open('rb') as stream: raw=stream.read(maximum+1)
+ require(0<len(raw)<=maximum and len(raw)==info.st_size);return raw
+def read_release(path=Path('/etc/os-release'),canonical_path=Path('/usr/lib/os-release')):
+ # The standard release-file link is the sole allowed link in this collector.
+ if path.is_symlink():
+  require(os.readlink(path) in ('../usr/lib/os-release','/usr/lib/os-release'))
+  path=canonical_path
+ return read(path,8192)
+def query(arguments,maximum=524288):
+ process=subprocess.Popen(arguments,stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+  env={'PATH':'/usr/bin:/bin','HOME':'/tmp','LC_ALL':'C'},close_fds=True,bufsize=0)
+ os.set_blocking(process.stdout.fileno(),False);os.set_blocking(process.stderr.fileno(),False)
+ outputs=[bytearray(),bytearray()];ended=[False,False];end=time.monotonic()+10
+ try:
+  while not all(ended) or process.poll() is None:
+   require(time.monotonic()<end)
+   for index,stream in enumerate((process.stdout,process.stderr)):
+    try:
+     chunk=os.read(stream.fileno(),4096)
+     if chunk: outputs[index].extend(chunk);require(len(outputs[index])<=(maximum if index==0 else 2048))
+     else: ended[index]=True
+    except BlockingIOError: pass
+   time.sleep(.002)
+  require(time.monotonic()<end and process.returncode==0 and not outputs[1]);return bytes(outputs[0])
+ finally:
+  if process.poll() is None: process.kill()
+  process.wait(timeout=2);process.stdout.close();process.stderr.close()
+def dpkg_rows(raw):
+ require(type(raw) is bytes and 0<len(raw)<=524288)
+ rows=[]
+ for line in raw.decode('ascii').splitlines():
+  parts=line.split('\t');require(len(parts)==4)
+  name,version,architecture,status=parts
+  if status in ('not-installed','config-files'): continue
+  require(status=='installed')
+  rows.append({'name':text(name),'version':text(version),'architecture':text(architecture,64)});require(len(rows)<=2048)
+ rows.sort(key=lambda x:(x['name'],x['architecture']))
+ require(rows and len({(x['name'],x['architecture']) for x in rows})==len(rows));return rows
+def rpm_rows(module):
+ packages=[];keys=[];transaction=module.TransactionSet('/')
+ try:
+  for header in transaction.dbMatch():
+   epoch=header['epoch'];epoch=0 if epoch is None else epoch
+   require(type(epoch) is int and 0<=epoch<=2147483647)
+   name=text(header['name']);arch=header['arch']
+   row={'name':name,'epoch':epoch,'version':text(header['version']),'release':text(header['release']),'arch':None if name=='gpg-pubkey' and arch is None else text(arch,64)}
+   (keys if name=='gpg-pubkey' else packages).append(row);require(len(packages)<=2048 and len(keys)<=16)
+ finally: transaction.closeDB()
+ key=lambda x:(x['name'],x['epoch'],x['version'],x['release'],x['arch'] or '')
+ packages.sort(key=key);keys.sort(key=key)
+ require(packages and len({key(x) for x in packages})==len(packages) and len({key(x) for x in keys})==len(keys));return packages,keys
+def collect():
+ release={}
+ for line in read_release().decode().splitlines():
+  key,sep,value=line.partition('=')
+  if sep and key in ('ID','VERSION_ID','NAME'): release[key]=value.strip().strip('"').strip("'")
+ require(set(release)=={'ID','VERSION_ID','NAME'} and all(0<len(x)<=128 and not any(ord(c)<32 for c in x) for x in release.values()))
+ if release['ID']=='ubuntu':
+  manager='dpkg';packages=dpkg_rows(query(['/usr/bin/dpkg-query','-W','-f=${Package}\t${Version}\t${Architecture}\t${db:Status-Status}\n']));keys=[]
+  architecture=text(query(['/usr/bin/dpkg','--print-architecture'],128).decode('ascii').strip(),64)
+ elif release['ID']=='rhel':
+  import rpm
+  manager='rpm';packages,keys=rpm_rows(rpm);architecture=text(rpm.expandMacro('%{_arch}'),64)
+ else: raise ValueError('unsupported package manager')
+ files=[]
+ for name in NAMES:
+  raw=read(ROOT/name,16*1024*1024);files.append({'path':name,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()})
+ content=hashlib.sha256(canonical({'files':[{'path':x['path'],'size':x['bytes'],'sha256':x['sha256']} for x in files]})).hexdigest()
+ version=text(read(ROOT/'version.txt',128).decode('ascii').strip(),128)
+ manifest=read(ROOT/'manifest.json',32768)
+ value={'schema_version':'1.0','os':{'id':release['ID'],'version_id':release['VERSION_ID'],'name':release['NAME'],'architecture':architecture},
+  'package_manager':manager,'packages':packages,'rpm_key_headers':keys,
+  'payload':{'version':version,'sha256':files[1]['sha256'],'manifest_sha256':hashlib.sha256(manifest).hexdigest(),'content_sha256':content,'source_sha256':files[0]['sha256'],'files':files},
+  'shared_kernel':{'scope':'host-shared','release':os.uname().release}}
+ raw=canonical(value);require(len(raw)<=32768);return raw
+if __name__=='__main__':
+ try: sys.stdout.buffer.write(base64.b64encode(collect())+b'\n')
+ except Exception: sys.stderr.write('software_inventory_collection_failed\n');raise SystemExit(2)
+'''
+
+SVD_CALLBACK_SOURCE = r'''import hashlib,importlib.metadata,json,os,stat
+from pathlib import Path
+from ansible.plugins.callback import CallbackBase
+DOCUMENTATION="""
+name: wormhole_inventory
+type: aggregate
+short_description: Fixed one-target software inventory event
+description: Bounded single original collector packet with terminal event proof.
+"""
+RESULTS=Path('/run/wormhole/readiness/software-inventory/results')
+class CallbackModule(CallbackBase):
+ CALLBACK_VERSION=2.0
+ CALLBACK_TYPE='aggregate'
+ CALLBACK_NAME='wormhole_inventory'
+ CALLBACK_NEEDS_ENABLED=True
+ def __init__(self,*args,**kwargs):
+  super().__init__(*args,**kwargs);self.seen=0;self.invalid=False;self.finished=False;self.version=importlib.metadata.version('ansible-core')
+  if self.version!='2.21.5': self.invalid=True
+ def directory(self):
+  if any(p.is_symlink() for p in (RESULTS,*RESULTS.parents)): raise ValueError('linked results')
+  info=RESULTS.lstat()
+  if not stat.S_ISDIR(info.st_mode) or info.st_uid!=os.getuid() or stat.S_IMODE(info.st_mode)!=0o700: raise ValueError('private results')
+ def fail(self):
+  self.invalid=True
+  try: self.directory();(RESULTS/'complete.json').unlink(missing_ok=True)
+  except Exception: pass
+ def write(self,name,value):
+  self.directory();raw=json.dumps(value,sort_keys=True,ensure_ascii=True,allow_nan=False).encode()
+  if len(raw)>49152: raise ValueError('event bound')
+  fd=os.open(RESULTS/name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+  with os.fdopen(fd,'wb') as stream: stream.write(raw);stream.flush();os.fsync(stream.fileno())
+ def record(self,result,event):
+  self.seen+=1
+  try:
+   if self.invalid or self.finished or self.seen!=1 or result.host.get_name()!='target-001' or result.task.action!='ansible.builtin.command' or result.task.no_log is True or result.result.get('_ansible_no_log') is True: raise ValueError('event scope')
+   original=result.result
+   if not isinstance(original,dict) or 'censored' in original: raise ValueError('event type')
+   selected={key:original.get(key,default) for key,default in (('rc',None),('stdout',''),('stderr',''),('msg',''),('failed',False),('unreachable',False),('skipped',False))}
+   if not all(type(selected[key]) is str and len(selected[key].encode())<=limit for key,limit in (('stdout',43692),('stderr',2048),('msg',2048))): raise ValueError('stream bound')
+   if not all(type(selected[key]) is bool for key in ('failed','unreachable','skipped')) or not(selected['rc'] is None or type(selected['rc']) is int): raise ValueError('event status')
+   command=original.get('cmd');selected['command_sha256']=hashlib.sha256(json.dumps(command,sort_keys=True,separators=(',',':')).encode()).hexdigest() if isinstance(command,list) and all(type(x) is str for x in command) and len(json.dumps(command).encode())<=16384 else None
+   self.write('target-001.json',{'schema_version':'1.0','host':'target-001','action':'ansible.builtin.command','event':event,'result':selected})
+  except Exception: self.fail()
+ def v2_runner_on_ok(self,result): self.record(result,'ok')
+ def v2_runner_on_failed(self,result,ignore_errors=False): self.record(result,'failed')
+ def v2_runner_on_unreachable(self,result): self.record(result,'unreachable')
+ def v2_runner_on_skipped(self,result): self.record(result,'skipped')
+ def v2_playbook_on_stats(self,stats):
+  try:
+   if self.invalid or self.finished or self.seen!=1: raise ValueError('incomplete events')
+   self.finished=True;self.write('complete.json',{'schema_version':'1.0','host':'target-001','events':1,'ansible_core_version':self.version,'status':'complete'})
+  except Exception: self.fail()
+'''
+
+
+def decode_software_inventory(raw):
+    require(type(raw) is bytes and 1<=len(raw)<=8192)
+    value=json.loads(raw,object_pairs_hook=unique)
+    fields={'schema_version','run_id','source_revision','target_id','plan_sha256','operation','address','scenario','readiness_source_sha256','timeout_seconds'}
+    require(type(value) is dict and set(value)==fields and value['schema_version']=='1.0' and value['operation']=='software-inventory-v1' and
+        type(value['run_id']) is str and str(UUID(value['run_id']))==value['run_id'] and value['target_id']=='target-001' and
+        value['scenario'] in {'healthy','collector-unavailable'} and
+        all(type(value[key]) is str and re.fullmatch('[a-f0-9]{'+str(length)+'}',value[key]) for key,length in
+            (('source_revision',40),('plan_sha256',64),('readiness_source_sha256',64))))
+    require(type(value['timeout_seconds']) in (int,float) and math.isfinite(value['timeout_seconds']) and .1<=value['timeout_seconds']<=33)
+    address=ipaddress.ip_address(value['address'])
+    require(address.version==4 and str(address)==value['address'] and not any((address.is_loopback,address.is_unspecified,address.is_multicast,address.is_link_local,address.is_reserved)))
+    return value
+
+
+def collect_software_inventory(value,rr=None):
+    import importlib.metadata,platform
+    began=time.monotonic();rr=readiness_runtime(value['readiness_source_sha256']) if rr is None else rr
+    module=rr.qualified_runtime();require(module.identity()==value['run_id'])
+    rr.prepare_auth(module,{'run_id':value['run_id'],'scenario':'healthy'})
+    attempt=rr.ROOT/'software-inventory';attempt.mkdir(mode=0o700)
+    callbacks=attempt/'callbacks';callbacks.mkdir(mode=0o700)
+    module.write_private(callbacks/'wormhole_inventory.py',SVD_CALLBACK_SOURCE.encode())
+    results=attempt/'results';results.mkdir(mode=0o700)
+    interpreter='/run/wormhole/no-such-python' if value['scenario']=='collector-unavailable' else '/usr/bin/python3'
+    variables={'ansible_host':value['address'],'ansible_port':2222,'ansible_user':'wormhole','ansible_connection':'ssh',
+        'ansible_python_interpreter':interpreter,'ansible_ssh_args':shlex.join(rr.ssh_options({'scenario':'healthy'})),
+        'ansible_ssh_retries':0,'ansible_ssh_use_tty':False,'ansible_ssh_transfer_method':'piped','ansible_remote_tmp':'/tmp/wormhole-ansible'}
+    inventory=attempt/'inventory.json';module.write_private(inventory,json.dumps({'all':{'hosts':{'target-001':variables}}}).encode())
+    command=['/usr/bin/python3','-I','-B','-c',SVD_PROGRAM]
+    arguments=['/opt/wormhole/venv/bin/ansible','-i',str(inventory),'target-001','-m','ansible.builtin.command',
+        '-a',json.dumps({'argv':command,'expand_argument_vars':False}),'--forks','1','--timeout','3']
+    budget=value['timeout_seconds']-(time.monotonic()-began);require(budget>.05)
+    environment={**rr.environment(),'ANSIBLE_CALLBACK_PLUGINS':str(callbacks),'ANSIBLE_CALLBACKS_ENABLED':'wormhole_inventory',
+        'ANSIBLE_LOAD_CALLBACK_PLUGINS':'1','PYTHONDONTWRITEBYTECODE':'1'}
+    rr.MAX_LOG=65536
+    result=rr.capture(arguments,budget,environment)
+    directory=results.lstat()
+    require(not any(path.is_symlink() for path in (results,*results.parents)) and stat.S_ISDIR(directory.st_mode) and
+        directory.st_uid==os.getuid() and stat.S_IMODE(directory.st_mode)==0o700)
+    tree,event=None,None
+    if set(os.listdir(results))=={'target-001.json','complete.json'}:
+        records={}
+        for name in ('target-001.json','complete.json'):
+            records[name]=private_json(results/name)
+        record,complete=records['target-001.json'],records['complete.json']
+        require(complete=={'schema_version':'1.0','host':'target-001','events':1,'ansible_core_version':'2.21.5','status':'complete'} and
+            type(record) is dict and set(record)=={'schema_version','host','action','event','result'} and record['schema_version']=='1.0' and
+            record['host']=='target-001' and record['action']=='ansible.builtin.command' and record['event'] in {'ok','failed','unreachable','skipped'} and type(record['result']) is dict)
+        tree,event=record['result'],record['event']
+    status,category='error','ansible_result_invalid';packet=None
+    if result['timed_out']:category='validation_timeout'
+    elif result['truncated']:category='output_bound'
+    elif event=='unreachable':category='ansible_unreachable'
+    elif event=='skipped':category='unexpected_skip'
+    elif result['returncode']!=0 or event=='failed':
+        category='configured_interpreter_unavailable' if value['scenario']=='collector-unavailable' and '/run/wormhole/no-such-python' in result['log']+json.dumps(tree) else 'svd_collector_failed'
+    elif event=='ok':
+        require(set(tree)=={'rc','stdout','stderr','msg','failed','unreachable','skipped','command_sha256'} and
+            type(tree['rc']) is int and tree['rc']==0 and tree['stderr']=='' and tree['msg']=='' and
+            all(tree[key] is False for key in ('failed','unreachable','skipped')) and
+            tree['command_sha256']==hashlib.sha256(json.dumps(command,sort_keys=True,separators=(',',':')).encode()).hexdigest() and
+            type(tree['stdout']) is str and 0<len(tree['stdout'])<=SVD_PACKET_LIMIT)
+        packet=tree['stdout'];raw=base64.b64decode(packet,validate=True);require(0<len(raw)<=SVD_RAW_LIMIT)
+        observed=json.loads(raw,object_pairs_hook=unique)
+        require(json.dumps(observed,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode()==raw)
+        status,category='pass',None
+    if time.monotonic()-began>=value['timeout_seconds']:status,category,packet='error','validation_timeout',None
+    return {**{key:value[key] for key in ('schema_version','run_id','source_revision','target_id','plan_sha256')},'status':status,
+        'category':category,'returncode':result['returncode'],'timed_out':result['timed_out'],'truncated':result['truncated'],
+        'duration_seconds':time.monotonic()-began,'collector_base64':packet,
+        'helper_provenance':{'python_version':platform.python_version(),'ansible_core_version':importlib.metadata.version('ansible-core')},
+        'private_diagnostic':'Bounded Ansible output: '+str(len(result['log'].encode()))+' bytes; SHA256 '+hashlib.sha256(result['log'].encode()).hexdigest()}
+
+
 def main():
     try:
         require(len(sys.argv) == 2 and len(sys.argv[1]) <= 11000)
         raw = base64.b64decode(sys.argv[1], validate=True)
         probe = json.loads(raw, object_pairs_hook=unique)
         batch = type(probe) is dict and probe.get('resource_layout') == 'indexed-targets-v1'
-        value = decode_batch(raw) if batch else decode(raw)
-        print(json.dumps(collect_batch(value) if batch else collect(value), sort_keys=True))
+        inventory = type(probe) is dict and probe.get('operation')=='software-inventory-v1'
+        value = decode_software_inventory(raw) if inventory else decode_batch(raw) if batch else decode(raw)
+        print(json.dumps(collect_software_inventory(value) if inventory else collect_batch(value) if batch else collect(value), sort_keys=True))
         return 0  # A complete failed observation is data, not an unknown exec.
     except Exception:
         print(json.dumps({'error': {'code': 'validation_runtime_refused'}}))
