@@ -17,7 +17,7 @@ installation laboratory. Read [architecture](ARCHITECTURE.md),
 | Recovery | Actual normal, failed, cooperative-cancelled and interrupted teardown cases; exact original-source reconciliation, readable/JSON agreement and unchanged sentinel | General resolution of unknown daemon outcomes or overlapping admitted runs |
 | Source/candidate | Synthetic chunks and an attributable payload are planned | Implemented reconstruction, candidate build or validated image mapping |
 | SVD | Observed-target collection is planned | A generated inventory or version-preservation result |
-| Assessment | Synthetic checklist processing and reference policy are planned | Real Evaluate-STIG integration or a production acceptance threshold |
+| Assessment | Original synthetic checklist parser, retained originals and strict reference-policy pass/reject tested in five local cases | Real Evaluate-STIG integration or a production acceptance threshold |
 | Publication | Separate tested-byte publication is planned | A complete reference release or private package/image publication |
 | CI and scale | Hosted fixture CI and measured 1/5/20 planning profiles; actual one-target qualifications | Manual/CI runtime parity, five/twenty-target execution or a homelab CI runner |
 

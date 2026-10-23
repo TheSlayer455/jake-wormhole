@@ -1,5 +1,19 @@
 # Engineering checkpoint
 
+## WORM-016 component qualified, October23 at17:10UTC
+
+Exact3e11548a253fbd7799606dc978d69f5965c5cea0 passed independent source review after the typed-evidence alias
+correction. Actual five generated local cases and new-process report replay all
+passed. Linux253cases251pass/two Windows-only skips10.953s; Windows253cases
+146pass/107platform skips8.402s. Both release flags remain false for every policy
+verdict. [Evidence](../handoff/evidence/WORM-016.json) and
+[review](../handoff/reviews/WORM-016.md) identify actual Runs, hashes and limits.
+
+Final private publication, exact-source hosted CI and normal delegated Owner
+completion are next. WORM-002 through009 are Done;010/011/012/016 are approved
+and active. Retrieve Minx for current versions/claims. No new Docker resources,
+scanner, host package, service, routing or storage change occurred in016.
+
 ## Current: WORM-010/012/016, October23 at17:02UTC
 
 Minx confirms WORM-002 through009 Done. WORM-009 is v23/r2 with no claim;
