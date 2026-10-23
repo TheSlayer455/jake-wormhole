@@ -1,0 +1,2058 @@
+{
+  "schema_version": "1.0",
+  "ticket_key": "WORM-010",
+  "requirements_revision": 2,
+  "tested_source_revision": "1920c9621017190a8756affab36e5d25e6102978",
+  "observed_at": "2026-10-23T17:39:30.125944+00:00",
+  "input_provenance": [
+    {
+      "name": "WORM-010-fleet-smoke-1920c96.json",
+      "sha256": "cf85f3d60edcfb00e854d8205c0b2f1d377cc65e7fce26e6dc448519a3c8f316",
+      "bytes": 6252
+    },
+    {
+      "name": "WORM-010-fleet-five-healthy-1920c96.json",
+      "sha256": "fd8787aa71b3707be93fa65717e5abd74d98154cebbde309f1bc62e569855bab",
+      "bytes": 15288
+    },
+    {
+      "name": "WORM-010-fleet-all-1920c96.json",
+      "sha256": "e838cdef0f6b0bd78bddaffa02767951411db4b1e51bb40fd59ff9c5cfe0ea1f",
+      "bytes": 143421
+    },
+    {
+      "name": "WORM-010-homelab-source-qualification.json",
+      "sha256": "2a4ee554dbd8f2bf1647b3d010c28260472792a2c0365eb5d4758340e004a0b1",
+      "bytes": 82989
+    },
+    {
+      "name": "WORM-010-windows-tests.json",
+      "sha256": "72678d66c49be42d69c26aac28967933d501998a61e779b57d6960a1cb8b0af9",
+      "bytes": 503
+    }
+  ],
+  "evidence_kind": "actual authorized Linux homelab runtime; source fixtures recorded separately",
+  "environment": {
+    "linux_python": "3.12.3",
+    "windows_python": "3.12.14",
+    "docker": "29.6.0"
+  },
+  "actual_suites": [
+    {
+      "profile": "smoke",
+      "status": "pass",
+      "observed_at": "2026-10-23T17:25:15.443429+00:00",
+      "cases": [
+        {
+          "run_id": "df8464eb-381a-4a8b-b534-42f6a2b490a5",
+          "profile": "smoke",
+          "scenario": "healthy",
+          "status": "pass",
+          "created_at": "2026-10-23T17:24:33.965Z",
+          "updated_at": "2026-10-23T17:25:15.423Z",
+          "negative_kind": "healthy",
+          "target_count": 1,
+          "configured_ansible_forks": 1,
+          "required_rows": 10,
+          "passed_rows": 10,
+          "underlying_status": "passed",
+          "plan_sha256": "15b969226263bbe67584d8580005508e64d26972e8898c4af1dd58545854095c",
+          "capture_bound": true,
+          "readable_structured_agreement": true,
+          "row_evidence_retained_privately": "evidence/batch-validation.json",
+          "attempted_targets": [
+            "target-001"
+          ],
+          "blocked_targets": {},
+          "targets": [
+            {
+              "target_id": "target-001",
+              "resource_id": "36df13df5dbafa1ae5c04f871fa68be522be004561aaca0fcbcc5803d777acaf",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            }
+          ],
+          "cleanup": {
+            "status": "completed",
+            "unknown_outcome": false,
+            "primary_failure_code": null,
+            "secondary_failure_codes": [],
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scans": {
+            "credential_scan_before_cleanup": {
+              "status": "pass",
+              "files_scanned": 41,
+              "bytes_scanned": 250802,
+              "secret_contents_exported": false
+            },
+            "credential_scan_after_cleanup": {
+              "status": "pass",
+              "files_scanned": 54,
+              "bytes_scanned": 287446,
+              "secret_contents_exported": false
+            }
+          },
+          "logical_disk_samples": [
+            {
+              "phase": "after-fleet-provision",
+              "sampled_at": "2026-10-23T17:25:00.202Z",
+              "logical_file_bytes": 266282703,
+              "hard_quota": false
+            },
+            {
+              "phase": "before-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:25:07.549Z",
+              "logical_file_bytes": 266296024,
+              "hard_quota": false
+            },
+            {
+              "phase": "after-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:25:15.423Z",
+              "logical_file_bytes": 266332666,
+              "hard_quota": false
+            }
+          ],
+          "owned_resource_ids": [
+            "14f594f55fec97b9a0d61a771797d7cf137ba57882710ce6c4ccd57981c1298c",
+            "340dd76358411b3b33ac2eac3fd16a450df651116052f8c3fc6ae27b73943d90",
+            "36df13df5dbafa1ae5c04f871fa68be522be004561aaca0fcbcc5803d777acaf",
+            "5eea8e04f07a26aee9a9ca850fde9efca2764d46302db87041f32b29448f8d67"
+          ],
+          "production_iso_eligible": false,
+          "runtime_pipeline_complete": false
+        }
+      ]
+    },
+    {
+      "profile": "five-targets",
+      "status": "pass",
+      "observed_at": "2026-10-23T17:26:41.029455+00:00",
+      "cases": [
+        {
+          "run_id": "28fe73dd-b8c0-4ba2-89d9-318f1a35d2cf",
+          "profile": "five-targets",
+          "scenario": "healthy",
+          "status": "pass",
+          "created_at": "2026-10-23T17:25:31.546Z",
+          "updated_at": "2026-10-23T17:26:41.010Z",
+          "negative_kind": "healthy",
+          "target_count": 5,
+          "configured_ansible_forks": 2,
+          "required_rows": 50,
+          "passed_rows": 50,
+          "underlying_status": "passed",
+          "plan_sha256": "ee4fdab53f4accaf94eb737931159ffe45109d91046ddb1b848383812b2b3131",
+          "capture_bound": true,
+          "readable_structured_agreement": true,
+          "row_evidence_retained_privately": "evidence/batch-validation.json",
+          "attempted_targets": [
+            "target-001",
+            "target-002",
+            "target-003",
+            "target-004",
+            "target-005"
+          ],
+          "blocked_targets": {},
+          "targets": [
+            {
+              "target_id": "target-001",
+              "resource_id": "9e69dfda4c1925e556899d2ca82fd4d18d36a5daff4f91ee98086e03a0de3f12",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-002",
+              "resource_id": "f9b53bc8800e2fb4ccea8d8178f946a15668becac42d216c5461616048122044",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-003",
+              "resource_id": "3ef95154aa5c0d886fea0aeff9cf873dab8e4e9363e92925f7bc1b1ed9b08bc7",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-004",
+              "resource_id": "b3f20cb48d8aa92455b1d805e8ca37256e6e0604f5c21d57e746611c5f8844c1",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-005",
+              "resource_id": "5e8192b66c7c97689d5ca965df3e37592d54920c8475608f7b2ae64b21d7d0cf",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            }
+          ],
+          "cleanup": {
+            "status": "completed",
+            "unknown_outcome": false,
+            "primary_failure_code": null,
+            "secondary_failure_codes": [],
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scans": {
+            "credential_scan_before_cleanup": {
+              "status": "pass",
+              "files_scanned": 41,
+              "bytes_scanned": 515644,
+              "secret_contents_exported": false
+            },
+            "credential_scan_after_cleanup": {
+              "status": "pass",
+              "files_scanned": 54,
+              "bytes_scanned": 609975,
+              "secret_contents_exported": false
+            }
+          },
+          "logical_disk_samples": [
+            {
+              "phase": "after-fleet-provision",
+              "sampled_at": "2026-10-23T17:26:00.397Z",
+              "logical_file_bytes": 266517716,
+              "hard_quota": false
+            },
+            {
+              "phase": "before-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:26:31.627Z",
+              "logical_file_bytes": 266580554,
+              "hard_quota": false
+            },
+            {
+              "phase": "after-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:26:41.010Z",
+              "logical_file_bytes": 266674883,
+              "hard_quota": false
+            }
+          ],
+          "owned_resource_ids": [
+            "22b28645753ce41cffa44f914916249f850f25f047e0a1faa86d664247406a4b",
+            "3ef95154aa5c0d886fea0aeff9cf873dab8e4e9363e92925f7bc1b1ed9b08bc7",
+            "5e8192b66c7c97689d5ca965df3e37592d54920c8475608f7b2ae64b21d7d0cf",
+            "65e8dafe3501c96e3942d1fa34a75165f3e1219b283bdd7a455217e0e1c4862b",
+            "9ce25afc77f052ec9620510da126b398f66591c101e44e92e309bc0f2f17bc5d",
+            "9e69dfda4c1925e556899d2ca82fd4d18d36a5daff4f91ee98086e03a0de3f12",
+            "b3f20cb48d8aa92455b1d805e8ca37256e6e0604f5c21d57e746611c5f8844c1",
+            "f9b53bc8800e2fb4ccea8d8178f946a15668becac42d216c5461616048122044"
+          ],
+          "production_iso_eligible": false,
+          "runtime_pipeline_complete": false
+        }
+      ]
+    },
+    {
+      "profile": "five-targets",
+      "status": "pass",
+      "observed_at": "2026-10-23T17:39:30.125944+00:00",
+      "cases": [
+        {
+          "run_id": "70107a3a-9f5e-4a52-9e92-70b723afce45",
+          "profile": "five-targets",
+          "scenario": "healthy",
+          "status": "pass",
+          "created_at": "2026-10-23T17:27:03.887Z",
+          "updated_at": "2026-10-23T17:28:13.137Z",
+          "negative_kind": "healthy",
+          "target_count": 5,
+          "configured_ansible_forks": 2,
+          "required_rows": 50,
+          "passed_rows": 50,
+          "underlying_status": "passed",
+          "plan_sha256": "f65440cc3f365e9b0ca94c7a0aee41f5a15a06d20529e30c8ad192283940f6d4",
+          "capture_bound": true,
+          "readable_structured_agreement": true,
+          "row_evidence_retained_privately": "evidence/batch-validation.json",
+          "attempted_targets": [
+            "target-001",
+            "target-002",
+            "target-003",
+            "target-004",
+            "target-005"
+          ],
+          "blocked_targets": {},
+          "targets": [
+            {
+              "target_id": "target-001",
+              "resource_id": "6906a5b2e885655459dc7fa63044b6d054aa6b7f915aad6c6d0095696f681759",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-002",
+              "resource_id": "ef5d94fe7ccabe34d0e42e3db7cc139f2f22f5add814b3ceeb6157f5240f5b33",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-003",
+              "resource_id": "e1628b652149b501c2c8eaf7c2f7dbc6970fea186b991219798b7280763e2903",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-004",
+              "resource_id": "2591824dfc8b0f95895397596f03a0f088571cdfdc46840637cf4e311615ed9f",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-005",
+              "resource_id": "bf3656959e3046c05313f6fd665ce4a5a8f95023bd4ec5f7250db52776f3e43b",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            }
+          ],
+          "cleanup": {
+            "status": "completed",
+            "unknown_outcome": false,
+            "primary_failure_code": null,
+            "secondary_failure_codes": [],
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scans": {
+            "credential_scan_before_cleanup": {
+              "status": "pass",
+              "files_scanned": 41,
+              "bytes_scanned": 515648,
+              "secret_contents_exported": false
+            },
+            "credential_scan_after_cleanup": {
+              "status": "pass",
+              "files_scanned": 54,
+              "bytes_scanned": 609987,
+              "secret_contents_exported": false
+            }
+          },
+          "logical_disk_samples": [
+            {
+              "phase": "after-fleet-provision",
+              "sampled_at": "2026-10-23T17:27:32.727Z",
+              "logical_file_bytes": 266517718,
+              "hard_quota": false
+            },
+            {
+              "phase": "before-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:28:03.982Z",
+              "logical_file_bytes": 266580563,
+              "hard_quota": false
+            },
+            {
+              "phase": "after-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:28:13.137Z",
+              "logical_file_bytes": 266674900,
+              "hard_quota": false
+            }
+          ],
+          "owned_resource_ids": [
+            "2591824dfc8b0f95895397596f03a0f088571cdfdc46840637cf4e311615ed9f",
+            "42bce9029f4d799575a267a688dee7d91ff85f0cb57eac699274672831619641",
+            "6906a5b2e885655459dc7fa63044b6d054aa6b7f915aad6c6d0095696f681759",
+            "bf3656959e3046c05313f6fd665ce4a5a8f95023bd4ec5f7250db52776f3e43b",
+            "d04e7659ba4fa70f4bd38cbaf65cc73139bc57501753794f6945e0908efea674",
+            "e1628b652149b501c2c8eaf7c2f7dbc6970fea186b991219798b7280763e2903",
+            "ef5d94fe7ccabe34d0e42e3db7cc139f2f22f5add814b3ceeb6157f5240f5b33",
+            "f868fc47e82998553773743b32f14190131a57205d3ed9c51ff81da8fcc2f4eb"
+          ],
+          "production_iso_eligible": false,
+          "runtime_pipeline_complete": false
+        },
+        {
+          "run_id": "237b95c0-77cd-4db6-b8c9-aec057e248b1",
+          "profile": "five-targets",
+          "scenario": "delayed-start",
+          "status": "pass",
+          "created_at": "2026-10-23T17:28:13.164Z",
+          "updated_at": "2026-10-23T17:29:28.698Z",
+          "negative_kind": "delayed-start",
+          "target_count": 5,
+          "configured_ansible_forks": 2,
+          "required_rows": 50,
+          "passed_rows": 50,
+          "underlying_status": "passed",
+          "plan_sha256": "9e9dcba8ac574934b7a766b66aca61cf74751614a95df852f048f30d4d9f4312",
+          "capture_bound": true,
+          "readable_structured_agreement": true,
+          "row_evidence_retained_privately": "evidence/batch-validation.json",
+          "attempted_targets": [
+            "target-001",
+            "target-002",
+            "target-003",
+            "target-004",
+            "target-005"
+          ],
+          "blocked_targets": {},
+          "targets": [
+            {
+              "target_id": "target-001",
+              "resource_id": "d48bcc41b58b520aec1c3e02fe4b8358f34274abd2f01097c08c2b050234706b",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-002",
+              "resource_id": "016458691d6cd6b7b4162564a7f2ca82d1e6bf0f67d984fc60cdb23ab1781335",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-003",
+              "resource_id": "31656091990b269e0d150d0b511feac6a5008d50486eb2e52e9282913b1b90a4",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-004",
+              "resource_id": "82fffa672ebd136026dc718f0aa8b294a9130776fce7776923b532a199febf24",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-005",
+              "resource_id": "ffc07fd37e9e6b757e2ee1f0220a8b588c0426d585b296e185a824e499627407",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            }
+          ],
+          "cleanup": {
+            "status": "completed",
+            "unknown_outcome": false,
+            "primary_failure_code": null,
+            "secondary_failure_codes": [],
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scans": {
+            "credential_scan_before_cleanup": {
+              "status": "pass",
+              "files_scanned": 49,
+              "bytes_scanned": 574931,
+              "secret_contents_exported": false
+            },
+            "credential_scan_after_cleanup": {
+              "status": "pass",
+              "files_scanned": 62,
+              "bytes_scanned": 669045,
+              "secret_contents_exported": false
+            }
+          },
+          "logical_disk_samples": [
+            {
+              "phase": "after-fleet-provision",
+              "sampled_at": "2026-10-23T17:28:41.894Z",
+              "logical_file_bytes": 266515751,
+              "hard_quota": false
+            },
+            {
+              "phase": "before-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:29:19.656Z",
+              "logical_file_bytes": 266639842,
+              "hard_quota": false
+            },
+            {
+              "phase": "after-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:29:28.698Z",
+              "logical_file_bytes": 266733954,
+              "hard_quota": false
+            }
+          ],
+          "owned_resource_ids": [
+            "016458691d6cd6b7b4162564a7f2ca82d1e6bf0f67d984fc60cdb23ab1781335",
+            "31656091990b269e0d150d0b511feac6a5008d50486eb2e52e9282913b1b90a4",
+            "82fffa672ebd136026dc718f0aa8b294a9130776fce7776923b532a199febf24",
+            "bdf4036337c6abe3f215be4ff15d8915ad905208301aee988faff02110530a10",
+            "d48bcc41b58b520aec1c3e02fe4b8358f34274abd2f01097c08c2b050234706b",
+            "d4c387819ea13ad27a8c3b22eff4c46f0b58991168eb53d9158417aca77a9939",
+            "e611b6ba13ebe664301ee1e9cdf0328286df16b770d521bb14c63fd13dcbbabb",
+            "ffc07fd37e9e6b757e2ee1f0220a8b588c0426d585b296e185a824e499627407"
+          ],
+          "production_iso_eligible": false,
+          "runtime_pipeline_complete": false
+        },
+        {
+          "run_id": "3b34c796-3523-4bd3-b7ac-dbba0548764f",
+          "profile": "five-targets",
+          "scenario": "never-starts",
+          "status": "pass",
+          "created_at": "2026-10-23T17:29:28.725Z",
+          "updated_at": "2026-10-23T17:31:38.032Z",
+          "negative_kind": "never-starts",
+          "target_count": 5,
+          "configured_ansible_forks": 2,
+          "required_rows": 50,
+          "passed_rows": 40,
+          "underlying_status": "failed",
+          "plan_sha256": "acc83bbce326fb1047fca1b54f5f2be08f0915a9aecd6fa925cb58895c69c563",
+          "capture_bound": true,
+          "readable_structured_agreement": true,
+          "row_evidence_retained_privately": "evidence/batch-validation.json",
+          "attempted_targets": [
+            "target-001",
+            "target-002",
+            "target-003",
+            "target-004"
+          ],
+          "blocked_targets": {
+            "target-005": "target_not_started"
+          },
+          "targets": [
+            {
+              "target_id": "target-001",
+              "resource_id": "6e4054ef6756ba3c7a15573918a742ec5fdddac6b2d0b064d9142bcc531a4832",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-002",
+              "resource_id": "f1890e346214cadc1560141dd9ed9bf79860b46482967b725b550e387eeb9bdb",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-003",
+              "resource_id": "361e43e58e1874191bf0e91583623c3836d42da6eeed85587d68bf1168e7fd3e",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-004",
+              "resource_id": "d3b5a1538bfe5d320fdaa2592927edd47e552089ed907203735d094233182b29",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-005",
+              "resource_id": "85e6d57e4fa7edfa0fe22419255999283f6d890a0daa75d09f7eee0839c98430",
+              "readiness": "failed",
+              "readiness_failure": "target_not_started",
+              "required_rows": 10,
+              "passed_rows": 0,
+              "transition_ids": [
+                "created"
+              ]
+            }
+          ],
+          "cleanup": {
+            "status": "completed",
+            "unknown_outcome": false,
+            "primary_failure_code": "target_not_started",
+            "secondary_failure_codes": [],
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scans": {
+            "credential_scan_before_cleanup": {
+              "status": "pass",
+              "files_scanned": 41,
+              "bytes_scanned": 506791,
+              "secret_contents_exported": false
+            },
+            "credential_scan_after_cleanup": {
+              "status": "pass",
+              "files_scanned": 54,
+              "bytes_scanned": 600922,
+              "secret_contents_exported": false
+            }
+          },
+          "logical_disk_samples": [
+            {
+              "phase": "after-fleet-provision",
+              "sampled_at": "2026-10-23T17:29:57.534Z",
+              "logical_file_bytes": 266515752,
+              "hard_quota": false
+            },
+            {
+              "phase": "before-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:31:29.087Z",
+              "logical_file_bytes": 266566887,
+              "hard_quota": false
+            },
+            {
+              "phase": "after-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:31:38.032Z",
+              "logical_file_bytes": 266661016,
+              "hard_quota": false
+            }
+          ],
+          "owned_resource_ids": [
+            "06bcba92639ea577faef4d1d62d1ec7e04dbd5447c4a1d7babae4a8adbada648",
+            "361e43e58e1874191bf0e91583623c3836d42da6eeed85587d68bf1168e7fd3e",
+            "6e4054ef6756ba3c7a15573918a742ec5fdddac6b2d0b064d9142bcc531a4832",
+            "85e6d57e4fa7edfa0fe22419255999283f6d890a0daa75d09f7eee0839c98430",
+            "be120be7f67f0380ab725f9f569cfae7ccd8d30675569c2f9af224ae0d471658",
+            "d3b5a1538bfe5d320fdaa2592927edd47e552089ed907203735d094233182b29",
+            "f1890e346214cadc1560141dd9ed9bf79860b46482967b725b550e387eeb9bdb",
+            "f74eebd5efcd0b9f151b10e4b90f79e5c9702978c288260a2a894c289f40fb99"
+          ],
+          "production_iso_eligible": false,
+          "runtime_pipeline_complete": false
+        },
+        {
+          "run_id": "3c22b34e-29cd-41f7-994b-4b920419e6ab",
+          "profile": "five-targets",
+          "scenario": "wrong-key",
+          "status": "pass",
+          "created_at": "2026-10-23T17:31:38.057Z",
+          "updated_at": "2026-10-23T17:32:42.089Z",
+          "negative_kind": "wrong-key",
+          "target_count": 5,
+          "configured_ansible_forks": 2,
+          "required_rows": 50,
+          "passed_rows": 40,
+          "underlying_status": "failed",
+          "plan_sha256": "31981dbf801a7df1e695399824d03a083b91918190604b86d5e179294ac30421",
+          "capture_bound": true,
+          "readable_structured_agreement": true,
+          "row_evidence_retained_privately": "evidence/batch-validation.json",
+          "attempted_targets": [
+            "target-001",
+            "target-002",
+            "target-003",
+            "target-004"
+          ],
+          "blocked_targets": {
+            "target-005": "ssh_key_rejected"
+          },
+          "targets": [
+            {
+              "target_id": "target-001",
+              "resource_id": "e0f4f71491f53beab325410f501f40d56a3c04359af7398a68cf50598001d3e6",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-002",
+              "resource_id": "12c3c24f8c4e364e1f0fd58e328b7c44e22ac04f08211d2cad2f25993ab0f695",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-003",
+              "resource_id": "43e0ff7efd61aadbd9c6c23ef3a1a9084c9c1a581471170133736540ed09a16c",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-004",
+              "resource_id": "4596e75c81ff5801d5de6ab01f9518978fb01b4299dce458f8b63ad72bb09dbd",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-005",
+              "resource_id": "70280ca10b8fb1462c20d3671567f3799b980024d7a369c3c53d6d0294257404",
+              "readiness": "failed",
+              "readiness_failure": "ssh_key_rejected",
+              "required_rows": 10,
+              "passed_rows": 0,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable"
+              ]
+            }
+          ],
+          "cleanup": {
+            "status": "completed",
+            "unknown_outcome": false,
+            "primary_failure_code": "ssh_key_rejected",
+            "secondary_failure_codes": [],
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scans": {
+            "credential_scan_before_cleanup": {
+              "status": "pass",
+              "files_scanned": 41,
+              "bytes_scanned": 511803,
+              "secret_contents_exported": false
+            },
+            "credential_scan_after_cleanup": {
+              "status": "pass",
+              "files_scanned": 54,
+              "bytes_scanned": 606301,
+              "secret_contents_exported": false
+            }
+          },
+          "logical_disk_samples": [
+            {
+              "phase": "after-fleet-provision",
+              "sampled_at": "2026-10-23T17:32:07.808Z",
+              "logical_file_bytes": 266517720,
+              "hard_quota": false
+            },
+            {
+              "phase": "before-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:32:32.997Z",
+              "logical_file_bytes": 266572903,
+              "hard_quota": false
+            },
+            {
+              "phase": "after-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:32:42.089Z",
+              "logical_file_bytes": 266667399,
+              "hard_quota": false
+            }
+          ],
+          "owned_resource_ids": [
+            "12c3c24f8c4e364e1f0fd58e328b7c44e22ac04f08211d2cad2f25993ab0f695",
+            "43e0ff7efd61aadbd9c6c23ef3a1a9084c9c1a581471170133736540ed09a16c",
+            "4596e75c81ff5801d5de6ab01f9518978fb01b4299dce458f8b63ad72bb09dbd",
+            "70280ca10b8fb1462c20d3671567f3799b980024d7a369c3c53d6d0294257404",
+            "8fc9f0282124c71ac927639b36281ddd7c4dff4186828c1f3e378c3c501a9e1b",
+            "9eb7efbe70f619a45c29fb1c9f9f15d960f1a88544c87a11f616eb350d2721e3",
+            "b54bd70a8240158d53a010f006a4387efceb177ca65a92439672426115c28e69",
+            "e0f4f71491f53beab325410f501f40d56a3c04359af7398a68cf50598001d3e6"
+          ],
+          "production_iso_eligible": false,
+          "runtime_pipeline_complete": false
+        },
+        {
+          "run_id": "79d64ab7-f226-4873-b550-117272fbec74",
+          "profile": "five-targets",
+          "scenario": "wrong-user",
+          "status": "pass",
+          "created_at": "2026-10-23T17:32:42.116Z",
+          "updated_at": "2026-10-23T17:33:45.648Z",
+          "negative_kind": "wrong-user",
+          "target_count": 5,
+          "configured_ansible_forks": 2,
+          "required_rows": 50,
+          "passed_rows": 40,
+          "underlying_status": "failed",
+          "plan_sha256": "7530e4c4230d5af096488446e6bceefe1cf3b3b45e24caf14e847b482d01db73",
+          "capture_bound": true,
+          "readable_structured_agreement": true,
+          "row_evidence_retained_privately": "evidence/batch-validation.json",
+          "attempted_targets": [
+            "target-001",
+            "target-002",
+            "target-003",
+            "target-004"
+          ],
+          "blocked_targets": {
+            "target-005": "ssh_user_rejected"
+          },
+          "targets": [
+            {
+              "target_id": "target-001",
+              "resource_id": "0bfae68ac048f65092b1cea80ad092dec9357f57e76adbf38f0d75739d9564c5",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-002",
+              "resource_id": "e513a93131529d7a00a005f78ec054e4c66910dc94bb5110b0d14ff41f472778",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-003",
+              "resource_id": "1cab231214bbd3e52a842efb3c3495a42ed808943f9de8d67038cd976f6303e5",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-004",
+              "resource_id": "76c69784119226d66b98da524ecb27e02099544cb844623738c15bf3868aa43b",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-005",
+              "resource_id": "8026a935c802883867ee03eb770939ba2a120bda7b6b674c417d08831a0196a6",
+              "readiness": "failed",
+              "readiness_failure": "ssh_user_rejected",
+              "required_rows": 10,
+              "passed_rows": 0,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable"
+              ]
+            }
+          ],
+          "cleanup": {
+            "status": "completed",
+            "unknown_outcome": false,
+            "primary_failure_code": "ssh_user_rejected",
+            "secondary_failure_codes": [],
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scans": {
+            "credential_scan_before_cleanup": {
+              "status": "pass",
+              "files_scanned": 41,
+              "bytes_scanned": 511827,
+              "secret_contents_exported": false
+            },
+            "credential_scan_after_cleanup": {
+              "status": "pass",
+              "files_scanned": 54,
+              "bytes_scanned": 606329,
+              "secret_contents_exported": false
+            }
+          },
+          "logical_disk_samples": [
+            {
+              "phase": "after-fleet-provision",
+              "sampled_at": "2026-10-23T17:33:11.261Z",
+              "logical_file_bytes": 266517726,
+              "hard_quota": false
+            },
+            {
+              "phase": "before-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:33:36.148Z",
+              "logical_file_bytes": 266572941,
+              "hard_quota": false
+            },
+            {
+              "phase": "after-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:33:45.648Z",
+              "logical_file_bytes": 266667441,
+              "hard_quota": false
+            }
+          ],
+          "owned_resource_ids": [
+            "0bfae68ac048f65092b1cea80ad092dec9357f57e76adbf38f0d75739d9564c5",
+            "1c10c16decd49e91b67ebdfd2ed5c8d404a625c246165050c5d930a52e177df0",
+            "1cab231214bbd3e52a842efb3c3495a42ed808943f9de8d67038cd976f6303e5",
+            "76c69784119226d66b98da524ecb27e02099544cb844623738c15bf3868aa43b",
+            "8026a935c802883867ee03eb770939ba2a120bda7b6b674c417d08831a0196a6",
+            "b662513dd70a7464e28fc4ba59f4a1e0ebfed9e90d4c5b0d2ce068c807598f42",
+            "d0827e72e3dc548d3545ef94b7bb5cb2f91370dcb5e754edfedf6b5b8178694e",
+            "e513a93131529d7a00a005f78ec054e4c66910dc94bb5110b0d14ff41f472778"
+          ],
+          "production_iso_eligible": false,
+          "runtime_pipeline_complete": false
+        },
+        {
+          "run_id": "fd81ad69-9394-476d-b4ef-957eac039e1d",
+          "profile": "five-targets",
+          "scenario": "configured-interpreter-unavailable",
+          "status": "pass",
+          "created_at": "2026-10-23T17:33:45.674Z",
+          "updated_at": "2026-10-23T17:35:05.191Z",
+          "negative_kind": "configured readiness interpreter path; not package removal",
+          "target_count": 5,
+          "configured_ansible_forks": 2,
+          "required_rows": 50,
+          "passed_rows": 40,
+          "underlying_status": "failed",
+          "plan_sha256": "048ef12932250adb8a3eef57989f163922d0192e292fb2cdd8a55ca60af294c0",
+          "capture_bound": true,
+          "readable_structured_agreement": true,
+          "row_evidence_retained_privately": "evidence/batch-validation.json",
+          "attempted_targets": [
+            "target-001",
+            "target-002",
+            "target-003",
+            "target-004"
+          ],
+          "blocked_targets": {
+            "target-005": "configured_interpreter_unavailable"
+          },
+          "targets": [
+            {
+              "target_id": "target-001",
+              "resource_id": "cb6e046a75dce41ae2b0aa54d9ddfc9b766cd06b12d7d3cd1d7fa0d23fc2a68f",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-002",
+              "resource_id": "da3646348bb123138afbd1104b5960aedb59309823c13f4c1abd1e8ace27648a",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-003",
+              "resource_id": "bea49a4c49ba627b0a0a92b6208b980dd3c91e17607d338d046df23117557edf",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-004",
+              "resource_id": "b8f7cbac039b1c34454599d2eeddc0ee8d2b1182706fab70173d14c859f86430",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-005",
+              "resource_id": "d504c2d59916dd2d460f9dd6705ef47858456f984fea448ea6e2c9f964f12b3e",
+              "readiness": "failed",
+              "readiness_failure": "configured_interpreter_unavailable",
+              "required_rows": 10,
+              "passed_rows": 0,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted"
+              ]
+            }
+          ],
+          "cleanup": {
+            "status": "completed",
+            "unknown_outcome": false,
+            "primary_failure_code": "configured_interpreter_unavailable",
+            "secondary_failure_codes": [],
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scans": {
+            "credential_scan_before_cleanup": {
+              "status": "pass",
+              "files_scanned": 41,
+              "bytes_scanned": 513923,
+              "secret_contents_exported": false
+            },
+            "credential_scan_after_cleanup": {
+              "status": "pass",
+              "files_scanned": 54,
+              "bytes_scanned": 608456,
+              "secret_contents_exported": false
+            }
+          },
+          "logical_disk_samples": [
+            {
+              "phase": "after-fleet-provision",
+              "sampled_at": "2026-10-23T17:34:14.517Z",
+              "logical_file_bytes": 266517719,
+              "hard_quota": false
+            },
+            {
+              "phase": "before-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:34:56.068Z",
+              "logical_file_bytes": 266576794,
+              "hard_quota": false
+            },
+            {
+              "phase": "after-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:35:05.191Z",
+              "logical_file_bytes": 266671325,
+              "hard_quota": false
+            }
+          ],
+          "owned_resource_ids": [
+            "09810597407d6a0f823099de16c90114ae28207398ba364e49c63ac07ef50bea",
+            "3be9dbd0d77bc3120f80d01389cb1954bd47bb2985a124e4a29bc759c947ca2d",
+            "599bcdb6731de30156fd1ec03442fbe26370bf4c1ad9207a95ec12c7db0807b5",
+            "b8f7cbac039b1c34454599d2eeddc0ee8d2b1182706fab70173d14c859f86430",
+            "bea49a4c49ba627b0a0a92b6208b980dd3c91e17607d338d046df23117557edf",
+            "cb6e046a75dce41ae2b0aa54d9ddfc9b766cd06b12d7d3cd1d7fa0d23fc2a68f",
+            "d504c2d59916dd2d460f9dd6705ef47858456f984fea448ea6e2c9f964f12b3e",
+            "da3646348bb123138afbd1104b5960aedb59309823c13f4c1abd1e8ace27648a"
+          ],
+          "production_iso_eligible": false,
+          "runtime_pipeline_complete": false
+        },
+        {
+          "run_id": "d33cc7b9-b0e1-4fec-ba3c-785d5bd11819",
+          "profile": "five-targets",
+          "scenario": "wrong-endpoint",
+          "status": "pass",
+          "created_at": "2026-10-23T17:35:05.217Z",
+          "updated_at": "2026-10-23T17:36:07.980Z",
+          "negative_kind": "expected inventory/network input; no foreign contact",
+          "target_count": 5,
+          "configured_ansible_forks": 2,
+          "required_rows": 50,
+          "passed_rows": 40,
+          "underlying_status": "failed",
+          "plan_sha256": "b7a7da04bd2b7cd393b9d43f0fcbb075d6a08af0b4b142f30ddb0c6d43ab938f",
+          "capture_bound": true,
+          "readable_structured_agreement": true,
+          "row_evidence_retained_privately": "evidence/batch-validation.json",
+          "attempted_targets": [
+            "target-001",
+            "target-002",
+            "target-003",
+            "target-004"
+          ],
+          "blocked_targets": {
+            "target-005": "inventory_endpoint_mismatch"
+          },
+          "targets": [
+            {
+              "target_id": "target-001",
+              "resource_id": "cdb60bdbd2200743e88c4b7f1a56a059a08f3ba16f2da414472176460d29eb58",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-002",
+              "resource_id": "96b8a0ad44f6cd3a703f190822f380d6160eadd4dd7c92dcdf184cf5793c6060",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-003",
+              "resource_id": "1b1920b947de28dc0eb43a43aa585fa27f01257c66a1b1173287f8ccfa0a9eba",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-004",
+              "resource_id": "cda1eccc87b078b3a11f2a6c96a34e5710896e2d938bcd759dc38425ca48359f",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-005",
+              "resource_id": "d27b14d7651f9877b66185a2eb8cf25b50c747a07b3994c65030bbde27fa7b6a",
+              "readiness": "failed",
+              "readiness_failure": "inventory_endpoint_mismatch",
+              "required_rows": 10,
+              "passed_rows": 0,
+              "transition_ids": [
+                "created",
+                "started"
+              ]
+            }
+          ],
+          "cleanup": {
+            "status": "completed",
+            "unknown_outcome": false,
+            "primary_failure_code": "inventory_endpoint_mismatch",
+            "secondary_failure_codes": [],
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scans": {
+            "credential_scan_before_cleanup": {
+              "status": "pass",
+              "files_scanned": 41,
+              "bytes_scanned": 509114,
+              "secret_contents_exported": false
+            },
+            "credential_scan_after_cleanup": {
+              "status": "pass",
+              "files_scanned": 54,
+              "bytes_scanned": 603629,
+              "secret_contents_exported": false
+            }
+          },
+          "logical_disk_samples": [
+            {
+              "phase": "after-fleet-provision",
+              "sampled_at": "2026-10-23T17:35:34.152Z",
+              "logical_file_bytes": 266517710,
+              "hard_quota": false
+            },
+            {
+              "phase": "before-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:35:58.859Z",
+              "logical_file_bytes": 266569215,
+              "hard_quota": false
+            },
+            {
+              "phase": "after-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:36:07.980Z",
+              "logical_file_bytes": 266663728,
+              "hard_quota": false
+            }
+          ],
+          "owned_resource_ids": [
+            "09c24684c3d212affb69a748773eaee5884cb3d350f368b6536533a13a74d65d",
+            "1b1920b947de28dc0eb43a43aa585fa27f01257c66a1b1173287f8ccfa0a9eba",
+            "3559f9f0d4ef519224ec2359dcc1038d371111a90036c8f0238951f8e6c7c975",
+            "6c8dc1b094fe1cc2a4d08f2ffcdff678146e29f5ce26f147200ff4db7b763b73",
+            "96b8a0ad44f6cd3a703f190822f380d6160eadd4dd7c92dcdf184cf5793c6060",
+            "cda1eccc87b078b3a11f2a6c96a34e5710896e2d938bcd759dc38425ca48359f",
+            "cdb60bdbd2200743e88c4b7f1a56a059a08f3ba16f2da414472176460d29eb58",
+            "d27b14d7651f9877b66185a2eb8cf25b50c747a07b3994c65030bbde27fa7b6a"
+          ],
+          "production_iso_eligible": false,
+          "runtime_pipeline_complete": false
+        },
+        {
+          "run_id": "ba9df63b-650b-4883-8421-edb202a93ff0",
+          "profile": "five-targets",
+          "scenario": "wrong-network",
+          "status": "pass",
+          "created_at": "2026-10-23T17:36:08.007Z",
+          "updated_at": "2026-10-23T17:37:10.881Z",
+          "negative_kind": "expected inventory/network input; no foreign contact",
+          "target_count": 5,
+          "configured_ansible_forks": 2,
+          "required_rows": 50,
+          "passed_rows": 40,
+          "underlying_status": "failed",
+          "plan_sha256": "a130e4820d52a637f3622d807288ad07b09846041e922fd8be461077c1566a11",
+          "capture_bound": true,
+          "readable_structured_agreement": true,
+          "row_evidence_retained_privately": "evidence/batch-validation.json",
+          "attempted_targets": [
+            "target-001",
+            "target-002",
+            "target-003",
+            "target-004"
+          ],
+          "blocked_targets": {
+            "target-005": "inventory_network_mismatch"
+          },
+          "targets": [
+            {
+              "target_id": "target-001",
+              "resource_id": "e064558ad0d8255a5a4dddeeffdfd750550c8d58b1ea9281771eeeb22c27de77",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-002",
+              "resource_id": "6386ecf03da279c3c7b4242c19e2fdd1e6a6d1b06ecf07aad7e60b5d2e3bdd9c",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-003",
+              "resource_id": "e6741d5084746d77702dbee8b879df66603ac90bf4e4be1bc06750070e87ae73",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-004",
+              "resource_id": "992c2cd3f8884f65b031400a71e7455997a4996b3831581fb8c3fb0992da34d6",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-005",
+              "resource_id": "7bf6c0c07d441015c62320f0dd981142b086325fe05166fc2044bde321054549",
+              "readiness": "failed",
+              "readiness_failure": "inventory_network_mismatch",
+              "required_rows": 10,
+              "passed_rows": 0,
+              "transition_ids": []
+            }
+          ],
+          "cleanup": {
+            "status": "completed",
+            "unknown_outcome": false,
+            "primary_failure_code": "inventory_network_mismatch",
+            "secondary_failure_codes": [],
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scans": {
+            "credential_scan_before_cleanup": {
+              "status": "pass",
+              "files_scanned": 41,
+              "bytes_scanned": 508652,
+              "secret_contents_exported": false
+            },
+            "credential_scan_after_cleanup": {
+              "status": "pass",
+              "files_scanned": 54,
+              "bytes_scanned": 603169,
+              "secret_contents_exported": false
+            }
+          },
+          "logical_disk_samples": [
+            {
+              "phase": "after-fleet-provision",
+              "sampled_at": "2026-10-23T17:36:37.300Z",
+              "logical_file_bytes": 266517717,
+              "hard_quota": false
+            },
+            {
+              "phase": "before-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:37:01.751Z",
+              "logical_file_bytes": 266568749,
+              "hard_quota": false
+            },
+            {
+              "phase": "after-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:37:10.881Z",
+              "logical_file_bytes": 266663264,
+              "hard_quota": false
+            }
+          ],
+          "owned_resource_ids": [
+            "34fb8eed5a8a3b3e5f86dd6a6b2fa567b6045a79956d979f6085f2ef44b6224c",
+            "6386ecf03da279c3c7b4242c19e2fdd1e6a6d1b06ecf07aad7e60b5d2e3bdd9c",
+            "78b45f964a54126ddfb620e3edf71dba9057c7f2233afbb556a24d8f402c0f87",
+            "7bf6c0c07d441015c62320f0dd981142b086325fe05166fc2044bde321054549",
+            "82dd4dca3b7004792da1e9cd74f884d023eb02dae43faed1ed8bd2d6b067a310",
+            "992c2cd3f8884f65b031400a71e7455997a4996b3831581fb8c3fb0992da34d6",
+            "e064558ad0d8255a5a4dddeeffdfd750550c8d58b1ea9281771eeeb22c27de77",
+            "e6741d5084746d77702dbee8b879df66603ac90bf4e4be1bc06750070e87ae73"
+          ],
+          "production_iso_eligible": false,
+          "runtime_pipeline_complete": false
+        },
+        {
+          "run_id": "3a594a11-2e44-43c3-a9d5-c5bb0fbf7bf1",
+          "profile": "five-targets",
+          "scenario": "changed-host-key",
+          "status": "pass",
+          "created_at": "2026-10-23T17:37:10.908Z",
+          "updated_at": "2026-10-23T17:38:21.438Z",
+          "negative_kind": "changed-host-key",
+          "target_count": 5,
+          "configured_ansible_forks": 2,
+          "required_rows": 50,
+          "passed_rows": 40,
+          "underlying_status": "failed",
+          "plan_sha256": "35f418e621afee18295a2652a21dcafa4e9813bbfac02b10c9649d9830c577f8",
+          "capture_bound": true,
+          "readable_structured_agreement": true,
+          "row_evidence_retained_privately": "evidence/batch-validation.json",
+          "attempted_targets": [
+            "target-001",
+            "target-002",
+            "target-003",
+            "target-004"
+          ],
+          "blocked_targets": {
+            "target-005": "ssh_host_key_mismatch"
+          },
+          "targets": [
+            {
+              "target_id": "target-001",
+              "resource_id": "3eac047c2e88bce7a14cdecf556dde99969ca5613572a6f1677ff5217d3edea6",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-002",
+              "resource_id": "a84d1b5d96d3b26022ec58da1fd7d117a39e8404a0f5d48b47ea4425dc430c4d",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-003",
+              "resource_id": "d5d572732ab1b3e7652445a59d5b9bfcfad4ff0795da59095af86b6487c77d89",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-004",
+              "resource_id": "445cefaa5c73f67b1064655550c48a7a82070ee1a0d16998dd216a5f4b873489",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-005",
+              "resource_id": "00a9877eb7daa527c1ffcef8e1f9ca929efeb29329a5d596bf619bd8f713ad7c",
+              "readiness": "failed",
+              "readiness_failure": "ssh_host_key_mismatch",
+              "required_rows": 10,
+              "passed_rows": 0,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable"
+              ]
+            }
+          ],
+          "cleanup": {
+            "status": "completed",
+            "unknown_outcome": false,
+            "primary_failure_code": "ssh_host_key_mismatch",
+            "secondary_failure_codes": [],
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scans": {
+            "credential_scan_before_cleanup": {
+              "status": "pass",
+              "files_scanned": 49,
+              "bytes_scanned": 572624,
+              "secret_contents_exported": false
+            },
+            "credential_scan_after_cleanup": {
+              "status": "pass",
+              "files_scanned": 62,
+              "bytes_scanned": 666833,
+              "secret_contents_exported": false
+            }
+          },
+          "logical_disk_samples": [
+            {
+              "phase": "after-fleet-provision",
+              "sampled_at": "2026-10-23T17:37:40.270Z",
+              "logical_file_bytes": 266517712,
+              "hard_quota": false
+            },
+            {
+              "phase": "before-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:38:12.421Z",
+              "logical_file_bytes": 266634736,
+              "hard_quota": false
+            },
+            {
+              "phase": "after-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:38:21.438Z",
+              "logical_file_bytes": 266728943,
+              "hard_quota": false
+            }
+          ],
+          "owned_resource_ids": [
+            "00a9877eb7daa527c1ffcef8e1f9ca929efeb29329a5d596bf619bd8f713ad7c",
+            "31fe3aa3cde4916c4dee29acd3628e753e833bd0dc00888dc2c8498c9ccfe664",
+            "3675f0ed0ba0fd3ef1c3d4fd8d07619c0f0eb84c82b7bf1d4cb9192e00358c3b",
+            "3eac047c2e88bce7a14cdecf556dde99969ca5613572a6f1677ff5217d3edea6",
+            "445cefaa5c73f67b1064655550c48a7a82070ee1a0d16998dd216a5f4b873489",
+            "a84d1b5d96d3b26022ec58da1fd7d117a39e8404a0f5d48b47ea4425dc430c4d",
+            "d5d572732ab1b3e7652445a59d5b9bfcfad4ff0795da59095af86b6487c77d89",
+            "da219f289d1605671cc78b179a2b7b52049aafb655795e72ebded91e81291c93"
+          ],
+          "production_iso_eligible": false,
+          "runtime_pipeline_complete": false
+        },
+        {
+          "run_id": "410f4fbf-98a8-4570-a675-719b319aa4d4",
+          "profile": "five-targets",
+          "scenario": "validation-interpreter-unavailable",
+          "status": "pass",
+          "created_at": "2026-10-23T17:38:21.464Z",
+          "updated_at": "2026-10-23T17:39:30.102Z",
+          "negative_kind": "configured validation interpreter path; actual Ansible attempt",
+          "target_count": 5,
+          "configured_ansible_forks": 2,
+          "required_rows": 50,
+          "passed_rows": 40,
+          "underlying_status": "failed",
+          "plan_sha256": "8e0036dd2b9b44966c7328b3a91fc4eabadc09d5a1e7a4054ec1e9914856a582",
+          "capture_bound": true,
+          "readable_structured_agreement": true,
+          "row_evidence_retained_privately": "evidence/batch-validation.json",
+          "attempted_targets": [
+            "target-001",
+            "target-002",
+            "target-003",
+            "target-004",
+            "target-005"
+          ],
+          "blocked_targets": {},
+          "targets": [
+            {
+              "target_id": "target-001",
+              "resource_id": "3a5226ef2a780f79f68b7407e20f14e56b933e02b485149c3a32cb3179717d0b",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-002",
+              "resource_id": "62f70e1701d54653d7fb55de9a5c5a00eec5103032870e8dd5a994c73d23531a",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-003",
+              "resource_id": "47f9b436f08d9a15952d800109c09eca6fe41ac4a1c2326d34ac9431413a94cc",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-004",
+              "resource_id": "76c6e273a339e8f8bc930236b257e94f5a9741f8abf2572571ceb7485efdcc17",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 10,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            },
+            {
+              "target_id": "target-005",
+              "resource_id": "cd90ca234a56cd9a522688aeefb8eb6489c41420f0820aca00829d5188735f8b",
+              "readiness": "ready",
+              "readiness_failure": null,
+              "required_rows": 10,
+              "passed_rows": 0,
+              "transition_ids": [
+                "created",
+                "started",
+                "endpoint-discovered",
+                "tcp-reachable",
+                "ssh-identity-accepted",
+                "python-usable",
+                "ansible-usable",
+                "required-test-complete"
+              ]
+            }
+          ],
+          "cleanup": {
+            "status": "completed",
+            "unknown_outcome": false,
+            "primary_failure_code": "required_batch_check_failed",
+            "secondary_failure_codes": [],
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scans": {
+            "credential_scan_before_cleanup": {
+              "status": "pass",
+              "files_scanned": 41,
+              "bytes_scanned": 515075,
+              "secret_contents_exported": false
+            },
+            "credential_scan_after_cleanup": {
+              "status": "pass",
+              "files_scanned": 54,
+              "bytes_scanned": 609589,
+              "secret_contents_exported": false
+            }
+          },
+          "logical_disk_samples": [
+            {
+              "phase": "after-fleet-provision",
+              "sampled_at": "2026-10-23T17:38:50.506Z",
+              "logical_file_bytes": 266517745,
+              "hard_quota": false
+            },
+            {
+              "phase": "before-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:39:21.020Z",
+              "logical_file_bytes": 266579521,
+              "hard_quota": false
+            },
+            {
+              "phase": "after-fleet-cleanup",
+              "sampled_at": "2026-10-23T17:39:30.102Z",
+              "logical_file_bytes": 266674033,
+              "hard_quota": false
+            }
+          ],
+          "owned_resource_ids": [
+            "17e16078ce6420a909ea5e5e9575d37fd3b8897b577b8a9bae96621101c49719",
+            "3a5226ef2a780f79f68b7407e20f14e56b933e02b485149c3a32cb3179717d0b",
+            "47f9b436f08d9a15952d800109c09eca6fe41ac4a1c2326d34ac9431413a94cc",
+            "5efd4b7b11276f74831a6371bfacda17bba893618059eca22a96a6eb95388a86",
+            "62f70e1701d54653d7fb55de9a5c5a00eec5103032870e8dd5a994c73d23531a",
+            "76c6e273a339e8f8bc930236b257e94f5a9741f8abf2572571ceb7485efdcc17",
+            "cd90ca234a56cd9a522688aeefb8eb6489c41420f0820aca00829d5188735f8b",
+            "f883ae7ce39592bcfc04774b643f5d90c5255cca98b316019ab542ef43d20c13"
+          ],
+          "production_iso_eligible": false,
+          "runtime_pipeline_complete": false
+        }
+      ]
+    }
+  ],
+  "fixture_tests": {
+    "tested_source_revision": "1920c9621017190a8756affab36e5d25e6102978",
+    "evidence_kind": "source fixtures, separate from runtime acceptance",
+    "linux": {
+      "cases": 277,
+      "passed": 275,
+      "skipped": 2,
+      "seconds": 19.359
+    },
+    "windows": {
+      "cases": 277,
+      "passed": 161,
+      "skipped": 116,
+      "seconds": 17.542
+    }
+  },
+  "criteria": {
+    "AC-01": "pass: actual staged one-target and five-target healthy lifecycles, plus ten fresh five-target cases; five targets and fifty required rows are independent of configured two Ansible forks.",
+    "AC-02": "pass: delayed/absent target, wrong key/user, changed host key, configured missing interpreter and expected endpoint/network faults retain the expected category and attributable private logs; no foreign networking mutation.",
+    "AC-03": "pass: actual delayed progression, categorized blocked targets, mixed forty-pass/ten-nonpass results, failed underlying operations, exact scoped cleanup and unchanged sentinel are proved by distinct source-bound Runs."
+  },
+  "review": {
+    "kind": "independent engineering subagent source review; not independent human examination",
+    "infrastructure_original_revision": "ca6da062371fbfcfae5d15477f25b870b82b95f9",
+    "helper_original_revision": "78b28d8bc8fe1126a1b411f6dc3ab4b08d721317",
+    "harness_original_revision": "fcdb25bf4632ee5d9b174e15d91a84cd995eef75",
+    "single_target_fault_correction_revision": "9c221742fdb7051b122a81b293903395fae2c116",
+    "tested_integration_revision": "1920c9621017190a8756affab36e5d25e6102978",
+    "remaining_material_source_findings": []
+  },
+  "limits": [
+    "Readiness/validation interpreter faults select missing configured paths; installed Python packages were not removed.",
+    "Wrong endpoint/network tests alter expected owned-target metadata and refuse before foreign contact; they do not mutate unrelated networks.",
+    "Expected negative acceptance pass does not convert the failed underlying operation to pass; cleanup status is a separate fact.",
+    "Full fifty-row artifacts, raw captures, Terraform state and credentials remain private; this export contains reviewed summaries and hashes only.",
+    "Logical disk samples are not quotas or continuous peak measurements. Synthetic fixtures do not establish actual runtime results.",
+    "Twenty-target runtime, candidate binding, complete pipeline, VM/ISO boot/install, STIG/scanner compatibility and production acceptance are unverified by this ticket."
+  ],
+  "publishing_status": "not verified by this generator; no push, CI, merge, deployment or Owner acceptance is inferred",
+  "production_iso_eligible": false,
+  "runtime_pipeline_complete": false
+}

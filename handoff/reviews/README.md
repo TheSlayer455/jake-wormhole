@@ -9,3 +9,8 @@ Each report should identify reviewer role and whether it is self-review or indep
 Do not include credentials, private keys, Terraform state/plans, environment dumps or unsanitized runtime logs. Link approved safe evidence rather than copying private stores. Minx remains authoritative for criterion evidence and human review decisions; repository reviews provide source context and do not automatically change ticket state. See [review prompt](../../prompts/REVIEW.md).
 
 See also [candidate source/image/test binding and exact-source recovery](WORM-013.md).
+
+
+<!-- WORM-010 actual qualification 1920c9621017190a8756affab36e5d25e6102978 -->
+
+[Five-target fleet review](WORM-010.md) records the exact WORM-010 source reviews and actual qualification limits.
