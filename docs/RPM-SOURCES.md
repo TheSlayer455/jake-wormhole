@@ -103,10 +103,17 @@ its finite PID1 and 70-second controller observation deadline. The receipt at
 request, complete private capture, selected NEVRAs and cleanup. It preserves
 primary failures; an uncertain daemon operation retains admission and refuses
 cleanup. It never claims RPM signature verification or full pipeline success.
-Failed solver captures include only a fixed implementation phase and a bounded
-exception class name. Exception messages, ambient environment and arbitrary
-traceback content are excluded; these diagnostics cannot turn a failure into
-a validated dependency selection.
+Failed solver captures include a fixed implementation phase, bounded exception
+class name, numeric errno when present and up to four allowlisted call-site
+labels. Exception messages, filenames, ambient environment and arbitrary
+traceback content are excluded. These diagnostics cannot turn a failure into
+a validated dependency selection. The solver creates fixed private cache,
+persist and log directories only inside its bounded `/tmp` tmpfs. DNF's
+[sack builder](https://raw.githubusercontent.com/rpm-software-management/dnf/4.14.0/dnf/sack.py)
+creates its cache but passes a logfile path to the
+[libdnf logger](https://raw.githubusercontent.com/rpm-software-management/libdnf/0.69.0/python/hawkey/sack-py.cpp),
+whose direct `fopen` requires an existing log parent. Source fixtures exercise
+that filesystem requirement; the actual resolver must still qualify the fix.
 
 The separate `prepare_eula(run)` / `validate_eula(run)` API retains the original
 [official March 2019 UBI EULA PDF](https://www.redhat.com/licenses/EULA_Red_Hat_Universal_Base_Image_English_20190422.pdf)

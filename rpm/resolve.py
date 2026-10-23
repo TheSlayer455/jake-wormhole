@@ -20,8 +20,9 @@ BASE_CONFIG = 'sha256:9be18d9ba921714e79e390694315e3341047fe758ac79b62e671d92d42
 MAX_JSON = 262144
 RESOLVER_SECONDS = 60
 START_MARKER = Path('/run/wormhole-rpm-resolve.start')
+WORK_ROOT = Path('/tmp/wormhole-rpm-resolver')
 PHASE = 'bootstrap'
-PHASES = ('bootstrap','startup-guard','release-wait','inputs','module-import','metadata','base-create',
+PHASES = ('bootstrap','startup-guard','release-wait','inputs','module-import','metadata','workdirs','base-create',
     'repo-config','sack-load','rpmdb-match','request-selection','dependency-solve','transaction-export','result')
 
 
@@ -41,8 +42,30 @@ def phase(value):
 def failure(error):
     name=type(error).__name__
     if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]{0,63}',name):name='UnknownError'
+    number=getattr(error,'errno',None)
+    if type(number) is not int or not 0<=number<=4095:number=None
+    allowed={('sack.py','_build_sack'):'dnf-sack-build',('base.py','fill_sack'):'dnf-sack-load',
+        ('util.py','ensure_dir'):'dnf-ensure-directory',('repo.py','load'):'dnf-repository-load',
+        ('resolve.py','resolve'):'fixed-solver',('resolve.py','working_directories'):'fixed-working-directories'}
+    sites=[];frame=error.__traceback__;count=0
+    while frame is not None and count<32:
+        code=frame.tb_frame.f_code;site=allowed.get((Path(code.co_filename).name,code.co_name))
+        if site is not None and site not in sites:sites.append(site)
+        frame=frame.tb_next;count+=1
     return {'operation':'ubi-offline-resolution-v1','status':'failed','code':'rpm_resolution_refused',
-        'phase':PHASE if PHASE in PHASES else 'bootstrap','exception_class':name}
+        'phase':PHASE if PHASE in PHASES else 'bootstrap','exception_class':name,'errno':number,'sites':sites[-4:]}
+
+
+def working_directories():
+    """DNF's sack builder creates its cache, but not its logfile parent."""
+    require(not WORK_ROOT.exists() and not WORK_ROOT.is_symlink())
+    WORK_ROOT.mkdir(mode=0o700)
+    result={}
+    for name in ('cache','persist','log'):
+        path=WORK_ROOT/name;path.mkdir(mode=0o700)
+        info=path.stat();require(stat.S_ISDIR(info.st_mode) and stat.S_IMODE(info.st_mode)==0o700 and info.st_uid==os.geteuid())
+        result[name]=str(path)
+    return result
 
 
 def unique(pairs):
@@ -109,12 +132,13 @@ def resolve(request, lock, dnf_module, rpm_module):
         request['sources_sha256']==sha(canonical(sources)) and canonical(request['requested_packages'])==canonical(sources['requested_packages']) and
         sources['policy']['allow_erasing'] is False and sources['policy']['plugins'] is False and sources['policy']['install_weak_deps'] is False)
     phase('metadata');catalog=metadata(lock)
+    phase('workdirs');directories=working_directories()
     phase('base-create')
     with dnf_module.Base() as base:
         # Do not read ambient config/repository files or initialize plugins.
         phase('repo-config')
         base.conf.plugins=False;base.conf.install_weak_deps=False;base.conf.best=True;base.conf.strict=True
-        base.conf.cachedir='/tmp/wormhole-rpm-resolver/cache';base.conf.persistdir='/tmp/wormhole-rpm-resolver/persist';base.conf.logdir='/tmp/wormhole-rpm-resolver/log'
+        base.conf.cachedir=directories['cache'];base.conf.persistdir=directories['persist'];base.conf.logdir=directories['log']
         base.conf.substitutions['releasever']='9';base.conf.substitutions['basearch']='x86_64'
         require(not list(base.repos.iter_enabled()))
         repo=base.repos.add_new_repo(sources['repository_id'],base.conf,baseurl=['file:///metadata'])

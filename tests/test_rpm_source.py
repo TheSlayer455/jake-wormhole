@@ -224,6 +224,28 @@ class PublicSources(unittest.TestCase):
 
 
 class OfflineResolution(unittest.TestCase):
+    def setUp(self):
+        # Protocol-only fixtures never create runtime paths on this host.
+        item=patch.object(resolver,'working_directories',return_value={name:'/synthetic/'+name for name in ('cache','persist','log')})
+        self.mock_directories=item.start();self.addCleanup(item.stop)
+
+    @unittest.skipUnless(os.name=='posix','Real private DNF working-directory fixture requires POSIX')
+    def test_sack_log_parent_exists_before_real_fopen_style_operation(self):
+        # Reach the unpatched fixed implementation without executing DNF.
+        module=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as folder,patch.object(module,'WORK_ROOT',Path(folder)/'fixed'):
+            with self.assertRaises(FileNotFoundError):(module.WORK_ROOT/'log/hawkey.log').open('a')
+            result=module.working_directories()
+            for path in result.values():self.assertEqual(Path(path).stat().st_mode&0o777,0o700)
+            with (Path(result['log'])/'hawkey.log').open('a') as stream:stream.write('synthetic bounded log')
+            with self.assertRaises(ValueError):module.working_directories()  # No retained-cache retry.
+
+    def test_oserror_diagnostic_preserves_numeric_errno_but_no_filename_or_message(self):
+        try:raise OSError(13,'Synthetic secret message','/private/credential/location')
+        except OSError as error:value=resolver.failure(error)
+        self.assertEqual(value['errno'],13);self.assertEqual(value['sites'],[])
+        self.assertNotIn('private',s.canonical(value).decode());self.assertNotIn('secret',s.canonical(value).decode())
+
     @unittest.skipUnless(os.name=='posix','Isolated solver exception fixture requires POSIX')
     def test_failed_solver_records_only_fixed_phase_and_exception_class(self):
         def child():
@@ -231,7 +253,7 @@ class OfflineResolution(unittest.TestCase):
         with patch.object(resolver,'emit_output') as emit:code=resolver.supervise(child,1)
         self.assertEqual(code,2);value=s.parse(emit.call_args.args[0])
         self.assertEqual(value,{'operation':'ubi-offline-resolution-v1','status':'failed','code':'rpm_resolution_refused',
-            'phase':'sack-load','exception_class':'RuntimeError'})
+            'phase':'sack-load','exception_class':'RuntimeError','errno':None,'sites':[]})
         self.assertNotIn(b'credential',emit.call_args.args[0])
 
     @unittest.skipUnless(os.name=='posix','Resolver release marker permission fixture requires POSIX')
