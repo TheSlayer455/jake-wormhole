@@ -1,0 +1,4 @@
+{
+  "attempts": [],
+  "scope": "Only explicitly configured source-bound failed attempts. Original files are not rewritten; cleanup/diagnostics do not promote a failed operation."
+}
