@@ -164,6 +164,9 @@ def ansible(value, attempt):
     variables = {'ansible_host': value['address'], 'ansible_port': 2222, 'ansible_user': user,
         'ansible_connection': 'ssh', 'ansible_python_interpreter': interpreter,
         'ansible_ssh_args': shlex.join(ssh_options(value)), 'ansible_ssh_retries': 0,
+        # Pinned2.21.5 ssh.py: use_tty defaults true (-tt); piped selects SSH/dd.
+        # The target deliberately forbids TTY allocation. Do not weaken sshd.
+        'ansible_ssh_use_tty': False, 'ansible_ssh_transfer_method': 'piped',
         'ansible_remote_tmp': '/tmp/wormhole-ansible'}
     inventory = attempt / 'inventory.json'
     inventory.write_text(json.dumps({'all': {'hosts': {'target-001': variables}}}))
@@ -182,7 +185,13 @@ def ansible(value, attempt):
         require(len(raw) <= 32768)
         observed = json.loads(raw, object_pairs_hook=unique)
     # CLI exit0 without the one expected target result cannot pass.
-    good = type(observed) is dict and observed.get('failed', False) is False and observed.get('unreachable', False) is False and not observed.get('skipped', False)
+    allowed = {'changed', 'failed', 'unreachable', 'skipped'} | ({'ping'} if value['operation'] == 'ansible-ping' else {'elapsed'})
+    # tree callback output may omit a failure flag. The pinned wait action puts
+    # msg on timeout, never on success: reject unexpected/msg/exception records
+    # as well as nonzero/incomplete captures, even if elapsed looks plausible.
+    good = (result['returncode'] == 0 and result['timed_out'] is False and result['truncated'] is False and
+        type(observed) is dict and set(observed) <= allowed and
+        all(observed.get(key, False) is False for key in ('changed', 'failed', 'unreachable', 'skipped')))
     if value['operation'] == 'ansible-ping':
         good = good and observed.get('ping') == 'pong'
     else:

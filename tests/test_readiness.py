@@ -377,10 +377,38 @@ class HelperSubprocess(unittest.TestCase):
             inventory = json.loads((attempt / 'inventory.json').read_text())['all']['hosts']['target-001']
             self.assertEqual(inventory['ansible_connection'], 'ssh')
             self.assertEqual(inventory['ansible_python_interpreter'], '/usr/bin/python3')
+            # Exact inventory variable names source-traced to the locked ssh
+            # plugin v2.21.5 options341..366 and implementations1304..1414.
+            self.assertIs(inventory['ansible_ssh_use_tty'], False)
+            self.assertEqual(inventory['ansible_ssh_transfer_method'], 'piped')
+            self.assertIn('StrictHostKeyChecking=yes', inventory['ansible_ssh_args'])
+            self.assertIn('IdentitiesOnly=yes', inventory['ansible_ssh_args'])
             (attempt / 'results/target-001').write_text(json.dumps({'ping': 'fabricated'}))
             with patch.object(runtime, 'capture', return_value={'returncode': 0, 'log': '', 'timed_out': False, 'truncated': False}):
                 result, observation = runtime.ansible(value, attempt)
             self.assertEqual(result['returncode'], 2); self.assertIsNone(observation['ping'])
+
+    def test_wait_requires_successful_terminal_capture_and_exact_positive_shape_not_elapsed_with_error(self):
+        with tempfile.TemporaryDirectory(prefix='wormhole-ansible-wait-synthetic-') as temporary, patch.object(runtime, 'ROOT', Path(temporary)):
+            root = Path(temporary)
+            value = HelperProtocol().value('ansible-wait')
+            cases = [({'elapsed': 0, 'changed': False}, 0, False, False, True),
+                ({'elapsed': 16, 'msg': 'timed out waiting for ping module test: PTY allocation request failed'}, 0, False, False, False),
+                ({'elapsed': 16, 'msg': 'timed out waiting for ping module test'}, 2, False, False, False),
+                ({'elapsed': 0}, 2, False, False, False), ({'elapsed': 0}, 0, True, False, False),
+                ({'elapsed': 0}, 0, False, True, False), ({'elapsed': 0, 'failed': True}, 0, False, False, False),
+                ({'elapsed': 0, 'exception': 'controlled failure'}, 0, False, False, False),
+                ({'elapsed': 0, 'skipped': True}, 0, False, False, False), ({'elapsed': True}, 0, False, False, False)]
+            for index, (tree, code, timed_out, truncated, expected) in enumerate(cases):
+                attempt = root / ('case-' + str(index)); attempt.mkdir(mode=0o700)
+                def child(*_):
+                    results = attempt / 'results'; results.mkdir()
+                    (results / 'target-001').write_text(json.dumps(tree))
+                    return {'returncode': code, 'log': '', 'timed_out': timed_out, 'truncated': truncated}
+                with self.subTest(index=index), patch.object(runtime, 'capture', side_effect=child):
+                    result, observation = runtime.ansible(value, attempt)
+                    self.assertIs(observation['structured_target_result'], expected)
+                    self.assertEqual(result['returncode'] == 0, expected)
 
 
 @unittest.skipUnless(os.name == 'posix' and hasattr(os, 'geteuid') and os.geteuid() == 0,

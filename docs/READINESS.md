@@ -64,6 +64,12 @@ configured Python interpreter. Genuine pinned Ansible Core2.21.5 then runs
 `ansible.builtin.wait_for_connection` and `ansible.builtin.ping`, requiring the
 expected target's structured result and actual `pong`. Connection is explicitly
 `ssh`; no local connection or target Docker exec substitutes for these checks.
+The inventory sets `ansible_ssh_use_tty=false` and
+`ansible_ssh_transfer_method=piped`. Pinned2.21.5 otherwise defaults to forced
+TTY allocation, which the target deliberately forbids. Piped transfer uses
+SSH/dd without the smart SFTP/SCP fallback; it does not change sshd, image,
+authentication or trust settings. Observed transfer warnings alone do not prove
+that the target's configured SFTP subsystem is absent.
 Ansible local and remote temporary directories are private helper tmpfs and
 `/tmp/wormhole-ansible`, respectively. No facts, application acceptance or repair
 tasks are run by readiness.
@@ -71,8 +77,11 @@ tasks are run by readiness.
 Fixed ad-hoc `ansible --tree` produces per-target JSON; the adapter does not parse
 human console success messages. The tree callback exists in pinned2.21.5 and is
 deprecated for removal in2.23; a future dependency update must replace or requalify
-it. Missing, duplicate/wrong-identity, skipped, truncated, malformed and fabricated
-`pong` results cannot establish readiness.
+it. Both probes require a successful CLI exit, complete capture and the expected
+positive field shape. A wait result's `elapsed` field alone is insufficient;
+`msg`, exception, failure, unreachable or skipped results cannot establish
+readiness even if a callback omits the failure flag. Missing, duplicate/wrong-identity,
+truncated, malformed and fabricated `pong` results also fail.
 
 The coordinator has one absolute90s readiness deadline, bounded attempts and
 short connection timeouts. Control-plane inspections, public-key reads and private
