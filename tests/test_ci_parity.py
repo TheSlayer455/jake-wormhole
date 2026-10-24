@@ -94,6 +94,7 @@ class AuthoredProviderContract(unittest.TestCase):
         self.assertNotIn('continue-on-error', workflow)
         self.assertNotIn('|| true', workflow)
         self.assertIn('persist-credentials: false', workflow)
+        self.assertIn('ref: ${{ github.event.pull_request.head.sha || github.sha }}', workflow)
         self.assertIn('fetch-depth: 0', workflow)
         self.assertIn("steps.safe_diagnostics.outcome == 'success'", workflow)
         self.assertIn('python3 -B -m wormhole.parity validate --output ci-artifacts', workflow)
