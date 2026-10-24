@@ -2,13 +2,13 @@ Continue this **Build Jake ISO Pipeline** conversation. Use the finished Jake Wo
 
 Wormhole is finished. Its 21 original delivery PRs and the verification follow-up were merged. Use it as an inspected reference and reuse compatible implementation where appropriate. Keep ISO work in its verified repository and environment; preserve completed Wormhole evidence.
 
-The verified private repository snapshot is `TheSlayer455/jake-wormhole` at `898d8764f46f661b852eb3332c12d2d6925d79d7`. Application qualification belongs to `c3d440a3c7eee9691f30315b49146eb72998d2df`; the later snapshot changes only documentation. Read these first if you have private GitHub access:
+The repository `TheSlayer455/jake-wormhole` is now public by my explicit October 24, 2026 decision. Use evidence snapshot `898d8764f46f661b852eb3332c12d2d6925d79d7`. Application qualification belongs to `c3d440a3c7eee9691f30315b49146eb72998d2df`; that later evidence snapshot changes only documentation. The snapshots describe repository privacy at their observation time. Read these first:
 
 - [Merged verification](https://github.com/TheSlayer455/jake-wormhole/blob/898d8764f46f661b852eb3332c12d2d6925d79d7/handoff/MERGED-VERIFICATION.md)
 - [Architecture](https://github.com/TheSlayer455/jake-wormhole/blob/898d8764f46f661b852eb3332c12d2d6925d79d7/docs/ARCHITECTURE.md)
 - [Evidence limits](https://github.com/TheSlayer455/jake-wormhole/blob/898d8764f46f661b852eb3332c12d2d6925d79d7/docs/FIDELITY.md)
 
-If you cannot access this private repository, say which files you need and request the smallest relevant sanitized excerpts. Use the facts supplied here meanwhile; distinguish them from source you inspected yourself. Refresh current source before implementation and keep the tested revisions above attached to their original observations.
+If GitHub or these files are unavailable in your environment, say which files you need and request the smallest relevant sanitized excerpts. Use the facts supplied here meanwhile; distinguish them from source you inspected yourself. Refresh current source before implementation and keep the tested revisions above attached to their original observations. Public source does not make runtime inputs, credentials or raw evidence public.
 
 Verified results from October 24, 2026:
 

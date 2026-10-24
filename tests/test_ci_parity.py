@@ -91,6 +91,9 @@ class AuthoredProviderContract(unittest.TestCase):
 
     def test_github_keeps_failure_status_and_uploads_only_validated_literals(self):
         workflow = (ROOT / '.github/workflows/verify.yml').read_text()
+        self.assertIn("github.repository_id != '1431014094' || github.repository != 'TheSlayer455/jake-wormhole'", workflow)
+        self.assertIn('contents: read', workflow)
+        self.assertNotIn('github.event.repository.private', workflow)
         self.assertNotIn('continue-on-error', workflow)
         self.assertNotIn('|| true', workflow)
         self.assertIn('persist-credentials: false', workflow)

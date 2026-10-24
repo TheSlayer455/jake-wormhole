@@ -1,6 +1,6 @@
 # Jake Wormhole engineering instructions
 
-Build this private, container-only reference project. Minx WORM-001 and its current child contracts define the work; original source milestone labels are not live ticket keys.
+Build this container-only reference project. Jake explicitly confirmed the public repository on October 24, 2026; see [decision 0006](docs/decisions/0006-public-source.md). Runtime state, credentials and raw evidence remain private. Minx WORM-001 and its current child contracts define the work; original source milestone labels are not live ticket keys.
 
 - Read README.md, docs/STATE.md, docs/ARCHITECTURE.md, docs/FIDELITY.md and handoff/CURRENT.md before changing code. Verify Git status, current source and evidence.
 - WORM-002 establishes the repository baseline. The application CLI and pipeline are not implemented by that ticket. Do not present proposed commands as working commands.
