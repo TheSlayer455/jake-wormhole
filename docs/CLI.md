@@ -1,5 +1,8 @@
 # CLI and versioned operations
 
+The separate [controlled parity CLI](CI-PARITY.md) documents the fixed manual/CI
+runner, seventeen synthetic cases, fresh-output requirements and failure controls.
+
 Use CPython 3.12.14 and Git. `python -m wormhole --help` describes this checkout. No pip dependencies are required. Commands/exits remain source-bound; a readable report can describe a failed gate.
 
 ## Local operations

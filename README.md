@@ -21,6 +21,10 @@ python -m unittest discover -s tests -v
 
 These commands do not provision homelab resources. Platform skips stay explicit. Repository hygiene checks selected patterns/links, not every possible secret.
 
+The [controlled parity runner](docs/CI-PARITY.md) adds a fixed seventeen-case
+synthetic operation with safe diagnostics and explicit process failure. Use a
+fresh clean checkout per mode; this is separate from actual container runs.
+
 The legacy synthetic fixture is a separate limited operation. Use dedicated absolute storage outside Git/vault sync, substituting an actual workspace and returned UUID:
 
 ```text
