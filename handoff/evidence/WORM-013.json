@@ -1,0 +1,546 @@
+{
+  "criteria": {
+    "AC-01": "Actual strict SSH/Ansible observes source bytes, manifest, payload hash, version, configuration and function in the explicitly derived target; seven rows retain exact expected/observed values and report parity.",
+    "AC-02": "Wrong candidate/image identities refuse before Terraform/helper allocation; the controlled version-expectation mismatch retains six pass and one fail, preserving the failed underlying operation.",
+    "AC-03": "Only generated synthetic reference source was reconstructed and copied into the derived Ubuntu target. No RHEL media upload, ISO manipulation, VM boot or production eligibility is claimed."
+  },
+  "historical_attempts": "WORM-013-initial-attempts.json",
+  "input_proofs": [
+    {
+      "bytes": 23867,
+      "name": "WORM-013-candidate-acceptance-dfff72b.json",
+      "sha256": "0c2e74ed896c0113ce2dc32bc69493447d3c55756bf968150e45d92fe7653df8"
+    },
+    {
+      "bytes": 92572,
+      "name": "WORM-013-homelab-source-qualification.json",
+      "sha256": "d094a23c87dff9353d3859b43430c08212abc8d8a5a53499ab4d37c2239eff18"
+    },
+    {
+      "bytes": 2927,
+      "name": "WORM-013-local-verification-dfff72be.json",
+      "sha256": "2c4c24e874a2b6d18b58af8d8c6a0f51679854d06c31c47fd65b2388f8c271a8"
+    },
+    {
+      "bytes": 1591,
+      "name": "WORM-013-candidate-acceptance-baaf2f6.json",
+      "sha256": "59d5540172495b488fdac0d87208760a0d3d4bad7021e70032d263548e38d4d2"
+    },
+    {
+      "bytes": 414,
+      "name": "WORM-013-failed-admission-baaf2f6.json",
+      "sha256": "542da9c0ebb5949d3fe02393cefec799c7b2b0fda36b820fd1204208b81ffec2"
+    },
+    {
+      "bytes": 882,
+      "name": "WORM-013-empty-recovery-baaf.json",
+      "sha256": "c5914e9620699efd1a7fe70b7876565e02099f733ef8ac01777d81bf551a00ec"
+    }
+  ],
+  "limits": [
+    "Controlled generated reference input only; no proprietary candidate or ISO was processed.",
+    "A passing negative harness preserves a failed underlying operation.",
+    "Stock qualified helper/provisioner remain original; the candidate-derived target is selected explicitly.",
+    "Derived candidate images and private state/evidence remain retained; exact owned containers/networks are absent.",
+    "Only selected runtime paths were scanned; this is not a comprehensive secret scan.",
+    "No complete pipeline, scanner/STIG compatibility, ISO boot/install or production eligibility is established.",
+    "Publication, hosted CI and Minx acceptance are separate later observations."
+  ],
+  "production_iso_eligible": false,
+  "qualification": {
+    "cases": [
+      {
+        "candidate_sha256": "60eabf9fa52b7b65b7df32e51a9735b73fb0b4f16217133cbbe2cc813654a7f9",
+        "checks": [
+          {
+            "check_id": "candidate-userland",
+            "evidence": [
+              "evidence/candidate-validation-plan.json",
+              "evidence/candidate-observations.json"
+            ],
+            "expected": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+            "observed": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-source-sha256",
+            "evidence": [
+              "evidence/candidate-validation-plan.json",
+              "evidence/candidate-observations.json"
+            ],
+            "expected": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+            "observed": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-manifest-sha256",
+            "evidence": [
+              "evidence/candidate-validation-plan.json",
+              "evidence/candidate-observations.json"
+            ],
+            "expected": "60eabf9fa52b7b65b7df32e51a9735b73fb0b4f16217133cbbe2cc813654a7f9",
+            "observed": "60eabf9fa52b7b65b7df32e51a9735b73fb0b4f16217133cbbe2cc813654a7f9",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-payload-sha256",
+            "evidence": [
+              "evidence/candidate-validation-plan.json",
+              "evidence/candidate-observations.json"
+            ],
+            "expected": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+            "observed": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-version",
+            "evidence": [
+              "evidence/candidate-validation-plan.json",
+              "evidence/candidate-observations.json"
+            ],
+            "expected": "1.0.0-reference",
+            "observed": "1.0.0-reference",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-configuration",
+            "evidence": [
+              "evidence/candidate-validation-plan.json",
+              "evidence/candidate-observations.json"
+            ],
+            "expected": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+            "observed": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-function",
+            "evidence": [
+              "evidence/candidate-validation-plan.json",
+              "evidence/candidate-observations.json"
+            ],
+            "expected": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+            "observed": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          }
+        ],
+        "chunk_manifest_sha256": "6c55b53898f6e3303501dd1de2a4077c75485835f529616bdfe261ffc56edcd4",
+        "cleanup": {
+          "primary_failure": null,
+          "private_state_removed": false,
+          "resources": [
+            {
+              "disposition": "absent",
+              "id": "84eb3fb3135d88e45e2ef8121f023d82a85f6694c69fc135bfc9e479c19ea586",
+              "kind": "container",
+              "role": "other-owned"
+            },
+            {
+              "disposition": "retained",
+              "id": "sha256:def4620ba3b5a455a2a1298c7136dc1dca8ad1eb11480f7b1b7ea143e0b36085",
+              "kind": "image",
+              "role": "retained-image"
+            },
+            {
+              "disposition": "absent",
+              "id": "deaa3e9451517ccac0c7324d4358514cc7d2face3588d905442ec27169f6adaf",
+              "kind": "container",
+              "role": "provisioner"
+            },
+            {
+              "disposition": "absent",
+              "id": "ed59d42b09e8d06c662a7f6358e9db9d81804ef833173664f2dae498de011474",
+              "kind": "container",
+              "role": "terraform-target"
+            },
+            {
+              "disposition": "absent",
+              "id": "51f0320e1eec4ae1e4d66f8317969a64db69c19f2238cb2b2a1862b44b5beac2",
+              "kind": "network",
+              "role": "terraform-network"
+            },
+            {
+              "disposition": "absent",
+              "id": "f74dc379d7acf3c00fda8bd6c3fdf95a2a3cf6434079e166d60c892d19eda61a",
+              "kind": "container",
+              "role": "helper"
+            }
+          ],
+          "status": "completed",
+          "unknown_outcome": false,
+          "unrelated_sentinel_unchanged": true
+        },
+        "created_at": "2026-10-23T17:54:59.891Z",
+        "credential_scan": {
+          "bytes_scanned": 302879,
+          "files_scanned": 62,
+          "public_provider_cache_excluded": true,
+          "secret_contents_exported": false,
+          "status": "pass"
+        },
+        "derived_image": "sha256:def4620ba3b5a455a2a1298c7136dc1dca8ad1eb11480f7b1b7ea143e0b36085",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 267401894,
+          "ordinary_files": 106,
+          "phase": "candidate-cleaned",
+          "sampled_at": "2026-10-23T17:55:47.174Z",
+          "unfollowed_links": 1
+        },
+        "failure_code": null,
+        "finished_at": "2026-10-23T17:55:47.195Z",
+        "network_id": "51f0320e1eec4ae1e4d66f8317969a64db69c19f2238cb2b2a1862b44b5beac2",
+        "operation_status": "passed",
+        "run_id": "c912efb0-a63b-439a-b4cb-b028ac74cbec",
+        "scenario": "healthy",
+        "source_sha256": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+        "status": "passed",
+        "stock_base_image": "sha256:6d15eb2c495d48c1eb6485a74d1adaef3e0e3a6e7c83063ba8459f90c27c683e",
+        "target_resource_id": "ed59d42b09e8d06c662a7f6358e9db9d81804ef833173664f2dae498de011474",
+        "test_contract_sha256": "59ebe12dd57aa41d3662ab1162b04d4be1f32fdd188cbac81b63c34b331f994f",
+        "validation_plan_sha256": "94bdcfc31febff6268f4bea17c6ba031fbcb586061c41c52f347bd1bc31bca69"
+      },
+      {
+        "candidate_sha256": "fe2ff4045e8e5e322817ba310619a18a82ed598db1c5f87fe6e4bc098e079d4a",
+        "checks": [],
+        "chunk_manifest_sha256": "1ed6c21d4ef96680527265751d345d2e82e1edf8b900a1dc799b5092ca8e6292",
+        "cleanup": {
+          "primary_failure": "candidate_binding_invalid",
+          "private_state_removed": false,
+          "resources": [
+            {
+              "disposition": "absent",
+              "id": "a1cb9c0d2afaf037d6095e4cee58f96b8591366e6524dd4d53ec1cd784fe5888",
+              "kind": "container",
+              "size_bytes": 0
+            },
+            {
+              "disposition": "retained",
+              "id": "sha256:9fb4a05dfc8e5259d3f7907bd389cd0e28e8a5084e35bf223f914c72b3e2b71f",
+              "kind": "image",
+              "size_bytes": 46925785
+            }
+          ],
+          "status": "completed",
+          "unknown_outcome": false,
+          "unrelated_sentinel_unchanged": true
+        },
+        "created_at": "2026-10-23T17:55:47.239Z",
+        "credential_scan": {
+          "bytes_scanned": 13448,
+          "files_scanned": 14,
+          "public_provider_cache_excluded": true,
+          "secret_contents_exported": false,
+          "status": "pass"
+        },
+        "derived_image": "sha256:9fb4a05dfc8e5259d3f7907bd389cd0e28e8a5084e35bf223f914c72b3e2b71f",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 1065970,
+          "ordinary_files": 36,
+          "phase": "candidate-cleaned",
+          "sampled_at": "2026-10-23T17:55:55.980Z",
+          "unfollowed_links": 0
+        },
+        "failure_code": "candidate_binding_invalid",
+        "finished_at": "2026-10-23T17:55:56.000Z",
+        "operation_status": "failed",
+        "run_id": "1ff477b0-d748-4e9b-9da3-82b8ac5391e9",
+        "scenario": "wrong-candidate",
+        "source_sha256": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+        "status": "passed",
+        "stock_base_image": "sha256:6d15eb2c495d48c1eb6485a74d1adaef3e0e3a6e7c83063ba8459f90c27c683e",
+        "test_contract_sha256": "59ebe12dd57aa41d3662ab1162b04d4be1f32fdd188cbac81b63c34b331f994f"
+      },
+      {
+        "candidate_sha256": "752cd49862a926682cc920f022367a6bdc241f26a78af313f424e5c7695a3f45",
+        "checks": [],
+        "chunk_manifest_sha256": "431e15e548bc1a61c8ed8a4b241d1a7f05211cc07667ac53905bc82e319e447a",
+        "cleanup": {
+          "primary_failure": "candidate_image_mismatch",
+          "private_state_removed": false,
+          "resources": [
+            {
+              "disposition": "absent",
+              "id": "c4753aa4bf0b0438963b1daab9b37dd059d2eae47f1775563fdcfe21fdeb647a",
+              "kind": "container",
+              "size_bytes": 0
+            },
+            {
+              "disposition": "retained",
+              "id": "sha256:40372999fb25910ce6e5dfac53a9bf087973e745fa7aefa6533b721e2708e954",
+              "kind": "image",
+              "size_bytes": 46925786
+            }
+          ],
+          "status": "completed",
+          "unknown_outcome": false,
+          "unrelated_sentinel_unchanged": true
+        },
+        "created_at": "2026-10-23T17:55:56.050Z",
+        "credential_scan": {
+          "bytes_scanned": 13442,
+          "files_scanned": 14,
+          "public_provider_cache_excluded": true,
+          "secret_contents_exported": false,
+          "status": "pass"
+        },
+        "derived_image": "sha256:40372999fb25910ce6e5dfac53a9bf087973e745fa7aefa6533b721e2708e954",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 1065964,
+          "ordinary_files": 36,
+          "phase": "candidate-cleaned",
+          "sampled_at": "2026-10-23T17:56:03.847Z",
+          "unfollowed_links": 0
+        },
+        "failure_code": "candidate_image_mismatch",
+        "finished_at": "2026-10-23T17:56:03.867Z",
+        "operation_status": "failed",
+        "run_id": "9e67de2c-11f0-4411-9aa7-7aa65491e449",
+        "scenario": "wrong-image",
+        "source_sha256": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+        "status": "passed",
+        "stock_base_image": "sha256:6d15eb2c495d48c1eb6485a74d1adaef3e0e3a6e7c83063ba8459f90c27c683e",
+        "test_contract_sha256": "59ebe12dd57aa41d3662ab1162b04d4be1f32fdd188cbac81b63c34b331f994f"
+      },
+      {
+        "candidate_sha256": "b646236bc85316d770ea40382fd5c5ef26803b35cd8d7a7ba2572b11458685fc",
+        "checks": [
+          {
+            "check_id": "candidate-userland",
+            "evidence": [
+              "evidence/candidate-validation-plan.json",
+              "evidence/candidate-observations.json"
+            ],
+            "expected": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+            "observed": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-source-sha256",
+            "evidence": [
+              "evidence/candidate-validation-plan.json",
+              "evidence/candidate-observations.json"
+            ],
+            "expected": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+            "observed": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-manifest-sha256",
+            "evidence": [
+              "evidence/candidate-validation-plan.json",
+              "evidence/candidate-observations.json"
+            ],
+            "expected": "b646236bc85316d770ea40382fd5c5ef26803b35cd8d7a7ba2572b11458685fc",
+            "observed": "b646236bc85316d770ea40382fd5c5ef26803b35cd8d7a7ba2572b11458685fc",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-payload-sha256",
+            "evidence": [
+              "evidence/candidate-validation-plan.json",
+              "evidence/candidate-observations.json"
+            ],
+            "expected": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+            "observed": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-version",
+            "evidence": [
+              "evidence/candidate-validation-plan.json",
+              "evidence/candidate-observations.json"
+            ],
+            "expected": "1.0.0-reference-controlled-mismatch",
+            "observed": "1.0.0-reference",
+            "required": true,
+            "status": "fail",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-configuration",
+            "evidence": [
+              "evidence/candidate-validation-plan.json",
+              "evidence/candidate-observations.json"
+            ],
+            "expected": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+            "observed": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-function",
+            "evidence": [
+              "evidence/candidate-validation-plan.json",
+              "evidence/candidate-observations.json"
+            ],
+            "expected": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+            "observed": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          }
+        ],
+        "chunk_manifest_sha256": "452f8cd4f5a2c2da244073db845cebcef5e9c4a377debaa7ea00535a6f4611d9",
+        "cleanup": {
+          "primary_failure": "candidate_required_check_mismatch",
+          "private_state_removed": false,
+          "resources": [
+            {
+              "disposition": "absent",
+              "id": "4dfdc2af4ce6e75166b5fa48ea8d4a4accf1e35fcee3109e37aa86b3edaeda7f",
+              "kind": "container",
+              "role": "other-owned"
+            },
+            {
+              "disposition": "retained",
+              "id": "sha256:18a0fd6d757c8ef0bd0d9373ad7a4a6b4beadbeee62db8fe8b0af65be7082967",
+              "kind": "image",
+              "role": "retained-image"
+            },
+            {
+              "disposition": "absent",
+              "id": "ab14700502f8fc4b691797a697be89936eec7e4ce6253b26847bda93b127f43e",
+              "kind": "container",
+              "role": "provisioner"
+            },
+            {
+              "disposition": "absent",
+              "id": "2d762551d63adf724dfb143a01feb6450444475c00f45319d0826cd2047d9bad",
+              "kind": "container",
+              "role": "terraform-target"
+            },
+            {
+              "disposition": "absent",
+              "id": "c525ca38486fdd936a5a46702e06d35c9bbd59c0a513a5b621b0bb3170d47dd6",
+              "kind": "network",
+              "role": "terraform-network"
+            },
+            {
+              "disposition": "absent",
+              "id": "2b74b05a3af1c74327ff2e3418373c4f0c4450a1e08f33b12a2d58832900d50b",
+              "kind": "container",
+              "role": "helper"
+            }
+          ],
+          "status": "completed",
+          "unknown_outcome": false,
+          "unrelated_sentinel_unchanged": true
+        },
+        "created_at": "2026-10-23T17:56:03.917Z",
+        "credential_scan": {
+          "bytes_scanned": 303347,
+          "files_scanned": 62,
+          "public_provider_cache_excluded": true,
+          "secret_contents_exported": false,
+          "status": "pass"
+        },
+        "derived_image": "sha256:18a0fd6d757c8ef0bd0d9373ad7a4a6b4beadbeee62db8fe8b0af65be7082967",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 267402360,
+          "ordinary_files": 106,
+          "phase": "candidate-cleaned",
+          "sampled_at": "2026-10-23T17:56:50.980Z",
+          "unfollowed_links": 1
+        },
+        "failure_code": "candidate_required_check_mismatch",
+        "finished_at": "2026-10-23T17:56:51.000Z",
+        "network_id": "c525ca38486fdd936a5a46702e06d35c9bbd59c0a513a5b621b0bb3170d47dd6",
+        "operation_status": "failed",
+        "run_id": "297cece7-858c-4d45-977f-3bb19ea4429e",
+        "scenario": "version-expectation-mismatch",
+        "source_sha256": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+        "status": "passed",
+        "stock_base_image": "sha256:6d15eb2c495d48c1eb6485a74d1adaef3e0e3a6e7c83063ba8459f90c27c683e",
+        "target_resource_id": "2d762551d63adf724dfb143a01feb6450444475c00f45319d0826cd2047d9bad",
+        "test_contract_sha256": "59ebe12dd57aa41d3662ab1162b04d4be1f32fdd188cbac81b63c34b331f994f",
+        "validation_plan_sha256": "bc531319f5e407daa182ff0478f543fbcb409febc2c9ad28cb8c08edef7e5a0e"
+      }
+    ],
+    "mode": "container-reference",
+    "observed_at": "2026-10-23T17:56:51.036437+00:00",
+    "operation": "real-candidate-acceptance-suite",
+    "production_iso_eligible": false,
+    "run_id": "36f50883-2de6-43bc-988b-1f7087714e97",
+    "runtime_pipeline_complete": false,
+    "schema_version": "1.0",
+    "source_dirty": false,
+    "source_revision": "dfff72bec8bbea050bae73e6bba846e388f449e9",
+    "status": "passed",
+    "suite_run_id": "36f50883-2de6-43bc-988b-1f7087714e97"
+  },
+  "review": {
+    "kind": "Independent Codex engineering source review, separate from owner acceptance.",
+    "material_findings_open": 0,
+    "reviewed_source_revision": "dfff72bec8bbea050bae73e6bba846e388f449e9",
+    "reviewer": "Codex subagent /root/ui"
+  },
+  "runtime_pipeline_complete": false,
+  "schema_version": "1.0",
+  "source_fixtures": {
+    "environments": {
+      "homelab_linux": {
+        "allocation_performed": false,
+        "docker": "29.6.0",
+        "elapsed_seconds": 24.693,
+        "passed": 328,
+        "python": "3.12.3",
+        "skipped": 2,
+        "tests": 330
+      },
+      "native_linux_git_fixture": {
+        "elapsed_seconds": 18.731,
+        "passed": 327,
+        "python": "3.12.3",
+        "skipped": 3,
+        "tests": 330
+      },
+      "windows": {
+        "elapsed_seconds": 24.651,
+        "passed": 195,
+        "python": "3.12.14",
+        "skipped": 135,
+        "tests": 330
+      }
+    },
+    "kind": "Source fixtures, separate from real runtime acceptance.",
+    "limits": [
+      "The local summary was recorded from completed tool outputs; its raw stdout/stderr was not separately saved.",
+      "Platform/privilege skips remain unverified in the environment that skipped them.",
+      "The repository verifier is not a comprehensive secret scanner."
+    ],
+    "repository_baseline": {
+      "local_link_targets_checked": 129,
+      "passed": true,
+      "tracked_files": 148
+    },
+    "tested_source_revision": "dfff72bec8bbea050bae73e6bba846e388f449e9"
+  },
+  "tested_source_revision": "dfff72bec8bbea050bae73e6bba846e388f449e9",
+  "ticket": "WORM-013"
+}

@@ -1,0 +1,292 @@
+WORMHOLE OBSERVED SOFTWARE VERSION DESCRIPTION
+Status: passed
+Run: 63ae38dc-161e-44f1-b5e4-28acc4f0916b
+Controller source: 14d510044757f588c256e27c62a0cbad037d7ca1
+Plan SHA256: 4840ee91735fbb27247e7cd2feb1a2936ed757e2100226688b219c9cc394de0a
+Collector version: 1.0
+Collector program SHA256: dc3aef3151d711a92d08a29c216c2e5a6cdb6943eb37f5948b04425d8e6c8c4a
+Helper source SHA256: 224d57c974ea932db23cf028612ca91d586d1036e79c7267aa2dc365228c82a7
+Readiness source SHA256: f7b3c82e75d9c8f3bbed8929821d415c38604dad0b6f1fb437ca0b6b22c8425b
+Target: target-001
+Resource: 87610339b8ee252bb05b657533e0bb1860673b65e2130f15ea5eb882b142886e
+Image: sha256:215466261dd3dffbd952e215ba946093eb4920e9df9ec962c560f1b5400c3d19
+Candidate SHA256: d0f1981b52fdf47328e7f68cfd12d7df529d02bbd655d46f93fc25c93895944c
+Source candidate SHA256: 8be6cf61a84b4916168a951fc42ce77dbc64b7d9cf8dab031708a4d92d696b44
+Candidate content SHA256: f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6
+Capture: private/qualification-helper-software-inventory-0.log
+Capture SHA256: 8080e3cb4593999c5954dfdd79cbc045bf2c04ae6676829a8c23e448ac861f82
+Capture bytes: 24009
+Capture complete: true
+Canonical collector bytes: 17538
+Canonical collector SHA256: d322e30c2d34ad4a74f1604d3ecec42c45a90d1ad54c03bfdee4d14fa0eacd80
+
+Target userland: Red Hat Enterprise Linux (rhel 9.8)
+Target architecture: x86_64
+Package manager: rpm
+Installed target packages: 188
+  acl | epoch=0 | version=2.4.0 | release=1.el9_8 | arch=x86_64
+  alternatives | epoch=0 | version=1.24 | release=2.el9 | arch=x86_64
+  attr | epoch=0 | version=2.6.0 | release=1.el9_8 | arch=x86_64
+  audit-libs | epoch=0 | version=3.1.5 | release=8.el9 | arch=x86_64
+  basesystem | epoch=0 | version=11 | release=13.el9 | arch=noarch
+  bash | epoch=0 | version=5.1.8 | release=9.el9 | arch=x86_64
+  bzip2-libs | epoch=0 | version=1.0.8 | release=11.el9 | arch=x86_64
+  ca-certificates | epoch=0 | version=2026.2.92_v9.0.319 | release=90.3.el9_8 | arch=noarch
+  coreutils-single | epoch=0 | version=8.32 | release=41.el9_8.1 | arch=x86_64
+  cracklib | epoch=0 | version=2.9.6 | release=28.el9 | arch=x86_64
+  cracklib-dicts | epoch=0 | version=2.9.6 | release=28.el9 | arch=x86_64
+  crypto-policies | epoch=0 | version=20260224 | release=1.gitea0f072.el9_8 | arch=noarch
+  crypto-policies-scripts | epoch=0 | version=20260224 | release=1.gitea0f072.el9_8 | arch=noarch
+  curl-minimal | epoch=0 | version=7.76.1 | release=40.el9_8.8 | arch=x86_64
+  cyrus-sasl-lib | epoch=0 | version=2.1.27 | release=22.el9 | arch=x86_64
+  dbus | epoch=1 | version=1.12.20 | release=8.el9 | arch=x86_64
+  dbus-broker | epoch=0 | version=28 | release=9.el9_8 | arch=x86_64
+  dbus-common | epoch=1 | version=1.12.20 | release=8.el9 | arch=noarch
+  dbus-libs | epoch=1 | version=1.12.20 | release=8.el9 | arch=x86_64
+  dejavu-sans-fonts | epoch=0 | version=2.37 | release=18.el9 | arch=noarch
+  dmidecode | epoch=1 | version=3.6 | release=2.el9 | arch=x86_64
+  dnf | epoch=0 | version=4.14.0 | release=34.el9_8 | arch=noarch
+  dnf-data | epoch=0 | version=4.14.0 | release=34.el9_8 | arch=noarch
+  elfutils-default-yama-scope | epoch=0 | version=0.194 | release=1.el9 | arch=noarch
+  elfutils-libelf | epoch=0 | version=0.194 | release=1.el9 | arch=x86_64
+  elfutils-libs | epoch=0 | version=0.194 | release=1.el9 | arch=x86_64
+  expat | epoch=0 | version=2.5.0 | release=6.el9_8.7 | arch=x86_64
+  file-libs | epoch=0 | version=5.39 | release=17.el9 | arch=x86_64
+  filesystem | epoch=0 | version=3.16 | release=5.el9 | arch=x86_64
+  findutils | epoch=1 | version=4.8.0 | release=7.el9 | arch=x86_64
+  fonts-filesystem | epoch=1 | version=2.0.5 | release=7.el9.1 | arch=noarch
+  gawk | epoch=0 | version=5.1.0 | release=6.el9_8.1 | arch=x86_64
+  gdb-gdbserver | epoch=0 | version=16.3 | release=3.1.el9_8 | arch=x86_64
+  gdbm-libs | epoch=1 | version=1.23 | release=1.el9 | arch=x86_64
+  glib2 | epoch=0 | version=2.68.4 | release=19.el9_8.10 | arch=x86_64
+  glibc | epoch=0 | version=2.34 | release=283.el9_8 | arch=x86_64
+  glibc-common | epoch=0 | version=2.34 | release=283.el9_8 | arch=x86_64
+  glibc-minimal-langpack | epoch=0 | version=2.34 | release=283.el9_8 | arch=x86_64
+  gmp | epoch=1 | version=6.2.0 | release=13.el9 | arch=x86_64
+  gnupg2 | epoch=0 | version=2.3.3 | release=5.el9_7 | arch=x86_64
+  gnutls | epoch=0 | version=3.8.10 | release=9.el9_8 | arch=x86_64
+  gobject-introspection | epoch=0 | version=1.68.0 | release=11.el9 | arch=x86_64
+  gpgme | epoch=0 | version=1.15.1 | release=6.el9 | arch=x86_64
+  grep | epoch=0 | version=3.6 | release=5.el9 | arch=x86_64
+  gzip | epoch=0 | version=1.12 | release=2.el9_8 | arch=x86_64
+  ima-evm-utils | epoch=0 | version=1.6.2 | release=2.el9 | arch=x86_64
+  iproute | epoch=0 | version=6.17.0 | release=2.el9 | arch=x86_64
+  json-c | epoch=0 | version=0.14 | release=11.el9 | arch=x86_64
+  json-glib | epoch=0 | version=1.6.6 | release=1.el9 | arch=x86_64
+  keyutils | epoch=0 | version=1.6.3 | release=1.el9 | arch=x86_64
+  keyutils-libs | epoch=0 | version=1.6.3 | release=1.el9 | arch=x86_64
+  kmod-libs | epoch=0 | version=28 | release=11.el9 | arch=x86_64
+  krb5-libs | epoch=0 | version=1.21.1 | release=10.el9_8 | arch=x86_64
+  langpacks-core-en | epoch=0 | version=3.0 | release=16.el9 | arch=noarch
+  langpacks-core-font-en | epoch=0 | version=3.0 | release=16.el9 | arch=noarch
+  langpacks-en | epoch=0 | version=3.0 | release=16.el9 | arch=noarch
+  libacl | epoch=0 | version=2.4.0 | release=1.el9_8 | arch=x86_64
+  libarchive | epoch=0 | version=3.5.3 | release=11.el9_8 | arch=x86_64
+  libassuan | epoch=0 | version=2.5.5 | release=3.el9 | arch=x86_64
+  libattr | epoch=0 | version=2.6.0 | release=1.el9_8 | arch=x86_64
+  libblkid | epoch=0 | version=2.37.4 | release=25.el9 | arch=x86_64
+  libbpf | epoch=2 | version=1.5.0 | release=3.el9 | arch=x86_64
+  libcap | epoch=0 | version=2.48 | release=10.el9_8.1 | arch=x86_64
+  libcap-ng | epoch=0 | version=0.8.2 | release=7.el9 | arch=x86_64
+  libcom_err | epoch=0 | version=1.46.5 | release=8.el9 | arch=x86_64
+  libcomps | epoch=0 | version=0.1.18 | release=1.el9 | arch=x86_64
+  libcurl-minimal | epoch=0 | version=7.76.1 | release=40.el9_8.8 | arch=x86_64
+  libdb | epoch=0 | version=5.3.28 | release=57.el9_6 | arch=x86_64
+  libdnf | epoch=0 | version=0.69.0 | release=18.el9 | arch=x86_64
+  libdnf-plugin-subscription-manager | epoch=0 | version=1.29.50 | release=1.el9 | arch=x86_64
+  libeconf | epoch=0 | version=0.4.1 | release=7.el9_8 | arch=x86_64
+  libevent | epoch=0 | version=2.1.13 | release=1.el9_8 | arch=x86_64
+  libfdisk | epoch=0 | version=2.37.4 | release=25.el9 | arch=x86_64
+  libffi | epoch=0 | version=3.4.2 | release=8.el9 | arch=x86_64
+  libgcc | epoch=0 | version=11.5.0 | release=14.el9 | arch=x86_64
+  libgcrypt | epoch=0 | version=1.10.0 | release=13.el9_8 | arch=x86_64
+  libgomp | epoch=0 | version=11.5.0 | release=14.el9 | arch=x86_64
+  libgpg-error | epoch=0 | version=1.42 | release=5.el9 | arch=x86_64
+  libidn2 | epoch=0 | version=2.3.0 | release=7.el9 | arch=x86_64
+  libksba | epoch=0 | version=1.5.1 | release=7.el9 | arch=x86_64
+  libmnl | epoch=0 | version=1.0.4 | release=16.el9_4 | arch=x86_64
+  libmodulemd | epoch=0 | version=2.13.0 | release=2.el9 | arch=x86_64
+  libmount | epoch=0 | version=2.37.4 | release=25.el9 | arch=x86_64
+  libnghttp2 | epoch=0 | version=1.43.0 | release=6.el9_8.2 | arch=x86_64
+  libpwquality | epoch=0 | version=1.4.4 | release=8.el9 | arch=x86_64
+  librepo | epoch=0 | version=1.19.0 | release=1.el9 | arch=x86_64
+  libreport-filesystem | epoch=0 | version=2.15.2 | release=6.el9 | arch=noarch
+  librhsm | epoch=0 | version=0.0.3 | release=9.el9 | arch=x86_64
+  libseccomp | epoch=0 | version=2.5.2 | release=2.el9 | arch=x86_64
+  libselinux | epoch=0 | version=3.6 | release=3.el9 | arch=x86_64
+  libsemanage | epoch=0 | version=3.6 | release=5.el9_6 | arch=x86_64
+  libsepol | epoch=0 | version=3.6 | release=3.el9 | arch=x86_64
+  libsigsegv | epoch=0 | version=2.13 | release=4.el9 | arch=x86_64
+  libsmartcols | epoch=0 | version=2.37.4 | release=25.el9 | arch=x86_64
+  libsolv | epoch=0 | version=0.7.24 | release=6.el9_8 | arch=x86_64
+  libstdc++ | epoch=0 | version=11.5.0 | release=14.el9 | arch=x86_64
+  libtasn1 | epoch=0 | version=4.16.0 | release=10.el9_8 | arch=x86_64
+  libtool-ltdl | epoch=0 | version=2.4.6 | release=46.el9 | arch=x86_64
+  libunistring | epoch=0 | version=0.9.10 | release=15.el9 | arch=x86_64
+  libuser | epoch=0 | version=0.63 | release=17.el9 | arch=x86_64
+  libutempter | epoch=0 | version=1.2.1 | release=6.el9 | arch=x86_64
+  libuuid | epoch=0 | version=2.37.4 | release=25.el9 | arch=x86_64
+  libverto | epoch=0 | version=0.3.2 | release=3.el9 | arch=x86_64
+  libxcrypt | epoch=0 | version=4.4.18 | release=3.el9 | arch=x86_64
+  libxml2 | epoch=0 | version=2.9.13 | release=14.el9_8.5 | arch=x86_64
+  libyaml | epoch=0 | version=0.2.5 | release=7.el9 | arch=x86_64
+  libzstd | epoch=0 | version=1.5.5 | release=1.el9 | arch=x86_64
+  lua-libs | epoch=0 | version=5.4.4 | release=4.el9 | arch=x86_64
+  lz4-libs | epoch=0 | version=1.9.3 | release=5.el9 | arch=x86_64
+  mpfr | epoch=0 | version=4.1.0 | release=10.el9 | arch=x86_64
+  ncurses-base | epoch=0 | version=6.2 | release=12.20210508.el9 | arch=noarch
+  ncurses-libs | epoch=0 | version=6.2 | release=12.20210508.el9 | arch=x86_64
+  nettle | epoch=0 | version=3.10.1 | release=1.el9 | arch=x86_64
+  npth | epoch=0 | version=1.6 | release=8.el9 | arch=x86_64
+  openldap | epoch=0 | version=2.6.8 | release=4.el9 | arch=x86_64
+  openssh | epoch=0 | version=9.9p1 | release=13.el9_8 | arch=x86_64
+  openssh-server | epoch=0 | version=9.9p1 | release=13.el9_8 | arch=x86_64
+  openssl | epoch=1 | version=3.5.8 | release=2.el9_8 | arch=x86_64
+  openssl-fips-provider | epoch=0 | version=3.0.7 | release=11.el9_8 | arch=x86_64
+  openssl-fips-provider-so | epoch=0 | version=3.0.7 | release=11.el9_8 | arch=x86_64
+  openssl-libs | epoch=1 | version=3.5.8 | release=2.el9_8 | arch=x86_64
+  p11-kit | epoch=0 | version=0.26.4 | release=1.el9_8 | arch=x86_64
+  p11-kit-trust | epoch=0 | version=0.26.4 | release=1.el9_8 | arch=x86_64
+  pam | epoch=0 | version=1.5.1 | release=28.el9_8.1 | arch=x86_64
+  passwd | epoch=0 | version=0.80 | release=12.el9 | arch=x86_64
+  pcre | epoch=0 | version=8.44 | release=4.el9 | arch=x86_64
+  pcre2 | epoch=0 | version=10.40 | release=7.el9_8 | arch=x86_64
+  pcre2-syntax | epoch=0 | version=10.40 | release=7.el9_8 | arch=noarch
+  popt | epoch=0 | version=1.18 | release=8.el9 | arch=x86_64
+  psmisc | epoch=0 | version=23.4 | release=3.el9 | arch=x86_64
+  python3 | epoch=0 | version=3.9.25 | release=7.el9_8.3 | arch=x86_64
+  python3-chardet | epoch=0 | version=4.0.0 | release=5.el9 | arch=noarch
+  python3-cloud-what | epoch=0 | version=1.29.50 | release=1.el9 | arch=x86_64
+  python3-dateutil | epoch=1 | version=2.9.0.post0 | release=1.el9_7 | arch=noarch
+  python3-dbus | epoch=0 | version=1.2.18 | release=2.el9 | arch=x86_64
+  python3-decorator | epoch=0 | version=4.4.2 | release=6.el9 | arch=noarch
+  python3-dnf | epoch=0 | version=4.14.0 | release=34.el9_8 | arch=noarch
+  python3-dnf-plugins-core | epoch=0 | version=4.3.0 | release=26.el9 | arch=noarch
+  python3-gobject-base | epoch=0 | version=3.40.1 | release=6.el9 | arch=x86_64
+  python3-gobject-base-noarch | epoch=0 | version=3.40.1 | release=6.el9 | arch=noarch
+  python3-gpg | epoch=0 | version=1.15.1 | release=6.el9 | arch=x86_64
+  python3-hawkey | epoch=0 | version=0.69.0 | release=18.el9 | arch=x86_64
+  python3-idna | epoch=0 | version=2.10 | release=8.el9_8 | arch=noarch
+  python3-iniparse | epoch=0 | version=0.4 | release=45.el9 | arch=noarch
+  python3-inotify | epoch=0 | version=0.9.6 | release=25.el9 | arch=noarch
+  python3-libcomps | epoch=0 | version=0.1.18 | release=1.el9 | arch=x86_64
+  python3-libdnf | epoch=0 | version=0.69.0 | release=18.el9 | arch=x86_64
+  python3-librepo | epoch=0 | version=1.19.0 | release=1.el9 | arch=x86_64
+  python3-libs | epoch=0 | version=3.9.25 | release=7.el9_8.3 | arch=x86_64
+  python3-pip-wheel | epoch=0 | version=21.3.1 | release=2.el9_8 | arch=noarch
+  python3-pysocks | epoch=0 | version=1.7.1 | release=12.el9 | arch=noarch
+  python3-requests | epoch=0 | version=2.25.1 | release=10.el9_6 | arch=noarch
+  python3-rpm | epoch=0 | version=4.16.1.3 | release=40.el9 | arch=x86_64
+  python3-setuptools | epoch=0 | version=53.0.0 | release=15.el9 | arch=noarch
+  python3-setuptools-wheel | epoch=0 | version=53.0.0 | release=15.el9 | arch=noarch
+  python3-six | epoch=0 | version=1.15.0 | release=9.el9 | arch=noarch
+  python3-subscription-manager-rhsm | epoch=0 | version=1.29.50 | release=1.el9 | arch=x86_64
+  python3-systemd | epoch=0 | version=234 | release=19.el9 | arch=x86_64
+  python3-urllib3 | epoch=0 | version=1.26.5 | release=8.el9_8 | arch=noarch
+  readline | epoch=0 | version=8.1 | release=4.el9 | arch=x86_64
+  redhat-release | epoch=0 | version=9.8 | release=1.0.el9 | arch=x86_64
+  rootfiles | epoch=0 | version=8.1 | release=35.el9 | arch=noarch
+  rpm | epoch=0 | version=4.16.1.3 | release=40.el9 | arch=x86_64
+  rpm-build-libs | epoch=0 | version=4.16.1.3 | release=40.el9 | arch=x86_64
+  rpm-libs | epoch=0 | version=4.16.1.3 | release=40.el9 | arch=x86_64
+  rpm-sign-libs | epoch=0 | version=4.16.1.3 | release=40.el9 | arch=x86_64
+  sed | epoch=0 | version=4.8 | release=10.el9 | arch=x86_64
+  setup | epoch=0 | version=2.13.7 | release=10.el9 | arch=noarch
+  shadow-utils | epoch=2 | version=4.9 | release=16.el9 | arch=x86_64
+  sqlite-libs | epoch=0 | version=3.34.1 | release=11.el9_8 | arch=x86_64
+  subscription-manager | epoch=0 | version=1.29.50 | release=1.el9 | arch=x86_64
+  subscription-manager-rhsm-certificates | epoch=0 | version=20220623 | release=1.el9 | arch=noarch
+  systemd | epoch=0 | version=252 | release=67.el9_8.6 | arch=x86_64
+  systemd-libs | epoch=0 | version=252 | release=67.el9_8.6 | arch=x86_64
+  systemd-pam | epoch=0 | version=252 | release=67.el9_8.6 | arch=x86_64
+  systemd-rpm-macros | epoch=0 | version=252 | release=67.el9_8.6 | arch=noarch
+  tar | epoch=2 | version=1.34 | release=13.el9_8 | arch=x86_64
+  tpm2-tss | epoch=0 | version=3.2.3 | release=1.el9 | arch=x86_64
+  tzdata | epoch=0 | version=2026e | release=1.el9_8 | arch=noarch
+  usermode | epoch=0 | version=1.114 | release=7.el9 | arch=x86_64
+  util-linux | epoch=0 | version=2.37.4 | release=25.el9 | arch=x86_64
+  util-linux-core | epoch=0 | version=2.37.4 | release=25.el9 | arch=x86_64
+  vim-minimal | epoch=2 | version=8.2.2637 | release=26.el9_8.23 | arch=x86_64
+  virt-what | epoch=0 | version=1.27 | release=2.el9 | arch=x86_64
+  which | epoch=0 | version=2.21 | release=30.el9_6 | arch=x86_64
+  xz-libs | epoch=0 | version=5.2.5 | release=8.el9_0 | arch=x86_64
+  yum | epoch=0 | version=4.14.0 | release=34.el9_8 | arch=noarch
+  zlib | epoch=0 | version=1.2.11 | release=40.el9 | arch=x86_64
+RPM virtual key headers (not application packages): 2
+  gpg-pubkey | epoch=0 | version=5a6340b3 | release=6229229e | arch=null (reported absent)
+  gpg-pubkey | epoch=0 | version=fd431d51 | release=4ae0493b | arch=null (reported absent)
+Payload version: 1.0.0-reference
+Payload SHA256: 6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193
+Payload manifest SHA256: d0f1981b52fdf47328e7f68cfd12d7df529d02bbd655d46f93fc25c93895944c
+Payload content SHA256: f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6
+Payload source SHA256: 3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2
+  source.synthetic.bin | bytes=262181 | sha256=3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2
+  payload.py | bytes=535 | sha256=6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193
+  version.txt | bytes=16 | sha256=26c5590f073239bf0c190f79334ee92244b72b3b5bad93db8a713287e3b3d466
+  config.json | bytes=63 | sha256=4a3204999ada4f9dee4681076d1dafbfbfaafa85626e2219273e629898534119
+Shared host kernel release (not target package inventory): 6.8.0-142-generic
+
+Execution provenance (separate from installed target packages)
+  Helper image: sha256:4f7f306ecd431b4b48169777966d88c1f09f2139506176a6b85203f5bae69a71
+  Helper Python: 3.12.3
+  Helper Ansible Core: 2.21.5
+  Provisioner image: sha256:6d15eb2c495d48c1eb6485a74d1adaef3e0e3a6e7c83063ba8459f90c27c683e
+  Provisioner Terraform: 1.17.0
+  Provisioner provider: 4.6.0
+
+Required checks: 12
+target-001 / target-identity: pass
+  expected: 87610339b8ee252bb05b657533e0bb1860673b65e2130f15ea5eb882b142886e
+  observed: 87610339b8ee252bb05b657533e0bb1860673b65e2130f15ea5eb882b142886e
+  evidence: evidence/software-inventory-plan.json, evidence/software-inventory.json
+target-001 / userland: pass
+  expected: {"id":"rhel","version_id":"9.8"}
+  observed: {"id":"rhel","version_id":"9.8"}
+  evidence: evidence/software-inventory-plan.json, evidence/software-inventory.json
+target-001 / package-inventory: pass
+  expected: complete installed native package database
+  observed: complete installed native package database
+  evidence: evidence/software-inventory-plan.json, evidence/software-inventory.json
+target-001 / payload-version: pass
+  expected: 1.0.0-reference
+  observed: 1.0.0-reference
+  evidence: evidence/software-inventory-plan.json, evidence/software-inventory.json
+target-001 / payload-sha256: pass
+  expected: 6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193
+  observed: 6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193
+  evidence: evidence/software-inventory-plan.json, evidence/software-inventory.json
+target-001 / candidate-manifest-sha256: pass
+  expected: d0f1981b52fdf47328e7f68cfd12d7df529d02bbd655d46f93fc25c93895944c
+  observed: d0f1981b52fdf47328e7f68cfd12d7df529d02bbd655d46f93fc25c93895944c
+  evidence: evidence/software-inventory-plan.json, evidence/software-inventory.json
+target-001 / candidate-content-sha256: pass
+  expected: f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6
+  observed: f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6
+  evidence: evidence/software-inventory-plan.json, evidence/software-inventory.json
+target-001 / candidate-source-sha256: pass
+  expected: 3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2
+  observed: 3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2
+  evidence: evidence/software-inventory-plan.json, evidence/software-inventory.json
+target-001 / package-openssh: pass
+  expected: {"arch":"x86_64","epoch":0,"name":"openssh","release":"13.el9_8","version":"9.9p1"}
+  observed: {"arch":"x86_64","epoch":0,"name":"openssh","release":"13.el9_8","version":"9.9p1"}
+  evidence: evidence/software-inventory-plan.json, evidence/software-inventory.json
+target-001 / package-openssh-server: pass
+  expected: {"arch":"x86_64","epoch":0,"name":"openssh-server","release":"13.el9_8","version":"9.9p1"}
+  observed: {"arch":"x86_64","epoch":0,"name":"openssh-server","release":"13.el9_8","version":"9.9p1"}
+  evidence: evidence/software-inventory-plan.json, evidence/software-inventory.json
+target-001 / package-python3: pass
+  expected: {"arch":"x86_64","epoch":0,"name":"python3","release":"7.el9_8.3","version":"3.9.25"}
+  observed: {"arch":"x86_64","epoch":0,"name":"python3","release":"7.el9_8.3","version":"3.9.25"}
+  evidence: evidence/software-inventory-plan.json, evidence/software-inventory.json
+target-001 / package-shadow-utils: pass
+  expected: {"arch":"x86_64","epoch":2,"name":"shadow-utils","release":"16.el9","version":"4.9"}
+  observed: {"arch":"x86_64","epoch":2,"name":"shadow-utils","release":"16.el9","version":"4.9"}
+  evidence: evidence/software-inventory-plan.json, evidence/software-inventory.json
+Primary failure: none
+Unknown outcome: false
+Updated: 2026-10-23T19:40:36.945Z
+Container userland observation; the kernel is shared with the host.
+Helper and provisioner versions are execution provenance, not target packages.
+No VM installation, ISO boot, operating-system STIG or scanner acceptance.
+Complete runtime pipeline and production ISO eligibility remain false.

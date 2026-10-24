@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:jake-wormhole:cleanup:1.0",
+  "title": "Scoped cleanup attempt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "attempt_id",
+    "created_at",
+    "mode",
+    "operation",
+    "primary_failure",
+    "private_state_removed",
+    "production_iso_eligible",
+    "reason",
+    "resources",
+    "run_id",
+    "runtime_pipeline_complete",
+    "schema_version",
+    "secondary_failures",
+    "source_dirty",
+    "source_revision",
+    "status",
+    "terraform_state_retained",
+    "unknown_outcome",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "run_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "attempt_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "source_revision": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "source_dirty": {
+      "type": "boolean"
+    },
+    "mode": {
+      "enum": [
+        "fixture",
+        "container-reference"
+      ]
+    },
+    "operation": {
+      "const": "scoped-cleanup"
+    },
+    "reason": {
+      "enum": [
+        "success",
+        "failure",
+        "cancelled"
+      ]
+    },
+    "status": {
+      "enum": [
+        "in-progress",
+        "completed",
+        "failed",
+        "blocked"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 32
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 32
+    },
+    "primary_failure": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "code",
+            "recorded_at"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,79}$"
+            },
+            "recorded_at": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 32
+            }
+          }
+        }
+      ]
+    },
+    "secondary_failures": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "recorded_at"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,79}$"
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 32
+          }
+        }
+      }
+    },
+    "resources": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "id",
+          "role",
+          "disposition"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "container",
+              "network",
+              "image"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^(?:[a-f0-9]{64}|sha256:[a-f0-9]{64})$"
+          },
+          "role": {
+            "enum": [
+              "provisioner",
+              "terraform-target",
+              "terraform-network",
+              "helper",
+              "retained-image",
+              "other-owned"
+            ]
+          },
+          "disposition": {
+            "enum": [
+              "pending",
+              "absent",
+              "retained",
+              "unknown"
+            ]
+          }
+        }
+      }
+    },
+    "unknown_outcome": {
+      "type": "boolean"
+    },
+    "terraform_state_retained": {
+      "const": true
+    },
+    "private_state_removed": {
+      "const": false
+    },
+    "runtime_pipeline_complete": {
+      "const": false
+    },
+    "production_iso_eligible": {
+      "const": false
+    }
+  },
+  "$comment": "The generated Python validator also checks canonical identities, unique resource IDs and completed-outcome consistency."
+}

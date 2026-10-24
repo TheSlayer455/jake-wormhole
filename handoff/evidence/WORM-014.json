@@ -1,0 +1,1644 @@
+{
+  "criteria": {
+    "AC-01": "The actual UBI9.8-derived target reports full RPM NEVRAs and custom payload source/manifest/content/hash/version/configuration/function through strict SSH/Ansible, bound to the candidate/image/Run.",
+    "AC-02": "Actual absent optional openssh-clients, controlled wrong-version expectation and unsupported OS applicability retain explicit failed/unverified rows without repairing the target to pass.",
+    "AC-03": "Evidence names the UBI9.8-derived container userland and separate shared-host kernel limits; it does not claim a RHEL VM installation, boot test, scanner/STIG result or production eligibility."
+  },
+  "history": "WORM-014-initial-attempts.json",
+  "input_proofs": [
+    {
+      "bytes": 931,
+      "name": "WORM-014-delivery-source.json",
+      "sha256": "4735dbc7036199345462eaa69a18063e0ccaa85142441824bf63391a18edcf9f"
+    },
+    {
+      "bytes": 98115,
+      "name": "WORM-014-rpm-suite-db5d8e7.json",
+      "sha256": "2c08a86bfa3e1d95909995ae291bf25ae874a387bd4157ea1f17a0c93f20827d"
+    },
+    {
+      "bytes": 10692,
+      "name": "WORM-014-ubuntu-regression-db5d8e7.json",
+      "sha256": "237594ce3cbb222800cece6bc2d704fcd5aa8c8eb2299fd7151052a3c8fff740"
+    },
+    {
+      "bytes": 34339,
+      "name": "WORM-014-db5d8e7-ubuntu-readback.json",
+      "sha256": "1858221693b76a31b1d545b49b4ae5a5c1a8a6c1aaeb9d4568548da0637df0c4"
+    },
+    {
+      "bytes": 115371,
+      "name": "WORM-014-db5d8e7-host-source.json",
+      "sha256": "c430f002d77920a687708b4b651f214545fe5496e0e67b8e6be659389786594b"
+    },
+    {
+      "bytes": 503,
+      "name": "WORM-014-windows-tests.json",
+      "sha256": "adcc9a16ee27b20856ac84f93209cf4bf52586f47b56cd4a1cf14a5c6275b25a"
+    },
+    {
+      "bytes": 978,
+      "name": "WORM-014-db5d8e7-linux-fixtures.json",
+      "sha256": "5152e7208598971ac71629012004ef3caf0f51808f066306eb4b34660c5b260c"
+    },
+    {
+      "bytes": 148392,
+      "name": "WORM-014-db5d8e7-healthy-readback.json",
+      "sha256": "831dc3098b71cbe24401e64c42d0f68394d6e32d8aab236cbe6e921b9419acb2"
+    },
+    {
+      "bytes": 149619,
+      "name": "WORM-014-db5d8e7-missing-readback.json",
+      "sha256": "3f24610892caf6c7d79a73fbce3a83f568b136455acd7896fbf3f585fbf73ffe"
+    },
+    {
+      "bytes": 148756,
+      "name": "WORM-014-db5d8e7-version-readback.json",
+      "sha256": "ffe37541a8c72ccca48e7bc93ba301d03887c50664fbee79066107ff7f57d2f3"
+    },
+    {
+      "bytes": 148784,
+      "name": "WORM-014-db5d8e7-os-readback.json",
+      "sha256": "b6a1e95a80c611174fcdccacffce6b7376f538a26bee06487d5dbd2cc6768034"
+    },
+    {
+      "bytes": 19840,
+      "name": "WORM-014-proposed-public-observations.json",
+      "sha256": "c2332e562f31bee4f04e142432df45aea8f5018eea98e305a245655cffd477c3"
+    },
+    {
+      "bytes": 122944,
+      "name": "WORM-014-first-child-readback-71878d1.json",
+      "sha256": "a83ca5cf8ad9d02a9ad2fe1bad1e93de8677ce3be43cdf83e93a178764550ca3"
+    },
+    {
+      "bytes": 1755,
+      "name": "WORM-014-after-suite-failure-status-71878d1.json",
+      "sha256": "a91195cb4e7592590eea16cf149d2426974f4c053b05476a47b56592ac79f3b0"
+    },
+    {
+      "bytes": 2052,
+      "name": "WORM-014-first-suite-readback-71878d1.json",
+      "sha256": "b1c46727f605a03e073eabdc08b8214787f94d68f993d74e1bea98d572728e40"
+    },
+    {
+      "bytes": 3285,
+      "name": "WORM-014-first-image-inspection-71878d1.json",
+      "sha256": "21cb237900cd16315ee64055eddbad9364581a379a557405554d8e12bf4489db"
+    },
+    {
+      "bytes": 130943,
+      "name": "WORM-014-first-child-readback-66b0e27.json",
+      "sha256": "a2f2e9a6d0c8dd86bb503462bb0a93aeeb7dfec0d7aee781999fbd9b0ff3a2f6"
+    },
+    {
+      "bytes": 131223,
+      "name": "WORM-014-rpm-suite-66b0e27.json",
+      "sha256": "20df6bd21ddce4f3f94303880ba8918a353b16cad6aa6d005ac63ede185c7088"
+    },
+    {
+      "bytes": 1942,
+      "name": "WORM-014-after-suite-failure-status-66b0e27.json",
+      "sha256": "08a34c2de20ec85c92e74d45d5701ebd83a93b972207ff4cbd4176852b20691b"
+    },
+    {
+      "bytes": 132037,
+      "name": "WORM-014-diagnostic-child-readback-ce3ec10.json",
+      "sha256": "611e9dc049687d720ff45db910e2731d1c63d0318739ce3f38fbe06ff8d99f48"
+    },
+    {
+      "bytes": 132317,
+      "name": "WORM-014-rpm-suite-ce3ec10.json",
+      "sha256": "888d224b4fae15acfdd06c30598c2302fcc52feb4f89eba3200bbd59a63b8620"
+    },
+    {
+      "bytes": 1942,
+      "name": "WORM-014-diagnostic-suite-progress-ce3ec10.json",
+      "sha256": "16283701ed26bfc87c4f2b9ee464e0f98d65c67399a5ef8cfaaeb31ca4cb154c"
+    }
+  ],
+  "limits": [
+    "No VM, ISO boot/install, scanner/STIG support or production acceptance.",
+    "Negative harness pass preserves the failed underlying operation.",
+    "Shared host kernel is not an installed RHEL kernel. UBI-only AUDIT_WRITE permits owned authentication audit records in the shared kernel audit log; ordinary Ubuntu retains its original three capabilities.",
+    "No AUDIT_READ, AUDIT_CONTROL, KILL, PAM or host audit-setting change is established.",
+    "Shared daemon pull/commit has admitted overhead, not an operation-specific hard cgroup cap.",
+    "Storage checks are samples, not quotas or reserved space.",
+    "Private state, raw captures, keys and Terraform evidence remain outside Git.",
+    "Engineering review, publication, hosted CI and owner acceptance are separate facts."
+  ],
+  "ordinary_ubuntu_regression": {
+    "capture": {
+      "complete": true,
+      "sha256": "4fd3cf58a56f33792f70ee78f10e7481894bf466976c2f9bf29c7c749d049ae6",
+      "size_bytes": 1707
+    },
+    "checks": [
+      {
+        "check_id": "os-applicability",
+        "evidence": [
+          "evidence/validation-plan.json",
+          "evidence/validation-observations.json"
+        ],
+        "expected": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+        "observed": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+        "required": true,
+        "status": "pass",
+        "target_id": "target-001"
+      },
+      {
+        "check_id": "package-ca-certificates",
+        "evidence": [
+          "evidence/validation-plan.json",
+          "evidence/validation-observations.json"
+        ],
+        "expected": "20260816ubuntu0.24.04.1",
+        "observed": "20260816ubuntu0.24.04.1",
+        "required": true,
+        "status": "pass",
+        "target_id": "target-001"
+      },
+      {
+        "check_id": "package-python3",
+        "evidence": [
+          "evidence/validation-plan.json",
+          "evidence/validation-observations.json"
+        ],
+        "expected": "3.12.3-0ubuntu2.1",
+        "observed": "3.12.3-0ubuntu2.1",
+        "required": true,
+        "status": "pass",
+        "target_id": "target-001"
+      },
+      {
+        "check_id": "package-python3-12",
+        "evidence": [
+          "evidence/validation-plan.json",
+          "evidence/validation-observations.json"
+        ],
+        "expected": "3.12.3-1ubuntu0.17",
+        "observed": "3.12.3-1ubuntu0.17",
+        "required": true,
+        "status": "pass",
+        "target_id": "target-001"
+      },
+      {
+        "check_id": "package-openssh-client",
+        "evidence": [
+          "evidence/validation-plan.json",
+          "evidence/validation-observations.json"
+        ],
+        "expected": "1:9.6p1-3ubuntu13.20",
+        "observed": "1:9.6p1-3ubuntu13.20",
+        "required": true,
+        "status": "pass",
+        "target_id": "target-001"
+      },
+      {
+        "check_id": "package-openssh-server",
+        "evidence": [
+          "evidence/validation-plan.json",
+          "evidence/validation-observations.json"
+        ],
+        "expected": "1:9.6p1-3ubuntu13.20",
+        "observed": "1:9.6p1-3ubuntu13.20",
+        "required": true,
+        "status": "pass",
+        "target_id": "target-001"
+      },
+      {
+        "check_id": "package-openssh-sftp-server",
+        "evidence": [
+          "evidence/validation-plan.json",
+          "evidence/validation-observations.json"
+        ],
+        "expected": "1:9.6p1-3ubuntu13.20",
+        "observed": "1:9.6p1-3ubuntu13.20",
+        "required": true,
+        "status": "pass",
+        "target_id": "target-001"
+      },
+      {
+        "check_id": "sshd-config-sha256",
+        "evidence": [
+          "evidence/validation-plan.json",
+          "evidence/validation-observations.json"
+        ],
+        "expected": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1",
+        "observed": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1",
+        "required": true,
+        "status": "pass",
+        "target_id": "target-001"
+      },
+      {
+        "check_id": "payload-sha256",
+        "evidence": [
+          "evidence/validation-plan.json",
+          "evidence/validation-observations.json"
+        ],
+        "expected": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+        "observed": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+        "required": true,
+        "status": "pass",
+        "target_id": "target-001"
+      },
+      {
+        "check_id": "payload-public-key-function",
+        "evidence": [
+          "evidence/validation-plan.json",
+          "evidence/validation-observations.json"
+        ],
+        "expected": "{\"invalid_rejected\":true,\"status\":\"observed\",\"valid_normalized\":true}",
+        "observed": "{\"invalid_rejected\":true,\"status\":\"observed\",\"valid_normalized\":true}",
+        "required": true,
+        "status": "pass",
+        "target_id": "target-001"
+      }
+    ],
+    "cleanup": "completed",
+    "observed_at": "2026-10-23T19:10:27.853518+00:00",
+    "readback_observed_at": "2026-10-23T19:11:39.770990+00:00",
+    "readiness": "passed",
+    "run_id": "f623e6ca-858b-4f10-9311-0bfbe2a1028c",
+    "scope": "Unchanged stock Ubuntu functional path; not a candidate or RPM installation.",
+    "source_revision": "db5d8e74f54483a909faaed963c752962785653c",
+    "status": "passed",
+    "suite_operation": "functional-acceptance-suite",
+    "target_runtime_policy": {
+      "capabilities": [
+        "SETGID",
+        "SETUID",
+        "SYS_CHROOT"
+      ],
+      "id": "qualified-ssh-v1",
+      "provenance": "Source-bound provisioning receipt, plus exact stored controller/input/receipt agreement where included; the frozen adapter validates actual stopped/live configuration, not exported as raw inspection.",
+      "scope": "AUDIT_WRITE, when present, permits owned target authentication audit records in the shared kernel audit log. No AUDIT_READ, AUDIT_CONTROL, KILL, PAM or host audit-setting change is authorized or established.",
+      "shared_kernel_audit_record_writes_permitted": false,
+      "stored_policy_bindings": {
+        "controller": {
+          "capabilities": [
+            "SETGID",
+            "SETUID",
+            "SYS_CHROOT"
+          ],
+          "id": "qualified-ssh-v1"
+        },
+        "generated_input": [
+          "SETGID",
+          "SETUID",
+          "SYS_CHROOT"
+        ],
+        "receipt": {
+          "capabilities": [
+            "SETGID",
+            "SETUID",
+            "SYS_CHROOT"
+          ],
+          "id": "qualified-ssh-v1"
+        }
+      }
+    },
+    "unrelated_sentinel_unchanged": true
+  },
+  "production_iso_eligible": false,
+  "qualification": {
+    "cases": [
+      {
+        "base_image": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+        "build": {
+          "dependency_check": "passed",
+          "eula": {
+            "bytes": 248785,
+            "path": "/licenses/ubi9-container/UBI-EULA-20190422.pdf",
+            "sha256": "a07025b9f5b71a816febe6ac76f21c9f759c806fa0a66874af90a50c3293f1b6"
+          },
+          "hostkeys_absent_before_runtime": true,
+          "installed_rpm_header_count": 190,
+          "key_files": [
+            {
+              "path": "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+              "primary_fingerprints": [
+                "567E347AD0044ADE55BA8A5F199E2F91FD431D51",
+                "7E4624258C406535D56D6F135054E4A45A6340B3"
+              ],
+              "sha256": "0db3dc1b6228f29d60f37c5ad91d9f4cd3547895e8ebedb242469b1c0a0cdf08"
+            }
+          ],
+          "os_release": {
+            "ID": "rhel",
+            "NAME": "Red Hat Enterprise Linux",
+            "PRETTY_NAME": "Red Hat Enterprise Linux 9.8 (Plow)",
+            "VERSION_ID": "9.8"
+          },
+          "signature_results": [
+            {
+              "filename": "openssh-9.9p1-13.el9_8.x86_64.rpm",
+              "sha256": "f3a0c1bf130cf8335db06a3b13793b4f590208e5a3f20a1a3391eb8f0162d06a",
+              "signature": "verified",
+              "verification_output": "/packages/openssh-9.9p1-13.el9_8.x86_64.rpm:\n    Header V4 RSA/SHA256 Signature, key ID fd431d51: OK\n    Header SHA256 digest: OK\n    Header SHA1 digest: OK\n    Payload SHA256 digest: OK\n    MD5 digest: OK\n",
+              "verification_output_sha256": "651635e888269b91555cf951e426f3d268c4af32ea82b4eed71b04380dc7bcaa",
+              "verification_returncode": 0
+            },
+            {
+              "filename": "openssh-server-9.9p1-13.el9_8.x86_64.rpm",
+              "sha256": "98b9fafb13d6482639a5cecc381166fa22484d770b65ed12f29159cce5e0d426",
+              "signature": "verified",
+              "verification_output": "/packages/openssh-server-9.9p1-13.el9_8.x86_64.rpm:\n    Header V4 RSA/SHA256 Signature, key ID fd431d51: OK\n    Header SHA256 digest: OK\n    Header SHA1 digest: OK\n    Payload SHA256 digest: OK\n    MD5 digest: OK\n",
+              "verification_output_sha256": "e6729e9f1228e56e1d45ca72247b439284fa50725ac4dce64091911c3f95d2f0",
+              "verification_returncode": 0
+            }
+          ],
+          "virtual_key_header_count": 2
+        },
+        "candidate_sha256": "cc7822056cda7e93814b33b60dd9e155901a61d5d589cecc67baf5be1920d236",
+        "checks": [
+          {
+            "check_id": "rpm-userland",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"id\":\"rhel\",\"version_id\":\"9.8\"}",
+            "observed": "{\"id\":\"rhel\",\"version_id\":\"9.8\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-python3",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"7.el9_8.3\",\"status\":\"installed\",\"version\":\"3.9.25\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"7.el9_8.3\",\"status\":\"installed\",\"version\":\"3.9.25\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-openssh",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-openssh-server",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-shadow-utils",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":2,\"release\":\"16.el9\",\"status\":\"installed\",\"version\":\"4.9\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":2,\"release\":\"16.el9\",\"status\":\"installed\",\"version\":\"4.9\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-source-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+            "observed": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-manifest-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "cc7822056cda7e93814b33b60dd9e155901a61d5d589cecc67baf5be1920d236",
+            "observed": "cc7822056cda7e93814b33b60dd9e155901a61d5d589cecc67baf5be1920d236",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-content-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+            "observed": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-payload-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+            "observed": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-version",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "1.0.0-reference",
+            "observed": "1.0.0-reference",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-configuration",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+            "observed": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-function",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+            "observed": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          }
+        ],
+        "cleanup": {
+          "primary_failure": null,
+          "private_state_removed": false,
+          "resources": [
+            {
+              "disposition": "retained",
+              "id": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+              "kind": "image",
+              "role": "retained-image"
+            },
+            {
+              "disposition": "absent",
+              "id": "a77f534662c79162247a3d13e84eed088549f7e0bdc6f13d39d4a15c034f948c",
+              "kind": "container",
+              "role": "other-owned"
+            },
+            {
+              "disposition": "absent",
+              "id": "f7355b1e0f6d09aabbb2db985e98f57343896c9b396d211a8334e57a54a4ebc4",
+              "kind": "container",
+              "role": "other-owned"
+            },
+            {
+              "disposition": "retained",
+              "id": "sha256:20f671951637643208d7bd2392c80f742233299606456cd0911cb5fc87db5804",
+              "kind": "image",
+              "role": "retained-image"
+            },
+            {
+              "disposition": "absent",
+              "id": "26d6373224f5b50ac478a60e98d3417c51581a6a36ca8fa82a97ef59af364017",
+              "kind": "container",
+              "role": "provisioner"
+            },
+            {
+              "disposition": "absent",
+              "id": "0e06c5dc3d208f50dab466e42306a12b048ced6a2380fbca39a0816eec96909f",
+              "kind": "container",
+              "role": "terraform-target"
+            },
+            {
+              "disposition": "absent",
+              "id": "83a9b81b30294e8a33f4c56f8cf0bb0810f7408ec7fb8a470e25d31aade81bad",
+              "kind": "network",
+              "role": "terraform-network"
+            },
+            {
+              "disposition": "absent",
+              "id": "1198f4ae9d458f23d27a0a852386d1985f8bb97130e3684b4ffc5dbffb38a81b",
+              "kind": "container",
+              "role": "helper"
+            }
+          ],
+          "status": "completed",
+          "unknown_outcome": false
+        },
+        "content_sha256": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+        "created_at": "2026-10-23T19:05:26.056Z",
+        "credential_scan": {
+          "bytes_scanned": 404271,
+          "files_scanned": 64,
+          "public_provider_cache_excluded": true,
+          "secret_contents_exported": false,
+          "status": "pass"
+        },
+        "derived_image": "sha256:20f671951637643208d7bd2392c80f742233299606456cd0911cb5fc87db5804",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 271147579,
+          "ordinary_files": 142,
+          "phase": "rpm-cleaned",
+          "sampled_at": "2026-10-23T19:06:24.645Z",
+          "unfollowed_links": 1
+        },
+        "failure_code": null,
+        "finished_at": "2026-10-23T19:06:24.650Z",
+        "network_id": "83a9b81b30294e8a33f4c56f8cf0bb0810f7408ec7fb8a470e25d31aade81bad",
+        "operation_status": "passed",
+        "run_id": "d473d988-f7d7-469f-95a1-2689295311fb",
+        "scenario": "healthy",
+        "source_candidate_sha256": "b156cc5b62d2bc0c3b578410fd6c9224c5d0dc65d8e18cfaa35aed809c957024",
+        "source_sha256": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+        "status": "passed",
+        "target_resource_id": "0e06c5dc3d208f50dab466e42306a12b048ced6a2380fbca39a0816eec96909f",
+        "target_runtime_policy": {
+          "capabilities": [
+            "SETGID",
+            "SETUID",
+            "SYS_CHROOT",
+            "AUDIT_WRITE"
+          ],
+          "id": "ubi9-ssh-audit-write-v1",
+          "provenance": "Source-bound provisioning receipt, plus exact stored controller/input/receipt agreement where included; the frozen adapter validates actual stopped/live configuration, not exported as raw inspection.",
+          "scope": "AUDIT_WRITE, when present, permits owned target authentication audit records in the shared kernel audit log. No AUDIT_READ, AUDIT_CONTROL, KILL, PAM or host audit-setting change is authorized or established.",
+          "shared_kernel_audit_record_writes_permitted": true,
+          "stored_policy_bindings": {
+            "controller": {
+              "capabilities": [
+                "SETGID",
+                "SETUID",
+                "SYS_CHROOT",
+                "AUDIT_WRITE"
+              ],
+              "id": "ubi9-ssh-audit-write-v1"
+            },
+            "generated_input": [
+              "SETGID",
+              "SETUID",
+              "SYS_CHROOT",
+              "AUDIT_WRITE"
+            ],
+            "receipt": {
+              "capabilities": [
+                "SETGID",
+                "SETUID",
+                "SYS_CHROOT",
+                "AUDIT_WRITE"
+              ],
+              "id": "ubi9-ssh-audit-write-v1"
+            }
+          }
+        },
+        "test_contract_sha256": "7898cd0f42ba89840c78b8b5380b2417af1436554df6ab28cae4fb9ad7df076c",
+        "unrelated_sentinel_unchanged": true,
+        "validation_plan_sha256": "8b01a7901dea8fbf3407566e587173f5bf624373b18a80c3db66b988b7d9368c"
+      },
+      {
+        "base_image": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+        "build": {
+          "dependency_check": "passed",
+          "eula": {
+            "bytes": 248785,
+            "path": "/licenses/ubi9-container/UBI-EULA-20190422.pdf",
+            "sha256": "a07025b9f5b71a816febe6ac76f21c9f759c806fa0a66874af90a50c3293f1b6"
+          },
+          "hostkeys_absent_before_runtime": true,
+          "installed_rpm_header_count": 190,
+          "key_files": [
+            {
+              "path": "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+              "primary_fingerprints": [
+                "567E347AD0044ADE55BA8A5F199E2F91FD431D51",
+                "7E4624258C406535D56D6F135054E4A45A6340B3"
+              ],
+              "sha256": "0db3dc1b6228f29d60f37c5ad91d9f4cd3547895e8ebedb242469b1c0a0cdf08"
+            }
+          ],
+          "os_release": {
+            "ID": "rhel",
+            "NAME": "Red Hat Enterprise Linux",
+            "PRETTY_NAME": "Red Hat Enterprise Linux 9.8 (Plow)",
+            "VERSION_ID": "9.8"
+          },
+          "signature_results": [
+            {
+              "filename": "openssh-9.9p1-13.el9_8.x86_64.rpm",
+              "sha256": "f3a0c1bf130cf8335db06a3b13793b4f590208e5a3f20a1a3391eb8f0162d06a",
+              "signature": "verified",
+              "verification_output": "/packages/openssh-9.9p1-13.el9_8.x86_64.rpm:\n    Header V4 RSA/SHA256 Signature, key ID fd431d51: OK\n    Header SHA256 digest: OK\n    Header SHA1 digest: OK\n    Payload SHA256 digest: OK\n    MD5 digest: OK\n",
+              "verification_output_sha256": "651635e888269b91555cf951e426f3d268c4af32ea82b4eed71b04380dc7bcaa",
+              "verification_returncode": 0
+            },
+            {
+              "filename": "openssh-server-9.9p1-13.el9_8.x86_64.rpm",
+              "sha256": "98b9fafb13d6482639a5cecc381166fa22484d770b65ed12f29159cce5e0d426",
+              "signature": "verified",
+              "verification_output": "/packages/openssh-server-9.9p1-13.el9_8.x86_64.rpm:\n    Header V4 RSA/SHA256 Signature, key ID fd431d51: OK\n    Header SHA256 digest: OK\n    Header SHA1 digest: OK\n    Payload SHA256 digest: OK\n    MD5 digest: OK\n",
+              "verification_output_sha256": "e6729e9f1228e56e1d45ca72247b439284fa50725ac4dce64091911c3f95d2f0",
+              "verification_returncode": 0
+            }
+          ],
+          "virtual_key_header_count": 2
+        },
+        "candidate_sha256": "7090d7db9073ed0b98c2c7ad22766ecc0094091a4b3b6b4fd36a57d7220c7437",
+        "checks": [
+          {
+            "check_id": "rpm-userland",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"id\":\"rhel\",\"version_id\":\"9.8\"}",
+            "observed": "{\"id\":\"rhel\",\"version_id\":\"9.8\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-python3",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"7.el9_8.3\",\"status\":\"installed\",\"version\":\"3.9.25\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"7.el9_8.3\",\"status\":\"installed\",\"version\":\"3.9.25\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-openssh",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-openssh-server",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-shadow-utils",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":2,\"release\":\"16.el9\",\"status\":\"installed\",\"version\":\"4.9\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":2,\"release\":\"16.el9\",\"status\":\"installed\",\"version\":\"4.9\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-source-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+            "observed": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-manifest-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "7090d7db9073ed0b98c2c7ad22766ecc0094091a4b3b6b4fd36a57d7220c7437",
+            "observed": "7090d7db9073ed0b98c2c7ad22766ecc0094091a4b3b6b4fd36a57d7220c7437",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-content-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+            "observed": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-payload-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+            "observed": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-version",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "1.0.0-reference",
+            "observed": "1.0.0-reference",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-configuration",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+            "observed": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-function",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+            "observed": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-openssh-clients",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "observed": "{\"status\":\"missing\"}",
+            "required": true,
+            "status": "fail",
+            "target_id": "target-001"
+          }
+        ],
+        "cleanup": {
+          "primary_failure": "rpm_missing_package",
+          "private_state_removed": false,
+          "resources": [
+            {
+              "disposition": "retained",
+              "id": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+              "kind": "image",
+              "role": "retained-image"
+            },
+            {
+              "disposition": "absent",
+              "id": "8ee9214f3786c3352fa5bb1ade4f33a93b74bddf5158bf546196f2a4d2e24832",
+              "kind": "container",
+              "role": "other-owned"
+            },
+            {
+              "disposition": "absent",
+              "id": "fb6bf38a7bebd077e4e80c7b4be188d92a084bada9a76837f47364d1f7b1f638",
+              "kind": "container",
+              "role": "other-owned"
+            },
+            {
+              "disposition": "retained",
+              "id": "sha256:05850d1c8f0e3390e0476427fd4cfc2343dec85b1a5584e068c9ed2d9a0aad69",
+              "kind": "image",
+              "role": "retained-image"
+            },
+            {
+              "disposition": "absent",
+              "id": "bc71fe80f191407c2f4298ba99a0594ca84540db15e75a26189ab807d45b3047",
+              "kind": "container",
+              "role": "provisioner"
+            },
+            {
+              "disposition": "absent",
+              "id": "f87cdade7bcd4cf2efe4324d3dd7a812e6f910270204c08fdc895b292c5ae823",
+              "kind": "container",
+              "role": "terraform-target"
+            },
+            {
+              "disposition": "absent",
+              "id": "42b16389a0220f4c32e9fc8a0fa11ddfc9f43f4dd279ef58674a499e87951368",
+              "kind": "network",
+              "role": "terraform-network"
+            },
+            {
+              "disposition": "absent",
+              "id": "0ecb11ab381fd05612bd07b89a1939d0a931c61e76a2fa706758044034675b93",
+              "kind": "container",
+              "role": "helper"
+            }
+          ],
+          "status": "completed",
+          "unknown_outcome": false
+        },
+        "content_sha256": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+        "created_at": "2026-10-23T19:06:24.704Z",
+        "credential_scan": {
+          "bytes_scanned": 405265,
+          "files_scanned": 64,
+          "public_provider_cache_excluded": true,
+          "secret_contents_exported": false,
+          "status": "pass"
+        },
+        "derived_image": "sha256:05850d1c8f0e3390e0476427fd4cfc2343dec85b1a5584e068c9ed2d9a0aad69",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 271148573,
+          "ordinary_files": 142,
+          "phase": "rpm-cleaned",
+          "sampled_at": "2026-10-23T19:07:23.206Z",
+          "unfollowed_links": 1
+        },
+        "failure_code": "rpm_missing_package",
+        "finished_at": "2026-10-23T19:07:23.210Z",
+        "network_id": "42b16389a0220f4c32e9fc8a0fa11ddfc9f43f4dd279ef58674a499e87951368",
+        "operation_status": "failed",
+        "run_id": "2948e601-9239-40f8-b681-8afd4b3c9903",
+        "scenario": "missing-optional-package",
+        "source_candidate_sha256": "6a4bdf3213eac1683470ca9b4577f406e22ad9311787b87b006dac3c322c545b",
+        "source_sha256": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+        "status": "passed",
+        "target_resource_id": "f87cdade7bcd4cf2efe4324d3dd7a812e6f910270204c08fdc895b292c5ae823",
+        "target_runtime_policy": {
+          "capabilities": [
+            "SETGID",
+            "SETUID",
+            "SYS_CHROOT",
+            "AUDIT_WRITE"
+          ],
+          "id": "ubi9-ssh-audit-write-v1",
+          "provenance": "Source-bound provisioning receipt, plus exact stored controller/input/receipt agreement where included; the frozen adapter validates actual stopped/live configuration, not exported as raw inspection.",
+          "scope": "AUDIT_WRITE, when present, permits owned target authentication audit records in the shared kernel audit log. No AUDIT_READ, AUDIT_CONTROL, KILL, PAM or host audit-setting change is authorized or established.",
+          "shared_kernel_audit_record_writes_permitted": true,
+          "stored_policy_bindings": {
+            "controller": {
+              "capabilities": [
+                "SETGID",
+                "SETUID",
+                "SYS_CHROOT",
+                "AUDIT_WRITE"
+              ],
+              "id": "ubi9-ssh-audit-write-v1"
+            },
+            "generated_input": [
+              "SETGID",
+              "SETUID",
+              "SYS_CHROOT",
+              "AUDIT_WRITE"
+            ],
+            "receipt": {
+              "capabilities": [
+                "SETGID",
+                "SETUID",
+                "SYS_CHROOT",
+                "AUDIT_WRITE"
+              ],
+              "id": "ubi9-ssh-audit-write-v1"
+            }
+          }
+        },
+        "test_contract_sha256": "7898cd0f42ba89840c78b8b5380b2417af1436554df6ab28cae4fb9ad7df076c",
+        "unrelated_sentinel_unchanged": true,
+        "validation_plan_sha256": "fdab0a8279adf4e686a29bdebf4c7060eccb54661a8b1f1ca2c20a9612b96fcf"
+      },
+      {
+        "base_image": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+        "build": {
+          "dependency_check": "passed",
+          "eula": {
+            "bytes": 248785,
+            "path": "/licenses/ubi9-container/UBI-EULA-20190422.pdf",
+            "sha256": "a07025b9f5b71a816febe6ac76f21c9f759c806fa0a66874af90a50c3293f1b6"
+          },
+          "hostkeys_absent_before_runtime": true,
+          "installed_rpm_header_count": 190,
+          "key_files": [
+            {
+              "path": "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+              "primary_fingerprints": [
+                "567E347AD0044ADE55BA8A5F199E2F91FD431D51",
+                "7E4624258C406535D56D6F135054E4A45A6340B3"
+              ],
+              "sha256": "0db3dc1b6228f29d60f37c5ad91d9f4cd3547895e8ebedb242469b1c0a0cdf08"
+            }
+          ],
+          "os_release": {
+            "ID": "rhel",
+            "NAME": "Red Hat Enterprise Linux",
+            "PRETTY_NAME": "Red Hat Enterprise Linux 9.8 (Plow)",
+            "VERSION_ID": "9.8"
+          },
+          "signature_results": [
+            {
+              "filename": "openssh-9.9p1-13.el9_8.x86_64.rpm",
+              "sha256": "f3a0c1bf130cf8335db06a3b13793b4f590208e5a3f20a1a3391eb8f0162d06a",
+              "signature": "verified",
+              "verification_output": "/packages/openssh-9.9p1-13.el9_8.x86_64.rpm:\n    Header V4 RSA/SHA256 Signature, key ID fd431d51: OK\n    Header SHA256 digest: OK\n    Header SHA1 digest: OK\n    Payload SHA256 digest: OK\n    MD5 digest: OK\n",
+              "verification_output_sha256": "651635e888269b91555cf951e426f3d268c4af32ea82b4eed71b04380dc7bcaa",
+              "verification_returncode": 0
+            },
+            {
+              "filename": "openssh-server-9.9p1-13.el9_8.x86_64.rpm",
+              "sha256": "98b9fafb13d6482639a5cecc381166fa22484d770b65ed12f29159cce5e0d426",
+              "signature": "verified",
+              "verification_output": "/packages/openssh-server-9.9p1-13.el9_8.x86_64.rpm:\n    Header V4 RSA/SHA256 Signature, key ID fd431d51: OK\n    Header SHA256 digest: OK\n    Header SHA1 digest: OK\n    Payload SHA256 digest: OK\n    MD5 digest: OK\n",
+              "verification_output_sha256": "e6729e9f1228e56e1d45ca72247b439284fa50725ac4dce64091911c3f95d2f0",
+              "verification_returncode": 0
+            }
+          ],
+          "virtual_key_header_count": 2
+        },
+        "candidate_sha256": "4eb787726652f4323db3239d8270a8b3a5b881e86dea4ba0ac4ec201684f69ed",
+        "checks": [
+          {
+            "check_id": "rpm-userland",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"id\":\"rhel\",\"version_id\":\"9.8\"}",
+            "observed": "{\"id\":\"rhel\",\"version_id\":\"9.8\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-python3",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"7.el9_8.3\",\"status\":\"installed\",\"version\":\"3.9.25\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"7.el9_8.3\",\"status\":\"installed\",\"version\":\"3.9.25\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-openssh",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-openssh-server",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1-controlled-mismatch\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "required": true,
+            "status": "fail",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-shadow-utils",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":2,\"release\":\"16.el9\",\"status\":\"installed\",\"version\":\"4.9\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":2,\"release\":\"16.el9\",\"status\":\"installed\",\"version\":\"4.9\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-source-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+            "observed": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-manifest-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "4eb787726652f4323db3239d8270a8b3a5b881e86dea4ba0ac4ec201684f69ed",
+            "observed": "4eb787726652f4323db3239d8270a8b3a5b881e86dea4ba0ac4ec201684f69ed",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-content-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+            "observed": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-payload-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+            "observed": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-version",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "1.0.0-reference",
+            "observed": "1.0.0-reference",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-configuration",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+            "observed": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-function",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+            "observed": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          }
+        ],
+        "cleanup": {
+          "primary_failure": "rpm_version_mismatch",
+          "private_state_removed": false,
+          "resources": [
+            {
+              "disposition": "retained",
+              "id": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+              "kind": "image",
+              "role": "retained-image"
+            },
+            {
+              "disposition": "absent",
+              "id": "eecf21968788a321c76d5779e2a98f1b89e0645bd75e5ea62019e69b58d1d2f2",
+              "kind": "container",
+              "role": "other-owned"
+            },
+            {
+              "disposition": "absent",
+              "id": "7a3b620fe1d79a88b831f1026dd4c6e3e3d7de87b1e8b22bfebc7644c716c7d4",
+              "kind": "container",
+              "role": "other-owned"
+            },
+            {
+              "disposition": "retained",
+              "id": "sha256:21584381f4b9d4e9873f0183931b29e26666c574cc4e27f825a9f7bfd62393b0",
+              "kind": "image",
+              "role": "retained-image"
+            },
+            {
+              "disposition": "absent",
+              "id": "8ffb5ea88f652db86d7e9c30a366eea6a4dcef708a1840876434c3818911ce95",
+              "kind": "container",
+              "role": "provisioner"
+            },
+            {
+              "disposition": "absent",
+              "id": "c346f7a16e30b6cd6945cd0549021499b7bc88f88f2e8183d561fea7be121244",
+              "kind": "container",
+              "role": "terraform-target"
+            },
+            {
+              "disposition": "absent",
+              "id": "516003901ebafaaa9c6021de368a79db2358521c2219d2da789ccadcc60da0a7",
+              "kind": "network",
+              "role": "terraform-network"
+            },
+            {
+              "disposition": "absent",
+              "id": "89dc821682ba1dcd726b321a5b3f52ec37f84d9ac6a8e5283e475ffe5db98276",
+              "kind": "container",
+              "role": "helper"
+            }
+          ],
+          "status": "completed",
+          "unknown_outcome": false
+        },
+        "content_sha256": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+        "created_at": "2026-10-23T19:07:23.262Z",
+        "credential_scan": {
+          "bytes_scanned": 404686,
+          "files_scanned": 64,
+          "public_provider_cache_excluded": true,
+          "secret_contents_exported": false,
+          "status": "pass"
+        },
+        "derived_image": "sha256:21584381f4b9d4e9873f0183931b29e26666c574cc4e27f825a9f7bfd62393b0",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 271147994,
+          "ordinary_files": 142,
+          "phase": "rpm-cleaned",
+          "sampled_at": "2026-10-23T19:08:21.690Z",
+          "unfollowed_links": 1
+        },
+        "failure_code": "rpm_version_mismatch",
+        "finished_at": "2026-10-23T19:08:21.695Z",
+        "network_id": "516003901ebafaaa9c6021de368a79db2358521c2219d2da789ccadcc60da0a7",
+        "operation_status": "failed",
+        "run_id": "86a24145-481c-4c96-aab0-7c8bccc37621",
+        "scenario": "version-expectation-mismatch",
+        "source_candidate_sha256": "515aad1cff0c8c986a750e8d8fc35ae2658a1a1c023df1b6dc1e9554c3a6873f",
+        "source_sha256": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+        "status": "passed",
+        "target_resource_id": "c346f7a16e30b6cd6945cd0549021499b7bc88f88f2e8183d561fea7be121244",
+        "target_runtime_policy": {
+          "capabilities": [
+            "SETGID",
+            "SETUID",
+            "SYS_CHROOT",
+            "AUDIT_WRITE"
+          ],
+          "id": "ubi9-ssh-audit-write-v1",
+          "provenance": "Source-bound provisioning receipt, plus exact stored controller/input/receipt agreement where included; the frozen adapter validates actual stopped/live configuration, not exported as raw inspection.",
+          "scope": "AUDIT_WRITE, when present, permits owned target authentication audit records in the shared kernel audit log. No AUDIT_READ, AUDIT_CONTROL, KILL, PAM or host audit-setting change is authorized or established.",
+          "shared_kernel_audit_record_writes_permitted": true,
+          "stored_policy_bindings": {
+            "controller": {
+              "capabilities": [
+                "SETGID",
+                "SETUID",
+                "SYS_CHROOT",
+                "AUDIT_WRITE"
+              ],
+              "id": "ubi9-ssh-audit-write-v1"
+            },
+            "generated_input": [
+              "SETGID",
+              "SETUID",
+              "SYS_CHROOT",
+              "AUDIT_WRITE"
+            ],
+            "receipt": {
+              "capabilities": [
+                "SETGID",
+                "SETUID",
+                "SYS_CHROOT",
+                "AUDIT_WRITE"
+              ],
+              "id": "ubi9-ssh-audit-write-v1"
+            }
+          }
+        },
+        "test_contract_sha256": "7898cd0f42ba89840c78b8b5380b2417af1436554df6ab28cae4fb9ad7df076c",
+        "unrelated_sentinel_unchanged": true,
+        "validation_plan_sha256": "7b1da608be6314fd9093cd71d5e601d3662701b69067a61bb54932fa79494aaa"
+      },
+      {
+        "base_image": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+        "build": {
+          "dependency_check": "passed",
+          "eula": {
+            "bytes": 248785,
+            "path": "/licenses/ubi9-container/UBI-EULA-20190422.pdf",
+            "sha256": "a07025b9f5b71a816febe6ac76f21c9f759c806fa0a66874af90a50c3293f1b6"
+          },
+          "hostkeys_absent_before_runtime": true,
+          "installed_rpm_header_count": 190,
+          "key_files": [
+            {
+              "path": "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+              "primary_fingerprints": [
+                "567E347AD0044ADE55BA8A5F199E2F91FD431D51",
+                "7E4624258C406535D56D6F135054E4A45A6340B3"
+              ],
+              "sha256": "0db3dc1b6228f29d60f37c5ad91d9f4cd3547895e8ebedb242469b1c0a0cdf08"
+            }
+          ],
+          "os_release": {
+            "ID": "rhel",
+            "NAME": "Red Hat Enterprise Linux",
+            "PRETTY_NAME": "Red Hat Enterprise Linux 9.8 (Plow)",
+            "VERSION_ID": "9.8"
+          },
+          "signature_results": [
+            {
+              "filename": "openssh-9.9p1-13.el9_8.x86_64.rpm",
+              "sha256": "f3a0c1bf130cf8335db06a3b13793b4f590208e5a3f20a1a3391eb8f0162d06a",
+              "signature": "verified",
+              "verification_output": "/packages/openssh-9.9p1-13.el9_8.x86_64.rpm:\n    Header V4 RSA/SHA256 Signature, key ID fd431d51: OK\n    Header SHA256 digest: OK\n    Header SHA1 digest: OK\n    Payload SHA256 digest: OK\n    MD5 digest: OK\n",
+              "verification_output_sha256": "651635e888269b91555cf951e426f3d268c4af32ea82b4eed71b04380dc7bcaa",
+              "verification_returncode": 0
+            },
+            {
+              "filename": "openssh-server-9.9p1-13.el9_8.x86_64.rpm",
+              "sha256": "98b9fafb13d6482639a5cecc381166fa22484d770b65ed12f29159cce5e0d426",
+              "signature": "verified",
+              "verification_output": "/packages/openssh-server-9.9p1-13.el9_8.x86_64.rpm:\n    Header V4 RSA/SHA256 Signature, key ID fd431d51: OK\n    Header SHA256 digest: OK\n    Header SHA1 digest: OK\n    Payload SHA256 digest: OK\n    MD5 digest: OK\n",
+              "verification_output_sha256": "e6729e9f1228e56e1d45ca72247b439284fa50725ac4dce64091911c3f95d2f0",
+              "verification_returncode": 0
+            }
+          ],
+          "virtual_key_header_count": 2
+        },
+        "candidate_sha256": "ea23a2d53527aea5a302c600f352f5e05e1742c16c2ddf1ba5ca456e10ca186a",
+        "checks": [
+          {
+            "check_id": "rpm-userland",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+            "observed": "{\"id\":\"rhel\",\"version_id\":\"9.8\"}",
+            "required": true,
+            "status": "fail",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-python3",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"7.el9_8.3\",\"status\":\"installed\",\"version\":\"3.9.25\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"7.el9_8.3\",\"status\":\"installed\",\"version\":\"3.9.25\"}",
+            "required": true,
+            "status": "unverified",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-openssh",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "required": true,
+            "status": "unverified",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-openssh-server",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":0,\"release\":\"13.el9_8\",\"status\":\"installed\",\"version\":\"9.9p1\"}",
+            "required": true,
+            "status": "unverified",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "rpm-shadow-utils",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"arch\":\"x86_64\",\"epoch\":2,\"release\":\"16.el9\",\"status\":\"installed\",\"version\":\"4.9\"}",
+            "observed": "{\"arch\":\"x86_64\",\"epoch\":2,\"release\":\"16.el9\",\"status\":\"installed\",\"version\":\"4.9\"}",
+            "required": true,
+            "status": "unverified",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-source-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+            "observed": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-manifest-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "ea23a2d53527aea5a302c600f352f5e05e1742c16c2ddf1ba5ca456e10ca186a",
+            "observed": "ea23a2d53527aea5a302c600f352f5e05e1742c16c2ddf1ba5ca456e10ca186a",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-content-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+            "observed": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-payload-sha256",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+            "observed": "6d383104bd20bd5c6d117d1b85c13e01aec1d3d32547ccf69dd227c41db6d193",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-version",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "1.0.0-reference",
+            "observed": "1.0.0-reference",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-configuration",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+            "observed": "{\"format\":\"wormhole-reference-v1\",\"greeting\":\"reference-ready\"}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          },
+          {
+            "check_id": "candidate-function",
+            "evidence": [
+              "evidence/rpm-validation-plan.json",
+              "evidence/rpm-observations.json"
+            ],
+            "expected": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+            "observed": "{\"status\":\"observed\",\"value\":{\"message\":\"reference-ready\",\"source_sha256\":\"3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2\",\"version\":\"1.0.0-reference\"}}",
+            "required": true,
+            "status": "pass",
+            "target_id": "target-001"
+          }
+        ],
+        "cleanup": {
+          "primary_failure": "rpm_applicability_mismatch",
+          "private_state_removed": false,
+          "resources": [
+            {
+              "disposition": "retained",
+              "id": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+              "kind": "image",
+              "role": "retained-image"
+            },
+            {
+              "disposition": "absent",
+              "id": "a4abccdfbebafd407bda4bd96c20dedb10bcde5bb46c91dd78f44c188fd25d3d",
+              "kind": "container",
+              "role": "other-owned"
+            },
+            {
+              "disposition": "absent",
+              "id": "2fc32207522391ac0f0de3609b350066d205b558701b09d17794690174f2e0ae",
+              "kind": "container",
+              "role": "other-owned"
+            },
+            {
+              "disposition": "retained",
+              "id": "sha256:3c76433f5f6519d438180467f21b795abf0e82a6839580cd0981c5ca48f3fefc",
+              "kind": "image",
+              "role": "retained-image"
+            },
+            {
+              "disposition": "absent",
+              "id": "8321ebf18924941bac236eb1f8524b4afbd1456f4ae4a0e1e85ec9da2d76335f",
+              "kind": "container",
+              "role": "provisioner"
+            },
+            {
+              "disposition": "absent",
+              "id": "2e11cd757c80b8af4f843d64c176f9923106567b99cc1ea916264d2ba2247d50",
+              "kind": "container",
+              "role": "terraform-target"
+            },
+            {
+              "disposition": "absent",
+              "id": "64440386714f62e2736dec82e109a4314701c44f52dd6b35a993bacf5ee30811",
+              "kind": "network",
+              "role": "terraform-network"
+            },
+            {
+              "disposition": "absent",
+              "id": "2b745181f032fd4892b36e220655d327d06e67a43132758d297dbf88952e9e06",
+              "kind": "container",
+              "role": "helper"
+            }
+          ],
+          "status": "completed",
+          "unknown_outcome": false
+        },
+        "content_sha256": "f89333e9a49dc17cde7a9c1ba5c052a698a1cc19e413ac99cb54d8f672dd28a6",
+        "created_at": "2026-10-23T19:08:21.748Z",
+        "credential_scan": {
+          "bytes_scanned": 404674,
+          "files_scanned": 64,
+          "public_provider_cache_excluded": true,
+          "secret_contents_exported": false,
+          "status": "pass"
+        },
+        "derived_image": "sha256:3c76433f5f6519d438180467f21b795abf0e82a6839580cd0981c5ca48f3fefc",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 271147983,
+          "ordinary_files": 142,
+          "phase": "rpm-cleaned",
+          "sampled_at": "2026-10-23T19:09:20.197Z",
+          "unfollowed_links": 1
+        },
+        "failure_code": "rpm_applicability_mismatch",
+        "finished_at": "2026-10-23T19:09:20.202Z",
+        "network_id": "64440386714f62e2736dec82e109a4314701c44f52dd6b35a993bacf5ee30811",
+        "operation_status": "failed",
+        "run_id": "0274e785-d0f9-4382-8186-3d7326c61e22",
+        "scenario": "unsupported-os",
+        "source_candidate_sha256": "16d4fd1eebb376598b7ccbc6e81430c3c4d456a95044530f05855f26e35a9ffc",
+        "source_sha256": "3e7b789161683a510a69b10eeaaccf5052939167517d01bee30b1e1eff6201f2",
+        "status": "passed",
+        "target_resource_id": "2e11cd757c80b8af4f843d64c176f9923106567b99cc1ea916264d2ba2247d50",
+        "target_runtime_policy": {
+          "capabilities": [
+            "SETGID",
+            "SETUID",
+            "SYS_CHROOT",
+            "AUDIT_WRITE"
+          ],
+          "id": "ubi9-ssh-audit-write-v1",
+          "provenance": "Source-bound provisioning receipt, plus exact stored controller/input/receipt agreement where included; the frozen adapter validates actual stopped/live configuration, not exported as raw inspection.",
+          "scope": "AUDIT_WRITE, when present, permits owned target authentication audit records in the shared kernel audit log. No AUDIT_READ, AUDIT_CONTROL, KILL, PAM or host audit-setting change is authorized or established.",
+          "shared_kernel_audit_record_writes_permitted": true,
+          "stored_policy_bindings": {
+            "controller": {
+              "capabilities": [
+                "SETGID",
+                "SETUID",
+                "SYS_CHROOT",
+                "AUDIT_WRITE"
+              ],
+              "id": "ubi9-ssh-audit-write-v1"
+            },
+            "generated_input": [
+              "SETGID",
+              "SETUID",
+              "SYS_CHROOT",
+              "AUDIT_WRITE"
+            ],
+            "receipt": {
+              "capabilities": [
+                "SETGID",
+                "SETUID",
+                "SYS_CHROOT",
+                "AUDIT_WRITE"
+              ],
+              "id": "ubi9-ssh-audit-write-v1"
+            }
+          }
+        },
+        "test_contract_sha256": "7898cd0f42ba89840c78b8b5380b2417af1436554df6ab28cae4fb9ad7df076c",
+        "unrelated_sentinel_unchanged": true,
+        "validation_plan_sha256": "8835267d0fbae54d2a1bcf6f5bf4c06d745dff2733cd0ae505b8ed4c1d2f9072"
+      }
+    ],
+    "observed_at": "2026-10-23T19:09:20.242487+00:00",
+    "source_revision": "db5d8e74f54483a909faaed963c752962785653c",
+    "status": "passed",
+    "suite_run_id": "9462d216-8d3e-42e0-845c-aadbc9950844"
+  },
+  "review": {
+    "material_findings_open": 0,
+    "reviewer": "Codex subagent /root/ui",
+    "source_revision": "db5d8e74f54483a909faaed963c752962785653c"
+  },
+  "runtime_pipeline_complete": false,
+  "schema_version": "1.0",
+  "source_fixtures": {
+    "homelab_linux": {
+      "docker": "29.6.0",
+      "passed": 452,
+      "python": "Python 3.12.3",
+      "seconds": 33.834,
+      "skipped": 2,
+      "tests": 454
+    },
+    "native_linux": {
+      "passed": 452,
+      "python": "3.12.3",
+      "seconds": 25.661,
+      "skipped": 2,
+      "tests": 454
+    },
+    "repository_baseline": {
+      "local_link_targets_checked": 155,
+      "passed": true,
+      "tracked_files": 191
+    },
+    "scope": "Synthetic source fixtures; separate actual runtime cases; skips do not establish skipped-platform behavior.",
+    "source_revision": "db5d8e74f54483a909faaed963c752962785653c",
+    "windows": {
+      "passed": 276,
+      "python": "3.12.14",
+      "seconds": 35.432,
+      "skipped": 178,
+      "tests": 454
+    }
+  },
+  "tested_source_revision": "db5d8e74f54483a909faaed963c752962785653c",
+  "ticket": "WORM-014"
+}

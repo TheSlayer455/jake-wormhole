@@ -1,0 +1,425 @@
+{
+  "allocation_scope": "smoke-one-target",
+  "criterion_results": {
+    "AC-01": "pass",
+    "AC-02": "pass",
+    "AC-03": "pass"
+  },
+  "independent_engineering_review": {
+    "material_findings_open": 0,
+    "reviewer": "Codex subagent ui",
+    "source_revision": "973c24a4b9e196d8d3117a3b91d372bd0397394a"
+  },
+  "limits": [
+    "Live coordinator processes overlap; canonical resource graphs are deliberately serialized.",
+    "The capacity refusal uses an isolated synthetic observation and is not actual twenty-target execution.",
+    "The interrupted publisher remains incomplete; duplicate refusal does not repair or overwrite it.",
+    "Actual reference publication uses generated candidate bytes and a synthetic assessment; no VM/ISO/scanner claim.",
+    "Private original captures, authentication material and Terraform state remain outside portable evidence.",
+    "Engineering qualification, pushing, hosted CI and Owner acceptance are separate facts."
+  ],
+  "original_private_input_hashes": [
+    {
+      "name": "WORM-019-delivery-source.json",
+      "sha256": "e945a8fdefefb1d9f46117c58de7fa3ba1ca3b9c468dac60097f1106dff19832",
+      "size_bytes": 1005
+    },
+    {
+      "name": "WORM-019-isolation-suite-973c24a.json",
+      "sha256": "63cec49ee7887fc4659ad34f7b12f5dae47c1c5b5a8cd781eabdb01d225a042c",
+      "size_bytes": 4144
+    },
+    {
+      "name": "WORM-019-isolation-readback-973c24a.json",
+      "sha256": "c84dee4db55a086d87d3c9ed2fbce9992642a963512c52b8d7334060ca163537",
+      "size_bytes": 86363
+    },
+    {
+      "name": "WORM-019-homelab-source-qualification.json",
+      "sha256": "b434b0a2a0c40670d579cafc127010053bbf9b5b63d3936e72bfdf1cb03c9f40",
+      "size_bytes": 148038
+    },
+    {
+      "name": "WORM-019-windows-tests-973c24a.json",
+      "sha256": "0ab5151087038ecc04d1b580293db5fc1c19aea89ad983257444bc43b86091b5",
+      "size_bytes": 1100
+    }
+  ],
+  "overlap_model": "overlapping-live-processes-serialized-resource-graphs",
+  "oversized_capacity_synthetic": true,
+  "prior_failed_attempts": [],
+  "production_iso_eligible": false,
+  "qualification": {
+    "case_captures": [
+      {
+        "logical_path": "evidence/isolation-overlap.json",
+        "sha256": "3310a7764e83225b36d386cf11c72ae4f6221d667a1ad1fb246a0ef8fb50bbe5",
+        "size_bytes": 4164
+      },
+      {
+        "logical_path": "evidence/isolation-interrupted-run.json",
+        "sha256": "ee542ba89f0da0c62d75788d98dad902de1427aa0147783ae6e8148cc0c22147",
+        "size_bytes": 3197
+      },
+      {
+        "logical_path": "evidence/isolation-interrupted-publication.json",
+        "sha256": "f3872c38430f7356a59daa83ac856e3c278e3ae29c24113ba32ffa10286f4dbb",
+        "size_bytes": 10544
+      },
+      {
+        "logical_path": "evidence/isolation-oversized-capacity.json",
+        "sha256": "01ef863c34f5bc03dd18582f99be26097585992eba2210bf4212c5acb4a223b5",
+        "size_bytes": 5598
+      }
+    ],
+    "cases": [
+      {
+        "a_events": [
+          {
+            "monotonic": 1178863.737777098,
+            "phase": "active"
+          },
+          {
+            "monotonic": 1178871.256093658,
+            "phase": "lease-finished"
+          },
+          {
+            "monotonic": 1178895.086893772,
+            "phase": "unlocked"
+          },
+          {
+            "monotonic": 1178902.777288804,
+            "phase": "completed"
+          }
+        ],
+        "allocation_intervals_monotonic": [
+          [
+            1178842.656709033,
+            1178871.255659703
+          ],
+          [
+            1178873.642816636,
+            1178902.659818525
+          ]
+        ],
+        "b_events": [
+          {
+            "monotonic": 1178894.862586769,
+            "phase": "active"
+          },
+          {
+            "monotonic": 1178902.660670164,
+            "phase": "lease-finished"
+          },
+          {
+            "monotonic": 1178902.69587846,
+            "phase": "unlocked"
+          },
+          {
+            "monotonic": 1178902.730763657,
+            "phase": "completed"
+          }
+        ],
+        "case": "overlap",
+        "checks": {
+          "busy-no-allocation": true,
+          "cleanup-completed": true,
+          "distinct-authentication": true,
+          "distinct-owned-resources": true,
+          "distinct-owned-state": true,
+          "first-recovery-run-busy": true,
+          "live-process-overlap": true,
+          "original-a-preserved": true,
+          "second-recovery-infrastructure-busy": true,
+          "sentinel-unchanged": true,
+          "serialized-admission": true
+        },
+        "interpretation": "Live coordinator lifetimes overlap; resource graph allocation intervals are serialized.",
+        "process_ids": [
+          2429365,
+          2435777
+        ],
+        "refusals": [
+          {
+            "code": "infrastructure_busy",
+            "collector_calls": 0,
+            "docker_calls": 0,
+            "role": "busy"
+          },
+          {
+            "code": "run_busy",
+            "collector_calls": 0,
+            "docker_calls": 0,
+            "role": "first-recovery"
+          },
+          {
+            "code": "infrastructure_busy",
+            "collector_calls": 0,
+            "docker_calls": 0,
+            "role": "second-recovery"
+          }
+        ],
+        "run_ids": [
+          "a9e95cf5-8c57-4e65-99e8-8545a605d823",
+          "3f6ee202-96ae-4369-be4b-7166fc0610a6",
+          "530fb265-6a50-4755-ae36-d7a8ca72db20"
+        ],
+        "safe_uniqueness": {
+          "credentials": true,
+          "inventory": true,
+          "resource_names_and_ids": true,
+          "run_paths": true
+        },
+        "status": "passed"
+      },
+      {
+        "case": "interrupted-run",
+        "checks": {
+          "cleanup-completed": true,
+          "exact-source-recovery": true,
+          "no-unknown-mutation": true,
+          "owned-state-retained": true,
+          "primary-preserved": true,
+          "sentinel-unchanged": true,
+          "terminal-destroy-before-interruption": true,
+          "unreconciled-refusal": true
+        },
+        "cleanup": "completed",
+        "docker_cli_killed": false,
+        "primary_failure": "controlled_teardown_interruption",
+        "retained_state_bytes": 181,
+        "run_ids": [
+          "4f56108a-4c86-4dd2-9c75-fef46a0b8baf",
+          "16867b1f-d398-4c60-8e78-5b6e4f9c2509"
+        ],
+        "status": "passed",
+        "terminal_checkpoint_sha256": "ba122e19d127db0dbd255057e06bf70e5cc4fd5e89b97b71a9b9723bc7ca0b4b",
+        "terraform_state_retained": true,
+        "unknown_outcome": false
+      },
+      {
+        "case": "interrupted-publication",
+        "checks": {
+          "before-complete-owned-child": true,
+          "both-markers-absent": true,
+          "duplicate-preserved": true,
+          "inspector-incomplete": true,
+          "original-evidence-unchanged": true,
+          "same-source-reference-passed": true,
+          "sentinel-unchanged": true
+        },
+        "completion_markers": "both absent",
+        "duplicate_refusal": "publication_duplicate",
+        "independent_cli_exit": 1,
+        "inspector": "incomplete",
+        "interrupted_files": 23,
+        "original_evidence_preserved": true,
+        "original_reference_counts": {
+          "blocked": 0,
+          "error": 0,
+          "fail": 0,
+          "pass": 43,
+          "skipped": 0,
+          "unreachable": 0,
+          "unverified": 0
+        },
+        "published_complete_release": false,
+        "publisher_exit": 86,
+        "run_ids": [
+          "46b817b0-fa18-4b69-89b4-49e9a9bd432c"
+        ],
+        "sentinel_unchanged": true,
+        "status": "passed"
+      },
+      {
+        "allocation_performed": false,
+        "case": "oversized-capacity",
+        "checks": {
+          "capacity-refused": true,
+          "no-allocation": true,
+          "no-twenty-runtime": true,
+          "prior-state-preserved": true,
+          "synthetic-fixed-root": true
+        },
+        "prior_fixture_admission_and_sentinel_unchanged": true,
+        "refusal_code": "capacity_refused",
+        "refusal_reasons": [
+          "host_memory_headroom"
+        ],
+        "run_ids": [
+          "32cff5e0-f84a-4e51-9943-6ba5371c0bee",
+          "e1f99659-6049-4716-b82a-30cdd1e89709"
+        ],
+        "status": "passed",
+        "synthetic": true,
+        "twenty_target_execution": false
+      }
+    ],
+    "finished_admitted_graphs": [
+      {
+        "archive": {
+          "logical_path": "admission/a9e95cf5-8c57-4e65-99e8-8545a605d823.json",
+          "sha256": "f7a830aba07075985ab7f1f9f9d8cd566fe1fe55a532a209aea22cd40dd14ede",
+          "size_bytes": 8841
+        },
+        "resources": [
+          {
+            "id": "4e768211a2c751e682d51371e801347e337dd08f78cb0356afaaad8cad7bb7ff",
+            "kind": "container",
+            "outcome": "absent",
+            "size_bytes": 0
+          },
+          {
+            "id": "370c26e0ce81628be0c200a2535e8d935f7b01e7ac876f606997f655467a0acf",
+            "kind": "container",
+            "outcome": "absent",
+            "size_bytes": 0
+          },
+          {
+            "id": "12bcb5ccdfd26dbc1f0493b7a1b141fa952db149d28ac595fb20c071abd7572b",
+            "kind": "network",
+            "outcome": "absent",
+            "size_bytes": 0
+          }
+        ],
+        "run_id": "a9e95cf5-8c57-4e65-99e8-8545a605d823"
+      },
+      {
+        "archive": {
+          "logical_path": "admission/530fb265-6a50-4755-ae36-d7a8ca72db20.json",
+          "sha256": "1881f4c5a69c5420fdb8363893939da42cc58836bb386f5f55531d283ae662c3",
+          "size_bytes": 8841
+        },
+        "resources": [
+          {
+            "id": "bc5d9eec1bbf7d00fa7a7fa08588fd4667c79e20bdf6fdaddc7bb0ae94d26d0b",
+            "kind": "container",
+            "outcome": "absent",
+            "size_bytes": 0
+          },
+          {
+            "id": "8937e8beba8916bf1ec0736dba8fbe028718ef1ffc490f3c1a2615ccc51b587d",
+            "kind": "container",
+            "outcome": "absent",
+            "size_bytes": 0
+          },
+          {
+            "id": "24dcd76c311facbc41e8153f568bc9540170fcb5534d30bd1fab1731da2cad5a",
+            "kind": "network",
+            "outcome": "absent",
+            "size_bytes": 0
+          }
+        ],
+        "run_id": "530fb265-6a50-4755-ae36-d7a8ca72db20"
+      },
+      {
+        "archive": {
+          "logical_path": "admission/4f56108a-4c86-4dd2-9c75-fef46a0b8baf.json",
+          "sha256": "d42a43933352194579ad67ad960b2a7db6b9870baab12977d56a33e4e6e12313",
+          "size_bytes": 8855
+        },
+        "resources": [
+          {
+            "id": "8e43a8bb6a8cafddb304d07636dcc1a80c660c69cd2ad132b1ccfc375badb276",
+            "kind": "container",
+            "outcome": "absent",
+            "size_bytes": 0
+          },
+          {
+            "id": "9bacd4e8cfccde65fea79920deace1089032562583064717f24cfb4289cdf389",
+            "kind": "container",
+            "outcome": "absent",
+            "size_bytes": 0
+          },
+          {
+            "id": "86f805ceb641a25d9bc7f2360550e5095af94194dc32cdea902445bb798274a6",
+            "kind": "network",
+            "outcome": "absent",
+            "size_bytes": 0
+          }
+        ],
+        "run_id": "4f56108a-4c86-4dd2-9c75-fef46a0b8baf"
+      },
+      {
+        "archive": {
+          "logical_path": "admission/46b817b0-fa18-4b69-89b4-49e9a9bd432c.json",
+          "sha256": "016fb5d14a3ebd2d59c4813cd1061866d521026109131a4dbf4ea92dc2a1fba0",
+          "size_bytes": 9366
+        },
+        "resources": [
+          {
+            "id": "d4ecb5031a0e72d18f72ba012ac5f74069aa51ed0b14ffc9157beb4f18ac4c50",
+            "kind": "container",
+            "outcome": "absent",
+            "size_bytes": 0
+          },
+          {
+            "id": "sha256:01f00753e392b521d2af860fbcb7e2b79b6e97c7a37f23ef929d96da2772a1c0",
+            "kind": "image",
+            "outcome": "retained",
+            "size_bytes": 46925785
+          },
+          {
+            "id": "68581ae686c85a9b41742084254a9d3fb74053d57bcbcfeb4037abdf07c04113",
+            "kind": "container",
+            "outcome": "absent",
+            "size_bytes": 0
+          },
+          {
+            "id": "d235562f8afb8cb4868d9c159aab14d10943f434d03d6cc3324944e52c0cceb3",
+            "kind": "container",
+            "outcome": "absent",
+            "size_bytes": 0
+          },
+          {
+            "id": "7264e647a4a75df2bf216f826e4c0854d5afef85adb206318528252525728652",
+            "kind": "network",
+            "outcome": "absent",
+            "size_bytes": 0
+          },
+          {
+            "id": "5ff91fc9a2748792fe29b38da40dab054115a75af7b3731629f862fc5cc7a636",
+            "kind": "container",
+            "outcome": "absent",
+            "size_bytes": 0
+          }
+        ],
+        "run_id": "46b817b0-fa18-4b69-89b4-49e9a9bd432c"
+      }
+    ],
+    "observed_at": "2026-10-24T17:07:00.586Z",
+    "scope": "Three actual bounded runtime/publication cases and one isolated synthetic capacity-refusal case.",
+    "status": "passed",
+    "suite_capture": {
+      "logical_path": "evidence/isolation-acceptance.json",
+      "sha256": "bfd71ed48931234485fee0731b067c4646965fc8d3ce75c68f3cc55abb1009b6",
+      "size_bytes": 2819
+    },
+    "suite_run_id": "c870d716-41b3-4f0f-baf1-9e0f710e9a27"
+  },
+  "requirements_revision": 2,
+  "schema_version": "1.0",
+  "simulation": false,
+  "source_branch": "codex/WORM-019-isolation",
+  "source_fixtures": {
+    "homelab_linux": {
+      "passed": 625,
+      "python": "Python 3.12.3",
+      "seconds": 47.599,
+      "skipped": 2,
+      "tests": 627
+    },
+    "scope": "Source fixtures; actual isolation operations are separate.",
+    "source_revision": "973c24a4b9e196d8d3117a3b91d372bd0397394a",
+    "windows": {
+      "passed": 394,
+      "python": "3.12.14",
+      "seconds": 60.293,
+      "skipped": 233,
+      "tests": 627
+    }
+  },
+  "tested_source_revision": "973c24a4b9e196d8d3117a3b91d372bd0397394a",
+  "ticket": "WORM-019",
+  "twenty_target_execution": false
+}

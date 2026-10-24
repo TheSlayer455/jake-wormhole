@@ -1,0 +1,1090 @@
+{
+  "$comment": "Fixed contract family; cross-file/grid/hash/privacy invariants are also enforced by parity_records.",
+  "$defs": {
+    "checksums.json": {
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "additionalProperties": false,
+          "properties": {
+            "decision.json": {
+              "additionalProperties": false,
+              "properties": {
+                "sha256": {
+                  "maxLength": 64,
+                  "minLength": 1,
+                  "pattern": "^[a-f0-9]{64}$(?![\\s\\S])",
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "maximum": 262144,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "sha256",
+                "size_bytes"
+              ],
+              "type": "object"
+            },
+            "execution.json": {
+              "additionalProperties": false,
+              "properties": {
+                "sha256": {
+                  "maxLength": 64,
+                  "minLength": 1,
+                  "pattern": "^[a-f0-9]{64}$(?![\\s\\S])",
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "maximum": 262144,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "sha256",
+                "size_bytes"
+              ],
+              "type": "object"
+            },
+            "plan.json": {
+              "additionalProperties": false,
+              "properties": {
+                "sha256": {
+                  "maxLength": 64,
+                  "minLength": 1,
+                  "pattern": "^[a-f0-9]{64}$(?![\\s\\S])",
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "maximum": 262144,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "sha256",
+                "size_bytes"
+              ],
+              "type": "object"
+            },
+            "results.json": {
+              "additionalProperties": false,
+              "properties": {
+                "sha256": {
+                  "maxLength": 64,
+                  "minLength": 1,
+                  "pattern": "^[a-f0-9]{64}$(?![\\s\\S])",
+                  "type": "string"
+                },
+                "size_bytes": {
+                  "maximum": 262144,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "sha256",
+                "size_bytes"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "plan.json",
+            "results.json",
+            "decision.json",
+            "execution.json"
+          ],
+          "type": "object"
+        },
+        "mode": {
+          "enum": [
+            "all",
+            "required-failure",
+            "unexpected-success"
+          ],
+          "type": "string"
+        },
+        "operation": {
+          "const": "synthetic-parity-checksums-v1",
+          "type": "string"
+        },
+        "production_iso_eligible": {
+          "const": false,
+          "type": "boolean"
+        },
+        "reference_eligible": {
+          "const": false,
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "type": "string"
+        },
+        "source_dirty": {
+          "const": false,
+          "type": "boolean"
+        },
+        "source_revision": {
+          "maxLength": 40,
+          "minLength": 1,
+          "pattern": "^[a-f0-9]{40}$(?![\\s\\S])",
+          "type": "string"
+        },
+        "synthetic": {
+          "const": true,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schema_version",
+        "source_revision",
+        "source_dirty",
+        "mode",
+        "synthetic",
+        "operation",
+        "files",
+        "reference_eligible",
+        "production_iso_eligible"
+      ],
+      "type": "object"
+    },
+    "decision.json": {
+      "additionalProperties": false,
+      "properties": {
+        "case_count": {
+          "maximum": 17,
+          "minimum": 17,
+          "type": "integer"
+        },
+        "exit_code": {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "failed_cases": {
+          "maximum": 17,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "mode": {
+          "enum": [
+            "all",
+            "required-failure",
+            "unexpected-success"
+          ],
+          "type": "string"
+        },
+        "operation": {
+          "const": "synthetic-parity-decision-v1",
+          "type": "string"
+        },
+        "passed_cases": {
+          "maximum": 17,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "plan_sha256": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-f0-9]{64}$(?![\\s\\S])",
+          "type": "string"
+        },
+        "primary_failure": {
+          "additionalProperties": false,
+          "properties": {
+            "case_id": {
+              "maxLength": 80,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9_-]{0,79}$(?![\\s\\S])",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "code": {
+              "maxLength": 80,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9_-]{0,79}$(?![\\s\\S])",
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "case_id"
+          ],
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "production_iso_eligible": {
+          "const": false,
+          "type": "boolean"
+        },
+        "reference_eligible": {
+          "const": false,
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "type": "string"
+        },
+        "source_dirty": {
+          "const": false,
+          "type": "boolean"
+        },
+        "source_revision": {
+          "maxLength": 40,
+          "minLength": 1,
+          "pattern": "^[a-f0-9]{40}$(?![\\s\\S])",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed"
+          ],
+          "type": "string"
+        },
+        "synthetic": {
+          "const": true,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schema_version",
+        "source_revision",
+        "source_dirty",
+        "mode",
+        "synthetic",
+        "operation",
+        "plan_sha256",
+        "status",
+        "exit_code",
+        "case_count",
+        "passed_cases",
+        "failed_cases",
+        "primary_failure",
+        "reference_eligible",
+        "production_iso_eligible"
+      ],
+      "type": "object"
+    },
+    "execution.json": {
+      "additionalProperties": false,
+      "properties": {
+        "architecture": {
+          "maxLength": 64,
+          "minLength": 1,
+          "type": "string"
+        },
+        "case_run_ids": {
+          "items": {
+            "format": "uuid",
+            "maxLength": 36,
+            "minLength": 1,
+            "pattern": "^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$(?![\\s\\S])",
+            "type": "string"
+          },
+          "maxItems": 17,
+          "minItems": 0,
+          "type": "array"
+        },
+        "command": {
+          "items": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 9,
+          "minItems": 9,
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "maxLength": 32,
+          "minLength": 1,
+          "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d{1,6})?Z$(?![\\s\\S])",
+          "type": "string"
+        },
+        "execution_mode": {
+          "enum": [
+            "manual",
+            "github-actions",
+            "gitlab"
+          ],
+          "type": "string"
+        },
+        "exit_code": {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "exit_code_kind": {
+          "const": "computed-runner-return-code",
+          "type": "string"
+        },
+        "github": {
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "const": "TheSlayer455/jake-wormhole",
+              "type": "string"
+            },
+            "run_attempt": {
+              "maximum": 1000,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "run_id": {
+              "maxLength": 30,
+              "minLength": 1,
+              "pattern": "^[1-9][0-9]{0,29}$(?![\\s\\S])",
+              "type": "string"
+            },
+            "runner_arch": {
+              "enum": [
+                "X64",
+                "ARM64",
+                "X86"
+              ],
+              "type": "string"
+            },
+            "runner_os": {
+              "enum": [
+                "Linux",
+                "Windows",
+                "macOS"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "repository",
+            "run_id",
+            "run_attempt",
+            "runner_os",
+            "runner_arch"
+          ],
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "operation": {
+          "const": "synthetic-parity-execution-v1",
+          "type": "string"
+        },
+        "original_records": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "case_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9_-]{0,79}$(?![\\s\\S])",
+                "type": "string"
+              },
+              "plan_sha256": {
+                "maxLength": 64,
+                "minLength": 1,
+                "pattern": "^[a-f0-9]{64}$(?![\\s\\S])",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "receipt_sha256": {
+                "maxLength": 64,
+                "minLength": 1,
+                "pattern": "^[a-f0-9]{64}$(?![\\s\\S])",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "case_id",
+              "plan_sha256",
+              "receipt_sha256"
+            ],
+            "type": "object"
+          },
+          "maxItems": 17,
+          "minItems": 0,
+          "type": "array"
+        },
+        "platform": {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        "production_iso_eligible": {
+          "const": false,
+          "type": "boolean"
+        },
+        "python_version": {
+          "maxLength": 20,
+          "minLength": 1,
+          "pattern": "^3\\.12\\.\\d{1,3}$(?![\\s\\S])",
+          "type": "string"
+        },
+        "reference_eligible": {
+          "const": false,
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "type": "string"
+        },
+        "source_revision": {
+          "maxLength": 40,
+          "minLength": 1,
+          "pattern": "^[a-f0-9]{40}$(?![\\s\\S])",
+          "type": "string"
+        },
+        "synthetic": {
+          "const": true,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "source_revision",
+        "python_version",
+        "platform",
+        "architecture",
+        "execution_mode",
+        "command",
+        "exit_code",
+        "exit_code_kind",
+        "created_at",
+        "case_run_ids",
+        "original_records",
+        "github",
+        "synthetic",
+        "reference_eligible",
+        "production_iso_eligible"
+      ],
+      "type": "object"
+    },
+    "plan.json": {
+      "additionalProperties": false,
+      "properties": {
+        "cases": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "case_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9_-]{0,79}$(?![\\s\\S])",
+                "type": "string"
+              },
+              "check_ids": {
+                "items": {
+                  "maxLength": 80,
+                  "minLength": 1,
+                  "pattern": "^[a-z][a-z0-9_-]{0,79}$(?![\\s\\S])",
+                  "type": "string"
+                },
+                "maxItems": 4,
+                "minItems": 4,
+                "type": "array"
+              },
+              "component": {
+                "enum": [
+                  "chunks",
+                  "assessment"
+                ],
+                "type": "string"
+              },
+              "expected_error_code": {
+                "maxLength": 80,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9_-]{0,79}$(?![\\s\\S])",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "expected_exit_code": {
+                "maximum": 2,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "expected_status": {
+                "enum": [
+                  "passed",
+                  "rejected",
+                  "failed"
+                ],
+                "type": "string"
+              },
+              "required": {
+                "const": true,
+                "type": "boolean"
+              },
+              "scenario": {
+                "maxLength": 80,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9_-]{0,79}$(?![\\s\\S])",
+                "type": "string"
+              },
+              "transport": {
+                "enum": [
+                  "local",
+                  "http-loopback",
+                  null
+                ],
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "case_id",
+              "component",
+              "transport",
+              "scenario",
+              "expected_status",
+              "expected_exit_code",
+              "expected_error_code",
+              "required",
+              "check_ids"
+            ],
+            "type": "object"
+          },
+          "maxItems": 17,
+          "minItems": 17,
+          "type": "array"
+        },
+        "mode": {
+          "enum": [
+            "all",
+            "required-failure",
+            "unexpected-success"
+          ],
+          "type": "string"
+        },
+        "operation": {
+          "const": "synthetic-parity-plan-v1",
+          "type": "string"
+        },
+        "plan_sha256": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-f0-9]{64}$(?![\\s\\S])",
+          "type": "string"
+        },
+        "production_iso_eligible": {
+          "const": false,
+          "type": "boolean"
+        },
+        "reference_eligible": {
+          "const": false,
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "type": "string"
+        },
+        "source_dirty": {
+          "const": false,
+          "type": "boolean"
+        },
+        "source_revision": {
+          "maxLength": 40,
+          "minLength": 1,
+          "pattern": "^[a-f0-9]{40}$(?![\\s\\S])",
+          "type": "string"
+        },
+        "synthetic": {
+          "const": true,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schema_version",
+        "source_revision",
+        "source_dirty",
+        "mode",
+        "synthetic",
+        "operation",
+        "cases",
+        "reference_eligible",
+        "production_iso_eligible",
+        "plan_sha256"
+      ],
+      "type": "object"
+    },
+    "results.json": {
+      "additionalProperties": false,
+      "properties": {
+        "cases": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "actual_status": {
+                "enum": [
+                  "passed",
+                  "rejected",
+                  "failed",
+                  "unverified"
+                ],
+                "type": "string"
+              },
+              "case_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9_-]{0,79}$(?![\\s\\S])",
+                "type": "string"
+              },
+              "checks": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "check_id": {
+                      "maxLength": 80,
+                      "minLength": 1,
+                      "pattern": "^[a-z][a-z0-9_-]{0,79}$(?![\\s\\S])",
+                      "type": "string"
+                    },
+                    "expected": {
+                      "maxLength": 512,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "observed": {
+                      "maxLength": 512,
+                      "minLength": 0,
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "required": {
+                      "const": true,
+                      "type": "boolean"
+                    },
+                    "status": {
+                      "enum": [
+                        "pass",
+                        "fail",
+                        "unverified"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "check_id",
+                    "required",
+                    "expected",
+                    "observed",
+                    "status"
+                  ],
+                  "type": "object"
+                },
+                "maxItems": 4,
+                "minItems": 4,
+                "type": "array"
+              },
+              "cleanup": {
+                "additionalProperties": false,
+                "properties": {
+                  "private_removed": {
+                    "type": "boolean"
+                  },
+                  "status": {
+                    "enum": [
+                      "completed",
+                      "failed",
+                      "not-started"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "private_removed"
+                ],
+                "type": "object"
+              },
+              "component_cli_exit_code": {
+                "maximum": 2,
+                "minimum": 0,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "details": {
+                "additionalProperties": false,
+                "properties": {
+                  "checked_chunks": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "index": {
+                          "maximum": 4,
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "sha256": {
+                          "maxLength": 64,
+                          "minLength": 1,
+                          "pattern": "^[a-f0-9]{64}$(?![\\s\\S])",
+                          "type": "string"
+                        },
+                        "size": {
+                          "maximum": 65536,
+                          "minimum": 1,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "index",
+                        "size",
+                        "sha256"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 5,
+                    "minItems": 0,
+                    "type": "array"
+                  },
+                  "counts": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "Not Applicable": {
+                        "maximum": 4,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "Not Reviewed": {
+                        "maximum": 4,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "Not a Finding": {
+                        "maximum": 4,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "Open": {
+                        "maximum": 4,
+                        "minimum": 0,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "Open",
+                      "Not a Finding",
+                      "Not Reviewed",
+                      "Not Applicable"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "findings": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "applicable": {
+                          "type": "boolean"
+                        },
+                        "finding_id": {
+                          "maxLength": 80,
+                          "minLength": 1,
+                          "pattern": "^[a-z][a-z0-9_-]{0,79}$(?![\\s\\S])",
+                          "type": "string"
+                        },
+                        "reason": {
+                          "maxLength": 512,
+                          "minLength": 0,
+                          "type": "string"
+                        },
+                        "status": {
+                          "enum": [
+                            "Open",
+                            "Not a Finding",
+                            "Not Reviewed",
+                            "Not Applicable"
+                          ],
+                          "type": "string"
+                        },
+                        "summary": {
+                          "maxLength": 512,
+                          "minLength": 1,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "finding_id",
+                        "status",
+                        "summary",
+                        "applicable",
+                        "reason"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 4,
+                    "minItems": 0,
+                    "type": "array"
+                  },
+                  "input_sha256": {
+                    "maxLength": 64,
+                    "minLength": 1,
+                    "pattern": "^[a-f0-9]{64}$(?![\\s\\S])",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "output_sha256": {
+                    "maxLength": 64,
+                    "minLength": 1,
+                    "pattern": "^[a-f0-9]{64}$(?![\\s\\S])",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "policy_verdict": {
+                    "enum": [
+                      "pass",
+                      "reject",
+                      null
+                    ],
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "input_sha256",
+                  "output_sha256",
+                  "checked_chunks",
+                  "findings",
+                  "counts",
+                  "policy_verdict"
+                ],
+                "type": "object"
+              },
+              "duration_seconds": {
+                "const": "normalized-duration",
+                "type": "string"
+              },
+              "error_code": {
+                "maxLength": 80,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9_-]{0,79}$(?![\\s\\S])",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "exit_code_kind": {
+                "const": "domain-cli-contract-mapping",
+                "type": "string"
+              },
+              "loopback_port": {
+                "enum": [
+                  "normalized-loopback-port",
+                  null
+                ],
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "run_id": {
+                "maxLength": 100,
+                "minLength": 1,
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "status": {
+                "enum": [
+                  "passed",
+                  "failed",
+                  "not-run"
+                ],
+                "type": "string"
+              },
+              "updated_at": {
+                "const": "normalized-time",
+                "type": "string"
+              }
+            },
+            "required": [
+              "case_id",
+              "run_id",
+              "updated_at",
+              "duration_seconds",
+              "loopback_port",
+              "status",
+              "actual_status",
+              "component_cli_exit_code",
+              "exit_code_kind",
+              "error_code",
+              "checks",
+              "details",
+              "cleanup"
+            ],
+            "type": "object"
+          },
+          "maxItems": 17,
+          "minItems": 17,
+          "type": "array"
+        },
+        "cleanup": {
+          "additionalProperties": false,
+          "properties": {
+            "private_removed": {
+              "type": "boolean"
+            },
+            "status": {
+              "enum": [
+                "completed",
+                "failed"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "status",
+            "private_removed"
+          ],
+          "type": "object"
+        },
+        "mode": {
+          "enum": [
+            "all",
+            "required-failure",
+            "unexpected-success"
+          ],
+          "type": "string"
+        },
+        "operation": {
+          "const": "synthetic-parity-results-v1",
+          "type": "string"
+        },
+        "plan_sha256": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-f0-9]{64}$(?![\\s\\S])",
+          "type": "string"
+        },
+        "primary_failure": {
+          "additionalProperties": false,
+          "properties": {
+            "case_id": {
+              "maxLength": 80,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9_-]{0,79}$(?![\\s\\S])",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "code": {
+              "maxLength": 80,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9_-]{0,79}$(?![\\s\\S])",
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "case_id"
+          ],
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "production_iso_eligible": {
+          "const": false,
+          "type": "boolean"
+        },
+        "reference_eligible": {
+          "const": false,
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "type": "string"
+        },
+        "source_dirty": {
+          "const": false,
+          "type": "boolean"
+        },
+        "source_revision": {
+          "maxLength": 40,
+          "minLength": 1,
+          "pattern": "^[a-f0-9]{40}$(?![\\s\\S])",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed"
+          ],
+          "type": "string"
+        },
+        "synthetic": {
+          "const": true,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schema_version",
+        "source_revision",
+        "source_dirty",
+        "mode",
+        "synthetic",
+        "operation",
+        "plan_sha256",
+        "status",
+        "cases",
+        "primary_failure",
+        "cleanup",
+        "reference_eligible",
+        "production_iso_eligible"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "wormhole:synthetic-parity-export:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/plan.json"
+    },
+    {
+      "$ref": "#/$defs/results.json"
+    },
+    {
+      "$ref": "#/$defs/decision.json"
+    },
+    {
+      "$ref": "#/$defs/execution.json"
+    },
+    {
+      "$ref": "#/$defs/checksums.json"
+    }
+  ]
+}

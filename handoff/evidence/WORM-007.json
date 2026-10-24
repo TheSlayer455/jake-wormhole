@@ -1,0 +1,645 @@
+{
+  "schema_version": "1.0",
+  "ticket_key": "WORM-007",
+  "requirements_revision": 2,
+  "tested_source_revision": "9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5",
+  "observed_at": "2026-10-23T16:14:20.473155+00:00",
+  "evidence_kind": "actual authorized homelab SSH/Ansible runtime plus separately labeled fixture tests",
+  "environment": "Ubuntu24.04 homelab CPython3.12.3, existing Docker29.6; no host packages, daemon, sshd, authentication or routing changed",
+  "command": "python3 -B -m wormhole.readiness_acceptance --scenario all --sentinel-id <existing exact unrelated container ID>",
+  "exit_status": 0,
+  "suite": {
+    "cases": [
+      {
+        "checks": {
+          "cleanup": {
+            "helper": "completed",
+            "status": "pass",
+            "terraform": "completed",
+            "underlying_partial_outcome": "completed",
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan": {
+            "bytes_scanned": 233718,
+            "files_scanned": 38,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "real_ssh_ansible_readiness": {
+            "genuine_remote_probes": true,
+            "observed_transitions": [
+              {
+                "check_id": "created",
+                "elapsed_seconds": 2.6349530150182545,
+                "observed_at": "2026-10-23T16:09:08.801Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "started",
+                "elapsed_seconds": 2.641096693929285,
+                "observed_at": "2026-10-23T16:09:08.808Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "endpoint-discovered",
+                "elapsed_seconds": 2.64616382913664,
+                "observed_at": "2026-10-23T16:09:08.813Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "tcp-reachable",
+                "elapsed_seconds": 2.784459074959159,
+                "observed_at": "2026-10-23T16:09:08.951Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ssh-identity-accepted",
+                "elapsed_seconds": 3.3790491139516234,
+                "observed_at": "2026-10-23T16:09:09.545Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "python-usable",
+                "elapsed_seconds": 3.693538381019607,
+                "observed_at": "2026-10-23T16:09:09.860Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ansible-usable",
+                "elapsed_seconds": 5.598065942991525,
+                "observed_at": "2026-10-23T16:09:11.765Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "required-test-complete",
+                "elapsed_seconds": 7.497282481053844,
+                "observed_at": "2026-10-23T16:09:13.664Z",
+                "status": "pass",
+                "target_id": "target-001"
+              }
+            ],
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T16:08:42.691Z",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 266246814,
+          "ordinary_files": 67,
+          "phase": "after-readiness",
+          "sampled_at": "2026-10-23T16:09:13.781Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-readiness-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "2b0bac2c-bfd5-4071-b212-3fdc1ada59d7",
+        "runtime_pipeline_complete": false,
+        "scenario": "healthy",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:09:21.615Z"
+      },
+      {
+        "checks": {
+          "cleanup": {
+            "helper": "completed",
+            "status": "pass",
+            "terraform": "completed",
+            "underlying_partial_outcome": "completed",
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan": {
+            "bytes_scanned": 233729,
+            "files_scanned": 38,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "delayed_start": {
+            "elapsed_seconds": 2.2847065101377666,
+            "invoked": true,
+            "status": "pass"
+          },
+          "real_ssh_ansible_readiness": {
+            "genuine_remote_probes": true,
+            "observed_transitions": [
+              {
+                "check_id": "created",
+                "elapsed_seconds": 8.256826200988144,
+                "observed_at": "2026-10-23T16:09:47.243Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "started",
+                "elapsed_seconds": 8.26303873793222,
+                "observed_at": "2026-10-23T16:09:47.249Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "endpoint-discovered",
+                "elapsed_seconds": 8.268180991988629,
+                "observed_at": "2026-10-23T16:09:47.254Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "tcp-reachable",
+                "elapsed_seconds": 8.410232797963545,
+                "observed_at": "2026-10-23T16:09:47.396Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ssh-identity-accepted",
+                "elapsed_seconds": 9.072690782137215,
+                "observed_at": "2026-10-23T16:09:48.058Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "python-usable",
+                "elapsed_seconds": 9.40219325106591,
+                "observed_at": "2026-10-23T16:09:48.388Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ansible-usable",
+                "elapsed_seconds": 11.374765302054584,
+                "observed_at": "2026-10-23T16:09:50.360Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "required-test-complete",
+                "elapsed_seconds": 13.291881050914526,
+                "observed_at": "2026-10-23T16:09:52.278Z",
+                "status": "pass",
+                "target_id": "target-001"
+              }
+            ],
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T16:09:21.636Z",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 266246826,
+          "ordinary_files": 67,
+          "phase": "after-readiness",
+          "sampled_at": "2026-10-23T16:09:52.394Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-readiness-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "08f95c30-c614-4d89-b513-fb36cbf5546b",
+        "runtime_pipeline_complete": false,
+        "scenario": "delayed-start",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:10:00.202Z"
+      },
+      {
+        "checks": {
+          "cleanup": {
+            "helper": "completed",
+            "status": "pass",
+            "terraform": "completed",
+            "underlying_partial_outcome": "failed",
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan": {
+            "bytes_scanned": 179879,
+            "files_scanned": 28,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "expected_failure": {
+            "configured_interpreter_absence_is_package_absence": false,
+            "dependent_check_blocked": true,
+            "mismatch_kind": "never-starts",
+            "observed_error": "target_not_started",
+            "reference_eligible": false,
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T16:10:00.225Z",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 266189550,
+          "ordinary_files": 50,
+          "phase": "after-readiness",
+          "sampled_at": "2026-10-23T16:10:24.783Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "negative_window_seconds": 5,
+        "operation": "real-readiness-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "0b89c872-3904-49f7-b842-df331bc4d626",
+        "runtime_pipeline_complete": false,
+        "scenario": "never-starts",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:10:32.240Z"
+      },
+      {
+        "checks": {
+          "cleanup": {
+            "helper": "completed",
+            "status": "pass",
+            "terraform": "completed",
+            "underlying_partial_outcome": "failed",
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan": {
+            "bytes_scanned": 230986,
+            "files_scanned": 38,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "expected_failure": {
+            "configured_interpreter_absence_is_package_absence": false,
+            "dependent_check_blocked": true,
+            "mismatch_kind": "wrong-key",
+            "observed_error": "ssh_key_rejected",
+            "reference_eligible": false,
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T16:10:32.262Z",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 266241661,
+          "ordinary_files": 64,
+          "phase": "after-readiness",
+          "sampled_at": "2026-10-23T16:10:59.178Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-readiness-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "592ed46a-4dd2-4ebe-b425-1c01b89e9a13",
+        "runtime_pipeline_complete": false,
+        "scenario": "wrong-key",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:11:06.796Z"
+      },
+      {
+        "checks": {
+          "cleanup": {
+            "helper": "completed",
+            "status": "pass",
+            "terraform": "completed",
+            "underlying_partial_outcome": "failed",
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan": {
+            "bytes_scanned": 230999,
+            "files_scanned": 38,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "expected_failure": {
+            "configured_interpreter_absence_is_package_absence": false,
+            "dependent_check_blocked": true,
+            "mismatch_kind": "wrong-user",
+            "observed_error": "ssh_user_rejected",
+            "reference_eligible": false,
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T16:11:06.820Z",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 266241687,
+          "ordinary_files": 64,
+          "phase": "after-readiness",
+          "sampled_at": "2026-10-23T16:11:33.517Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-readiness-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "0603b947-15f7-4518-afd9-102974efaab7",
+        "runtime_pipeline_complete": false,
+        "scenario": "wrong-user",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:11:41.216Z"
+      },
+      {
+        "checks": {
+          "cleanup": {
+            "helper": "completed",
+            "status": "pass",
+            "terraform": "completed",
+            "underlying_partial_outcome": "failed",
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan": {
+            "bytes_scanned": 232635,
+            "files_scanned": 38,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "expected_failure": {
+            "configured_interpreter_absence_is_package_absence": false,
+            "dependent_check_blocked": true,
+            "mismatch_kind": "configured-interpreter-unavailable",
+            "observed_error": "configured_interpreter_unavailable",
+            "reference_eligible": false,
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T16:11:41.238Z",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 266245077,
+          "ordinary_files": 66,
+          "phase": "after-readiness",
+          "sampled_at": "2026-10-23T16:12:24.862Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-readiness-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "4a76301d-0e94-4450-8ac3-d86e2d28d644",
+        "runtime_pipeline_complete": false,
+        "scenario": "configured-interpreter-unavailable",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:12:32.500Z"
+      },
+      {
+        "checks": {
+          "cleanup": {
+            "helper": "completed",
+            "status": "pass",
+            "terraform": "completed",
+            "underlying_partial_outcome": "failed",
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan": {
+            "bytes_scanned": 228577,
+            "files_scanned": 38,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "expected_failure": {
+            "configured_interpreter_absence_is_package_absence": false,
+            "dependent_check_blocked": true,
+            "mismatch_kind": "expected inventory/network input",
+            "observed_error": "inventory_endpoint_mismatch",
+            "reference_eligible": false,
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T16:12:32.523Z",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 266238248,
+          "ordinary_files": 60,
+          "phase": "after-readiness",
+          "sampled_at": "2026-10-23T16:12:58.698Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-readiness-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "61a5e8e4-f29f-4e04-b264-1498e63ffe8f",
+        "runtime_pipeline_complete": false,
+        "scenario": "wrong-endpoint",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:13:06.307Z"
+      },
+      {
+        "checks": {
+          "cleanup": {
+            "helper": "completed",
+            "status": "pass",
+            "terraform": "completed",
+            "underlying_partial_outcome": "failed",
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan": {
+            "bytes_scanned": 228596,
+            "files_scanned": 38,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "expected_failure": {
+            "configured_interpreter_absence_is_package_absence": false,
+            "dependent_check_blocked": true,
+            "mismatch_kind": "expected inventory/network input",
+            "observed_error": "inventory_endpoint_mismatch",
+            "reference_eligible": false,
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T16:13:06.328Z",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 266238267,
+          "ordinary_files": 60,
+          "phase": "after-readiness",
+          "sampled_at": "2026-10-23T16:13:32.519Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-readiness-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "482505ac-0487-4dff-80e5-2d9e86f8b8a9",
+        "runtime_pipeline_complete": false,
+        "scenario": "wrong-network",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:13:40.193Z"
+      },
+      {
+        "checks": {
+          "actual_hostkey_rotation": {
+            "actual_stop_pid_zero": true,
+            "after_started_at": "2026-10-23T16:14:08.12544449Z",
+            "before_started_at": "2026-10-23T16:13:59.695389742Z",
+            "new_public_identity_observed": true,
+            "original_pin_retained": true,
+            "purpose": "controlled host-key rotation; original trusted pin retained",
+            "status": "pass",
+            "target_resource_id": "3e04f57f291f03cc5841276fab7eb1ed241bb678c746906fb90e70350a691508"
+          },
+          "cleanup": {
+            "helper": "completed",
+            "status": "pass",
+            "terraform": "completed",
+            "underlying_partial_outcome": "failed",
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan": {
+            "bytes_scanned": 257395,
+            "files_scanned": 46,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "expected_failure": {
+            "configured_interpreter_absence_is_package_absence": false,
+            "dependent_check_blocked": true,
+            "mismatch_kind": "changed-host-key",
+            "observed_error": "ssh_host_key_mismatch",
+            "reference_eligible": false,
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T16:13:40.215Z",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 266269047,
+          "ordinary_files": 73,
+          "phase": "after-readiness",
+          "sampled_at": "2026-10-23T16:14:12.825Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-readiness-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "25051fe6-f4bc-48c8-adb1-40065fc5c735",
+        "runtime_pipeline_complete": false,
+        "scenario": "changed-host-key",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:14:20.457Z"
+      }
+    ],
+    "operation": "real-readiness-acceptance",
+    "production_iso_eligible": false,
+    "runtime_pipeline_complete": false,
+    "status": "pass"
+  },
+  "fixture_tests": {
+    "tested_source_revision": "9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5",
+    "linux": {
+      "cases": 173,
+      "passed": 171,
+      "skipped": 2,
+      "seconds": 7.792
+    },
+    "windows": {
+      "cases": 173,
+      "passed": 99,
+      "skipped": 74,
+      "seconds": 5.483
+    }
+  },
+  "earlier_failed_attempts": [
+    {
+      "run_id": "159b83fb-e133-4f8f-959e-f671af0749b0",
+      "original_source_revision": "367fc19fa67a40dc224abbdd50973770e409f8e4",
+      "helper_cleanup": "completed",
+      "terraform_cleanup": "completed",
+      "original_primary_failure": "helper_probe_incomplete",
+      "underlying_operation_status": "failed",
+      "unrelated_sentinel_unchanged": true,
+      "resources_reconciled": true,
+      "observed_failure_and_correction": "Non-root helper could not read root0600 mounted source; fixed by exact readonly per-run public code copy.",
+      "reviewed_private_recovery_operator_sha256": "897ea8ca7c95cb94870448f6faeffb6d39c4af77f702cff183afbf8a0163b0c4"
+    },
+    {
+      "run_id": "035776e5-f514-4db7-9d65-fff68fbe64b7",
+      "original_source_revision": "ca210a4a8a24672edef94e75f887c6e796577764",
+      "helper_cleanup": "completed",
+      "terraform_cleanup": "completed",
+      "original_primary_failure": "ansible_unusable",
+      "underlying_operation_status": "failed",
+      "unrelated_sentinel_unchanged": true,
+      "resources_reconciled": true,
+      "observed_failure_and_correction": "Ansible default forced terminal conflicted with target PermitTTY=no; fixed using documented no-TTY/piped SSH options.",
+      "reviewed_private_recovery_operator_sha256": "71ee85cd5b6839a3469855e82d3c9fb41c0b9914f20a42577984e4f738e33441"
+    },
+    {
+      "run_id": "ce7a207c-ee05-46ef-949c-ad577b04c975",
+      "original_source_revision": "b94a9017766d1b5fa46d37ffa1055608df24568e",
+      "helper_cleanup": "completed",
+      "terraform_cleanup": "completed",
+      "original_primary_failure": "ansible_unusable",
+      "underlying_operation_status": "failed",
+      "unrelated_sentinel_unchanged": true,
+      "resources_reconciled": true,
+      "observed_failure_and_correction": "Ansible treated empty JSON argument as unsupported raw ping parameters; fixed by omitting empty -a.",
+      "reviewed_private_recovery_operator_sha256": "be8c1a9f67a09f7c6c395d36691e1b445440330f1a8592977c7a110dd52b9f34"
+    }
+  ],
+  "criteria": {
+    "AC-01": "pass: healthy and delayed-start actual helper TCP, strict UID10001 SSH, interpreter check, Ansible wait_for_connection and remote ping with measured transitions and bounded evidence",
+    "AC-02": "pass: all7 actual negative cases retain expected target-specific failure; changed host key observed after controlled single owned restart with original pin unchanged; endpoint/network cases alter only expected metadata, not unrelated networking; missing-interpreter case verifies an unavailable configured path rather than claiming removal of the Python package",
+    "AC-03": "pass: negative readiness require_ready guards refuse dependent work and preserve failed partial outcomes; SSH/Ansible probes run on actual helper/network, while exact owned public-key observation is only the trusted pinning channel"
+  },
+  "review": {
+    "kind": "independent engineering subagent source review, not independent human examination",
+    "original_commits": [
+      "d6442847af7cf4c98941dadf3f2baf952091f285",
+      "9850192bda93c2b192b607cd132812ca31f3009e",
+      "475dafa9e137c79aea7d022b95e027d1d6ecefce",
+      "91e81646de787e40c4ab973de3a17a2df07cc218"
+    ],
+    "harness_revision": "1d1ab1e1c8d42586e83899ed0ff0825cafb39611",
+    "remaining_material_source_findings": []
+  },
+  "limits": [
+    "This is readiness, not WORM-009 package/configuration/payload functional validation or a complete pipeline.",
+    "The interpreter negative uses a deliberately unavailable configured target path; the baked Python package is not removed.",
+    "Wrong endpoint/network cases change expected inventory metadata and restore it before cleanup; unrelated networking is never modified.",
+    "A fixed exact-owned public-key reader supports trust establishment; all acceptance transport and Ansible checks use network SSH.",
+    "Disk figures are checkpoint logical-file samples, not a hard quota or continuous peak.",
+    "Private authentication, Terraform state/plans and full diagnostics remain outside Git."
+  ],
+  "runtime_pipeline_complete": false,
+  "production_iso_eligible": false
+}

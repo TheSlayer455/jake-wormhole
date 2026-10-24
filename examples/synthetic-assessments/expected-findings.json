@@ -1,0 +1,22 @@
+[
+  {
+    "finding_id": "fixture-alpha",
+    "applicable": true,
+    "reason": ""
+  },
+  {
+    "finding_id": "fixture-beta",
+    "applicable": true,
+    "reason": ""
+  },
+  {
+    "finding_id": "fixture-gamma",
+    "applicable": true,
+    "reason": ""
+  },
+  {
+    "finding_id": "fixture-delta",
+    "applicable": false,
+    "reason": "Synthetic fixture excludes this capability."
+  }
+]

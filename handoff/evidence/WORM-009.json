@@ -1,0 +1,1595 @@
+{
+  "schema_version": "1.0",
+  "ticket_key": "WORM-009",
+  "requirements_revision": 2,
+  "tested_source_revision": "de745a6ee7f80cddb2007ced380e2f67f79395f5",
+  "observed_at": "2026-10-23T16:51:23.113829+00:00",
+  "evidence_kind": "actual authorized homelab runtime plus separately labeled source fixtures",
+  "environment": "Ubuntu24.04 homelab, CPython3.12.3, existing Docker29.6; no host package/daemon changes",
+  "command": "python3 -B -m wormhole.validation_acceptance --scenario all --sentinel-id <existing exact unrelated container ID>",
+  "exit_status": 0,
+  "suite": {
+    "cases": [
+      {
+        "checks": {
+          "actual_readiness": {
+            "status": "pass",
+            "transitions": [
+              {
+                "check_id": "created",
+                "elapsed_seconds": 2.6972686999943107,
+                "observed_at": "2026-10-23T16:47:40.806Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "started",
+                "elapsed_seconds": 2.7027332480065525,
+                "observed_at": "2026-10-23T16:47:40.812Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "endpoint-discovered",
+                "elapsed_seconds": 2.7078463861253113,
+                "observed_at": "2026-10-23T16:47:40.817Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "tcp-reachable",
+                "elapsed_seconds": 2.9090462611056864,
+                "observed_at": "2026-10-23T16:47:41.018Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ssh-identity-accepted",
+                "elapsed_seconds": 3.695207183016464,
+                "observed_at": "2026-10-23T16:47:41.804Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "python-usable",
+                "elapsed_seconds": 4.006017229985446,
+                "observed_at": "2026-10-23T16:47:42.115Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ansible-usable",
+                "elapsed_seconds": 5.984197672922164,
+                "observed_at": "2026-10-23T16:47:44.093Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "required-test-complete",
+                "elapsed_seconds": 7.881170057924464,
+                "observed_at": "2026-10-23T16:47:45.990Z",
+                "status": "pass",
+                "target_id": "target-001"
+              }
+            ]
+          },
+          "cleanup": {
+            "primary_failure": null,
+            "secondary_failures": [],
+            "status": "completed",
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan_after_cleanup": {
+            "bytes_scanned": 280105,
+            "files_scanned": 54,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "credential_scan_before_cleanup": {
+            "bytes_scanned": 243707,
+            "files_scanned": 41,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "functional": {
+            "attempts": [
+              {
+                "duration_seconds": 2.1395847559906542,
+                "log_truncated": false,
+                "private_log": "private/qualification-helper-functional-validation-0.log",
+                "returncode": 0,
+                "role": "helper",
+                "stage": "functional-validation",
+                "status": "pass"
+              }
+            ],
+            "candidate_binding": "not-implemented; qualified stock reference image only",
+            "expected_failure": null,
+            "negative_kind": null,
+            "observed_failure": null,
+            "plan_sha256": "42e9734b9db871e9f6a8cdbeffb91350dc48202712cfe08b6851eff7289e627b",
+            "readable_structured_agreement": true,
+            "records": [
+              {
+                "check_id": "os-applicability",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+                "observed": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-ca-certificates",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "20260816ubuntu0.24.04.1",
+                "observed": "20260816ubuntu0.24.04.1",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-python3",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "3.12.3-0ubuntu2.1",
+                "observed": "3.12.3-0ubuntu2.1",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-python3-12",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "3.12.3-1ubuntu0.17",
+                "observed": "3.12.3-1ubuntu0.17",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-client",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "1:9.6p1-3ubuntu13.20",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-server",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "1:9.6p1-3ubuntu13.20",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-sftp-server",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "1:9.6p1-3ubuntu13.20",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "sshd-config-sha256",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1",
+                "observed": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "payload-sha256",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+                "observed": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "payload-public-key-function",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "{\"invalid_rejected\":true,\"status\":\"observed\",\"valid_normalized\":true}",
+                "observed": "{\"invalid_rejected\":true,\"status\":\"observed\",\"valid_normalized\":true}",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              }
+            ],
+            "required_rows": 10,
+            "status": "pass",
+            "underlying_status": "passed"
+          }
+        },
+        "created_at": "2026-10-23T16:47:13.867Z",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 266275291,
+          "ordinary_files": 72,
+          "phase": "before-functional-cleanup",
+          "sampled_at": "2026-10-23T16:47:48.312Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-functional-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "b305cae9-7a16-4de9-8cd3-0437d19a2d99",
+        "runtime_pipeline_complete": false,
+        "scenario": "healthy",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "de745a6ee7f80cddb2007ced380e2f67f79395f5",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:47:55.912Z"
+      },
+      {
+        "checks": {
+          "actual_readiness": {
+            "status": "pass",
+            "transitions": [
+              {
+                "check_id": "created",
+                "elapsed_seconds": 2.6495949330274016,
+                "observed_at": "2026-10-23T16:48:22.688Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "started",
+                "elapsed_seconds": 2.657735326094553,
+                "observed_at": "2026-10-23T16:48:22.696Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "endpoint-discovered",
+                "elapsed_seconds": 2.6626986761111766,
+                "observed_at": "2026-10-23T16:48:22.701Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "tcp-reachable",
+                "elapsed_seconds": 2.7995806981343776,
+                "observed_at": "2026-10-23T16:48:22.838Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ssh-identity-accepted",
+                "elapsed_seconds": 3.428080052137375,
+                "observed_at": "2026-10-23T16:48:23.466Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "python-usable",
+                "elapsed_seconds": 3.7494292450137436,
+                "observed_at": "2026-10-23T16:48:23.788Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ansible-usable",
+                "elapsed_seconds": 5.763240025145933,
+                "observed_at": "2026-10-23T16:48:25.801Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "required-test-complete",
+                "elapsed_seconds": 7.663224357180297,
+                "observed_at": "2026-10-23T16:48:27.701Z",
+                "status": "pass",
+                "target_id": "target-001"
+              }
+            ]
+          },
+          "cleanup": {
+            "primary_failure": {
+              "code": "required_check_mismatch",
+              "recorded_at": "2026-10-23T16:48:29.900Z"
+            },
+            "secondary_failures": [],
+            "status": "completed",
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan_after_cleanup": {
+            "bytes_scanned": 280570,
+            "files_scanned": 54,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "credential_scan_before_cleanup": {
+            "bytes_scanned": 244004,
+            "files_scanned": 41,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "functional": {
+            "attempts": [
+              {
+                "duration_seconds": 2.0369348148815334,
+                "log_truncated": false,
+                "private_log": "private/qualification-helper-functional-validation-0.log",
+                "returncode": 0,
+                "role": "helper",
+                "stage": "functional-validation",
+                "status": "pass"
+              }
+            ],
+            "candidate_binding": "not-implemented; qualified stock reference image only",
+            "expected_failure": "required_check_mismatch",
+            "negative_kind": "controlled-expectation",
+            "observed_failure": "required_check_mismatch",
+            "plan_sha256": "6962d6d2713b48b24c353d18bb11a510acad12c2d6a610bd25a126b28a97b591",
+            "readable_structured_agreement": true,
+            "records": [
+              {
+                "check_id": "os-applicability",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+                "observed": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-ca-certificates",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "20260816ubuntu0.24.04.1",
+                "observed": "20260816ubuntu0.24.04.1",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-python3",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "3.12.3-0ubuntu2.1-controlled-expectation-mismatch",
+                "observed": "3.12.3-0ubuntu2.1",
+                "required": true,
+                "status": "fail",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-python3-12",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "3.12.3-1ubuntu0.17",
+                "observed": "3.12.3-1ubuntu0.17",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-client",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "1:9.6p1-3ubuntu13.20",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-server",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "1:9.6p1-3ubuntu13.20",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-sftp-server",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "1:9.6p1-3ubuntu13.20",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "sshd-config-sha256",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1",
+                "observed": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "payload-sha256",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+                "observed": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "payload-public-key-function",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "{\"invalid_rejected\":true,\"status\":\"observed\",\"valid_normalized\":true}",
+                "observed": "{\"invalid_rejected\":true,\"status\":\"observed\",\"valid_normalized\":true}",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              }
+            ],
+            "required_rows": 10,
+            "status": "pass",
+            "underlying_status": "failed"
+          }
+        },
+        "created_at": "2026-10-23T16:47:55.938Z",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 266275588,
+          "ordinary_files": 72,
+          "phase": "before-functional-cleanup",
+          "sampled_at": "2026-10-23T16:48:29.921Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-functional-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "10ff42f8-5570-4be5-b0d5-50de8237054d",
+        "runtime_pipeline_complete": false,
+        "scenario": "version-expectation-mismatch",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "de745a6ee7f80cddb2007ced380e2f67f79395f5",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:48:37.507Z"
+      },
+      {
+        "checks": {
+          "actual_readiness": {
+            "status": "pass",
+            "transitions": [
+              {
+                "check_id": "created",
+                "elapsed_seconds": 2.6678061801940203,
+                "observed_at": "2026-10-23T16:49:03.993Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "started",
+                "elapsed_seconds": 2.673452074173838,
+                "observed_at": "2026-10-23T16:49:03.998Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "endpoint-discovered",
+                "elapsed_seconds": 2.679471299983561,
+                "observed_at": "2026-10-23T16:49:04.004Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "tcp-reachable",
+                "elapsed_seconds": 2.8238891700748354,
+                "observed_at": "2026-10-23T16:49:04.149Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ssh-identity-accepted",
+                "elapsed_seconds": 3.532696997979656,
+                "observed_at": "2026-10-23T16:49:04.858Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "python-usable",
+                "elapsed_seconds": 3.850545580033213,
+                "observed_at": "2026-10-23T16:49:05.175Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ansible-usable",
+                "elapsed_seconds": 5.789126021089032,
+                "observed_at": "2026-10-23T16:49:07.114Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "required-test-complete",
+                "elapsed_seconds": 7.784663929138333,
+                "observed_at": "2026-10-23T16:49:09.109Z",
+                "status": "pass",
+                "target_id": "target-001"
+              }
+            ]
+          },
+          "cleanup": {
+            "primary_failure": {
+              "code": "required_check_mismatch",
+              "recorded_at": "2026-10-23T16:49:11.469Z"
+            },
+            "secondary_failures": [],
+            "status": "completed",
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan_after_cleanup": {
+            "bytes_scanned": 280517,
+            "files_scanned": 54,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "credential_scan_before_cleanup": {
+            "bytes_scanned": 243947,
+            "files_scanned": 41,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "functional": {
+            "attempts": [
+              {
+                "duration_seconds": 2.1949501128401607,
+                "log_truncated": false,
+                "private_log": "private/qualification-helper-functional-validation-0.log",
+                "returncode": 0,
+                "role": "helper",
+                "stage": "functional-validation",
+                "status": "pass"
+              }
+            ],
+            "candidate_binding": "not-implemented; qualified stock reference image only",
+            "expected_failure": "required_check_mismatch",
+            "negative_kind": "controlled-expectation",
+            "observed_failure": "required_check_mismatch",
+            "plan_sha256": "75897ae38a21a9b18b06dd08462fa1963c53ff166f4bf55c40e205522fae7cdb",
+            "readable_structured_agreement": true,
+            "records": [
+              {
+                "check_id": "os-applicability",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+                "observed": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-ca-certificates",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "20260816ubuntu0.24.04.1",
+                "observed": "20260816ubuntu0.24.04.1",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-python3",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "3.12.3-0ubuntu2.1",
+                "observed": "3.12.3-0ubuntu2.1",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-python3-12",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "3.12.3-1ubuntu0.17",
+                "observed": "3.12.3-1ubuntu0.17",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-client",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "1:9.6p1-3ubuntu13.20",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-server",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "1:9.6p1-3ubuntu13.20",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-sftp-server",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "1:9.6p1-3ubuntu13.20",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "sshd-config-sha256",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1",
+                "observed": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "payload-sha256",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+                "observed": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+                "required": true,
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "payload-public-key-function",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "{\"invalid_rejected\":true,\"status\":\"observed\",\"valid_normalized\":false}",
+                "observed": "{\"invalid_rejected\":true,\"status\":\"observed\",\"valid_normalized\":true}",
+                "required": true,
+                "status": "fail",
+                "target_id": "target-001"
+              }
+            ],
+            "required_rows": 10,
+            "status": "pass",
+            "underlying_status": "failed"
+          }
+        },
+        "created_at": "2026-10-23T16:48:37.532Z",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 266275530,
+          "ordinary_files": 72,
+          "phase": "before-functional-cleanup",
+          "sampled_at": "2026-10-23T16:49:11.491Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-functional-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "05b6ea71-321f-4f5c-9ffd-5f877bc365f9",
+        "runtime_pipeline_complete": false,
+        "scenario": "functional-expectation-mismatch",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "de745a6ee7f80cddb2007ced380e2f67f79395f5",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:49:19.198Z"
+      },
+      {
+        "checks": {
+          "actual_readiness": {
+            "status": "pass",
+            "transitions": [
+              {
+                "check_id": "created",
+                "elapsed_seconds": 2.674053027993068,
+                "observed_at": "2026-10-23T16:49:45.466Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "started",
+                "elapsed_seconds": 2.6797701839823276,
+                "observed_at": "2026-10-23T16:49:45.472Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "endpoint-discovered",
+                "elapsed_seconds": 2.6856040759012103,
+                "observed_at": "2026-10-23T16:49:45.478Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "tcp-reachable",
+                "elapsed_seconds": 2.828828090801835,
+                "observed_at": "2026-10-23T16:49:45.621Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ssh-identity-accepted",
+                "elapsed_seconds": 3.4534525519702584,
+                "observed_at": "2026-10-23T16:49:46.246Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "python-usable",
+                "elapsed_seconds": 3.7664858968928456,
+                "observed_at": "2026-10-23T16:49:46.559Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ansible-usable",
+                "elapsed_seconds": 5.692298498004675,
+                "observed_at": "2026-10-23T16:49:48.484Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "required-test-complete",
+                "elapsed_seconds": 7.5923688178882,
+                "observed_at": "2026-10-23T16:49:50.385Z",
+                "status": "pass",
+                "target_id": "target-001"
+              }
+            ]
+          },
+          "cleanup": {
+            "primary_failure": {
+              "code": "configured_interpreter_unavailable",
+              "recorded_at": "2026-10-23T16:49:51.962Z"
+            },
+            "secondary_failures": [],
+            "status": "completed",
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan_after_cleanup": {
+            "bytes_scanned": 279863,
+            "files_scanned": 54,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "credential_scan_before_cleanup": {
+            "bytes_scanned": 243269,
+            "files_scanned": 41,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "functional": {
+            "attempts": [
+              {
+                "duration_seconds": 1.4126781960949302,
+                "log_truncated": false,
+                "private_log": "private/qualification-helper-functional-validation-0.log",
+                "returncode": 0,
+                "role": "helper",
+                "stage": "functional-validation",
+                "status": "pass"
+              }
+            ],
+            "candidate_binding": "not-implemented; qualified stock reference image only",
+            "expected_failure": "configured_interpreter_unavailable",
+            "negative_kind": "controlled-input",
+            "observed_failure": "configured_interpreter_unavailable",
+            "plan_sha256": "91890e8f60ae8dc5924f67d32a7e93160d177ec4e68150a26b22c6427449f833",
+            "readable_structured_agreement": true,
+            "records": [
+              {
+                "check_id": "os-applicability",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+                "observed": "configured_interpreter_unavailable",
+                "required": true,
+                "status": "fail",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-ca-certificates",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "20260816ubuntu0.24.04.1",
+                "observed": "configured_interpreter_unavailable",
+                "required": true,
+                "status": "fail",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-python3",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "3.12.3-0ubuntu2.1",
+                "observed": "configured_interpreter_unavailable",
+                "required": true,
+                "status": "fail",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-python3-12",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "3.12.3-1ubuntu0.17",
+                "observed": "configured_interpreter_unavailable",
+                "required": true,
+                "status": "fail",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-client",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "configured_interpreter_unavailable",
+                "required": true,
+                "status": "fail",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-server",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "configured_interpreter_unavailable",
+                "required": true,
+                "status": "fail",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-sftp-server",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "configured_interpreter_unavailable",
+                "required": true,
+                "status": "fail",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "sshd-config-sha256",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1",
+                "observed": "configured_interpreter_unavailable",
+                "required": true,
+                "status": "fail",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "payload-sha256",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+                "observed": "configured_interpreter_unavailable",
+                "required": true,
+                "status": "fail",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "payload-public-key-function",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "{\"invalid_rejected\":true,\"status\":\"observed\",\"valid_normalized\":true}",
+                "observed": "configured_interpreter_unavailable",
+                "required": true,
+                "status": "fail",
+                "target_id": "target-001"
+              }
+            ],
+            "required_rows": 10,
+            "status": "pass",
+            "underlying_status": "failed"
+          }
+        },
+        "created_at": "2026-10-23T16:49:19.225Z",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 266274383,
+          "ordinary_files": 72,
+          "phase": "before-functional-cleanup",
+          "sampled_at": "2026-10-23T16:49:51.984Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-functional-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "8f5bee0a-6871-403a-b92f-0a555fb78df9",
+        "runtime_pipeline_complete": false,
+        "scenario": "configured-interpreter-unavailable",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "de745a6ee7f80cddb2007ced380e2f67f79395f5",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:50:00.178Z"
+      },
+      {
+        "checks": {
+          "actual_readiness": {
+            "status": "pass",
+            "transitions": [
+              {
+                "check_id": "created",
+                "elapsed_seconds": 2.6618239250965416,
+                "observed_at": "2026-10-23T16:50:26.351Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "started",
+                "elapsed_seconds": 2.667775826063007,
+                "observed_at": "2026-10-23T16:50:26.357Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "endpoint-discovered",
+                "elapsed_seconds": 2.6735633430071175,
+                "observed_at": "2026-10-23T16:50:26.363Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "tcp-reachable",
+                "elapsed_seconds": 2.816439446993172,
+                "observed_at": "2026-10-23T16:50:26.506Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ssh-identity-accepted",
+                "elapsed_seconds": 3.4257088529411703,
+                "observed_at": "2026-10-23T16:50:27.115Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "python-usable",
+                "elapsed_seconds": 3.740576104959473,
+                "observed_at": "2026-10-23T16:50:27.430Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ansible-usable",
+                "elapsed_seconds": 5.658390850992873,
+                "observed_at": "2026-10-23T16:50:29.348Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "required-test-complete",
+                "elapsed_seconds": 7.553348215064034,
+                "observed_at": "2026-10-23T16:50:31.243Z",
+                "status": "pass",
+                "target_id": "target-001"
+              }
+            ]
+          },
+          "cleanup": {
+            "primary_failure": {
+              "code": "unexpected_skip",
+              "recorded_at": "2026-10-23T16:50:33.252Z"
+            },
+            "secondary_failures": [],
+            "status": "completed",
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan_after_cleanup": {
+            "bytes_scanned": 279567,
+            "files_scanned": 54,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "credential_scan_before_cleanup": {
+            "bytes_scanned": 243009,
+            "files_scanned": 41,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "functional": {
+            "attempts": [
+              {
+                "duration_seconds": 1.8444782339502126,
+                "log_truncated": false,
+                "private_log": "private/qualification-helper-functional-validation-0.log",
+                "returncode": 0,
+                "role": "helper",
+                "stage": "functional-validation",
+                "status": "pass"
+              }
+            ],
+            "candidate_binding": "not-implemented; qualified stock reference image only",
+            "expected_failure": "unexpected_skip",
+            "negative_kind": "controlled-input",
+            "observed_failure": "unexpected_skip",
+            "plan_sha256": "6bddc54d6952bb634d0f9fc0f2185ad81c77288b9ee7a92f4825cd6e1e4b186c",
+            "readable_structured_agreement": true,
+            "records": [
+              {
+                "check_id": "os-applicability",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+                "observed": "unexpected_skip",
+                "required": true,
+                "status": "skipped",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-ca-certificates",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "20260816ubuntu0.24.04.1",
+                "observed": "unexpected_skip",
+                "required": true,
+                "status": "skipped",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-python3",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "3.12.3-0ubuntu2.1",
+                "observed": "unexpected_skip",
+                "required": true,
+                "status": "skipped",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-python3-12",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "3.12.3-1ubuntu0.17",
+                "observed": "unexpected_skip",
+                "required": true,
+                "status": "skipped",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-client",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "unexpected_skip",
+                "required": true,
+                "status": "skipped",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-server",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "unexpected_skip",
+                "required": true,
+                "status": "skipped",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-sftp-server",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "unexpected_skip",
+                "required": true,
+                "status": "skipped",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "sshd-config-sha256",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1",
+                "observed": "unexpected_skip",
+                "required": true,
+                "status": "skipped",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "payload-sha256",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+                "observed": "unexpected_skip",
+                "required": true,
+                "status": "skipped",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "payload-public-key-function",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "{\"invalid_rejected\":true,\"status\":\"observed\",\"valid_normalized\":true}",
+                "observed": "unexpected_skip",
+                "required": true,
+                "status": "skipped",
+                "target_id": "target-001"
+              }
+            ],
+            "required_rows": 10,
+            "status": "pass",
+            "underlying_status": "failed"
+          }
+        },
+        "created_at": "2026-10-23T16:50:00.205Z",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 266273353,
+          "ordinary_files": 72,
+          "phase": "before-functional-cleanup",
+          "sampled_at": "2026-10-23T16:50:33.274Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-functional-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "c832f5b5-f912-4eaa-bdcf-3b070732c25e",
+        "runtime_pipeline_complete": false,
+        "scenario": "unexpected-skip",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "de745a6ee7f80cddb2007ced380e2f67f79395f5",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:50:40.933Z"
+      },
+      {
+        "checks": {
+          "actual_readiness": {
+            "status": "pass",
+            "transitions": [
+              {
+                "check_id": "created",
+                "elapsed_seconds": 2.656308330828324,
+                "observed_at": "2026-10-23T16:51:06.863Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "started",
+                "elapsed_seconds": 2.6618857188150287,
+                "observed_at": "2026-10-23T16:51:06.869Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "endpoint-discovered",
+                "elapsed_seconds": 2.6680356268770993,
+                "observed_at": "2026-10-23T16:51:06.875Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "tcp-reachable",
+                "elapsed_seconds": 2.8212099238298833,
+                "observed_at": "2026-10-23T16:51:07.028Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ssh-identity-accepted",
+                "elapsed_seconds": 3.391244293889031,
+                "observed_at": "2026-10-23T16:51:07.598Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "python-usable",
+                "elapsed_seconds": 3.7080684858374298,
+                "observed_at": "2026-10-23T16:51:07.915Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "ansible-usable",
+                "elapsed_seconds": 5.633056114893407,
+                "observed_at": "2026-10-23T16:51:09.840Z",
+                "status": "pass",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "required-test-complete",
+                "elapsed_seconds": 7.534440289018676,
+                "observed_at": "2026-10-23T16:51:11.741Z",
+                "status": "pass",
+                "target_id": "target-001"
+              }
+            ]
+          },
+          "cleanup": {
+            "primary_failure": {
+              "code": "ansible_unreachable",
+              "recorded_at": "2026-10-23T16:51:15.593Z"
+            },
+            "secondary_failures": [],
+            "status": "completed",
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan_after_cleanup": {
+            "bytes_scanned": 279485,
+            "files_scanned": 54,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "credential_scan_before_cleanup": {
+            "bytes_scanned": 243085,
+            "files_scanned": 41,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "functional": {
+            "attempts": [
+              {
+                "duration_seconds": 3.4790892868768424,
+                "log_truncated": false,
+                "private_log": "private/qualification-helper-functional-validation-0.log",
+                "returncode": 0,
+                "role": "helper",
+                "stage": "functional-validation",
+                "status": "pass"
+              }
+            ],
+            "candidate_binding": "not-implemented; qualified stock reference image only",
+            "expected_failure": "ansible_unreachable",
+            "negative_kind": "controlled-input",
+            "observed_failure": "ansible_unreachable",
+            "plan_sha256": "6cecb389b4688b76bf049786f088b488ff286e34fde33b37f7edb87b0e17d3f2",
+            "readable_structured_agreement": true,
+            "records": [
+              {
+                "check_id": "os-applicability",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "{\"id\":\"ubuntu\",\"version_id\":\"24.04\"}",
+                "observed": "ansible_unreachable",
+                "required": true,
+                "status": "unreachable",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-ca-certificates",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "20260816ubuntu0.24.04.1",
+                "observed": "ansible_unreachable",
+                "required": true,
+                "status": "unreachable",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-python3",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "3.12.3-0ubuntu2.1",
+                "observed": "ansible_unreachable",
+                "required": true,
+                "status": "unreachable",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-python3-12",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "3.12.3-1ubuntu0.17",
+                "observed": "ansible_unreachable",
+                "required": true,
+                "status": "unreachable",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-client",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "ansible_unreachable",
+                "required": true,
+                "status": "unreachable",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-server",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "ansible_unreachable",
+                "required": true,
+                "status": "unreachable",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "package-openssh-sftp-server",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "1:9.6p1-3ubuntu13.20",
+                "observed": "ansible_unreachable",
+                "required": true,
+                "status": "unreachable",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "sshd-config-sha256",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "9989e0010c526dd543debf9aa4164831a41b3fadcb7f68633c2556b50d088fa1",
+                "observed": "ansible_unreachable",
+                "required": true,
+                "status": "unreachable",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "payload-sha256",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "fc617dc71ec7e31ba95779b7d66ca7832eae9d054a9ec9a70a45c28bc7fe084b",
+                "observed": "ansible_unreachable",
+                "required": true,
+                "status": "unreachable",
+                "target_id": "target-001"
+              },
+              {
+                "check_id": "payload-public-key-function",
+                "evidence": [
+                  "evidence/validation-plan.json",
+                  "evidence/validation-observations.json"
+                ],
+                "expected": "{\"invalid_rejected\":true,\"status\":\"observed\",\"valid_normalized\":true}",
+                "observed": "ansible_unreachable",
+                "required": true,
+                "status": "unreachable",
+                "target_id": "target-001"
+              }
+            ],
+            "required_rows": 10,
+            "status": "pass",
+            "underlying_status": "failed"
+          },
+          "unreachable_injection": {
+            "exact_target_resource_id": "9ef0f353f1f960f60fddce008d925c0896c804be87a3674c39e9d234802d572f",
+            "new_endpoint_selected": false,
+            "previous_provider_endpoint_retained": true,
+            "status": "pass",
+            "stopped_pid_zero": true
+          }
+        },
+        "created_at": "2026-10-23T16:50:40.961Z",
+        "disk_sample": {
+          "hard_quota": false,
+          "logical_file_bytes": 266273930,
+          "ordinary_files": 72,
+          "phase": "before-functional-cleanup",
+          "sampled_at": "2026-10-23T16:51:15.615Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-functional-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "272f8e9c-d43e-488c-ac8c-8faf4560a852",
+        "runtime_pipeline_complete": false,
+        "scenario": "unreachable",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "de745a6ee7f80cddb2007ced380e2f67f79395f5",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:51:23.095Z"
+      }
+    ],
+    "existing_sentinel_modified": false,
+    "operation": "functional-acceptance-suite",
+    "production_iso_eligible": false,
+    "runtime_pipeline_complete": false,
+    "schema_version": "1.0",
+    "source_revision": "de745a6ee7f80cddb2007ced380e2f67f79395f5",
+    "status": "pass"
+  },
+  "fixture_tests": {
+    "tested_source_revision": "de745a6ee7f80cddb2007ced380e2f67f79395f5",
+    "linux": {
+      "cases": 237,
+      "passed": 235,
+      "skipped": 2,
+      "seconds": 10.592
+    },
+    "windows": {
+      "cases": 237,
+      "passed": 131,
+      "skipped": 106,
+      "seconds": 8.497
+    }
+  },
+  "criteria": {
+    "AC-01": "pass: six fresh real Terraform/strict SSH/Ansible lifecycles, each with frozen same-run evidence and exact cleanup; healthy path passed all ten required checks",
+    "AC-02": "pass: bounded module command and fixed prerequisite images/tools/storage/identity requirements documented in docs/VALIDATION.md and current checkpoint; immutable tested source retained",
+    "AC-03": "pass: container-only reference, original baked smoke payload, unfinished candidate/full pipeline and production ISO ineligibility remain explicit",
+    "AC-04": "pass: actual dpkg package versions, OS, SSH configuration SHA, smoke payload SHA and pure public-key function observations collected through real SSH Ansible; readable and JSON rows agree",
+    "AC-05": "pass: fresh controlled version/function expectations, actual configured missing interpreter, actual Ansible check-mode skip and actual stopped-target unreachable remain failed; require_passed rejects every negative",
+    "AC-06": "pass: ten checks frozen before validation, original raw captures replayed, read-only collection, no repair/reuse; six distinct run/attempt identities and primary failures retained through cleanup"
+  },
+  "review": {
+    "kind": "independent engineering subagent source review; not independent human examination",
+    "core_original_revision": "7abff03f9f568b3aaef4401f9d10ac70813ffb86",
+    "callback_correction_original_revision": "32320d63f398a6f507bab1c4a7518daff4224467",
+    "integrated_harness_revision": "de745a6ee7f80cddb2007ced380e2f67f79395f5",
+    "remaining_material_source_findings": []
+  },
+  "limits": [
+    "Version/function faults deliberately change expected comparisons; they do not claim a defective function or package removal.",
+    "The interpreter case configures an absent path; installed Python packages are not removed.",
+    "The smoke payload is the original qualified baked runtime; candidate-derived image binding remains WORM-013.",
+    "Raw captures, Terraform state and keys remain private. Run-file measurements are logical samples, not reserved storage or continuous peaks.",
+    "Cleanup success does not change the failed underlying negative operation. No full pipeline, VM/ISO/STIG, scanner compatibility or Lightspeed repair is established."
+  ],
+  "runtime_pipeline_complete": false,
+  "production_iso_eligible": false
+}

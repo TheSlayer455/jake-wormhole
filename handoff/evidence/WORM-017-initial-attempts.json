@@ -1,0 +1,6 @@
+{
+  "attempts": [],
+  "schema_version": "1.0",
+  "scope": "Historical failures are separate from final actual qualification; no original input is rewritten.",
+  "ticket": "WORM-017"
+}

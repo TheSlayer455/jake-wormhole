@@ -1,0 +1,2401 @@
+{
+  "children": [
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T12:43:55.492Z",
+          "criterion_id": "AC-01",
+          "id": "c9d2a147-4702-40db-ba13-4bcc62e3c9d3",
+          "outcome": "pass",
+          "reference_sha256": "c075487890a3493d8b21d792d9a47766f5fdebe5ef51e45f6543dd4d211e361f",
+          "revision": 2,
+          "summary_sha256": "8a57ea559dd50df2ebe936054c6ade0ff23243c15dc128bc81cc7c02a7f9d87f"
+        },
+        {
+          "created_at": "2026-10-23T12:43:55.900Z",
+          "criterion_id": "AC-02",
+          "id": "eb7bb26b-db55-4915-820a-7f173ee8c949",
+          "outcome": "pass",
+          "reference_sha256": "252ab6ecefac13d5cdbea103ce399f090a19146db6a6837dee3230b1e66778e0",
+          "revision": 2,
+          "summary_sha256": "3cabfbf262c42223bc1cec2e53b0324324bcce10ad281a201f01b41ee4bf7ca6"
+        },
+        {
+          "created_at": "2026-10-23T12:43:56.466Z",
+          "criterion_id": "AC-03",
+          "id": "c2cb586a-c991-4f33-84f1-e60dc45e7c20",
+          "outcome": "pass",
+          "reference_sha256": "bb4401e1a0fd62051f3ba00d9a94745a46741e84e48585d76850c10f96741a38",
+          "revision": 2,
+          "summary_sha256": "07cb00c25c504961ba9919cbdb6fef723f8fe02d97e6f2bb4747b52adb3b20a0"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "e75493b0-8087-4c1c-acce-dcf691d689de",
+          "identifier": "codex/WORM-002-baseline",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-002-baseline",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "d8878cbb-8629-4a25-9742-998fbe79d6b6",
+          "identifier": "bda5afbcac9edcf7aed4ba41b7e9285660a212a7",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/bda5afbcac9edcf7aed4ba41b7e9285660a212a7",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "b81f0ab3-f9cc-4e90-a58a-55b9e4ceeadc",
+          "identifier": "1",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/1",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-002",
+      "solution_comments": [
+        {
+          "body_sha256": "12316e1e9db37dd50147fab1f6832a5da0a72af7030c98062e98606c1c02fb16",
+          "created_at": "2026-10-23T12:43:56.862Z",
+          "id": "a084126f-5a4c-418e-8ee2-b2770c700311"
+        }
+      ],
+      "status": "Done",
+      "title": "Establish the private repository and durable engineering baseline",
+      "version": 16,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 175,
+          "created_at": "2026-10-23T12:29:55.095Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "e50c1871c77b38e7c9c3b927f80d409f2c617759679166210a1ea1673b687d9c",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 188,
+          "created_at": "2026-10-23T12:46:15.012Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "b4d9c745890b15da8657e52c8cccc5235ad9bdc9809bfbc4bd3b2687740aeb5e",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 189,
+          "created_at": "2026-10-23T12:46:22.200Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "e1bb7888039aef4890f84d48e545857e7c7627f7a5faaa22dabe044194b95ef3",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T13:07:01.251Z",
+          "criterion_id": "AC-01",
+          "id": "93059c6f-526a-4d85-aa0e-165f61f294b8",
+          "outcome": "pass",
+          "reference_sha256": "ecd0967923efb6f32af978ee3ade9372c6e716dd4d86df50dc7d650292ecf7df",
+          "revision": 2,
+          "summary_sha256": "be2f2f09fbc9fa5c7979ad425f1614aab4d5dc97c8c66860dd0ac638ea3e311f"
+        },
+        {
+          "created_at": "2026-10-23T13:07:01.646Z",
+          "criterion_id": "AC-02",
+          "id": "634dd2da-e448-4956-a831-249d2da76638",
+          "outcome": "pass",
+          "reference_sha256": "91ce3df03e55672714d0a62ccef1223f87cdbd77c1205eae4708f85bd052d69f",
+          "revision": 2,
+          "summary_sha256": "ad52995838f811fc5d7c65a2d1dccdb17f9c8a7c99105dfecd6da34a2260ecba"
+        },
+        {
+          "created_at": "2026-10-23T13:07:02.033Z",
+          "criterion_id": "AC-03",
+          "id": "f344be02-94db-4287-912e-9e87b169597e",
+          "outcome": "pass",
+          "reference_sha256": "9aa7f5d9c048f740620429bd4e656b9e833fc9db9cfecc3185fbe5825df21447",
+          "revision": 2,
+          "summary_sha256": "ebebb76b3f16215fbc8bf3e831d68d6e421facc26616a0a37dca81ccad8b5026"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "5c10eabc-3dbf-4605-a414-8d5596aed162",
+          "identifier": "codex/WORM-003-cli",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-003-cli",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "1de379a0-595a-4c59-afce-ba3a2ec6aa67",
+          "identifier": "9fb7ee772aae2e3b96b8541c5b7b9e41b05decc4",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/9fb7ee772aae2e3b96b8541c5b7b9e41b05decc4",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "c665c31f-e772-4f07-8d39-1c868b53822b",
+          "identifier": "2",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/2",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-003",
+      "solution_comments": [
+        {
+          "body_sha256": "3d7bff2d6bbdc26251f64d230989d632af12e36f7d5be05801b390babbb0c69b",
+          "created_at": "2026-10-23T13:07:02.427Z",
+          "id": "061b05dd-cbca-49f1-b349-c0a7bce59680"
+        }
+      ],
+      "status": "Done",
+      "title": "Implement the versioned CLI and isolated run contracts",
+      "version": 16,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 190,
+          "created_at": "2026-10-23T12:46:39.421Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "ac8630df6cfcf624b1dda5cfdad1d26344fc4598eaa69a7747bc03b42c1e5b1f",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 203,
+          "created_at": "2026-10-23T13:07:22.561Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "319f0efd4d763a440cf91499f19d9c2a0eed122295a0f0c5cb96030a0ce05071",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 204,
+          "created_at": "2026-10-23T13:07:34.672Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "040065631ab69e9798a04781ad459138c9e90c9e7b424d8f17e858b4e999f1ad",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T13:30:23.388Z",
+          "criterion_id": "AC-01",
+          "id": "0426268f-da93-4fb0-a3fe-556b4b2f2dc7",
+          "outcome": "pass",
+          "reference_sha256": "e5afd3a3efb584781674f20f6a0eeffb3e6da258babab8799d2c630c249977ad",
+          "revision": 2,
+          "summary_sha256": "0e5a78e17e772595bf7180bb972c34ccea518057e6729b33632cbc2dbbaa3b0f"
+        },
+        {
+          "created_at": "2026-10-23T13:30:24.192Z",
+          "criterion_id": "AC-02",
+          "id": "5ade73fb-8697-4235-9fe6-9db0995b88b5",
+          "outcome": "pass",
+          "reference_sha256": "481b302fa85bdd8c01c8fdf7b47725b289b4cf678d731c23d8e12bed5dd298a4",
+          "revision": 2,
+          "summary_sha256": "de00186918af3bbdf42f4324c43f8b4ed75c8f0be27f5bea47043755c470d7f3"
+        },
+        {
+          "created_at": "2026-10-23T13:30:25.008Z",
+          "criterion_id": "AC-03",
+          "id": "869d74e2-5264-4529-8198-a67623f7936c",
+          "outcome": "pass",
+          "reference_sha256": "961c59febabad0210c30ca4fe26ae07f7625c5eabee7fe54389a3314fafcad7d",
+          "revision": 2,
+          "summary_sha256": "a1a128ffc2ad55ef165bed3d4839fd5ac7d1f06e57fef8af8319f26a144bb7d6"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "44839f3b-defb-47d6-9864-96e9041a1355",
+          "identifier": "codex/WORM-004-integration",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-004-integration",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "909b82d2-4d47-447a-8d3d-cee3d5cd69ad",
+          "identifier": "576379e0d7a03ccf64d53849bc13939e9981d0a3",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/576379e0d7a03ccf64d53849bc13939e9981d0a3",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "84e19db0-14af-4cf8-b8ee-622d208b9fe1",
+          "identifier": "a8ac067b6c38dd6ecc5c9dfd9df2860b16b8dde3",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/a8ac067b6c38dd6ecc5c9dfd9df2860b16b8dde3",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "6d87f7c9-b009-41ef-bef7-c0f4925402a9",
+          "identifier": "3",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/3",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-004",
+      "solution_comments": [
+        {
+          "body_sha256": "b6785681c40d270ea24bbaa5edff792efe991e1e760eaeab164c2cee9e19469c",
+          "created_at": "2026-10-23T13:30:25.801Z",
+          "id": "7b7da6d6-7c10-4d39-8826-15e151508783"
+        }
+      ],
+      "status": "Done",
+      "title": "Enforce resource admission and shared run ownership",
+      "version": 17,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 205,
+          "created_at": "2026-10-23T13:08:11.352Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "b56e8256e3c0f21603a4429e7697cff3a9f23ac3f7c03fae74218b8050affdb0",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 222,
+          "created_at": "2026-10-23T13:30:38.526Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "9b260b24f7f08c79b5df98d45be8e7a3e7a6e38a74ea90fa4a5d8b9dbaff6d81",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 223,
+          "created_at": "2026-10-23T13:30:50.170Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "8e7d50c8a6f0ff5acceb0da8a3f2185ac971396c8f1ea046a3077683f079aad3",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T14:36:11.230Z",
+          "criterion_id": "AC-01",
+          "id": "3bfaaaee-3431-4f03-9b8f-261fa7e55e6d",
+          "outcome": "pass",
+          "reference_sha256": "a516ef05d9d6a72cf74f4e75445af4b2f9f0053e0b25d07adc7f0327274e05fe",
+          "revision": 2,
+          "summary_sha256": "7f2b625ddaac0da4b3465945feb2d0701ae0fbefe0dd62e8e3404383f5dfaf3b"
+        },
+        {
+          "created_at": "2026-10-23T14:36:12.077Z",
+          "criterion_id": "AC-02",
+          "id": "8627f017-de95-4e2c-8b0c-6acebf1cec2f",
+          "outcome": "pass",
+          "reference_sha256": "a516ef05d9d6a72cf74f4e75445af4b2f9f0053e0b25d07adc7f0327274e05fe",
+          "revision": 2,
+          "summary_sha256": "69488b94b3adda6070c1283460cb51b6217d3cf20dd15be572bdf9a1e7b618c2"
+        },
+        {
+          "created_at": "2026-10-23T14:36:12.854Z",
+          "criterion_id": "AC-03",
+          "id": "8bfcce1e-b511-4c07-af8d-f1e8cca7c8b2",
+          "outcome": "pass",
+          "reference_sha256": "a516ef05d9d6a72cf74f4e75445af4b2f9f0053e0b25d07adc7f0327274e05fe",
+          "revision": 2,
+          "summary_sha256": "6bd9f150e09f57bd07fca11c8f45ebabce3d0228f8e0561c3703be50d58bda62"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "8fd29387-7ac6-4737-b3ca-bfdd69fbccae",
+          "identifier": "codex/WORM-005-integration",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-005-integration",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "808268a1-1b76-4755-b232-9a71ac169a7a",
+          "identifier": "731eabee3d691404e22c9422e37ff1c6ccddfcf4",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/731eabee3d691404e22c9422e37ff1c6ccddfcf4",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "90426c2d-9d24-4e8b-878b-ed368d17471f",
+          "identifier": "bdf70e5248de40d234f658a6a5fbbd5a0a670f86",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/bdf70e5248de40d234f658a6a5fbbd5a0a670f86",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "2a570a07-636e-4c6c-a8d7-62f6b26daa08",
+          "identifier": "4",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/4",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-005",
+      "solution_comments": [
+        {
+          "body_sha256": "31f42ed390c1a7f829e34d4438215eb93185a96d299aa8c90100053dc0f1e50d",
+          "created_at": "2026-10-23T14:36:45.408Z",
+          "id": "1e4b2dfc-ca13-4407-8127-ab5cf2306d9d"
+        }
+      ],
+      "status": "Done",
+      "title": "Build minimal SSH targets and a pinned validation helper",
+      "version": 23,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 206,
+          "created_at": "2026-10-23T13:08:21.983Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "6fcf440b0dfc88d20ca7d2cef344d0d9f42dd4cd389e7db0ae0a0b32105d736e",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 240,
+          "created_at": "2026-10-23T14:37:05.056Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "d7aed52ba4379b27484470287ac7bb66a1a1d29bfadd410ffb273ed11dd53f74",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 241,
+          "created_at": "2026-10-23T14:37:13.926Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "c69aa75afbe211a1ff2883757ef357167e5d72a77880d4acb3b6845bb11f887c",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T15:28:02.998Z",
+          "criterion_id": "AC-01",
+          "id": "3e009ad7-d4ac-4898-9ad9-3b95761e00d2",
+          "outcome": "pass",
+          "reference_sha256": "514f8a000dd9eb73a881a25925fc57f56c433345323eeaae6a02ec92a5f11c9e",
+          "revision": 2,
+          "summary_sha256": "d472083f30e34b30bb2ac119ebe8f52cb2c02c1d969f650f442c079f859338b7"
+        },
+        {
+          "created_at": "2026-10-23T15:28:03.769Z",
+          "criterion_id": "AC-02",
+          "id": "aa5ff0fb-e05f-404c-9038-95cb69715ad4",
+          "outcome": "pass",
+          "reference_sha256": "514f8a000dd9eb73a881a25925fc57f56c433345323eeaae6a02ec92a5f11c9e",
+          "revision": 2,
+          "summary_sha256": "6d0016df58e247978b38de0ccee46dc6c2d2dff83edd1c4c73fbab211b20cdc2"
+        },
+        {
+          "created_at": "2026-10-23T15:28:04.596Z",
+          "criterion_id": "AC-03",
+          "id": "20c8b62e-6618-4ba1-a683-ce3cdaaa674a",
+          "outcome": "pass",
+          "reference_sha256": "514f8a000dd9eb73a881a25925fc57f56c433345323eeaae6a02ec92a5f11c9e",
+          "revision": 2,
+          "summary_sha256": "c714e4eab532b6cd37c5e86575ffcf7e50b9bdcdd2a05c40d57dfa48b16f064b"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "35b3594b-c5f0-42ad-a120-2343cb6d69f4",
+          "identifier": "codex/WORM-006-integration",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-006-integration",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "2b41eab4-bceb-4ff0-9df5-112c1dfbc72a",
+          "identifier": "fc9ccf81e26ec83c11560f2f5579ab8ec316871e",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/fc9ccf81e26ec83c11560f2f5579ab8ec316871e",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "30dc1988-2789-4a59-bd27-db30334f0b38",
+          "identifier": "9bf2178f762ea9a9c1a146da4b7797e395220d40",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/9bf2178f762ea9a9c1a146da4b7797e395220d40",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "4d2202ea-4adb-453d-97c5-6f6258e34f62",
+          "identifier": "5",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/5",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "70dd4668-69ac-439f-a58c-e21a7b78ee3d",
+          "identifier": "c58c1a179381d46ad01375c5b3d3d564033e781b",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/c58c1a179381d46ad01375c5b3d3d564033e781b",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-006",
+      "solution_comments": [
+        {
+          "body_sha256": "636ad54a54d61530986dd95e3dcb9304bcc5868d8904e81df42a23f4bcf5bae2",
+          "created_at": "2026-10-23T15:28:05.380Z",
+          "id": "cdb9cb72-13a7-446b-a358-df0d5ea7eac6"
+        }
+      ],
+      "status": "Done",
+      "title": "Provision run-owned targets with the Terraform Docker provider",
+      "version": 22,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 242,
+          "created_at": "2026-10-23T14:37:40.234Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "ca540794435bae23d946dc4c55aaa6acdf06d57607d4827f5b29324a9dbdea70",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 261,
+          "created_at": "2026-10-23T15:28:55.771Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "d445f69ad1ce128c11d98611ba4852e1c03bfd8127baa751d02e16a65ee035c3",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 262,
+          "created_at": "2026-10-23T15:29:03.854Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "9a446b26dac11e765d4b4abe40800ded93e95f4b7804cd4282cf6fb400f42a0a",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T16:16:30.548Z",
+          "criterion_id": "AC-01",
+          "id": "ee018130-6bcc-46be-8570-8160ae51db81",
+          "outcome": "pass",
+          "reference_sha256": "412d2aa08d48c1cf1b6da45ef9d78491fa1178a519dabe87b170442bb9d2c72f",
+          "revision": 2,
+          "summary_sha256": "8bffa786665fd93f0dd7b24951a9b30a92375a3c443a1c5dce6997408558cfef"
+        },
+        {
+          "created_at": "2026-10-23T16:16:31.350Z",
+          "criterion_id": "AC-02",
+          "id": "5bcf779a-a7d5-460c-b990-5dbab0edec57",
+          "outcome": "pass",
+          "reference_sha256": "412d2aa08d48c1cf1b6da45ef9d78491fa1178a519dabe87b170442bb9d2c72f",
+          "revision": 2,
+          "summary_sha256": "0873aae26c1b0822fe7c6c5879deec1a7c926303e3cf9bdeb6ad264778e36ed1"
+        },
+        {
+          "created_at": "2026-10-23T16:16:32.156Z",
+          "criterion_id": "AC-03",
+          "id": "b446ee85-2296-4fd8-8943-4b4c29d15214",
+          "outcome": "pass",
+          "reference_sha256": "412d2aa08d48c1cf1b6da45ef9d78491fa1178a519dabe87b170442bb9d2c72f",
+          "revision": 2,
+          "summary_sha256": "cc719f67bf0d36c0fe6c7924498d76a21b0a4ef60965f4df7f5384fc4f3fbe70"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "ea19f323-062f-40c9-8979-11ff7f01bd1f",
+          "identifier": "codex/WORM-007-integration",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-007-integration",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "19d5741d-7987-4c7e-9759-8ecc1f7c4d1d",
+          "identifier": "9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "20105bad-7c53-4972-9949-e771aa9f61f2",
+          "identifier": "d1f81615ad4b435aad58aedaf880944d8fa05bd2",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/d1f81615ad4b435aad58aedaf880944d8fa05bd2",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "50a3edfe-3075-44cc-86f6-b5867a0a82cb",
+          "identifier": "6",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/6",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-007",
+      "solution_comments": [
+        {
+          "body_sha256": "fb5ac9278e108099fdd8fb3644ec28140fb402981fa6199212465b1b32d2534e",
+          "created_at": "2026-10-23T16:16:32.956Z",
+          "id": "24ef9f49-839d-4906-a5af-64e201599165"
+        }
+      ],
+      "status": "Done",
+      "title": "Trace endpoint, SSH trust and Ansible readiness separately",
+      "version": 23,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 263,
+          "created_at": "2026-10-23T15:29:35.150Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "e69288b023641b998bdac78a453cdb9feb9ac669eaca057b4370b3497655183e",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 303,
+          "created_at": "2026-10-23T16:17:49.627Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "cf3ea91629148a96352c6a78b0f3c49832f88955f1152052aab623b1202018fa",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 304,
+          "created_at": "2026-10-23T16:17:57.854Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "a8d7d902ece8ac23e50b9bff028a72a1f747eacb5e9c1d1f6efc4bddd3a556a2",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T16:11:11.639Z",
+          "criterion_id": "AC-01",
+          "id": "dfa262a3-b864-46ac-968b-13b7a430632b",
+          "outcome": "pass",
+          "reference_sha256": "bd9fc014981faba5d7f8231c4ebea5eae7dc0edff3b6c9b5b5de933b45462c21",
+          "revision": 2,
+          "summary_sha256": "cb92abb40c538a6e1f85db1f4d9bbe859e95aa676ec6b17fe3ef5696ce14a220"
+        },
+        {
+          "created_at": "2026-10-23T16:11:12.394Z",
+          "criterion_id": "AC-02",
+          "id": "708a5089-1797-4ce6-a627-6a44c95fed1a",
+          "outcome": "pass",
+          "reference_sha256": "bd9fc014981faba5d7f8231c4ebea5eae7dc0edff3b6c9b5b5de933b45462c21",
+          "revision": 2,
+          "summary_sha256": "66c7b9405a15e90b876e7dd2591dd1300d51d9be9b2c6298a0c4ba732260b072"
+        },
+        {
+          "created_at": "2026-10-23T16:11:13.163Z",
+          "criterion_id": "AC-03",
+          "id": "5dfa1768-6f8c-45c4-9ade-cf6cb8e55f22",
+          "outcome": "pass",
+          "reference_sha256": "bd9fc014981faba5d7f8231c4ebea5eae7dc0edff3b6c9b5b5de933b45462c21",
+          "revision": 2,
+          "summary_sha256": "bac5e7f33fd5134b4515b3f92af87aaf5a057e4ce4ae31595838222397dbd42a"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "65fbf268-9382-40e6-90ec-e0e8175ef885",
+          "identifier": "codex/WORM-008-integration",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-008-integration",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "6a00ba24-0660-4cb3-ba36-05ad3d0d1443",
+          "identifier": "68bd82dd3202c27a63d03fcaad9a8c32a12521b2",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/68bd82dd3202c27a63d03fcaad9a8c32a12521b2",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "7b99b42e-6a67-49fc-b340-3c160da8f1a4",
+          "identifier": "b4c021a8f545dde435236bd0b342d4365915a659",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/b4c021a8f545dde435236bd0b342d4365915a659",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "e726dd7e-0aae-4189-8c5e-23a055e0c2c0",
+          "identifier": "7",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/7",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-008",
+      "solution_comments": [
+        {
+          "body_sha256": "a43746d07711eafa0ac291614aa04a6b8728fb96eae4256dae545731dbc04353",
+          "created_at": "2026-10-23T16:11:13.958Z",
+          "id": "07a4fa7f-6b3f-4d86-aead-3f117205a39b"
+        }
+      ],
+      "status": "Done",
+      "title": "Implement scoped cleanup, cancellation and leftover recovery",
+      "version": 21,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 264,
+          "created_at": "2026-10-23T15:29:54.104Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "76dacefd0cd900ac414d6783690b443dce48f44fd8f394b46a4519e0599c3fa3",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 289,
+          "created_at": "2026-10-23T16:12:00.074Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "4bda72ad9d612fc87e6f72c7f3ad735208818fd22b87a9a5c812e24e29f3fa6c",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 290,
+          "created_at": "2026-10-23T16:12:08.180Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "f059d6c544b16fd03bec6438d72db3da69f6959b08dd3126c4ed5a8be7bad639",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T16:52:44.373Z",
+          "criterion_id": "AC-01",
+          "id": "a9f2d4fa-4451-4d12-a7bb-e78b9ae19079",
+          "outcome": "pass",
+          "reference_sha256": "e40b096dff78ebc0a38378b02cb66bb1d357b169bc6565b9c1b9e70e569a3d1f",
+          "revision": 2,
+          "summary_sha256": "249855e1c6eecf2e08034928168bf0f616f195d2ff04d3595c86c034a9a4d3d4"
+        },
+        {
+          "created_at": "2026-10-23T16:52:45.537Z",
+          "criterion_id": "AC-02",
+          "id": "ed2e0c58-5266-40a8-81e4-d7cf20442d54",
+          "outcome": "pass",
+          "reference_sha256": "e40b096dff78ebc0a38378b02cb66bb1d357b169bc6565b9c1b9e70e569a3d1f",
+          "revision": 2,
+          "summary_sha256": "d13aca4c99dc46c944a76dec2a4b335b7ff15d0f5f5a1a093563a4d8dd9ffc4c"
+        },
+        {
+          "created_at": "2026-10-23T16:52:46.761Z",
+          "criterion_id": "AC-03",
+          "id": "46ebd069-2063-42f6-baed-e601069047c2",
+          "outcome": "pass",
+          "reference_sha256": "e40b096dff78ebc0a38378b02cb66bb1d357b169bc6565b9c1b9e70e569a3d1f",
+          "revision": 2,
+          "summary_sha256": "cef23eed026cf9fe085f747cb8d1b6d4a96e65c12741ad09f6d0b1108cd67bbc"
+        },
+        {
+          "created_at": "2026-10-23T16:52:47.944Z",
+          "criterion_id": "AC-04",
+          "id": "dc917d07-4b09-40d5-b956-ac5075ad0146",
+          "outcome": "pass",
+          "reference_sha256": "e40b096dff78ebc0a38378b02cb66bb1d357b169bc6565b9c1b9e70e569a3d1f",
+          "revision": 2,
+          "summary_sha256": "61b51a72453147f11973eda11d64c1a5366c4177446b2977e10f5bb0fd354f9f"
+        },
+        {
+          "created_at": "2026-10-23T16:52:49.137Z",
+          "criterion_id": "AC-05",
+          "id": "d128a3a1-05c5-4d96-87ee-342b149198c6",
+          "outcome": "pass",
+          "reference_sha256": "e40b096dff78ebc0a38378b02cb66bb1d357b169bc6565b9c1b9e70e569a3d1f",
+          "revision": 2,
+          "summary_sha256": "da31173c3f253566a4480765f84284f267228afdc49da66dd4b9350c6e9f5126"
+        },
+        {
+          "created_at": "2026-10-23T16:52:50.333Z",
+          "criterion_id": "AC-06",
+          "id": "5bfa0084-bc58-474b-87b5-6cdafa85a9f7",
+          "outcome": "pass",
+          "reference_sha256": "e40b096dff78ebc0a38378b02cb66bb1d357b169bc6565b9c1b9e70e569a3d1f",
+          "revision": 2,
+          "summary_sha256": "e9f68079ad815585d750c64f574caa9bafbb2d9f2b2eb1501b2574884864f5d5"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "3ba434cb-73a9-4fc4-ab88-5c44eb994260",
+          "identifier": "codex/WORM-009-integration",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-009-integration",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "a2c3deb2-3bf9-4cf7-bb98-b2d5438bd796",
+          "identifier": "de745a6ee7f80cddb2007ced380e2f67f79395f5",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/de745a6ee7f80cddb2007ced380e2f67f79395f5",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "ab660539-3c49-4a5e-b89b-762d2de0cd64",
+          "identifier": "1979e7eaef3f03bc682c7db766cdbd2dc38ec3b0",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/1979e7eaef3f03bc682c7db766cdbd2dc38ec3b0",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "1c95aa4c-dd15-4ae6-8145-b888f440c701",
+          "identifier": "8",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/8",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-009",
+      "solution_comments": [
+        {
+          "body_sha256": "6989965f1c278141abfd5ab49a34b5493c299d34e1ef85639414f4512a771983",
+          "created_at": "2026-10-23T16:52:51.542Z",
+          "id": "c4061c87-eb93-4541-91ec-662b2297a28e"
+        }
+      ],
+      "status": "Done",
+      "title": "Prove the first one-target Terraform to SSH to Ansible path",
+      "version": 23,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 305,
+          "created_at": "2026-10-23T16:18:11.586Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "37ff625573d51b7b8fe569192b01a76b244f37186c51dc7b4f9fe0f669bd06a5",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 324,
+          "created_at": "2026-10-23T16:53:15.036Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "108197b5b137c701e064ece5c17c50b876ed1f214798be5bdbc922477f4e5b00",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 325,
+          "created_at": "2026-10-23T16:53:22.379Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "c35e8a77df3e9061de077b02eec7e2148fc5443287dabeb9670037d6ff3e8e6e",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T17:42:44.376Z",
+          "criterion_id": "AC-01",
+          "id": "1e394f6c-9da1-4f3c-9711-6235703a5f50",
+          "outcome": "pass",
+          "reference_sha256": "ee124d4a7fa70c46ce11c47c2194e362f7f9f013bbbf62558f7612e4cfe889af",
+          "revision": 2,
+          "summary_sha256": "c1657c9180548722ca0324947bb9cfb2c9b09da19b4b5d45aea055319b455b8b"
+        },
+        {
+          "created_at": "2026-10-23T17:42:45.556Z",
+          "criterion_id": "AC-02",
+          "id": "690af287-e2ab-4015-93c1-56f5c343453e",
+          "outcome": "pass",
+          "reference_sha256": "ee124d4a7fa70c46ce11c47c2194e362f7f9f013bbbf62558f7612e4cfe889af",
+          "revision": 2,
+          "summary_sha256": "263fa7b15f503977cc6a6fc279f24b09c0f701a77ec6dcfabc855a4f2d6a6a42"
+        },
+        {
+          "created_at": "2026-10-23T17:42:46.749Z",
+          "criterion_id": "AC-03",
+          "id": "f0e974b5-acd8-4b3c-99c5-b60f323a0052",
+          "outcome": "pass",
+          "reference_sha256": "ee124d4a7fa70c46ce11c47c2194e362f7f9f013bbbf62558f7612e4cfe889af",
+          "revision": 2,
+          "summary_sha256": "ecf85bd19e9e3f192dfe9228007cab3f42d98ead7dd2c777b5a3524de7c17d02"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "a7043f60-441c-4259-9316-004377969a2c",
+          "identifier": "codex/WORM-010-integration",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-010-integration",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "751e62a7-bdbb-4d4f-8c27-69df26daaa09",
+          "identifier": "1920c9621017190a8756affab36e5d25e6102978",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/1920c9621017190a8756affab36e5d25e6102978",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "e564cc67-8958-43e3-a7e8-47d56520f912",
+          "identifier": "065408790087310d7cf03dd738b958813b2b02c7",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/065408790087310d7cf03dd738b958813b2b02c7",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "64622bd2-b247-478a-acb7-d3cfa9faf366",
+          "identifier": "11",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/11",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-010",
+      "solution_comments": [
+        {
+          "body_sha256": "f85a7b3c48cd55518649d1255a4158241e97635d4f616ec9bc77d2ddfd56046a",
+          "created_at": "2026-10-23T17:42:47.917Z",
+          "id": "f2b378eb-f758-4e89-8c75-9edceba24c27"
+        }
+      ],
+      "status": "Done",
+      "title": "Qualify five targets and readiness failure aggregation",
+      "version": 20,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 326,
+          "created_at": "2026-10-23T16:53:46.598Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "98e10a06d7f418fa74cba358319c516e1e8f22d8973baafd7fbc404851073f51",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 383,
+          "created_at": "2026-10-23T17:45:20.405Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "64c00f51f432c6763b2b4ae39ca415790e76abcef601079fa11baa93c66f71ba",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 384,
+          "created_at": "2026-10-23T17:45:20.894Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "cd7c45381f64d32ef30e08a795764b9a033fc5bf4ece62869fb7d538fff10e43",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T17:51:10.015Z",
+          "criterion_id": "AC-01",
+          "id": "cac371b4-4ebe-446f-bfcc-36c193c82f41",
+          "outcome": "pass",
+          "reference_sha256": "ed6da61e3498b2b84385540bceaced4a9e069b7fd90e3501100b3f94593a1cf4",
+          "revision": 2,
+          "summary_sha256": "429023dc9e3023cd9f775f6e8e356b347125243b416f3d55b54e72905c0d9343"
+        },
+        {
+          "created_at": "2026-10-23T17:51:11.180Z",
+          "criterion_id": "AC-02",
+          "id": "3738b2e5-ae5e-40d8-ba6c-c695a637c94f",
+          "outcome": "pass",
+          "reference_sha256": "ed6da61e3498b2b84385540bceaced4a9e069b7fd90e3501100b3f94593a1cf4",
+          "revision": 2,
+          "summary_sha256": "2746b3c9bc6b54b6ad92bfba6816a71c73ce7f6619efeebcc448d8dc6aa49993"
+        },
+        {
+          "created_at": "2026-10-23T17:51:12.343Z",
+          "criterion_id": "AC-03",
+          "id": "bb9b9fef-644b-412e-847b-da3201ad9cf8",
+          "outcome": "pass",
+          "reference_sha256": "ed6da61e3498b2b84385540bceaced4a9e069b7fd90e3501100b3f94593a1cf4",
+          "revision": 2,
+          "summary_sha256": "2a05df45092f841d6e5e60d408357b413d30b4f55b00f67c6416fd3eaf9445de"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "6ec8ffe3-a069-4fa1-9225-a21435b63667",
+          "identifier": "codex/WORM-011-powershell",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-011-powershell",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "539b8170-fc2f-4f85-9ccc-22abe83d4e9d",
+          "identifier": "88c8df01c38986fb909b3cfe231a97081f790bc1",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/88c8df01c38986fb909b3cfe231a97081f790bc1",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "4c15a6ee-9095-4ed8-9510-b6826417fde3",
+          "identifier": "68c30b08db79677bf0ca83e9ca8e76567a0091ac",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/68c30b08db79677bf0ca83e9ca8e76567a0091ac",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "72b89d0d-65be-495e-8b7a-68ff39ec36bb",
+          "identifier": "12",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/12",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-011",
+      "solution_comments": [
+        {
+          "body_sha256": "8c7cdf98a06d7d45201f52bdab3261af9c9a89683d36d2cd09cc92cbd2f92b7a",
+          "created_at": "2026-10-23T17:51:13.509Z",
+          "id": "243b32e0-e8b4-4e27-876a-caaf5abd8ed5"
+        }
+      ],
+      "status": "Done",
+      "title": "Investigate optional PowerShell and missing-package diagnostics",
+      "version": 19,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 338,
+          "created_at": "2026-10-23T17:07:56.851Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "92de7759d07a6f907b62051c0e1d61f69002ca84dd3fdd5103117ca098d53bb8",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 395,
+          "created_at": "2026-10-23T17:55:17.748Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "8d0b2c55ea970af9e36c632d6a57227e7c57dd6c972c721868b2dac7f19d31c4",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 396,
+          "created_at": "2026-10-23T17:55:18.345Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "0257ee7f162594066d17e00c6384ef2c1ebf646fe0db99874423120cc45533ed",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T17:12:53.235Z",
+          "criterion_id": "AC-01",
+          "id": "1cab61e7-484a-48c8-9a7d-3af9ee615750",
+          "outcome": "pass",
+          "reference_sha256": "695e7aace95f962d5b12a7cec2cccbfd3dda070fb9152fa7fda95363cd980e66",
+          "revision": 2,
+          "summary_sha256": "b7efcea88df8e64ed21c6f679b2e6136800ce7897f8d1b1da9e5889b58f452e1"
+        },
+        {
+          "created_at": "2026-10-23T17:12:54.403Z",
+          "criterion_id": "AC-02",
+          "id": "9a861cf5-7815-4eac-8312-fdd4706e7349",
+          "outcome": "pass",
+          "reference_sha256": "695e7aace95f962d5b12a7cec2cccbfd3dda070fb9152fa7fda95363cd980e66",
+          "revision": 2,
+          "summary_sha256": "24546b8f774f7ad91fa33a297308956493d227151225730c12840895935861c0"
+        },
+        {
+          "created_at": "2026-10-23T17:12:55.563Z",
+          "criterion_id": "AC-03",
+          "id": "9b5c66df-84cc-4d01-b6d2-b21bfd9de004",
+          "outcome": "pass",
+          "reference_sha256": "695e7aace95f962d5b12a7cec2cccbfd3dda070fb9152fa7fda95363cd980e66",
+          "revision": 2,
+          "summary_sha256": "c49d9cb5e7637949ce6c96aa68c46d3e51a851572e4fd3841dd1d933ec44f776"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "f28f0517-d301-4d56-bd67-0d927b5ce3c4",
+          "identifier": "codex/WORM-012-chunks",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-012-chunks",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "61669acd-b5d0-4f12-90a2-6c958ef47d05",
+          "identifier": "72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "a87dee25-2396-45c7-b830-8977b49a3918",
+          "identifier": "f33237847af396bd72f83a3da10dd7e1bc40e482",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/f33237847af396bd72f83a3da10dd7e1bc40e482",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "3876cddf-1deb-478b-83d3-b357b3740fb8",
+          "identifier": "9",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/9",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-012",
+      "solution_comments": [
+        {
+          "body_sha256": "183863177d98aaef814c0a171dd50cf0b35ec18d4a76c538cb358d4ab33c8f1b",
+          "created_at": "2026-10-23T17:12:56.755Z",
+          "id": "d019c995-38a6-4951-af08-5af866545bfe"
+        }
+      ],
+      "status": "Done",
+      "title": "Implement chunk manifests, reconstruction and integrity faults",
+      "version": 18,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 327,
+          "created_at": "2026-10-23T16:53:52.231Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "c8cb10c46acbfbf789c48c06b7dce4e97c35ace09b1ea457ebec60461519f583",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 359,
+          "created_at": "2026-10-23T17:13:34.990Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "a8a819f27f7338509201909967f7be074e67e8645ba79c885e850398f6e81be9",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 360,
+          "created_at": "2026-10-23T17:13:35.551Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "d2ae8f45040f594abbab6f46c0ce3c0f2591049d1f97ea604ae6463de6fafe16",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T18:00:11.413Z",
+          "criterion_id": "AC-01",
+          "id": "604582ca-4291-484f-b2e2-c59aa514924f",
+          "outcome": "pass",
+          "reference_sha256": "2a287d7ddf970baa1f5287dcf7923fb78321a2d1f7d7918e2a3feac983677337",
+          "revision": 2,
+          "summary_sha256": "b83ba13814dfd8ad21885b891d5110fdc01da7b52a0daa9daa84b3afd459a714"
+        },
+        {
+          "created_at": "2026-10-23T18:00:12.635Z",
+          "criterion_id": "AC-02",
+          "id": "88192b0f-9fea-4d7b-ad9f-97ff6ef8c81e",
+          "outcome": "pass",
+          "reference_sha256": "2a287d7ddf970baa1f5287dcf7923fb78321a2d1f7d7918e2a3feac983677337",
+          "revision": 2,
+          "summary_sha256": "8f49ab960065d94c564ad21b66552808e05bdbac03fd2dd49364e4bbebe1f57d"
+        },
+        {
+          "created_at": "2026-10-23T18:00:13.790Z",
+          "criterion_id": "AC-03",
+          "id": "8ed2425d-babc-41d5-9546-f1ffa302b3df",
+          "outcome": "pass",
+          "reference_sha256": "2a287d7ddf970baa1f5287dcf7923fb78321a2d1f7d7918e2a3feac983677337",
+          "revision": 2,
+          "summary_sha256": "f76c9695bdb5d6fb24c3d95822c682b1f9a62ab5fc1803d2d73d1c6fd52ceafd"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "73e820b1-0792-46c1-a0bb-7834b81c0e3a",
+          "identifier": "codex/WORM-013-candidate",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-013-candidate",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "f0cb79ba-7ec1-4b27-8539-850d19eeeb2c",
+          "identifier": "dfff72bec8bbea050bae73e6bba846e388f449e9",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/dfff72bec8bbea050bae73e6bba846e388f449e9",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "348fa21d-9bba-4b30-905c-ad2fbb9aec2f",
+          "identifier": "57978e208eebac45f90af21d796b720b595feb87",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/57978e208eebac45f90af21d796b720b595feb87",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "a4312d5b-5b4e-42d3-ab0a-0e277de1296d",
+          "identifier": "13",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/13",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-013",
+      "solution_comments": [
+        {
+          "body_sha256": "5be82f3a9cde7e7dc4b933ba1e723a7aaa83e1c55115e5c8e357b443c0c1bba8",
+          "created_at": "2026-10-23T18:00:14.954Z",
+          "id": "9083603e-5f1e-4581-b331-ebad2e5a253f"
+        }
+      ],
+      "status": "Done",
+      "title": "Bind the reference candidate to the image actually tested",
+      "version": 19,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 364,
+          "created_at": "2026-10-23T17:19:09.378Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "0d802eab624d3017c50e1de2cb7b70ac494f17be9294afb632d42fee153c32e5",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 406,
+          "created_at": "2026-10-23T18:00:26.085Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "66d069f13f324ddfc59a442a83b37a9bf6ee647c36abe70fc2c3fb1db5675e30",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 407,
+          "created_at": "2026-10-23T18:00:26.634Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "ee7939a8340c59e3dee9237afa750482974fd636c2d36f48a6af39f9a3016301",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T19:18:19.173Z",
+          "criterion_id": "AC-01",
+          "id": "c71593f4-dd49-442b-8f59-84f6c12c9e93",
+          "outcome": "pass",
+          "reference_sha256": "63ab1cb7c5d0a699302d006e551dd69a18c9c3c15dc5c22123cf51c3385a9b86",
+          "revision": 2,
+          "summary_sha256": "989b69ae3a8f5db668d833c53f334eecf6d7d2f0a4b5d1d1fb0f2b8a8f7e3881"
+        },
+        {
+          "created_at": "2026-10-23T19:18:20.377Z",
+          "criterion_id": "AC-02",
+          "id": "cb055206-32de-437e-ad03-c615b201daa2",
+          "outcome": "pass",
+          "reference_sha256": "63ab1cb7c5d0a699302d006e551dd69a18c9c3c15dc5c22123cf51c3385a9b86",
+          "revision": 2,
+          "summary_sha256": "ea38ec9384d63340014af9a11d763eef7db10959960a597d4738ef4b5a0306b2"
+        },
+        {
+          "created_at": "2026-10-23T19:18:21.563Z",
+          "criterion_id": "AC-03",
+          "id": "43556e88-5dff-4d7b-a8f9-695d1d631160",
+          "outcome": "pass",
+          "reference_sha256": "63ab1cb7c5d0a699302d006e551dd69a18c9c3c15dc5c22123cf51c3385a9b86",
+          "revision": 2,
+          "summary_sha256": "b15f93ea5c829c201d71d4467e9174fb277dddd40a5aea05cddf5fcb13453bca"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "994c5398-2e97-4f7e-b04f-fb1c8c17e40a",
+          "identifier": "codex/WORM-014-rpm",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-014-rpm",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "bbac2b06-da20-4d80-8893-2ebf1b1cc7b0",
+          "identifier": "db5d8e74f54483a909faaed963c752962785653c",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/db5d8e74f54483a909faaed963c752962785653c",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "c85b9659-2454-4a56-a57f-444e01dc9a7d",
+          "identifier": "50ff7cb5d43840294e2e0674dc3de03f598c22b2",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/50ff7cb5d43840294e2e0674dc3de03f598c22b2",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "e812f36a-8c3d-4260-9dff-9e02cbf762ef",
+          "identifier": "14",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/14",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-014",
+      "solution_comments": [
+        {
+          "body_sha256": "1e91352cb85cdb593c8e85bc150e80926d2a6842be8b0808b3fd775071cf826e",
+          "created_at": "2026-10-23T19:18:22.722Z",
+          "id": "ab1c5b9c-5600-4787-b4c4-6012bd081297"
+        }
+      ],
+      "status": "Done",
+      "title": "Add legally usable RPM-userland target coverage",
+      "version": 26,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 408,
+          "created_at": "2026-10-23T18:00:38.921Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "c062e1fe4038bec123366e3d1567dc63159b48b6187a293ca640334341b5d69d",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 430,
+          "created_at": "2026-10-23T19:18:52.619Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "62e518986eb08643c541e0152198a9b00f6af3e90bfc7943512d59efd67ef21d",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 431,
+          "created_at": "2026-10-23T19:18:53.156Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "3c1836c40743e4c2827b9dcd8f91503e34804a49a0af2a50b140077aaf09cd6b",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T19:49:00.944Z",
+          "criterion_id": "AC-01",
+          "id": "e95c78cb-b1b5-4aeb-ad32-c254498c2194",
+          "outcome": "pass",
+          "reference_sha256": "e28d9609f527b13912bb7806da9b612bc47dfc0799594776821a634b0ff7ba4c",
+          "revision": 2,
+          "summary_sha256": "4e0a7336115aee0e71275411b67dda41f7ccbeaa2742d9a505bb46dc5f0c6915"
+        },
+        {
+          "created_at": "2026-10-23T19:49:02.116Z",
+          "criterion_id": "AC-02",
+          "id": "eea8065e-8529-4ccd-8c40-47529916821e",
+          "outcome": "pass",
+          "reference_sha256": "e28d9609f527b13912bb7806da9b612bc47dfc0799594776821a634b0ff7ba4c",
+          "revision": 2,
+          "summary_sha256": "baabb7ac387aeee2f98916ae43da07fd2e26b7da8cc29c79f4c56ca0199a00c4"
+        },
+        {
+          "created_at": "2026-10-23T19:49:03.260Z",
+          "criterion_id": "AC-03",
+          "id": "93294ca9-fbad-46eb-aaa9-b95e50a02d44",
+          "outcome": "pass",
+          "reference_sha256": "e28d9609f527b13912bb7806da9b612bc47dfc0799594776821a634b0ff7ba4c",
+          "revision": 2,
+          "summary_sha256": "8c166fb567db5419701e33941995ef33d80e45458e1627c978df9c3f4999a3cf"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "8e315053-0ae8-40fd-a776-0cb8612c3003",
+          "identifier": "codex/WORM-015-svd",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-015-svd",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "a4728a5c-a909-4d26-a287-f1e02fed6824",
+          "identifier": "14d510044757f588c256e27c62a0cbad037d7ca1",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/14d510044757f588c256e27c62a0cbad037d7ca1",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "b161d8fe-cc1f-4097-b46c-3cd684182650",
+          "identifier": "41a0047b7fa8083f6b6a740308b32efe690a8d54",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/41a0047b7fa8083f6b6a740308b32efe690a8d54",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "b29083d5-d698-4cdf-a084-7bcfb8d94a2f",
+          "identifier": "15",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/15",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-015",
+      "solution_comments": [
+        {
+          "body_sha256": "b4e57fe9dafb2a5e66c3a12c0775f1e8c77f1c0d6fb95ac534fe7e689d4e86d2",
+          "created_at": "2026-10-23T19:49:04.403Z",
+          "id": "7fda2434-2f93-40a3-a3ea-e93d257cbd4b"
+        }
+      ],
+      "status": "Done",
+      "title": "Generate an observed and attributable Software Version Description",
+      "version": 19,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 432,
+          "created_at": "2026-10-23T19:19:20.076Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "9cda3fb7abc5fa043a3aecf90c71510435a286d41c5fe60075167afd564eb73d",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 447,
+          "created_at": "2026-10-23T19:49:25.953Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "2d9efa7c075d49498ff8eaadee8b0a9d93cd235aef362de567977b3674116228",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 448,
+          "created_at": "2026-10-23T19:49:36.125Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "31c2b11260d6dcbf5fcc81f17c92f9878d050272482a86d67ebcb570939323d9",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T17:12:53.243Z",
+          "criterion_id": "AC-01",
+          "id": "d30e0a1d-61ce-4559-8b47-da4c6343e374",
+          "outcome": "pass",
+          "reference_sha256": "6ea66dac380405943b122caf1c4e8f39ec7c54229b91e51eab9de5c72f92ea17",
+          "revision": 2,
+          "summary_sha256": "28cb10dd22ef46814866c12a34cd96d38969d8687e637af1102508d636737dbc"
+        },
+        {
+          "created_at": "2026-10-23T17:12:54.410Z",
+          "criterion_id": "AC-02",
+          "id": "80149fa6-8e6e-4e95-ade0-7814e30166be",
+          "outcome": "pass",
+          "reference_sha256": "6ea66dac380405943b122caf1c4e8f39ec7c54229b91e51eab9de5c72f92ea17",
+          "revision": 2,
+          "summary_sha256": "79ca5436bc6605197e812bf80bdd65007e8407b51b4020d03e29d006285dff60"
+        },
+        {
+          "created_at": "2026-10-23T17:12:55.568Z",
+          "criterion_id": "AC-03",
+          "id": "25036340-5455-4e5f-802e-26501a518831",
+          "outcome": "pass",
+          "reference_sha256": "6ea66dac380405943b122caf1c4e8f39ec7c54229b91e51eab9de5c72f92ea17",
+          "revision": 2,
+          "summary_sha256": "0603f186462fde64a1c21d2b18f9825bc67c9955d281d817fddeec6354e53e8c"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "1b93dbf2-d1f0-4a50-b7f4-fd1da722482f",
+          "identifier": "codex/WORM-016-assessments",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-016-assessments",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "60095838-0705-4971-ad86-f869f4d7fb33",
+          "identifier": "3e11548a253fbd7799606dc978d69f5965c5cea0",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/3e11548a253fbd7799606dc978d69f5965c5cea0",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "2cf5ccf7-dd5b-4ae3-9211-fe10ecaf3f01",
+          "identifier": "4579515372eb6c8565021799412ed0e38a6b1329",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/4579515372eb6c8565021799412ed0e38a6b1329",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "b3f84e23-a068-4565-8591-3bccdd287c3c",
+          "identifier": "10",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/10",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-016",
+      "solution_comments": [
+        {
+          "body_sha256": "036b8788f34751f2c2f2cc41f7961f9422098f8fcdd82198bbd3687a9de16957",
+          "created_at": "2026-10-23T17:12:56.748Z",
+          "id": "33780ebc-bea1-4bb8-9d3d-4659cf85931c"
+        }
+      ],
+      "status": "Done",
+      "title": "Parse synthetic assessments and define reference-only policy",
+      "version": 16,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 328,
+          "created_at": "2026-10-23T16:53:57.990Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "caec3d0fbac9da52ee2323054944b4799023e247d2bf8cc456009d2817ceb659",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 361,
+          "created_at": "2026-10-23T17:13:41.950Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "39d11dd120e0537164a151a0fd2382e61b4eb954fae4b4d6b74eccda5442f15b",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 362,
+          "created_at": "2026-10-23T17:13:42.467Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "f860ddc8f7657b3892b9ea69842e8ddaf47cdcb081ab63b4af5234da2701a87d",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-23T20:34:38.397Z",
+          "criterion_id": "AC-01",
+          "id": "40b3adef-3c46-4499-b873-29f9663eb84a",
+          "outcome": "pass",
+          "reference_sha256": "5717390113c41f7551802e59abd9d272122d5ce8b7f41c9344f75d9a66216dc3",
+          "revision": 2,
+          "summary_sha256": "852d69581827575027d429838f657399361765ed4e52a92f51db493d7ab25a2d"
+        },
+        {
+          "created_at": "2026-10-23T20:34:39.556Z",
+          "criterion_id": "AC-02",
+          "id": "fa2c3fba-e9f4-42a0-a86a-63fe8b35da8e",
+          "outcome": "pass",
+          "reference_sha256": "5717390113c41f7551802e59abd9d272122d5ce8b7f41c9344f75d9a66216dc3",
+          "revision": 2,
+          "summary_sha256": "00cd817cf46deb8790afcb387fa4ddc9954f03e1cc858a76ba7edf4ad845f4ee"
+        },
+        {
+          "created_at": "2026-10-23T20:34:40.716Z",
+          "criterion_id": "AC-03",
+          "id": "182c3652-ac82-4929-9215-d8b82bbf40ce",
+          "outcome": "pass",
+          "reference_sha256": "5717390113c41f7551802e59abd9d272122d5ce8b7f41c9344f75d9a66216dc3",
+          "revision": 2,
+          "summary_sha256": "2bf963c8cdf6e6a364dba32b51dd716dee7dfbe0ca1dd219874f616eb8f60991"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "aca6683f-5bd2-4aa8-a27e-94810a8f67c4",
+          "identifier": "codex/WORM-017-pipeline",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-017-pipeline",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "34b81102-fa5f-4d0d-9e17-489a67ffd8cc",
+          "identifier": "753b67d7e550218f28e2f765d3e3abf254c31656",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/753b67d7e550218f28e2f765d3e3abf254c31656",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "e1fc8fcf-8781-4f99-9e24-d0512979f7ea",
+          "identifier": "7ac5f8149b428d588982020afa99a1e5361ccdc8",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/7ac5f8149b428d588982020afa99a1e5361ccdc8",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "63ceb647-a38b-49f5-b745-8d22ecd07a7e",
+          "identifier": "16",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/16",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-017",
+      "solution_comments": [
+        {
+          "body_sha256": "7f234e2adb22769571d6956e3fbe95115a5943edc05462dc513e7dd3b86d19f5",
+          "created_at": "2026-10-23T20:34:41.896Z",
+          "id": "5f504e28-ea88-4af9-9214-731903c602c0"
+        }
+      ],
+      "status": "Done",
+      "title": "Unify run evidence, reports and strict completeness gates",
+      "version": 19,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 449,
+          "created_at": "2026-10-23T19:49:52.630Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "988e0854efe44fd94f6a4ff7d9ed293f07d8d5177b50975b7eaa53a5b427330b",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 466,
+          "created_at": "2026-10-24T16:07:17.386Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "552b6d724c407b1318c6f06d50a634a9873b61f400089ccb9b3bd138276e71d2",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 467,
+          "created_at": "2026-10-24T16:07:24.786Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "0f31c292e479d994c81084ea45577e1631e9e38c8fd98723358967c63990ca04",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-24T16:46:26.314Z",
+          "criterion_id": "AC-01",
+          "id": "73c4ac97-ec77-4554-99e0-fcf1f9e56cef",
+          "outcome": "pass",
+          "reference_sha256": "53aad2858398b1723323d335b66592785d60b2b57f14e7ef81f54676d6a27333",
+          "revision": 2,
+          "summary_sha256": "60e6b6f0f506a7ec66dfb010951fa68af960a48fbd3931e835b75de9777e22c5"
+        },
+        {
+          "created_at": "2026-10-24T16:46:26.365Z",
+          "criterion_id": "AC-02",
+          "id": "9fd3acd9-dc08-45e5-88e0-af7c488fb168",
+          "outcome": "pass",
+          "reference_sha256": "53aad2858398b1723323d335b66592785d60b2b57f14e7ef81f54676d6a27333",
+          "revision": 2,
+          "summary_sha256": "f65ae051502a344a5f1b9934723221c5f92294f3cac3a6772589fbd2f48cebe5"
+        },
+        {
+          "created_at": "2026-10-24T16:46:26.402Z",
+          "criterion_id": "AC-03",
+          "id": "976fc0a1-4ad9-4be2-ac7c-1c0417a570c0",
+          "outcome": "pass",
+          "reference_sha256": "53aad2858398b1723323d335b66592785d60b2b57f14e7ef81f54676d6a27333",
+          "revision": 2,
+          "summary_sha256": "e1f011d413fc4f709f154e745f08c9d7281d676a9ee1741ddf80cdb8aeb70d82"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "4acd713d-8ccf-4bcf-802f-5b28fce43c0b",
+          "identifier": "codex/WORM-018-publication",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-018-publication",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "aeda9738-343f-4396-8384-2a9a08b38fbd",
+          "identifier": "85f4c56116f30679c083795bed17bb56f7b25d6d",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/85f4c56116f30679c083795bed17bb56f7b25d6d",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "8fab7c9f-16d4-4c0b-b137-6aa2a3451bf1",
+          "identifier": "1ae2a2dc49f3a8f5779cbb1cdab1a2d828003df2",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/1ae2a2dc49f3a8f5779cbb1cdab1a2d828003df2",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "ad3ee13f-d9f7-4a29-a229-7e331cbf7d6d",
+          "identifier": "17",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/17",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-018",
+      "solution_comments": [
+        {
+          "body_sha256": "3a4dd260c884f86ec366dcf754f44b8544592c2ff12efb82bffa5e5fc5c3e948",
+          "created_at": "2026-10-24T16:46:46.709Z",
+          "id": "c40f3b6a-f7a9-4f37-89ba-2b6d8a29796e"
+        }
+      ],
+      "status": "Done",
+      "title": "Publish tested reference artifacts atomically and privately",
+      "version": 20,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 468,
+          "created_at": "2026-10-24T16:07:33.224Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "8978fd0c0768423377ee129ae662473c62903e2acea611a4624fcd7483f0ea3c",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 484,
+          "created_at": "2026-10-24T16:47:10.643Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "445f47f4e92cea422abc125a294161e03e9fc31cefe7d92c5ffb6ef7b0e97f48",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 485,
+          "created_at": "2026-10-24T16:47:15.261Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "f91f089befb2fc3de4b0cf76b27586da608b4f4864a98ab5283a7084de36deed",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-24T17:14:23.806Z",
+          "criterion_id": "AC-01",
+          "id": "df9b77c7-e921-4213-92c7-74623f002d25",
+          "outcome": "pass",
+          "reference_sha256": "674511530a359b2e3f9e4116f3f1e4c04d722b68da8fcedde13afec81def152a",
+          "revision": 2,
+          "summary_sha256": "9c4dd95855abe5505a1223876a73d20f67ac5e27ad560b1cea09a059d740a2c0"
+        },
+        {
+          "created_at": "2026-10-24T17:14:23.853Z",
+          "criterion_id": "AC-02",
+          "id": "757b231a-0f1f-4964-9177-85e2cf5fbfa8",
+          "outcome": "pass",
+          "reference_sha256": "674511530a359b2e3f9e4116f3f1e4c04d722b68da8fcedde13afec81def152a",
+          "revision": 2,
+          "summary_sha256": "b0fc0cb0f35f54307a6f9ddeca737cb642d12cd9627e7a104d740c00493d2dbf"
+        },
+        {
+          "created_at": "2026-10-24T17:14:23.902Z",
+          "criterion_id": "AC-03",
+          "id": "0c2ab246-123b-4cfc-b9fe-3e8e9d676f40",
+          "outcome": "pass",
+          "reference_sha256": "674511530a359b2e3f9e4116f3f1e4c04d722b68da8fcedde13afec81def152a",
+          "revision": 2,
+          "summary_sha256": "d004517a8af9e91ee21bac8e180cbb93f7b0cbc6c051c3205538088eeb14e20e"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "6d873ab8-cbbb-41f9-82a9-417e81dc704e",
+          "identifier": "codex/WORM-019-isolation",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-019-isolation",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "968a20f2-3dc8-42a6-a444-77f6fdc53095",
+          "identifier": "973c24a4b9e196d8d3117a3b91d372bd0397394a",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/973c24a4b9e196d8d3117a3b91d372bd0397394a",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "225c2f0b-6f56-4217-8f9c-c9cdd9505721",
+          "identifier": "34c59a6200357a7b61d7c846b16af95440dc399a",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/34c59a6200357a7b61d7c846b16af95440dc399a",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "f9f84f85-c9c0-43cb-8c25-73c550c654aa",
+          "identifier": "18",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/18",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-019",
+      "solution_comments": [
+        {
+          "body_sha256": "2b28d80ea4351e8f90f2fea16a5488d7b534127fbe0a02df2d9ee805a25113fc",
+          "created_at": "2026-10-24T17:15:26.740Z",
+          "id": "37821766-51b6-4090-96e0-eb8c5b02188e"
+        }
+      ],
+      "status": "Done",
+      "title": "Prove overlapping-run isolation and interrupted recovery",
+      "version": 18,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 486,
+          "created_at": "2026-10-24T16:47:49.673Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "a9da3d8f089d5369baef62c6a3d38d5f01fca2ef57733e524017af145288d1aa",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 500,
+          "created_at": "2026-10-24T17:15:40.314Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "11ac841e7a684bac40b13c3fe57de9c3e6f60d09b4963be82b841aca3ae6625d",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 501,
+          "created_at": "2026-10-24T17:15:48.147Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "d53e73c9326656c9b8b06c87cf6acec39842fa94a8be13ec993104aa24b87248",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-24T18:45:03.454Z",
+          "criterion_id": "AC-01",
+          "id": "254da98f-032c-4f97-b738-0c7c8d1b53ee",
+          "outcome": "pass",
+          "reference_sha256": "cd6604fa2c601f731ce9b3dd689585406c71164c7ded0ba51aa240fd59adbdb5",
+          "revision": 2,
+          "summary_sha256": "d7bb62f664a6be584e5965cf629c429e92f99d4284fa5fe269cc4b7cd82dfecf"
+        },
+        {
+          "created_at": "2026-10-24T18:45:03.514Z",
+          "criterion_id": "AC-02",
+          "id": "4e14faf6-cf28-4297-a6c2-5c2572436d9f",
+          "outcome": "pass",
+          "reference_sha256": "cd6604fa2c601f731ce9b3dd689585406c71164c7ded0ba51aa240fd59adbdb5",
+          "revision": 2,
+          "summary_sha256": "e5011537a3dfe790934abcaa12c61b84b8804fbe9354058da7f07707b113a8a6"
+        },
+        {
+          "created_at": "2026-10-24T18:45:03.556Z",
+          "criterion_id": "AC-03",
+          "id": "7007a4a4-9b61-4df7-867d-857c699035e0",
+          "outcome": "pass",
+          "reference_sha256": "cd6604fa2c601f731ce9b3dd689585406c71164c7ded0ba51aa240fd59adbdb5",
+          "revision": 2,
+          "summary_sha256": "3dc099c41865a98b4fdbef1fc9376bc9983f9334226b45cc9b8ca12e3994746f"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "09351fb8-60ba-4690-baf6-08b67864e4d9",
+          "identifier": "codex/WORM-020-twenty",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-020-twenty",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "12aa267f-958b-45a5-997d-3e5251b36da8",
+          "identifier": "825a594862b816401d4b963329e6242bd8ed8aeb",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/825a594862b816401d4b963329e6242bd8ed8aeb",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "a32a841d-1587-4d13-816e-bcccabbb0578",
+          "identifier": "193a9fd78b31595861904df2a93c26323bec2834",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/193a9fd78b31595861904df2a93c26323bec2834",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "2ec231a2-d7a2-459b-8737-a87f4a4da968",
+          "identifier": "19",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/19",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "d9031f22-e718-4b32-ae44-69214d6abb3b",
+          "identifier": "65db67b90fb104e1e58efffb5fb0e3d80f0c0871",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/65db67b90fb104e1e58efffb5fb0e3d80f0c0871",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-020",
+      "solution_comments": [
+        {
+          "body_sha256": "f8fa4cf563b5668090e3d249ef20326b48d5f95783c1bb4aa5714c96e980729f",
+          "created_at": "2026-10-24T18:51:49.793Z",
+          "id": "1299945c-9c58-4446-882c-7e48fe1d1356"
+        }
+      ],
+      "status": "Done",
+      "title": "Demonstrate measured twenty-target execution",
+      "version": 28,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 502,
+          "created_at": "2026-10-24T17:16:11.650Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "d26ae0a50bf5f8a2d013d52b7c064dca226aad08ccc33512111a213f1f0a7cb5",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 530,
+          "created_at": "2026-10-24T18:52:11.140Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "1ad8ab2c8f6d499c39cc0cc4a03019bf31ea1ca2c3350516ceb9c7468f8132f3",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 531,
+          "created_at": "2026-10-24T18:52:18.820Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "1bcdfdcec87ee09ef3c3646aa92332b0806c915dafa74aa40ffe256bdbb96216",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    },
+    {
+      "approved_revision": 2,
+      "blocker": null,
+      "claim": null,
+      "contract_revision": 2,
+      "criteria": [
+        {
+          "created_at": "2026-10-24T19:22:55.347Z",
+          "criterion_id": "AC-01",
+          "id": "bed8bc17-1ff3-4e82-98f4-59f8b940fbec",
+          "outcome": "pass",
+          "reference_sha256": "e138e723e432fe621d372029c6eddfc6abd51aa4c86fb1d5dea4c80b73bddc3d",
+          "revision": 2,
+          "summary_sha256": "d9cfee87dd0e3d6e159e439d70081d4ac3f4c8fb9f117918d7e64b10ad24cb8b"
+        },
+        {
+          "created_at": "2026-10-24T19:22:55.385Z",
+          "criterion_id": "AC-02",
+          "id": "499cb917-7e32-4ab4-952b-c83f1d52368d",
+          "outcome": "pass",
+          "reference_sha256": "e138e723e432fe621d372029c6eddfc6abd51aa4c86fb1d5dea4c80b73bddc3d",
+          "revision": 2,
+          "summary_sha256": "5485beed50d8816d72252686a4d9a4629f9c21a636433c1fb9baff31032f4d32"
+        },
+        {
+          "created_at": "2026-10-24T19:22:55.425Z",
+          "criterion_id": "AC-03",
+          "id": "30e0ef0d-9823-4461-a05e-e61e2178c038",
+          "outcome": "pass",
+          "reference_sha256": "e138e723e432fe621d372029c6eddfc6abd51aa4c86fb1d5dea4c80b73bddc3d",
+          "revision": 2,
+          "summary_sha256": "a8ee9eb5f57279388b6f278057e57ef2d9427219fb7ef169d9673a9d38a3e3b7"
+        },
+        {
+          "created_at": "2026-10-24T19:22:55.463Z",
+          "criterion_id": "AC-04",
+          "id": "91112383-d4f1-42ee-b472-6fa8471114bb",
+          "outcome": "pass",
+          "reference_sha256": "e138e723e432fe621d372029c6eddfc6abd51aa4c86fb1d5dea4c80b73bddc3d",
+          "revision": 2,
+          "summary_sha256": "7b6cf47c74d3e55a0738ba3fa24cfc44dc94f5ce54d045e4c2bf2b68cc9cb4e2"
+        },
+        {
+          "created_at": "2026-10-24T19:22:55.512Z",
+          "criterion_id": "AC-05",
+          "id": "1107f6c4-9c58-4581-a96a-f7667a525981",
+          "outcome": "pass",
+          "reference_sha256": "e138e723e432fe621d372029c6eddfc6abd51aa4c86fb1d5dea4c80b73bddc3d",
+          "revision": 2,
+          "summary_sha256": "0ca3cb11d8537e72ee2ecd4261ab41135f373bec6653bcdf5bac4f6566c948c8"
+        },
+        {
+          "created_at": "2026-10-24T19:22:55.554Z",
+          "criterion_id": "AC-06",
+          "id": "7db71d8b-6ddb-4ad3-95b5-012eb18930f8",
+          "outcome": "pass",
+          "reference_sha256": "e138e723e432fe621d372029c6eddfc6abd51aa4c86fb1d5dea4c80b73bddc3d",
+          "revision": 2,
+          "summary_sha256": "9b680b47062232e73989a4addc47e59d6a88a87d950900f8af33a4ea590d1cad"
+        }
+      ],
+      "development_links": [
+        {
+          "id": "9b6aacb4-2b86-4504-a6a8-afdaa259ce07",
+          "identifier": "codex/WORM-021-parity",
+          "kind": "branch",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/tree/codex%2FWORM-021-parity",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "66cbde2a-5323-466a-97f7-b7a0f1adba9d",
+          "identifier": "3f7e3cf3db5715f88cd0d60fd8caf1426ae5df14",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/3f7e3cf3db5715f88cd0d60fd8caf1426ae5df14",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "ad223a14-5e67-45e5-b6fa-ce09a842c52c",
+          "identifier": "20",
+          "kind": "pull",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/pull/20",
+          "verification": "user-supplied"
+        },
+        {
+          "id": "55ef571e-db07-49b0-92bc-af23875f5724",
+          "identifier": "dc745a6833823b9341f0d5fa05ae7629f4b07f39",
+          "kind": "commit",
+          "observed_at": null,
+          "repository": "https://github.com/TheSlayer455/jake-wormhole",
+          "url": "https://github.com/TheSlayer455/jake-wormhole/commit/dc745a6833823b9341f0d5fa05ae7629f4b07f39",
+          "verification": "user-supplied"
+        }
+      ],
+      "key": "WORM-021",
+      "solution_comments": [
+        {
+          "body_sha256": "b558591e6c1e8068c3d18c43185d29172dff13a059b0c8ed6314945795b98bf3",
+          "created_at": "2026-10-24T19:24:43.743Z",
+          "id": "1d3ad2e7-cc27-4b4a-8c77-040f8bac27d9"
+        }
+      ],
+      "status": "Done",
+      "title": "Verify manual and CI parity and the final engineering handoff",
+      "version": 21,
+      "workflow_decisions": [
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 532,
+          "created_at": "2026-10-24T18:52:34.251Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "e0dd185efece62b7adaf9ce906b6f8455e770c5f240057affa4bb2ecc8cc7ce8",
+          "revision": 2,
+          "to": "Ready"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 551,
+          "created_at": "2026-10-24T19:24:55.735Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "9fea86ece019bae7f93d1e914a508764daac8a8f04842237fbc18ca56168b03d",
+          "revision": 2,
+          "to": "Verified"
+        },
+        {
+          "actor": "7293d226-ae53-4240-9400-cd5024dcfee3",
+          "actor_name": "Jake",
+          "audit_id": 552,
+          "created_at": "2026-10-24T19:25:03.374Z",
+          "historical_role_snapshot": null,
+          "reason_sha256": "b30713f4bb07b65b473955bfc437ef377838b5692d364b2bf8d321a54c9b3ee0",
+          "revision": 2,
+          "to": "Done"
+        }
+      ]
+    }
+  ],
+  "independent_preliminary_audit_sha256": "f50fd5cc3b56165b31924f331c5e664e4f5d7d34e70037aa7e231edb5753155d",
+  "limitations": [
+    "Historical audit exposes actor ID/name/reason, not a historical role snapshot.",
+    "Owner-directed automated decisions are not independent human examination.",
+    "Evidence and solution prose remain in Minx; this ledger binds IDs and content hashes without copying transcripts.",
+    "Development links retain user-supplied/unverified observations; this audit does not refetch all old GitHub artifacts.",
+    "All historical runtime results remain bound to their original sources, not rerun by parent closeout."
+  ],
+  "observed_at": "2026-10-24T19:25:16Z",
+  "operation": "parent-child-acceptance-ledger-v1",
+  "parent": "WORM-001",
+  "private_fresh_readback_sha256": "dfe5c97e5305280750ef663a25e88e8d3a9b493a35e8bfb7de45fd30af41b74d",
+  "production_iso_eligible": false,
+  "schema_version": "1.0",
+  "source_base": "dc745a6833823b9341f0d5fa05ae7629f4b07f39",
+  "summary": {
+    "active_child_claims": 0,
+    "children": 20,
+    "current_approved_revision": 2,
+    "current_criteria_pass": 66,
+    "done": 20,
+    "solution_comments_present": 20
+  }
+}

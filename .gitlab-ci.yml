@@ -1,0 +1,28 @@
+{
+  "stages": ["verify"],
+  "verify": {
+    "stage": "verify",
+    "tags": ["wormhole-python31214"],
+    "timeout": "10m",
+    "variables": {"GIT_DEPTH": "0", "PYTHONDONTWRITEBYTECODE": "1"},
+    "script": [
+      "python3 -c \"import sys; assert sys.version_info[:3] == (3,12,14)\"",
+      "python3 -B scripts/verify_repository.py",
+      "python3 -B scripts/verify_acceptance_matrix.py",
+      "python3 -B -m unittest discover -s tests -v",
+      "python3 -B scripts/run_ci_parity.py --mode all"
+    ],
+    "allow_failure": false,
+    "artifacts": {
+      "when": "always",
+      "expire_in": "7 days",
+      "paths": [
+        "ci-artifacts/plan.json",
+        "ci-artifacts/results.json",
+        "ci-artifacts/decision.json",
+        "ci-artifacts/execution.json",
+        "ci-artifacts/checksums.json"
+      ]
+    }
+  }
+}

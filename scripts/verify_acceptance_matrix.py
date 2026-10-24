@@ -1,0 +1,246 @@
+"""Read-only historical evidence/link verifier; not a runtime or parity gate."""
+import hashlib
+import json
+from pathlib import Path
+import re
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+CATEGORIES = (
+    'healthy-reference', 'readiness-auth-trust-network-python',
+    'functional-version', 'powershell-source', 'integrity-evidence',
+    'interruption-recovery', 'overlap-resource-refusal',
+    'native-inventory', 'publication', 'synthetic-assessment', 'twenty-targets',
+)
+
+
+# Reviewed original scenario grid. A category summary cannot authorize omissions.
+ORIGINAL_GRID = (
+    ('WORM-005', '/qualification_runs/0', 'healthy-reference', 'actual-container', '731eabee3d691404e22c9422e37ff1c6ccddfcf4'),
+    ('WORM-005', '/qualification_runs/1', 'healthy-reference', 'actual-container', '731eabee3d691404e22c9422e37ff1c6ccddfcf4'),
+    ('WORM-006', '/suite/cases/0', 'healthy-reference', 'actual-container', '06c19f16d45fe66cd0ebde0432372b2d060f7226'),
+    ('WORM-006', '/suite/cases/1', 'healthy-reference', 'actual-container', '06c19f16d45fe66cd0ebde0432372b2d060f7226'),
+    ('WORM-006', '/suite/cases/2', 'interruption-recovery', 'actual-container', '06c19f16d45fe66cd0ebde0432372b2d060f7226'),
+    ('WORM-007', '/suite/cases/0', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/1', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/2', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/3', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/4', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/5', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/6', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/7', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/8', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-008', '/suite/cases/0', 'interruption-recovery', 'actual-container', '68bd82dd3202c27a63d03fcaad9a8c32a12521b2'),
+    ('WORM-008', '/suite/cases/1', 'interruption-recovery', 'actual-container', '68bd82dd3202c27a63d03fcaad9a8c32a12521b2'),
+    ('WORM-008', '/suite/cases/2', 'interruption-recovery', 'actual-container', '68bd82dd3202c27a63d03fcaad9a8c32a12521b2'),
+    ('WORM-008', '/suite/cases/3', 'interruption-recovery', 'actual-container', '68bd82dd3202c27a63d03fcaad9a8c32a12521b2'),
+    ('WORM-009', '/suite/cases/0', 'functional-version', 'actual-container', 'de745a6ee7f80cddb2007ced380e2f67f79395f5'),
+    ('WORM-009', '/suite/cases/1', 'functional-version', 'actual-container', 'de745a6ee7f80cddb2007ced380e2f67f79395f5'),
+    ('WORM-009', '/suite/cases/2', 'functional-version', 'actual-container', 'de745a6ee7f80cddb2007ced380e2f67f79395f5'),
+    ('WORM-009', '/suite/cases/3', 'functional-version', 'actual-container', 'de745a6ee7f80cddb2007ced380e2f67f79395f5'),
+    ('WORM-009', '/suite/cases/4', 'functional-version', 'actual-container', 'de745a6ee7f80cddb2007ced380e2f67f79395f5'),
+    ('WORM-009', '/suite/cases/5', 'functional-version', 'actual-container', 'de745a6ee7f80cddb2007ced380e2f67f79395f5'),
+    ('WORM-010', '/actual_suites/0/cases/0', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/1/cases/0', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/0', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/1', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/2', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/3', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/4', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/5', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/6', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/7', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/8', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/9', 'functional-version', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-011', '/components/missing', 'powershell-source', 'actual-container', '88c8df01c38986fb909b3cfe231a97081f790bc1'),
+    ('WORM-011', '/components/ordinary', 'powershell-source', 'actual-container', '88c8df01c38986fb909b3cfe231a97081f790bc1'),
+    ('WORM-011', '/components/build', 'powershell-source', 'actual-container', '88c8df01c38986fb909b3cfe231a97081f790bc1'),
+    ('WORM-011', '/components/smoke', 'powershell-source', 'actual-container', '88c8df01c38986fb909b3cfe231a97081f790bc1'),
+    ('WORM-012', '/linux_acceptance/cases/0', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/1', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/2', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/3', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/4', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/5', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/6', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/7', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/8', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/9', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/10', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/11', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-013', '/qualification/cases/0', 'integrity-evidence', 'actual-container', 'dfff72bec8bbea050bae73e6bba846e388f449e9'),
+    ('WORM-013', '/qualification/cases/1', 'integrity-evidence', 'actual-container', 'dfff72bec8bbea050bae73e6bba846e388f449e9'),
+    ('WORM-013', '/qualification/cases/2', 'integrity-evidence', 'actual-container', 'dfff72bec8bbea050bae73e6bba846e388f449e9'),
+    ('WORM-013', '/qualification/cases/3', 'integrity-evidence', 'actual-container', 'dfff72bec8bbea050bae73e6bba846e388f449e9'),
+    ('WORM-014', '/qualification/cases/0', 'functional-version', 'actual-container', 'db5d8e74f54483a909faaed963c752962785653c'),
+    ('WORM-014', '/qualification/cases/1', 'functional-version', 'actual-container', 'db5d8e74f54483a909faaed963c752962785653c'),
+    ('WORM-014', '/qualification/cases/2', 'functional-version', 'actual-container', 'db5d8e74f54483a909faaed963c752962785653c'),
+    ('WORM-014', '/qualification/cases/3', 'functional-version', 'actual-container', 'db5d8e74f54483a909faaed963c752962785653c'),
+    ('WORM-015', '/qualification/cases/0', 'native-inventory', 'actual-container', '14d510044757f588c256e27c62a0cbad037d7ca1'),
+    ('WORM-015', '/qualification/cases/1', 'native-inventory', 'actual-container', '14d510044757f588c256e27c62a0cbad037d7ca1'),
+    ('WORM-015', '/qualification/cases/2', 'native-inventory', 'actual-container', '14d510044757f588c256e27c62a0cbad037d7ca1'),
+    ('WORM-015', '/qualification/cases/3', 'native-inventory', 'actual-container', '14d510044757f588c256e27c62a0cbad037d7ca1'),
+    ('WORM-015', '/qualification/cases/4', 'native-inventory', 'actual-container', '14d510044757f588c256e27c62a0cbad037d7ca1'),
+    ('WORM-015', '/qualification/cases/5', 'native-inventory', 'actual-container', '14d510044757f588c256e27c62a0cbad037d7ca1'),
+    ('WORM-016', '/actual_component_acceptance/cases/0', 'synthetic-assessment', 'actual-local-fixture', '3e11548a253fbd7799606dc978d69f5965c5cea0'),
+    ('WORM-016', '/actual_component_acceptance/cases/1', 'synthetic-assessment', 'actual-local-fixture', '3e11548a253fbd7799606dc978d69f5965c5cea0'),
+    ('WORM-016', '/actual_component_acceptance/cases/2', 'synthetic-assessment', 'actual-local-fixture', '3e11548a253fbd7799606dc978d69f5965c5cea0'),
+    ('WORM-016', '/actual_component_acceptance/cases/3', 'synthetic-assessment', 'actual-local-fixture', '3e11548a253fbd7799606dc978d69f5965c5cea0'),
+    ('WORM-016', '/actual_component_acceptance/cases/4', 'synthetic-assessment', 'actual-local-fixture', '3e11548a253fbd7799606dc978d69f5965c5cea0'),
+    ('WORM-017', '/qualification/cases/0', 'healthy-reference', 'actual-container', '753b67d7e550218f28e2f765d3e3abf254c31656'),
+    ('WORM-017', '/qualification/cases/1', 'healthy-reference', 'actual-container', '753b67d7e550218f28e2f765d3e3abf254c31656'),
+    ('WORM-017', '/qualification/cases/2', 'functional-version', 'actual-container', '753b67d7e550218f28e2f765d3e3abf254c31656'),
+    ('WORM-018', '/qualification/cases/0', 'publication', 'private-local-publication', '85f4c56116f30679c083795bed17bb56f7b25d6d'),
+    ('WORM-018', '/qualification/cases/1', 'publication', 'private-local-publication', '85f4c56116f30679c083795bed17bb56f7b25d6d'),
+    ('WORM-018', '/qualification/cases/2', 'publication', 'private-local-publication', '85f4c56116f30679c083795bed17bb56f7b25d6d'),
+    ('WORM-018', '/qualification/cases/3', 'publication', 'private-local-publication', '85f4c56116f30679c083795bed17bb56f7b25d6d'),
+    ('WORM-019', '/qualification/cases/0', 'overlap-resource-refusal', 'actual-container', '973c24a4b9e196d8d3117a3b91d372bd0397394a'),
+    ('WORM-019', '/qualification/cases/1', 'interruption-recovery', 'actual-container', '973c24a4b9e196d8d3117a3b91d372bd0397394a'),
+    ('WORM-019', '/qualification/cases/2', 'interruption-recovery', 'private-local-publication', '973c24a4b9e196d8d3117a3b91d372bd0397394a'),
+    ('WORM-019', '/qualification/cases/3', 'overlap-resource-refusal', 'synthetic-capacity', '973c24a4b9e196d8d3117a3b91d372bd0397394a'),
+    ('WORM-020', '/qualification', 'twenty-targets', 'actual-container', '825a594862b816401d4b963329e6242bd8ed8aeb'),
+)
+
+def canonical(value):
+    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=True,
+                      allow_nan=False).encode('ascii')
+
+
+def require(value, code):
+    if not value:
+        raise ValueError(code)
+
+
+def pointer(value, path):
+    require(type(path) is str and (path == '' or path.startswith('/')), 'pointer')
+    for part in path.split('/')[1:]:
+        part = part.replace('~1', '/').replace('~0', '~')
+        value = value[int(part)] if type(value) is list else value[part]
+    return value
+
+
+def render_markdown(value):
+    lines = ['# Historical acceptance matrix', '',
+        'This is an index of original, source-bound observations, not a rerun at the',
+        'current WORM-021 source. Expected-negative harness success retains the failed',
+        'underlying operation. Full hashes, exact JSON selectors, selected original',
+        'fields, cleanup references and limitations are in [the JSON record](acceptance-matrix.json).', '',
+        'WORM-021 is In Progress at this snapshot. Controlled manual/hosted parity and',
+        'safe failing-job diagnostics still need their own final evidence. GitLab runner',
+        'execution, scanner/STIG, VM/ISO and production eligibility are unverified or excluded.', '',
+        '| ID | Category / scenario | Original tested source | Observation | Evidence |',
+        '| --- | --- | --- | --- | --- |']
+    for row in value['rows']:
+        fields = row['observed_fields']
+        parts = []
+        for key in ('/status', '/qualification_status', '/acceptance_status',
+                    '/operation_status', '/underlying_status', '/component_status'):
+            if key in fields:
+                parts.append(key[1:] + '=' + str(fields[key]))
+        if row['execution_kind'] == 'synthetic-capacity':
+            parts.append('synthetic; no allocation')
+        observed = '; '.join(parts) or 'source fields retained in JSON'
+        label = row['scenario'].replace('|', '\\|')
+        lines.append(f"| {row['id']} | {row['category']} / {label} | `{row['tested_source_revision'][:12]}` | {observed} | [{row['ticket']}](../{row['evidence']['path']}) |")
+    lines += ['', '## Interpretation', '',
+        '- PowerShell missing-package evidence uses an isolated empty local APT source/state; ordinary helper checks passed separately. It is not a package removed from the normal helper.',
+        '- Wrong-version, wrong-identity and applicability cases use declared controlled expectations; they do not claim a naturally broken production payload.',
+        '- WORM-019 overlaps live coordinators while serializing allocation. Its oversized-capacity refusal is synthetic; WORM-020 separately ran twenty simultaneous stock targets.',
+        '- Native inventories retain full target package versions and architectures. Helper/provisioner versions and the shared kernel are separate provenance.',
+        '- Publication is verified private local filesystem publication of tested reference bytes, not a remote release or image export.',
+        '- Original checkpoints, evidence, reviews and failed attempts remain unchanged. Private state, raw logs and credentials are not copied here.', '',
+        '## CI history', '',
+        'WORM-020 delivery source `193a9fd78b31595861904df2a93c26323bec2834` failed hosted verification because a depth-one checkout lacked the original `6f3f28e` fixture source.',
+        'The reviewed `fetch-depth: 0` correction preserves pinned actions, read-only permissions, disabled credential persistence and all tests.',
+        'Both hosted checks passed at `65db67b90fb104e1e58efffb5fb0e3d80f0c0871`. This is fixture CI success, not WORM-021 normalized parity.', '',
+        'Verify this index with `python scripts/verify_acceptance_matrix.py`.', '']
+    return '\n'.join(lines)
+
+
+def validate(value, root=ROOT):
+    require(type(value) is dict and value.get('schema_version') == '1.0' and
+            value.get('operation') == 'historical-acceptance-matrix-v1', 'matrix_identity')
+    require(value.get('production_iso_eligible') is False and
+            value.get('historical_execution_is_final_source_rerun') is False and
+            value.get('gitlab_runner_executed') is False, 'fidelity_flags')
+    require(value.get('categories') == list(CATEGORIES), 'declared_categories')
+    rows = value.get('rows')
+    require(type(rows) is list and len(rows) == len(ORIGINAL_GRID), 'exact_original_grid')
+    for index, (row, expected) in enumerate(zip(rows, ORIGINAL_GRID), 1):
+        actual = (row['ticket'], row['evidence']['json_pointer'], row['category'],
+                  row['execution_kind'], row['tested_source_revision'])
+        require(row['id'] == f'H{index:03}' and actual == expected, 'exact_original_grid')
+    require(len({row['id'] for row in rows}) == len(rows), 'unique_rows')
+    require(set(row['category'] for row in rows) == set(CATEGORIES), 'category_coverage')
+    sources = {}
+    for row in rows:
+        require(row['ticket'] in {f'WORM-{n:03}' for n in range(5, 21)} and
+                re.fullmatch('[a-f0-9]{40}', row['tested_source_revision']), 'original_source')
+        evidence = row['evidence']; name = evidence['path']
+        require(name == 'handoff/evidence/' + row['ticket'] + '.json', 'fixed_evidence_path')
+        if name not in sources:
+            path = root / name
+            require(path.is_file() and not path.is_symlink() and path.stat().st_size <= 2*1024*1024, 'ordinary_bounded_evidence')
+            raw = path.read_bytes(); sources[name] = (hashlib.sha256(raw).hexdigest(), json.loads(raw))
+        digest, original = sources[name]
+        require(evidence['sha256'] == digest, 'original_file_hash')
+        selected = pointer(original, evidence['json_pointer'])
+        require(hashlib.sha256(canonical(selected)).hexdigest() == evidence['record_sha256'], 'selected_record_hash')
+        require(type(row['observed_fields']) is dict and row['observed_fields'], 'observed_fields')
+        for key, observed in row['observed_fields'].items():
+            require(canonical(pointer(selected, key)) == canonical(observed), 'typed_original_observation')
+        for ref in row['cleanup_evidence']:
+            target = pointer(original, ref['json_pointer'])
+            require(hashlib.sha256(canonical(target)).hexdigest() == ref['record_sha256'], 'cleanup_record_hash')
+        identity = original.get('tested_source_revision', original.get('tested_controller_revision'))
+        if row['ticket'] == 'WORM-005':
+            identity = selected['source_revision']
+        require(identity == row['tested_source_revision'], 'original_tested_revision')
+        require(row['execution_kind'] in ('actual-container', 'actual-local-fixture',
+                'private-local-publication', 'synthetic-capacity') and
+                type(row['expected_outcome']) is str and row['expected_outcome'] and
+                type(row['limits']) is list and row['limits'], 'scope')
+        if row['execution_kind'] == 'synthetic-capacity':
+            require(selected.get('synthetic') is True and selected.get('allocation_performed') is False,
+                    'no_actual_overload_claim')
+    twenty = sources['handoff/evidence/WORM-020.json'][1]
+    require(len(twenty['prior_failed_attempts']) == 4 and
+            canonical(value.get('preserved_twenty_failure_history')) ==
+            canonical(twenty['prior_failed_attempts']), 'preserved_four_actual_failures')
+    ci = value.get('ci_history')
+    require(type(ci) is list and len(ci) == 2, 'ci_history')
+    expected = (
+        ('193a9fd78b31595861904df2a93c26323bec2834', 'failure', {40122081169, 40122084718}),
+        ('65db67b90fb104e1e58efffb5fb0e3d80f0c0871', 'success', {40122478923, 40122482009}),
+    )
+    for entry, (revision, conclusion, identifiers) in zip(ci, expected):
+        require(entry['source_revision'] == revision and
+                re.fullmatch('[a-f0-9]{64}', entry['original_private_receipt_sha256']), 'ci_original_identity')
+        runs = entry['runs']
+        require(type(runs) is list and len(runs) == 2 and
+                {row['id'] for row in runs} == identifiers and
+                {row['event'] for row in runs} == {'push', 'pull_request'}, 'ci_actual_events')
+        for run in runs:
+            require(type(run['id']) is int and run['head_sha'] == revision and
+                    run['status'] == 'completed' and run['conclusion'] == conclusion and
+                    run['html_url'] == 'https://github.com/TheSlayer455/jake-wormhole/actions/runs/' + str(run['id']),
+                    'ci_actual_conclusion')
+    return {'rows': len(rows), 'evidence_files': len(sources), 'categories': len(CATEGORIES)}
+
+
+def main():
+    try:
+        path = ROOT / 'docs/acceptance-matrix.json'
+        require(path.stat().st_size <= 2*1024*1024, 'matrix_bound')
+        value = json.loads(path.read_bytes()); result = validate(value)
+        require((ROOT / 'docs/acceptance-matrix.md').read_text(encoding='utf-8') == render_markdown(value),
+                'markdown_parity')
+        print(json.dumps({'status': 'passed', 'scope': 'historical evidence index only', **result}, sort_keys=True))
+        return 0
+    except (ValueError, KeyError, TypeError, OSError, IndexError) as error:
+        print(json.dumps({'status': 'failed', 'error_type': type(error).__name__}), file=sys.stderr)
+        return 1
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

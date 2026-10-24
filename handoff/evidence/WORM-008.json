@@ -1,0 +1,319 @@
+{
+  "schema_version": "1.0",
+  "ticket_key": "WORM-008",
+  "requirements_revision": 2,
+  "tested_source_revision": "68bd82dd3202c27a63d03fcaad9a8c32a12521b2",
+  "observed_at": "2026-10-23T16:05:19.301886+00:00",
+  "evidence_kind": "actual authorized homelab runtime plus separately labeled fixture tests",
+  "environment": "Ubuntu24.04 homelab, CPython3.12.3, existing local Docker29.6; no host package or daemon changes",
+  "command": "python3 -B -m wormhole.recovery_acceptance --sentinel-id <existing unrelated exact container ID>",
+  "exit_status": 0,
+  "suite": {
+    "cases": [
+      {
+        "checks": {
+          "admission_finished": {
+            "finished_current_exact_run": true,
+            "pending_resources": 0,
+            "status": "pass"
+          },
+          "cleanup": {
+            "primary_failure": null,
+            "status": "pass",
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "scan_after_cleanup": {
+            "bytes_scanned": 262728,
+            "files_scanned": 50,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "scan_before_cleanup": {
+            "bytes_scanned": 226684,
+            "files_scanned": 37,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T16:03:11.869Z",
+        "disk_before_cleanup": {
+          "hard_quota": false,
+          "logical_file_bytes": 266220960,
+          "ordinary_files": 57,
+          "phase": "before-cleanup",
+          "sampled_at": "2026-10-23T16:03:35.352Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-recovery-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "aa4f1349-c045-4bcc-9e43-1c5ee32de20b",
+        "runtime_pipeline_complete": false,
+        "scenario": "normal",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "68bd82dd3202c27a63d03fcaad9a8c32a12521b2",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:03:42.664Z"
+      },
+      {
+        "checks": {
+          "admission_finished": {
+            "finished_current_exact_run": true,
+            "pending_resources": 0,
+            "status": "pass"
+          },
+          "cleanup": {
+            "primary_failure": "controlled_functional_failure",
+            "status": "pass",
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "controlled_functional_failure": {
+            "actual_container_exit": 17,
+            "controlled_fixture": true,
+            "output_sha256": "126d4a64b460135a4aa8f12ea7f12f23713f202b4132a09ebc3d21a4f3a5ab46",
+            "status": "pass"
+          },
+          "scan_after_cleanup": {
+            "bytes_scanned": 266186,
+            "files_scanned": 61,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "scan_before_cleanup": {
+            "bytes_scanned": 226686,
+            "files_scanned": 37,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "secondary_cleanup_failure": {
+            "attempt_id": "e9fdd30e-88b8-4d63-a290-993f0df3bcdd",
+            "fault": "owned-controller acknowledgement exception",
+            "original_primary_retained": true,
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T16:03:42.721Z",
+        "disk_before_cleanup": {
+          "hard_quota": false,
+          "logical_file_bytes": 266220962,
+          "ordinary_files": 57,
+          "phase": "before-cleanup",
+          "sampled_at": "2026-10-23T16:04:06.290Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-recovery-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "07e85c7b-f5e2-490c-a9af-d60ddca5ebf1",
+        "runtime_pipeline_complete": false,
+        "scenario": "functional-failure",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "68bd82dd3202c27a63d03fcaad9a8c32a12521b2",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:04:16.056Z"
+      },
+      {
+        "checks": {
+          "admission_finished": {
+            "finished_current_exact_run": true,
+            "pending_resources": 0,
+            "status": "pass"
+          },
+          "cancellation": {
+            "coordinator_safe_poll_acknowledged": true,
+            "docker_cli_killed": false,
+            "separate_cli_completed_while_run_locked": true,
+            "status": "pass"
+          },
+          "cleanup": {
+            "primary_failure": "cancelled",
+            "status": "pass",
+            "terraform_state_retained": true,
+            "unrelated_sentinel_unchanged": true
+          },
+          "scan_after_cleanup": {
+            "bytes_scanned": 224790,
+            "files_scanned": 42,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "scan_before_cleanup": {
+            "bytes_scanned": 179801,
+            "files_scanned": 28,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T16:04:16.111Z",
+        "disk_before_cleanup": {
+          "hard_quota": false,
+          "logical_file_bytes": 266189105,
+          "ordinary_files": 53,
+          "phase": "before-cleanup",
+          "sampled_at": "2026-10-23T16:04:36.110Z",
+          "unfollowed_links": 1
+        },
+        "mode": "container-reference",
+        "operation": "real-recovery-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "0897f7fc-7c48-4542-a098-92c717362e73",
+        "runtime_pipeline_complete": false,
+        "scenario": "cancelled",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "68bd82dd3202c27a63d03fcaad9a8c32a12521b2",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:04:43.484Z"
+      },
+      {
+        "checks": {
+          "admission_finished": {
+            "finished_current_exact_run": true,
+            "pending_resources": 0,
+            "status": "pass"
+          },
+          "cleanup": {
+            "normal_exact_source_recovery": true,
+            "original_primary_retained": true,
+            "status": "pass",
+            "unrelated_sentinel_unchanged": true
+          },
+          "credential_scan": {
+            "bytes_scanned": 275552,
+            "files_scanned": 62,
+            "public_provider_cache_excluded": true,
+            "scope": "Terraform state, plans, configuration, operation captures and portable evidence",
+            "secret_contents_exported": false,
+            "status": "pass"
+          },
+          "interruption": {
+            "checkpoint_sha256": "7de56377523dea8cc239bdc9fbd4c1558a9f9ac6e0dc1c94ac00cceb34082727",
+            "docker_cli_killed": false,
+            "empty_bound_final_state": true,
+            "exact_resources_absent_before_journal_ack": true,
+            "known_successful_saved_destroy": true,
+            "owned_coordinator_terminated": true,
+            "status": "pass"
+          }
+        },
+        "created_at": "2026-10-23T16:04:43.542Z",
+        "mode": "container-reference",
+        "operation": "real-recovery-acceptance",
+        "production_iso_eligible": false,
+        "run_id": "6829708b-da0d-4db5-b42c-917f193f117d",
+        "runtime_pipeline_complete": false,
+        "scenario": "interrupted-cleanup",
+        "schema_version": "1.0",
+        "source_dirty": false,
+        "source_revision": "68bd82dd3202c27a63d03fcaad9a8c32a12521b2",
+        "status": "pass",
+        "updated_at": "2026-10-23T16:05:19.282Z"
+      }
+    ],
+    "existing_sentinel_modified": false,
+    "operation": "recovery-acceptance-suite",
+    "production_iso_eligible": false,
+    "runtime_pipeline_complete": false,
+    "schema_version": "1.0",
+    "source_revision": "68bd82dd3202c27a63d03fcaad9a8c32a12521b2",
+    "status": "pass"
+  },
+  "readable_outcomes": {
+    "status": "pass",
+    "actual_original_source": "68bd82dd3202c27a63d03fcaad9a8c32a12521b2",
+    "cases": [
+      {
+        "run_id": "aa4f1349-c045-4bcc-9e43-1c5ee32de20b",
+        "primary_failure": null,
+        "readable_structured_agreement": true,
+        "readable_excerpt": [
+          "Run aa4f1349-c045-4bcc-9e43-1c5ee32de20b: cleanup completed",
+          "Primary failure: none",
+          "Terraform state and private evidence retained."
+        ]
+      },
+      {
+        "run_id": "07e85c7b-f5e2-490c-a9af-d60ddca5ebf1",
+        "primary_failure": "controlled_functional_failure",
+        "readable_structured_agreement": true,
+        "readable_excerpt": [
+          "Run 07e85c7b-f5e2-490c-a9af-d60ddca5ebf1: cleanup completed",
+          "Primary failure: controlled_functional_failure",
+          "Terraform state and private evidence retained."
+        ]
+      },
+      {
+        "run_id": "0897f7fc-7c48-4542-a098-92c717362e73",
+        "primary_failure": "cancelled",
+        "readable_structured_agreement": true,
+        "readable_excerpt": [
+          "Run 0897f7fc-7c48-4542-a098-92c717362e73: cleanup completed",
+          "Primary failure: cancelled",
+          "Terraform state and private evidence retained."
+        ]
+      },
+      {
+        "run_id": "6829708b-da0d-4db5-b42c-917f193f117d",
+        "primary_failure": "controlled_teardown_interruption",
+        "readable_structured_agreement": true,
+        "readable_excerpt": [
+          "Run 6829708b-da0d-4db5-b42c-917f193f117d: cleanup completed",
+          "Primary failure: controlled_teardown_interruption",
+          "Terraform state and private evidence retained."
+        ]
+      }
+    ]
+  },
+  "fixture_tests": {
+    "tested_source_revision": "4f68c695d989a913e7a5c2c396faf7fd874114a1",
+    "linux": {
+      "cases": 210,
+      "passed": 208,
+      "skipped": 2,
+      "seconds": 9.889,
+      "scope": "actual homelab source fixtures; separate from Docker acceptance"
+    },
+    "windows": {
+      "cases": 210,
+      "passed": 109,
+      "skipped": 101,
+      "seconds": 6.086
+    }
+  },
+  "criteria": {
+    "AC-01": "pass: actual normal, controlled failure and cooperative cancellation; exact owned cleanup and unchanged unrelated sentinel in each case",
+    "AC-02": "pass: own coordinator interrupted after proven completed Terraform destroy and before first journal acknowledgement; normal original-source recovery reconciled retained IDs/state without replacement allocation",
+    "AC-03": "pass: original functional/cancelled/interrupted primary failures and a separate injected cleanup acknowledgement error retained; actual readable and JSON cleanup outcomes agree"
+  },
+  "review": {
+    "kind": "independent engineering subagent source review; not independent human examination",
+    "core_original_revision": "945944a573e7a6ca4695cd081d834bb7355c836d",
+    "harness_original_revision": "6b3297a0adcb738224ba477f65858e7070f4ba81",
+    "remaining_material_source_findings": []
+  },
+  "limits": [
+    "The functional failure is a controlled actual container exit17 for cleanup testing, not completed WORM-009 functional Ansible validation.",
+    "Only the harness-owned coordinator child was terminated after terminal-destroy proof. No Docker CLI, unrelated process or target was killed as a cancellation shortcut.",
+    "Unknown daemon outcomes still block mutation and new admission; elapsed TTL and empty label searches do not clear uncertainty.",
+    "Private Terraform state, credentials, full logs and exact cleanup receipts remain in protected runtime storage outside Git.",
+    "This does not complete the full pipeline or establish production ISO eligibility."
+  ],
+  "runtime_pipeline_complete": false,
+  "production_iso_eligible": false
+}

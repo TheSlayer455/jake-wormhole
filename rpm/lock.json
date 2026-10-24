@@ -1,0 +1,154 @@
+{
+  "schema_version": "1.0",
+  "target_family": "ubi9-rpm",
+  "platform": "linux/amd64",
+  "base": {
+    "reference": "registry.access.redhat.com/ubi9/ubi@sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+    "image_id": "sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+    "manifest_url": "https://registry.access.redhat.com/v2/ubi9/ubi/manifests/sha256:3bd1aa8b49948633375021c22ef5601ae644f5c08c869751ac2b542884622ea1",
+    "labels": {
+      "architecture": "x86_64",
+      "build-date": "2026-10-23T07:58:46Z",
+      "com.redhat.component": "ubi9-container",
+      "com.redhat.license_terms": "https://www.redhat.com/en/about/red-hat-end-user-license-agreements#UBI",
+      "cpe": "cpe:/a:redhat:enterprise_linux:9::appstream",
+      "description": "The Universal Base Image is designed and engineered to be the base layer for all of your containerized applications, middleware and utilities. This base image is freely redistributable, but Red Hat only supports Red Hat technologies through subscriptions for Red Hat products. This image is maintained by Red Hat and updated regularly.",
+      "distribution-scope": "public",
+      "io.buildah.version": "1.45.0",
+      "io.k8s.description": "The Universal Base Image is designed and engineered to be the base layer for all of your containerized applications, middleware and utilities. This base image is freely redistributable, but Red Hat only supports Red Hat technologies through subscriptions for Red Hat products. This image is maintained by Red Hat and updated regularly.",
+      "io.k8s.display-name": "Red Hat Universal Base Image 9",
+      "io.openshift.expose-services": "",
+      "io.openshift.tags": "base rhel9",
+      "maintainer": "Red Hat, Inc.",
+      "name": "ubi9/ubi",
+      "org.opencontainers.image.created": "2026-10-23T07:58:46Z",
+      "org.opencontainers.image.revision": "4fed77deb378a5b25e394fe33b2b061be0d026b8",
+      "release": "1792742206",
+      "summary": "Provides the latest release of Red Hat Universal Base Image 9.",
+      "url": "https://catalog.redhat.com/en/search?searchType=containers",
+      "vcs-ref": "4fed77deb378a5b25e394fe33b2b061be0d026b8",
+      "vcs-type": "git",
+      "vendor": "Red Hat, Inc.",
+      "version": "9.8"
+    },
+    "config_digest": "sha256:9be18d9ba921714e79e390694315e3341047fe758ac79b62e671d92d4217c3fb"
+  },
+  "probe": {
+    "operation": "ubi-base-observation-v1",
+    "seconds": 45,
+    "output_bytes": 49152,
+    "max_installed_packages": 1024
+  },
+  "sources": {
+    "repository_id": "wormhole-ubi9-baseos",
+    "base_url": "https://cdn-ubi.redhat.com/content/public/ubi/dist/ubi9/9/x86_64/baseos/os/",
+    "repomd": {
+      "path": "repodata/repomd.xml",
+      "bytes": 3857,
+      "sha256": "d1739e3e97d5200cc684e7a6a0f3eba8ca0a1aa9b60bbc4bde5c070ec08ecf99"
+    },
+    "metadata": [
+      {
+        "kind": "primary",
+        "path": "repodata/c5ee79e94b0f13bd8167ed6c0008e880e93c46564c5d42174393c81e775cd0d3-primary.xml.gz",
+        "bytes": 192647,
+        "sha256": "c5ee79e94b0f13bd8167ed6c0008e880e93c46564c5d42174393c81e775cd0d3",
+        "open_bytes": 1592722,
+        "open_sha256": "7c0bc80b8b35087f4a36265743c42b1a6ebcea817fa99b9209ae78f96bd54db0"
+      },
+      {
+        "kind": "filelists",
+        "path": "repodata/819e5a2e5c0358193320225a90a78a16a631f646dbb9287545fe9e12d9ed8823-filelists.xml.gz",
+        "bytes": 353895,
+        "sha256": "819e5a2e5c0358193320225a90a78a16a631f646dbb9287545fe9e12d9ed8823",
+        "open_bytes": 3659901,
+        "open_sha256": "385033e24181fa2d8379843321dba0521938e2a2e621db94ac791435af0de9d6"
+      },
+      {
+        "kind": "other",
+        "path": "repodata/a97fdf9a67ad58baab4369667b58c18f8d1ccd76c5119b416ea70f70cca3f45a-other.xml.gz",
+        "bytes": 146323,
+        "sha256": "a97fdf9a67ad58baab4369667b58c18f8d1ccd76c5119b416ea70f70cca3f45a",
+        "open_bytes": 945122,
+        "open_sha256": "59552204ff10dac770df78c5784e4d988ea134ae3c9fa96f23a330282cba1ca9"
+      },
+      {
+        "kind": "primary_db",
+        "path": "repodata/0d84b8de824c2835089fc53514d1974a0544b987e8562e4d02993b7bfc7ccf97-primary.sqlite.bz2",
+        "bytes": 424474,
+        "sha256": "0d84b8de824c2835089fc53514d1974a0544b987e8562e4d02993b7bfc7ccf97",
+        "open_bytes": 1802240,
+        "open_sha256": "27e47a9afb121317718e809b2828142f83af9eb167c4b99dfbf95b618701fd67"
+      },
+      {
+        "kind": "filelists_db",
+        "path": "repodata/ad897891c4f019f24ccf44b5e1afc691a901c6cc8d50745b47432050b539944a-filelists.sqlite.bz2",
+        "bytes": 450442,
+        "sha256": "ad897891c4f019f24ccf44b5e1afc691a901c6cc8d50745b47432050b539944a",
+        "open_bytes": 2052096,
+        "open_sha256": "4cdecdee65e73c1a6c0b7a50f13088ee4a9a9b8d3682156b005af5744329b1cb"
+      },
+      {
+        "kind": "other_db",
+        "path": "repodata/7438b8c609633909c9ec1fdb38a02f5ae9360fe2fbca57d7a11bade9aff8895a-other.sqlite.bz2",
+        "bytes": 187108,
+        "sha256": "7438b8c609633909c9ec1fdb38a02f5ae9360fe2fbca57d7a11bade9aff8895a",
+        "open_bytes": 876544,
+        "open_sha256": "d5ce55ac4857ab08b98e722af7cdff0360840fba8ad483795c84272536241597"
+      },
+      {
+        "kind": "group",
+        "path": "repodata/a27718cc28ec6d71432e0ef3e6da544b7f9d93f6bb7d0a55aacd592d03144b70-comps.xml",
+        "bytes": 124,
+        "sha256": "a27718cc28ec6d71432e0ef3e6da544b7f9d93f6bb7d0a55aacd592d03144b70"
+      },
+      {
+        "kind": "updateinfo",
+        "path": "repodata/61fa1d984ed6730296041890d32210482820c1df2ba3e67c5f19918e2dfea74d-updateinfo.xml.gz",
+        "bytes": 92,
+        "sha256": "61fa1d984ed6730296041890d32210482820c1df2ba3e67c5f19918e2dfea74d",
+        "open_bytes": 51,
+        "open_sha256": "f5922ee6f9f76089a8135e281dbd0e88ae4765166a8b9c66659de709cc556f08"
+      }
+    ],
+    "requested_packages": [
+      {
+        "name": "openssh-server",
+        "epoch": 0,
+        "version": "9.9p1",
+        "release": "13.el9_8",
+        "arch": "x86_64"
+      },
+      {
+        "name": "python3",
+        "epoch": 0,
+        "version": "3.9.25",
+        "release": "7.el9_8.3",
+        "arch": "x86_64"
+      },
+      {
+        "name": "shadow-utils",
+        "epoch": 2,
+        "version": "4.9",
+        "release": "16.el9",
+        "arch": "x86_64"
+      }
+    ],
+    "policy": {
+      "worker_seconds": 180,
+      "metadata_file_bytes": 16777216,
+      "metadata_total_bytes": 33554432,
+      "metadata_open_file_bytes": 33554432,
+      "metadata_open_total_bytes": 134217728,
+      "rpm_file_bytes": 67108864,
+      "rpm_total_bytes": 536870912,
+      "rpm_count": 128,
+      "resolution_bytes": 262144,
+      "allow_erasing": false,
+      "install_weak_deps": false,
+      "plugins": false
+    },
+    "signing": "Actual pinned-base key provenance and isolated cryptographic RPM verification required before install; no host key import or signature bypass."
+  },
+  "production_iso_eligible": false
+}

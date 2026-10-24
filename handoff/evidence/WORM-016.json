@@ -1,0 +1,149 @@
+{
+  "schema_version": "1.0",
+  "ticket_key": "WORM-016",
+  "requirements_revision": 2,
+  "tested_source_revision": "3e11548a253fbd7799606dc978d69f5965c5cea0",
+  "environment": "Windows CPython3.12.14",
+  "observed_at": "2026-10-23T17:07:31.434518+00:00",
+  "actual_component_acceptance": {
+    "source_revision": "3e11548a253fbd7799606dc978d69f5965c5cea0",
+    "observed_at": "2026-10-23T17:07:31.434518+00:00",
+    "environment": "Windows CPython3.12.14",
+    "status": "pass",
+    "operation": "actual local synthetic component fixture and new-process replay",
+    "command": "python -B -m wormhole.assessments fixture/report --workspace PRIVATE_STORAGE --case CASE",
+    "cases": [
+      {
+        "case": "pass",
+        "run_id": "62cc84c8-966b-4fe5-a502-509ae2c93557",
+        "exit_status": 0,
+        "component_status": "passed",
+        "counts": {
+          "Not Applicable": 1,
+          "Not Reviewed": 0,
+          "Not a Finding": 3,
+          "Open": 0
+        },
+        "policy_verdict": "pass",
+        "primary_failure": null,
+        "original_sha256": "b3a1019b5f2704b6fb69dce0813ed87063042089e023fb20bfb4fd89b7eeba5e",
+        "original_size_bytes": 628,
+        "separate_process_report_identical": true,
+        "reference_eligible": false,
+        "production_iso_eligible": false
+      },
+      {
+        "case": "reject",
+        "run_id": "7f254b69-9260-4194-b09a-2dde37c6490f",
+        "exit_status": 1,
+        "component_status": "rejected",
+        "counts": {
+          "Not Applicable": 1,
+          "Not Reviewed": 1,
+          "Not a Finding": 1,
+          "Open": 1
+        },
+        "policy_verdict": "reject",
+        "primary_failure": null,
+        "original_sha256": "7a0faff6029ae1a23dea55ac362ad8fa97d37f3d88a13f2f4006ee3a50b3e41b",
+        "original_size_bytes": 618,
+        "separate_process_report_identical": true,
+        "reference_eligible": false,
+        "production_iso_eligible": false
+      },
+      {
+        "case": "malformed",
+        "run_id": "ff431d03-20ab-4ad9-9f00-1e44f7c3df2a",
+        "exit_status": 2,
+        "component_status": "failed",
+        "counts": null,
+        "policy_verdict": null,
+        "primary_failure": {
+          "code": "malformed_assessment"
+        },
+        "original_sha256": "a4e54678ffcc21fb5b8e89f26ad975d3e07e9b282b211fdcf057f4ff49623e83",
+        "original_size_bytes": 10,
+        "separate_process_report_identical": true,
+        "reference_eligible": false,
+        "production_iso_eligible": false
+      },
+      {
+        "case": "unsupported",
+        "run_id": "e3217f91-a940-4900-8449-1c95729b4ab6",
+        "exit_status": 2,
+        "component_status": "failed",
+        "counts": null,
+        "policy_verdict": null,
+        "primary_failure": {
+          "code": "unsupported_assessment_format"
+        },
+        "original_sha256": "0a16cc3ebab502127448218f0b9dac5d6ff255fef02ee5718982301c68f55573",
+        "original_size_bytes": 630,
+        "separate_process_report_identical": true,
+        "reference_eligible": false,
+        "production_iso_eligible": false
+      },
+      {
+        "case": "incomplete",
+        "run_id": "a8d77dd7-ac49-4c76-8ba4-60aebdbdc2a9",
+        "exit_status": 2,
+        "component_status": "failed",
+        "counts": null,
+        "policy_verdict": null,
+        "primary_failure": {
+          "code": "incomplete_assessment"
+        },
+        "original_sha256": "3bb8a492308745895d09ebac5417554c7d79f7644f50968c7d56927cd0f8471e",
+        "original_size_bytes": 461,
+        "separate_process_report_identical": true,
+        "reference_eligible": false,
+        "production_iso_eligible": false
+      }
+    ],
+    "owned_infrastructure_allocated": false,
+    "state_retained_outside_git": true,
+    "runtime_pipeline_complete": false,
+    "production_iso_eligible": false
+  },
+  "fixture_tests": {
+    "linux": {
+      "cases": 253,
+      "passed": 251,
+      "skipped": 2,
+      "seconds": 10.953,
+      "environment": "Actual homelab Linux CPython3.12.3"
+    },
+    "windows": {
+      "cases": 253,
+      "passed": 146,
+      "skipped": 107,
+      "seconds": 8.402,
+      "environment": "Windows CPython3.12.14"
+    }
+  },
+  "criteria": {
+    "AC-01": "pass: all four categories counted; actual malformed, unsupported and incomplete inputs remain explicit failed receipts; original bytes/hashes and identical new-process reports retained",
+    "AC-02": "pass: actual generated pass/reject fixtures exercise declared reference policy; frozen complete expected IDs/applicability, synthetic labels, type-strict replay and reporting reject altered/unsupported records",
+    "AC-03": "pass: every policy outcome retains both release flags false with synthetic assessment, absent installation evidence, undecided production policy and incomplete gate as explicit limitations; no scanner or Lightspeed threshold invented"
+  },
+  "review": {
+    "kind": "independent engineering subagent source review, not independent human examination",
+    "reviewed_source": "3e11548a253fbd7799606dc978d69f5965c5cea0",
+    "corrected_finding": "Python bool/int equality accepted edited typed evidence. Canonical JSON comparison now rejects aliases in frozen plans, common identity, counts and reconstructed artifact. Regression and original reproducer independently pass.",
+    "independent_focused_tests": {
+      "cases": 16,
+      "passed": 15,
+      "skipped": 1,
+      "seconds": 0.636
+    },
+    "remaining_material_findings": []
+  },
+  "limits": [
+    "Original synthetic JSON format, not CKL/Evaluate-STIG or scanner compatibility.",
+    "Independent component only; original foundation fixture artifacts and v1 release guards unchanged.",
+    "Private generated originals and receipts remain outside Git. Consistency checking is not host-administrator tamper resistance."
+  ],
+  "runtime_pipeline_complete": false,
+  "reference_eligible": false,
+  "production_iso_eligible": false
+}

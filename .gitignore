@@ -13,3 +13,5 @@ __pycache__/
 /private/
 /artifacts/private/
 *.pem
+/ci-safe/
+/ci-artifacts/

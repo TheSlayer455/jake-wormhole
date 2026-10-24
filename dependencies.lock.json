@@ -1,0 +1,21 @@
+{
+  "lock_version": 1,
+  "python": {
+    "implementation": "CPython",
+    "selected_version": "3.12.14",
+    "minimum_supported": "3.12",
+    "third_party_packages": []
+  },
+  "github_actions": {
+    "actions/checkout": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+    "actions/setup-python": "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0",
+    "actions/upload-artifact": "cf430e030ddbb5b0abf93d22962f4752f3646cd9"
+  },
+  "runtime_pipeline_dependencies": {
+    "images_and_helper": "images/images.lock.json",
+    "terraform_and_provider_artifacts": "provisioning/tools.lock.json",
+    "provider_installation": "provisioning/.terraform.lock.hcl",
+    "host_tools_installed": false,
+    "complete_pipeline_implemented": false
+  }
+}

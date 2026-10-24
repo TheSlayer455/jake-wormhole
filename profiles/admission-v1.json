@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "planning_hypotheses": true,
+  "headroom": {"memory_mib": 4096, "disk_mib": 4096, "cpus": 1},
+  "project_ceiling": {"memory_mib": 8192, "disk_mib": 16384, "cpus": 8, "pids": 2048},
+  "materialization": {"writable_layer_limit_mib": 1024, "extra_disk_reserve_mib": 2048, "shared_daemon_memory_reserve_mib": 512, "client_timeout_seconds": 120},
+  "profiles": {
+    "smoke": {"target_count": 1, "controller_concurrency": 1, "build_concurrency": 1},
+    "five-targets": {"target_count": 5, "controller_concurrency": 2, "build_concurrency": 1},
+    "twenty-targets": {"target_count": 20, "controller_concurrency": 4, "build_concurrency": 1}
+  },
+  "limits": {
+    "target": {"memory_mib": 256, "disk_mib": 64, "cpus": 0.25, "pids_limit": 64, "log_max_size_bytes": 1048576, "log_max_files": 2, "timeout_seconds": 300},
+    "helper": {"memory_mib": 512, "disk_mib": 256, "cpus": 1, "pids_limit": 128, "log_max_size_bytes": 1048576, "log_max_files": 2, "timeout_seconds": 600},
+    "provisioner": {"memory_mib": 512, "disk_mib": 512, "cpus": 0.5, "pids_limit": 128, "log_max_size_bytes": 1048576, "log_max_files": 2, "timeout_seconds": 600},
+    "build": {"memory_mib": 2048, "disk_mib": 4096, "cpus": 2, "pids_limit": 256, "log_max_size_bytes": 1048576, "log_max_files": 2, "timeout_seconds": 600},
+    "overhead": {"memory_mib": 512, "disk_mib": 512, "cpus": 0.25, "pids_limit": 64, "log_max_size_bytes": 1048576, "log_max_files": 2, "timeout_seconds": 600}
+  }
+}

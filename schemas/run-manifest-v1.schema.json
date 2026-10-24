@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:jake-wormhole:schema:run-manifest:1.0",
+  "title": "Jake Wormhole run-manifest v1",
+  "$comment": "Generated from wormhole/contracts.py. Fixed-contract validation also enforces x-uniqueBy and the declared size/depth bounds; schema validity alone is not runtime acceptance or release eligibility. Version 1 cannot declare a complete runtime pipeline or an eligible release.",
+  "x-maxEncodedBytes": 1048576,
+  "x-maxDepth": 16,
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 36,
+      "format": "uuid",
+      "pattern": "^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$(?![\\s\\S])"
+    },
+    "source_revision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40,
+      "pattern": "^(?:[0-9a-f]{40})$(?![\\s\\S])"
+    },
+    "source_dirty": {
+      "type": "boolean"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "fixture",
+        "container-reference"
+      ]
+    },
+    "profile": {
+      "type": "string",
+      "enum": [
+        "fixture",
+        "smoke",
+        "five-targets",
+        "twenty-targets"
+      ]
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "running",
+        "passed",
+        "failed",
+        "cleaned"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^(?:\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z)$(?![\\s\\S])",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^(?:\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z)$(?![\\s\\S])",
+      "format": "date-time"
+    },
+    "expected_checks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "pattern": "^(?:[a-z][a-z0-9_-]{0,63})$(?![\\s\\S])"
+      },
+      "maxItems": 1000,
+      "uniqueItems": true
+    },
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^(?:[a-z][a-z0-9_-]{0,63})$(?![\\s\\S])"
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024,
+              "pattern": "^(?:[A-Za-z0-9][A-Za-z0-9._-]{0,127}(?:/[A-Za-z0-9][A-Za-z0-9._-]{0,127})*)$(?![\\s\\S])"
+            },
+            "maxItems": 32,
+            "uniqueItems": true
+          },
+          "outputs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024,
+              "pattern": "^(?:[A-Za-z0-9][A-Za-z0-9._-]{0,127}(?:/[A-Za-z0-9][A-Za-z0-9._-]{0,127})*)$(?![\\s\\S])"
+            },
+            "maxItems": 32,
+            "uniqueItems": true
+          },
+          "location": {
+            "type": "string",
+            "enum": [
+              "local",
+              "provisioner",
+              "helper",
+              "target"
+            ]
+          },
+          "timeout_seconds": {
+            "type": "number",
+            "minimum": 0.01,
+            "maximum": 3600
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail",
+              "error",
+              "timeout",
+              "unsupported"
+            ]
+          },
+          "duration_seconds": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 86400
+          },
+          "returncode": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "log_bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 65536
+          },
+          "log_truncated": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 0,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "name",
+          "inputs",
+          "outputs",
+          "location",
+          "timeout_seconds",
+          "status",
+          "duration_seconds",
+          "returncode",
+          "log_bytes",
+          "log_truncated",
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 32,
+      "x-uniqueBy": [
+        "name"
+      ],
+      "$comment": "Wormhole also rejects duplicate identities named by x-uniqueBy."
+    },
+    "runtime_pipeline_complete": {
+      "type": "boolean",
+      "const": false
+    },
+    "production_iso_eligible": {
+      "type": "boolean",
+      "const": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "run_id",
+    "source_revision",
+    "source_dirty",
+    "mode",
+    "profile",
+    "outcome",
+    "created_at",
+    "updated_at",
+    "expected_checks",
+    "stages",
+    "runtime_pipeline_complete",
+    "production_iso_eligible"
+  ],
+  "additionalProperties": false
+}

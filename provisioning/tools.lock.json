@@ -1,0 +1,136 @@
+{
+  "artifacts": [
+    {
+      "bytes": 38219019,
+      "destination": "bin",
+      "filename": "terraform_1.17.0_linux_amd64.zip",
+      "kind": "terraform",
+      "license": "BUSL-1.1",
+      "members": [
+        {
+          "archive_mode": 33188,
+          "bytes": 4950,
+          "mode": 256,
+          "name": "LICENSE.txt",
+          "sha256": "dc4cb9f6140970b69110d82e8f25545135965ae50f6761ddfd6cd7cf9452bfa9"
+        },
+        {
+          "archive_mode": 33261,
+          "bytes": 129257634,
+          "mode": 320,
+          "name": "terraform",
+          "sha256": "664b66cc0bcd7ed28fd27569719ccaa8a40c230b8be45060ce4d65e2852e1bcc"
+        }
+      ],
+      "sha256": "c168cab7c637a8769fdb90089ddd19de701bc6ff8aca64dc2e2185fe46f59f67",
+      "signed_metadata": {
+        "checksums": {
+          "bytes": 1592,
+          "sha256": "8a324f66c91b6d741e88eed20f655bcf4d92dbe34bdcc894d085dfaf3d432abd",
+          "url": "https://releases.hashicorp.com/terraform/1.17.0/terraform_1.17.0_SHA256SUMS"
+        },
+        "gpg_version": "2.4.4",
+        "key": {
+          "material_sha256": "c2f5bc1163bd8d15a711616b587bcede212d045a5b8b52df01c74095897cd065",
+          "source_url": "https://www.hashicorp.com/.well-known/pgp-key.txt"
+        },
+        "primary_fingerprint": "C874011F0AB405110D02105534365D9472D7468F",
+        "signature": {
+          "bytes": 566,
+          "sha256": "a60e7fe7227eb40282357e73728d902deaa5c2532bd4cd878352ac3737a543e3",
+          "url": "https://releases.hashicorp.com/terraform/1.17.0/terraform_1.17.0_SHA256SUMS.72D7468F.sig"
+        },
+        "signature_date": "2026-10-21",
+        "signer_fingerprint": "374EC75B485913604A831CC7C820C6D5CD27AB87",
+        "trust_basis": "HashiCorp official security page fingerprint and HTTPS key",
+        "verified": true,
+        "verified_at": "2026-10-23T14:00:50.074317+00:00"
+      },
+      "url": "https://releases.hashicorp.com/terraform/1.17.0/terraform_1.17.0_linux_amd64.zip",
+      "version": "1.17.0"
+    },
+    {
+      "bytes": 23190962,
+      "destination": "mirror/registry.terraform.io/kreuzwerker/docker/4.6.0/linux_amd64",
+      "filename": "terraform-provider-docker_4.6.0_linux_amd64.zip",
+      "kind": "docker-provider",
+      "license": "MPL-2.0",
+      "members": [
+        {
+          "archive_mode": 33188,
+          "bytes": 103926,
+          "mode": 256,
+          "name": "CHANGELOG.md",
+          "sha256": "f237718deedc8c21f6156af235cf2779e1e3c8dacde37d44e6cb183c272a6eba"
+        },
+        {
+          "archive_mode": 33188,
+          "bytes": 16725,
+          "mode": 256,
+          "name": "LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5"
+        },
+        {
+          "archive_mode": 33188,
+          "bytes": 7412,
+          "mode": 256,
+          "name": "README.md",
+          "sha256": "0666d806854a6b8b1b39e62ed6f25c1c57cb08324056081ac679e86079ad6904"
+        },
+        {
+          "archive_mode": 33261,
+          "bytes": 75186360,
+          "mode": 320,
+          "name": "terraform-provider-docker_v4.6.0",
+          "sha256": "7dafa79fb3e548453ef9be0b683819afa33e07036925f276d8dcf677bdda9683"
+        }
+      ],
+      "sha256": "866046fa4938ac1ed5cc58b3c4d36e27433dac1aae50256911e6f28184dcf82e",
+      "signed_metadata": {
+        "checksums": {
+          "bytes": 1374,
+          "sha256": "324ed53dbcc72fd2fea78ece67e5897bd2a41e840451438eb00a175824c5de52",
+          "url": "https://github.com/kreuzwerker/terraform-provider-docker/releases/download/v4.6.0/terraform-provider-docker_4.6.0_SHA256SUMS"
+        },
+        "gpg_version": "2.4.4",
+        "key": {
+          "derivation": "ASCII-armored key extracted from the Registry HTTPS download metadata; hash is extracted key material, not the containing JSON.",
+          "material_sha256": "c2b16d328d1e20b39fc7ff5c7643d792de71115a95c699bbf1b00ae291c09b77",
+          "source_document_sha256": "1fdc5853b80c5d6b704670f8c68f472df131aca76a3f5beeff9644cee632255a",
+          "source_url": "https://registry.terraform.io/v1/providers/kreuzwerker/docker/4.6.0/download/linux/amd64"
+        },
+        "primary_fingerprint": "F31236BA85096E3AE22A8C660DCE698927DAF8EC",
+        "signature": {
+          "bytes": 594,
+          "sha256": "5718d4997df6ce439bc02d51bc41f0842e211ecc7ddda9961505c574d6dda953",
+          "url": "https://github.com/kreuzwerker/terraform-provider-docker/releases/download/v4.6.0/terraform-provider-docker_4.6.0_SHA256SUMS.sig"
+        },
+        "signature_date": "2026-09-01",
+        "signer_fingerprint": "F31236BA85096E3AE22A8C660DCE698927DAF8EC",
+        "trust_basis": "Terraform Registry HTTPS key metadata; no independent identity certification",
+        "verified": true,
+        "verified_at": "2026-10-23T14:00:50.074317+00:00"
+      },
+      "url": "https://github.com/kreuzwerker/terraform-provider-docker/releases/download/v4.6.0/terraform-provider-docker_4.6.0_linux_amd64.zip",
+      "version": "4.6.0"
+    }
+  ],
+  "downloaded_binaries_executed": false,
+  "observed_at": "2026-10-23T14:00:50.074317+00:00",
+  "platform": "linux_amd64",
+  "policy": {
+    "archive_bytes_total": 100663296,
+    "cache_bytes_total": 536870912,
+    "download_bytes_per_file": 67108864,
+    "expanded_bytes_total": 536870912,
+    "preparation_timeout_seconds": 180,
+    "provider_redirect": "one HTTPS github.com fixed release URL to release-assets.githubusercontent.com; no auth/cookies; signed Location/query never recorded"
+  },
+  "provider_h1": {
+    "source": "https://github.com/hashicorp/terraform/blob/v1.17.0/internal/getproviders/hash.go#L248-L288",
+    "status": "Python-derived from full ZIP contents; actual Terraform h1 verification pending provisioner init",
+    "value": "h1:1jD5QVpeLkdxKEWWJpTzNdxtR0WNNFq28Po4yq9w+VM="
+  },
+  "schema_version": "1.0",
+  "verification_receipt_sha256": "26d217cf73cf31f468ca57cbbe100e3a2f2617c558ed827ae9d5eb169cf5628b"
+}
