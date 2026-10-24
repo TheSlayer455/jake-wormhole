@@ -17,6 +17,8 @@ OPERATION = 'real-isolation-acceptance-v1'
 MAX_RECEIPT_BYTES = 32768
 MAX_PROOF_BYTES = 256 * 1024
 CASE_NAMES = ('overlap', 'interrupted-run', 'interrupted-publication', 'oversized-capacity')
+CASE_RUN_COUNTS = {'overlap': 3, 'interrupted-run': 2,
+                   'interrupted-publication': 1, 'oversized-capacity': 2}
 CHECKS = {
     'overlap': ('busy-no-allocation', 'live-process-overlap', 'serialized-admission',
         'distinct-owned-state', 'distinct-owned-resources', 'distinct-authentication',
@@ -100,10 +102,15 @@ def _case(name=None):
         tuple(dict.fromkeys(key for names in CHECKS.values() for key in names)))})
     if name is None:
         checks['required'] = []
-    return _object({'name': _constant(name) if name else {'type': 'string', 'enum': list(CASE_NAMES)},
+    result = _object({'name': _constant(name) if name else {'type': 'string', 'enum': list(CASE_NAMES)},
         'status': {'type': 'string', 'enum': ['not-run', 'running', 'passed', 'failed']},
         'run_ids': {'type': 'array', 'items': UUID, 'minItems': 0, 'maxItems': 4, 'uniqueItems': True},
         'proof': _nullable(_proof(name)), 'failure_code': _nullable(CODE), 'checks': checks})
+    if name is not None:
+        result['allOf'] = [{'if': {'properties': {'status': {'const': 'passed'}}, 'required': ['status']},
+            'then': {'properties': {'run_ids': {'minItems': CASE_RUN_COUNTS[name],
+                                               'maxItems': CASE_RUN_COUNTS[name]}}}}]
+    return result
 
 
 RECEIPT = _object({**COMMON, **FLAGS, 'operation': _constant(OPERATION), 'profile': _constant('smoke'),
@@ -151,7 +158,8 @@ def validate_receipt(value):
                 require(not row['run_ids'] and row['proof'] is None and row['failure_code'] is None and
                     all(flag is None for flag in row['checks'].values()), 'isolation_unrun_claim')
             elif status == 'passed':
-                require(not frontier and row['run_ids'] and row['proof'] is not None and row['failure_code'] is None and
+                require(not frontier and len(row['run_ids']) == CASE_RUN_COUNTS[name] and
+                    row['proof'] is not None and row['failure_code'] is None and
                     all(flag is True for flag in row['checks'].values()), 'isolation_case_false_pass')
             elif status == 'running':
                 require(not frontier and row['failure_code'] is None, 'isolation_case_progress')
