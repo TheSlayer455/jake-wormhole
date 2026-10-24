@@ -1,26 +1,21 @@
 # Current engineering state
 
-Parent closeout snapshot, October24,2026. All20 child tickets are Done; final child delivery is `dc745a6833823b9341f0d5fa05ae7629f4b07f39`. This does not rerun historical observations. See [parent evidence](../handoff/WORM-001-checkpoint.md).
+Post-merge verification, October 24, 2026. All 21 original delivery PRs are merged. The qualified main source is `c3d440a3c7eee9691f30315b49146eb72998d2df`, tree `f5a69b447b224840c66229c00f0fd2e102812449`. See [merged verification](../handoff/MERGED-VERIFICATION.md). Original ticket evidence and tested revisions remain unchanged.
 
 | Fact | Recorded scope |
 | --- | --- |
-| Implemented | Fixture CLI, admission, pinned images, real Terraform/SSH/Ansible, recovery, functional checks, chunks/candidates, optional PowerShell, UBI, observed SVD, reference reports/gate, local publisher, isolation, stock twenty-target operation |
-| Actual homelab qualification | Original commits in the [acceptance matrix](acceptance-matrix.md); latest stock runtime `825a594862b816401d4b963329e6242bd8ed8aeb` |
-| Latest runtime | Run `290ad14a-e6ec-4822-ae36-258d336ecc38`, all 160/200/200 rows, twenty 123-package inventories, 22-container interval, all 23 transient resources absent, sentinel unchanged |
-| Source fixtures at that runtime | Windows 741: 472 pass/269 platform skips, 94.928 seconds; Linux 741: 739 pass/two Windows-only skips, 85.702 seconds |
-| Private GitHub | Delivery `65db67b90fb104e1e58efffb5fb0e3d80f0c0871`, draft PR19, both hosted checks passed; PRs remain unmerged |
-| Local reference publication | Actual private Ubuntu/UBI filesystem bundles at original WORM-018 source; no image or remote release |
-| Minx snapshot | All20children WORM-002 through WORM-021 Done,66current passes,solution comments/no child claims; parent final decision is in live Minx |
-| WORM-021 parity | Source3f7e3cf3: actual manual/hosted0/1/1 and byte-identical semantic projections; both red jobs retained valid diagnostics; [checkpoint](../handoff/WORM-021-checkpoint.md) |
+| Implemented | Fixture CLI, admission, pinned images, real Terraform/SSH/Ansible, recovery, functional checks, chunks/candidates, optional PowerShell, UBI, observed SVD, reference reports/gate, local publisher, isolation and stock twenty-target operation |
+| Repository | PR21 merged at 19:50:33 UTC; all 21 original delivery PRs recorded merged by 19:50:35 UTC. The qualified tree equals the accepted parent closeout tree |
+| Source checks at merged main | Windows: 788 total, 515 passed/273 skips, CPython 3.12.14, 121.747 s. Linux nonroot: 778 passed/10 skips, 76.733 s. Linux root: 786 passed/two Windows-only skips, 78.403 s. Both Linux runs used CPython 3.12.3; this difference is explicit |
+| Hygiene/discovery | Repository baseline, original acceptance matrix and local doctor passed on all three environments |
+| Controlled parity | Same-source Linux nonroot manual/GitHub modes observed 0/1/1; first three semantic files matched byte for byte, 102 distinct component Runs. Both red jobs failed intentionally and retained validated uploaded diagnostics |
+| Latest actual runtime | Merged-source Ubuntu Run `8f14b817-486f-4340-87fd-85fe53a9aa6b`: all 43 required rows passed; separate report/gate agreed; cleanup completed, canonical admission finished with no pending resources, unrelated sentinel unchanged |
+| Latest actual twenty-target qualification | Source `825a594862b816401d4b963329e6242bd8ed8aeb`, Run `290ad14a-e6ec-4822-ae36-258d336ecc38`: 160/200/200 rows, twenty 123-package inventories, 22-container interval, all 23 transient resources absent |
+| Historical acceptance | [Matrix](acceptance-matrix.md): 83 original scenarios across 11 categories and 16 evidence files; these remain original-source observations |
+| Minx | Original child completion/criterion/solution records remain in the [parent ledger](../handoff/evidence/WORM-001.json). Refresh live Minx before mutations; source snapshots are not leases |
 
-[WORM-020 evidence](../handoff/evidence/WORM-020.json) retains all four failed actual predecessors: nonmutating Terraform diagnostic truncation, readiness deadline exhaustion, sampler counter grammar refusal and inventory console overflow. Cleanup and later success do not rewrite failures.
+The fresh Ubuntu reference run retained its candidate image; its four containers and network are absent. Earlier retained images/private Run state and intentionally incomplete publications remain preserved. No cleanup, source reinterpretation or marker repair is implied by merging.
 
-The latest runtime has no pending transient graph. Images/private Run state are retained. Earlier intentionally incomplete publication outputs remain incomplete; do not repair markers or delete them to improve a report. No active host operation was reported at that snapshot; recheck ownership before new work.
+[WORM-020 evidence](../handoff/evidence/WORM-020.json) retains all four failed actual predecessors. Historical WORM-021 source `3f7e3cf3` parity, source checks and red jobs remain in its [checkpoint](../handoff/WORM-021-checkpoint.md). New merged-source results supplement those facts; they do not replace their hashes or attribution.
 
-All original per-ticket checkpoints/evidence/reviews remain unchanged under `handoff/`. The [matrix JSON](acceptance-matrix.json) gives exact source/file hashes and selectors. Earlier nested STATE/CURRENT versions remain in Git at the baseline commit.
-
-WORM-021 source/CI parity passed at3f7e3cf3: Windows788/515pass273skips; local Linux788/786pass2Windows-onlyskips. Its reviewed deliverydc745a6 has successful push/PR checks. See the checkpoint for versions, nonroot coverage, failures and reviews. No approved child work remains; parent acceptance and future PR decisions are separate in live Minx.
-
-Refresh Minx and use its supported scoped Agent token/API path. Verify actual deployed capabilities, roles, revision and claim guards; where normal Owner action remains required, record the authorized delegation honestly. Do not elevate roles or treat an obsolete browser-login path as the intended universal access method.
-
-Built, source-tested, privately pushed, hosted-CI-tested, homelab-executed, locally reference-published and accepted are separate facts. Production ISO eligibility stays false.
+The documentation-only follow-up has its own PR/main CI. A later documentation commit does not become the source of the `c3d440a3` runtime or parity observations. Built, merged, source-tested, hosted-CI-tested, homelab-executed, locally reference-published and accepted remain separate facts. GitLab runner execution, VM/ISO/scanner compatibility and production ISO eligibility remain unverified or excluded.

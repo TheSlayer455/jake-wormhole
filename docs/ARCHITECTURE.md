@@ -32,6 +32,6 @@ UBI uses official public metadata, exact RPM hashes/signatures, retained EULA, o
 
 ## CI and handoff
 
-Hosted source fixture CI runs the same local library/tests; historical source proof tests require full Git history. WORM-021 controlled parity and safe failure diagnostics are being implemented separately. GitLab compatibility is not runner execution. No persistent runner, homelab CI credentials/tunnel, external model or other-chat orchestration is needed.
+Hosted source fixture CI runs the same local library/tests; historical source proof tests require full Git history. The implemented WORM-021 runner preserves seventeen synthetic component outcomes, compares source-bound semantic exports and retains safe diagnostics from deliberately failed jobs. [Merged verification](../handoff/MERGED-VERIFICATION.md) records actual manual/hosted checks at `c3d440a3`, separately from fresh container smoke and historical scale qualification. GitLab authorship/local checks are not runner execution. No persistent runner, homelab CI credentials/tunnel, external model or other-chat orchestration is needed.
 
 See [CLI](CLI.md), [repository controls](REPOSITORY.md), [fidelity](FIDELITY.md), [original decision](decisions/0001-container-reference.md) and [handoff](../handoff/CURRENT.md). Original component contracts retain their versioned scope flags.

@@ -1,12 +1,12 @@
 # Repository controls and publication
 
-`TheSlayer455/jake-wormhole` is the verified private repository, ID `1431014094`. Work uses isolated ticket-key worktrees/branches and private draft PRs. Root's October 24 snapshot records WORM-020 delivery `65db67b90fb104e1e58efffb5fb0e3d80f0c0871` in private draft PR19 with both hosted checks successful. PRs remain unmerged. A push/CI result is not deployment, runtime execution or acceptance.
+`TheSlayer455/jake-wormhole` is the verified private repository, ID `1431014094`. All 21 original delivery PRs are merged; PR21 established merged main `c3d440a3c7eee9691f30315b49146eb72998d2df` at 19:50:33 UTC on October 24, 2026, and GitHub recorded all remaining contained heads as merged by 19:50:35 UTC. [Merged verification](../handoff/MERGED-VERIFICATION.md) records fresh source, manual/hosted parity and one Ubuntu reference smoke. A merge/CI result is separate from deployment, runtime execution and acceptance. The documentation-only follow-up receives its own PR/main CI; original evidence stays source-bound.
 
 ## Verification
 
 `python scripts/verify_repository.py` checks tracked context, links and selected state/key/token patterns. `python scripts/verify_acceptance_matrix.py` checks original evidence hashes, exact JSON selectors, typed selected observations and Markdown parity. Neither provisions resources, reads credentials or proves complete secret absence.
 
-At the WORM-020 baseline, one hosted Ubuntu 24.04 job uses `contents: read`, a five-minute timeout, repository-privacy guard, pinned CPython 3.12.14 and no persisted checkout credential. Checkout is pinned to `3d3c42e5aac5ba805825da76410c181273ba90b1`; setup-python to `6d4fd22b20465ccc0f7354476588e8df7c9ca0e0`. WORM-021's final workflow is separate work requiring its own source-bound observations.
+The current hosted Ubuntu 24.04 job uses `contents: read`, a ten-minute timeout, repository-privacy guard, pinned CPython 3.12.14, full history and no persisted checkout credential. Checkout is pinned to `3d3c42e5aac5ba805825da76410c181273ba90b1`; setup-python to `6d4fd22b20465ccc0f7354476588e8df7c9ca0e0`; the validated five-file uploader is pinned. The same fixed wrapper runs manually and in authored CI. Deliberate red controls remain failures after successful diagnostic validation/upload. Actual merged-source observations are linked above.
 
 ## WORM-020 CI history
 
