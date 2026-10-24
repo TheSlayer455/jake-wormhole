@@ -724,7 +724,7 @@ class RuntimeCapture(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='wormhole-runtime-synthetic-') as temporary:
             root = Path(temporary)
             with patch.object(runtime, 'STATE', root), patch.object(runtime, 'TOOL', sys.executable), \
-                 patch.dict(runtime.OPERATIONS, {'synthetic': ('-c', 'print("x" * 100000)')}, clear=True), \
+                 patch.dict(runtime.OPERATIONS, {'synthetic': ('-c', 'print("x" * 400000)')}, clear=True), \
                  patch.object(runtime, 'environment', return_value={'PATH': os.environ['PATH']}):
                 # Python does not accept Terraform's -chdir global flag: remove that one fixed prefix in the subprocess fixture.
                 original = runtime.subprocess.Popen
@@ -732,7 +732,7 @@ class RuntimeCapture(unittest.TestCase):
                 with patch.object(runtime.subprocess, 'Popen', side_effect=fixture):
                     self.assertEqual(runtime.operation('synthetic', 1), 2)
                     self.assertTrue(json.loads((root / 'operations/synthetic-1.json').read_text())['truncated'])
-                    self.assertLessEqual((root / 'operations/synthetic-1.out').stat().st_size, 65536)
+                    self.assertLessEqual((root / 'operations/synthetic-1.out').stat().st_size, runtime.LOG_LIMIT)
                     with self.assertRaises(ValueError): runtime.operation('synthetic', 1)
                     with patch.dict(runtime.OPERATIONS, {'synthetic': ('-c', 'import time;time.sleep(10)')}, clear=True), \
                          patch.object(runtime, 'OPERATION_TIMEOUT', .2):
