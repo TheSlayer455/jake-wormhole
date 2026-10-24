@@ -52,8 +52,9 @@ Reports contain no raw capture, private key, Terraform state, environment or hos
 filesystem path. Pure validation performs no file reads or resource inspection.
 The helper selects a fixed quiet stdout callback so native packets are not
 duplicated into its 4 KiB diagnostic console. The aggregate callback's complete
-target events and the actual Ansible exit status still decide success. Console
-truncation, missing events and nonzero execution cannot become passing evidence.
+target events and the actual Ansible exit status still decide success. Diagnostic
+console output is never accepted as target evidence; missing events and nonzero
+execution cannot pass.
 Closed fields and narrow path/private-key-marker checks protect printable free
 text as well; this is not a comprehensive secret scanner. Unexpected data is
 refused rather than silently removed from an apparently complete inventory.
