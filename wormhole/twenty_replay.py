@@ -128,6 +128,7 @@ def report_provisioning(run, archive):
         'wormhole.tfrc': b'disable_checkpoint = true\nprovider_installation {\n filesystem_mirror {\n path = "/opt/toolchain/mirror"\n include = ["registry.terraform.io/kreuzwerker/docker"]\n }\n}\n'}
     require(set(session.inputs) == set(fixed) and all(raw == raw_file(run, 'private/terraform/' + name) and
         hashlib.sha256(raw).hexdigest() == session.inputs[name] for name, raw in fixed.items()), 'twenty_original_input_changed')
+    require(p.file_digest(session.state / 'apply.tfplan')[0] == receipt['validated_plan_sha256'], 'twenty_original_plan_changed')
     captures = operations(run, session, receipt)
     require(captures['version'][0]['terraform_version'] == '1.17.0' and captures['version'][0]['platform'] == 'linux_amd64')
     schema = captures['schema'][0]['provider_schemas'][p.PROVIDER]['resource_schemas']

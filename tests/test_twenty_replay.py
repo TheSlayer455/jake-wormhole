@@ -3,12 +3,18 @@ from copy import deepcopy
 import hashlib
 import json
 import os
+from pathlib import Path
+import sys
 import unittest
 from unittest.mock import patch
 
-import test_provisioning as tf
-import test_provisioning_fleet as fleet_tf
-import test_twenty_infrastructure as helper_fixture
+# Existing shared fixtures import one another by discovery-relative names.
+# Keep those legacy fixtures available for both named and discovery invocation.
+if str(Path(__file__).parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).parent))
+from tests import test_provisioning as tf
+from tests import test_provisioning_fleet as fleet_tf
+from tests import test_twenty_infrastructure as helper_fixture
 from scripts import qualify_images as qualification
 from wormhole import images, provisioning as p, readiness as r, twenty_replay as replay
 from wormhole.runs import atomic_json, common, read_json
@@ -92,6 +98,11 @@ class OfflineTwentyTerraform(unittest.TestCase):
         self.archive['resources'].append({'kind': 'container', 'id': '9' * 64, 'outcome': 'absent'})
         (self.ps.state / 'operations/final-state-1.out').write_bytes(b'changed original capture')
         with self.assertRaises(replay.TwentyReplayError): self.report()
+
+    def test_changed_saved_apply_bytes_cannot_retain_validated_plan_credit(self):
+        (self.ps.state / 'apply.tfplan').write_bytes(b'changed saved apply plan after execution')
+        with self.assertRaises(replay.TwentyReplayError) as error: self.report()
+        self.assertEqual(error.exception.code, 'twenty_original_plan_changed')
 
 
 @unittest.skipUnless(os.name == 'posix', 'POSIX original helper source/capture fixtures; no Docker or SSH')
