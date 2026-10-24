@@ -192,6 +192,42 @@ class PublicationFilesystem(unittest.TestCase):
         self.assertEqual(list(self.destination.iterdir()), [])
         self.assertFalse((self.base / 'moved-owned-release/COMPLETE.json').exists())
 
+    def test_final_nested_directory_replacement_cannot_acknowledge_old_descriptor_bytes(self):
+        original_read = p._read_at
+        changed = False
+        def read(parent, name, maximum, **kwargs):
+            nonlocal changed
+            if not changed and name == 'payload.py' and (self.destination / 'COMPLETE.json').exists():
+                changed = True
+                candidate = self.destination / 'candidate'
+                moved = self.base / 'moved-candidate'
+                candidate.rename(moved)
+                candidate.mkdir(mode=0o700)
+                for path in moved.iterdir():
+                    atomic_bytes(candidate / path.name, b'Untested replacement' if path.name == name else path.read_bytes())
+            return original_read(parent, name, maximum, **kwargs)
+        with patch.object(p, '_read_at', side_effect=read):
+            error = self.failed(lambda: p.publish_reference(self.run), 'publication_destination_changed')
+        self.assertTrue(changed)
+        self.assertFalse(self.receipt(error)['logical_complete'])
+        self.assertFalse(self.receipt(error)['durability_acknowledged'])
+        self.assertEqual(p.inspect_publication(self.run.id)['status'], 'incomplete')
+
+    def test_final_nested_entry_addition_cannot_hide_outside_the_initial_directory_listing(self):
+        original_read = p._read_at
+        changed = False
+        def read(parent, name, maximum, **kwargs):
+            nonlocal changed
+            if not changed and name == 'payload.py' and (self.destination / 'COMPLETE.json').exists():
+                changed = True
+                atomic_bytes(self.destination / 'candidate/unapproved.txt', b'Unapproved synthetic extra')
+            return original_read(parent, name, maximum, **kwargs)
+        with patch.object(p, '_read_at', side_effect=read):
+            error = self.failed(lambda: p.publish_reference(self.run), 'publication_destination_changed')
+        self.assertTrue(changed)
+        self.assertFalse(self.receipt(error)['durability_acknowledged'])
+        self.assertEqual(p.inspect_publication(self.run.id)['status'], 'incomplete')
+
     def test_source_revision_change_after_copy_cannot_be_hidden_by_a_mocked_receipt(self):
         def change(event, detail):
             if event == 'before-complete':

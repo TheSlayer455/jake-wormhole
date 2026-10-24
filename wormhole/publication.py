@@ -406,10 +406,21 @@ def _tree(directory, expected, deadline):
         parts = name.split('/')
         directories.update('/'.join(parts[:i]) for i in range(1, len(parts)))
     seen, count = {}, 0
+    def names(parent):
+        result = []
+        with os.scandir(parent) as entries:
+            for entry in entries:
+                _remaining(deadline)
+                require(len(result) < 64, 'publication_file_set')
+                result.append(entry.name)
+        return tuple(sorted(result))
     def walk(parent, prefix):
         nonlocal count
         _remaining(deadline)
-        for name in os.listdir(parent):
+        before = os.fstat(parent)
+        _directory_info(before, private=True)
+        entries = names(parent)
+        for name in entries:
             count += 1
             require(count <= 64, 'publication_file_set')
             relative = prefix + name
@@ -418,8 +429,12 @@ def _tree(directory, expected, deadline):
                 require(relative in directories, 'publication_file_set')
                 child = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=parent)
                 try:
-                    _directory_info(os.fstat(child), private=True)
+                    opened = os.fstat(child)
+                    _directory_info(opened, private=True)
+                    require(_identity(opened) == _identity(value), 'publication_destination_changed')
                     walk(child, relative + '/')
+                    require(_identity(os.stat(name, dir_fd=parent, follow_symlinks=False)) == _identity(opened),
+                            'publication_destination_changed')
                 finally:
                     os.close(child)
             else:
@@ -427,6 +442,8 @@ def _tree(directory, expected, deadline):
                 raw = _read_at(parent, name, expected[relative]['size_bytes'])
                 seen[relative] = {'sha256': digest(raw), 'size_bytes': len(raw)}
                 require(seen[relative] == expected[relative], 'publication_destination_changed')
+        require(_identity(os.fstat(parent)) == _identity(before) and names(parent) == entries,
+                'publication_destination_changed')
     walk(directory, '')
     require(set(seen) == set(expected), 'publication_file_set')
     _remaining(deadline)
