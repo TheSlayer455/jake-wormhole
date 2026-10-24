@@ -19,10 +19,13 @@ def receipt(status='passed'):
         **{key: definition['const'] for key, definition in i.FLAGS.items()},
         'status': status, 'cases': [], 'primary_failure': None,
         'created_at': '2026-10-24T17:00:00.000Z', 'updated_at': '2026-10-24T17:01:00.000Z'}
-    for number, name in enumerate(i.CASE_NAMES, 2):
+    next_id = 2
+    for name in i.CASE_NAMES:
         passed = status == 'passed'
+        ids = [identifier(number) for number in range(next_id, next_id + i.CASE_RUN_COUNTS[name])]
+        next_id += i.CASE_RUN_COUNTS[name]
         value['cases'].append({'name': name, 'status': 'passed' if passed else 'not-run',
-            'run_ids': [identifier(number)] if passed else [],
+            'run_ids': ids if passed else [],
             'proof': {'logical_path': 'evidence/isolation-' + name + '.json',
                 'sha256': 'b' * 64, 'size_bytes': 123} if passed else None,
             'failure_code': None, 'checks': {key: True if passed else None for key in i.checks_for(name)}})
@@ -106,6 +109,15 @@ class IsolationRecords(unittest.TestCase):
             value = receipt(); value['cases'][0]['run_ids'] = ids
             with self.subTest(ids=ids): self.rejected(value)
         value = receipt(); value['cases'][0]['run_ids'] = []; self.rejected(value)
+
+    def test_passed_cases_retain_every_admitted_refused_and_fixture_attempt(self):
+        self.assertEqual(tuple(i.CASE_RUN_COUNTS.values()), (3, 2, 1, 2))
+        for index, name in enumerate(i.CASE_NAMES):
+            for count in range(5):
+                if count == i.CASE_RUN_COUNTS[name]: continue
+                value = receipt()
+                value['cases'][index]['run_ids'] = [identifier(number) for number in range(50, 50 + count)]
+                with self.subTest(name=name, count=count): self.rejected(value)
 
     def test_fixed_scope_refuses_simultaneous_graph_or_twenty_target_credit(self):
         changes = {'overlap_model': 'simultaneous-resource-graphs', 'allocation_scope': 'twenty-targets',
