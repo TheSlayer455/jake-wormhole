@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -315,6 +316,46 @@ class PublicationFilesystem(unittest.TestCase):
         self.assertEqual(list((moved / 'releases').iterdir()), [])
         self.assertEqual([item.name for item in target.iterdir()], ['unrelated-synthetic.txt'])
         self.assertEqual((target / 'unrelated-synthetic.txt').read_bytes(), b'Untouched synthetic existing directory')
+
+    def test_fixed_storage_owner_is_allowed_only_for_the_exact_protected_anchor(self):
+        self.assertEqual(p.STORAGE_ANCHOR, Path('/srv/homelab'))
+        self.assertEqual(p.STORAGE_OWNER, (1000, 1000))
+        value = SimpleNamespace(st_mode=stat.S_IFDIR | 0o755, st_uid=1000, st_gid=1000)
+        p._directory_info(value, storage_anchor=True)
+        if os.geteuid() != 1000:
+            self.failed(lambda: p._directory_info(value), 'publication_unsafe_directory')
+        for uid, gid, mode in ((0, 0, 0o755), (1001, 1000, 0o755), (1000, 1001, 0o755),
+                               (1000, 1000, 0o700), (1000, 1000, 0o775), (1000, 1000, 0o777)):
+            with self.subTest(uid=uid, gid=gid, mode=mode):
+                changed = SimpleNamespace(st_mode=stat.S_IFDIR | mode, st_uid=uid, st_gid=gid)
+                self.failed(lambda: p._directory_info(changed, storage_anchor=True))
+        self.failed(lambda: p._directory_info(value, storage_anchor=True, private=True))
+
+    def test_storage_anchor_walk_requires_actual_mount_predicate_and_unchanged_named_inode(self):
+        # Synthetic anchor path/owner/mount predicate; no host mount or ownership
+        # mutation. Production constants remain asserted in the policy fixture.
+        anchor = self.base / 'synthetic-storage-anchor'
+        anchor.mkdir(mode=0o755); anchor.chmod(0o755)
+        project = anchor / 'project'; project.mkdir(mode=0o700)
+        original_stat = p.os.stat
+        with patch.object(p, 'STORAGE_ANCHOR', anchor), patch.object(p, 'STORAGE_OWNER', (os.geteuid(), os.getegid())):
+            with patch.object(p.os.path, 'ismount', return_value=False) as mounted:
+                self.failed(lambda: p._directory(project, private=True), 'publication_storage_mount_required')
+                mounted.assert_called_once_with(anchor)
+            with patch.object(p.os.path, 'ismount', return_value=True) as mounted:
+                descriptor = p._directory(project, private=True)
+                os.close(descriptor)
+                mounted.assert_called_once_with(anchor)
+            def stat_path(path, **kwargs):
+                value = original_stat(path, **kwargs)
+                if path == anchor:
+                    changed = {name: getattr(value, name) for name in ('st_dev', 'st_ino', 'st_uid', 'st_gid', 'st_mode',
+                               'st_nlink', 'st_size', 'st_mtime_ns', 'st_ctime_ns')}
+                    changed['st_ino'] += 1
+                    return SimpleNamespace(**changed)
+                return value
+            with patch.object(p.os.path, 'ismount', return_value=True), patch.object(p.os, 'stat', side_effect=stat_path):
+                self.failed(lambda: p._directory(project, private=True), 'publication_storage_anchor_changed')
 
     def crash(self, event):
         process = os.fork()

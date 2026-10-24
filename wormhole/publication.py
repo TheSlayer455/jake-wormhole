@@ -24,6 +24,10 @@ from .runs import (Run, RunError, _owned, atomic_bytes, atomic_json, common, now
                    run_id, source_identity)
 
 RELEASE_ROOT = Path('/srv/homelab/jake-wormhole/releases')
+# Existing approved, manually unlocked ext4 mount. This is a path-specific
+# trust anchor, not permission for arbitrary UID1000-owned ancestors.
+STORAGE_ANCHOR = Path('/srv/homelab')
+STORAGE_OWNER = (1000, 1000)
 OWNER = {'schema_version': '1.0', 'application': 'jake-wormhole',
          'kind': 'private-reference-publications'}
 MAX_SECONDS = 120
@@ -72,9 +76,14 @@ def _identity(value):
             value.st_nlink, value.st_size, value.st_mtime_ns, value.st_ctime_ns)
 
 
-def _directory_info(value, *, private=False):
-    require(stat.S_ISDIR(value.st_mode) and value.st_uid in (0, os.geteuid()) and
-            not stat.S_IMODE(value.st_mode) & 0o022, 'publication_unsafe_directory')
+def _directory_info(value, *, private=False, storage_anchor=False):
+    require(stat.S_ISDIR(value.st_mode) and not stat.S_IMODE(value.st_mode) & 0o022,
+            'publication_unsafe_directory')
+    if storage_anchor:
+        require((value.st_uid, value.st_gid) == STORAGE_OWNER and stat.S_IMODE(value.st_mode) == 0o755,
+                'publication_storage_anchor_changed')
+    else:
+        require(value.st_uid in (0, os.geteuid()), 'publication_unsafe_directory')
     if private:
         require(value.st_uid == os.geteuid() and stat.S_IMODE(value.st_mode) == 0o700,
                 'publication_private_directory_required')
@@ -87,11 +96,20 @@ def _directory(path, *, private=False):
     descriptor = os.open('/', os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
     try:
         _directory_info(os.fstat(descriptor))
+        current = Path('/')
         for index, part in enumerate(path.parts[1:], 1):
+            current = current / part
             child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC,
                             dir_fd=descriptor)
             try:
-                _directory_info(os.fstat(child), private=private and index == len(path.parts) - 1)
+                opened = os.fstat(child)
+                anchor = current == STORAGE_ANCHOR
+                _directory_info(opened, private=private and index == len(path.parts) - 1,
+                                storage_anchor=anchor)
+                if anchor:
+                    require(os.path.ismount(STORAGE_ANCHOR), 'publication_storage_mount_required')
+                    require(_identity(os.stat(STORAGE_ANCHOR, follow_symlinks=False)) == _identity(opened),
+                            'publication_storage_anchor_changed')
             except BaseException:
                 os.close(child)
                 raise
