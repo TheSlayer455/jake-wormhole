@@ -53,4 +53,4 @@ python scripts/verify_acceptance_matrix.py
 python -m unittest discover -s tests -v
 ```
 
-Disposable tests require no Docker daemon or homelab credentials; platform skips are explicit. Original-source fixtures need Git history, so hosted checkout uses `fetch-depth: 0` with disabled credential persistence. WORM-021 controlled parity/wiring is being implemented and needs final evidence; historical CI success is not its result.
+Disposable tests require no Docker daemon or homelab credentials; platform skips are explicit. Original-source fixtures need Git history, so hosted checkout uses `fetch-depth: 0` with disabled credential persistence. WORM-021 controlled parity and failure diagnostics are implemented and actually qualified. [Merged verification](../handoff/MERGED-VERIFICATION.md) records fresh source/CI results at `c3d440a3`, including actual 0/1/1 process outcomes and safe diagnostic uploads. Validation of a failed record does not change the runner/job failure to success. Historical container evidence keeps its original tested source.
