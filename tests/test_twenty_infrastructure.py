@@ -141,6 +141,8 @@ class TwentyHelper(unittest.TestCase):
         def late(): self.session.deadline = time.monotonic() - 1
         with patch.object(self.session, 'require_ready', side_effect=late), self.assertRaises(r.ReadinessError):
             self.session.wait_ready()
+        self.assertEqual(self.session.receipt['status'], 'failed')
+        self.assertIsNotNone(self.session.receipt['primary_failure'])
 
 
 class LegacyHelperPolicy(unittest.TestCase):

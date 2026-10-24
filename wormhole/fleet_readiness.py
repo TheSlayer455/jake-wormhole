@@ -315,8 +315,12 @@ class BatchReadinessSession(r.ReadinessSession):
             self.save()
             if self._aggregate['primary_failure'] is not None:
                 raise r.ReadinessError(self._aggregate['primary_failure']['code'], 'One or more exact planned targets failed readiness.')
-            self.require_ready()
-            self.timeout()
+            try:
+                self.require_ready()
+                self.timeout()
+            except Exception as error:
+                super().failure(error)
+                raise
             return deepcopy(self._aggregate)
         finally:
             self._on_poll = None
