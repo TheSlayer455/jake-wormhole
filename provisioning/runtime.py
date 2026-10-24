@@ -2,6 +2,10 @@
 
 No caller supplies executable paths, Terraform flags, arbitrary URLs or commands.
 Outputs/state remain private in the one explicit host bind; stdout is a receipt.
+Fixed Terraform text diagnostics are streamed to a private file up to 256 KiB
+for larger multi-target plans; actual qualification remains separate. The 4 MiB machine-readable
+JSON cap and the outer/core 64 KiB receipt/log limits remain unchanged. Crossing
+either private output cap still kills this operation and records truncation.
 """
 import hashlib
 import errno
@@ -17,7 +21,7 @@ import time
 STATE = Path('/state')
 TOOL = '/opt/toolchain/bin/terraform'
 JSON_LIMIT = 4 * 1024 * 1024
-LOG_LIMIT = 65536
+LOG_LIMIT = 256 * 1024
 OPERATION_TIMEOUT = 120
 OPERATIONS = {
     'probe-unavailable': (),
