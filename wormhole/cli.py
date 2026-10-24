@@ -40,6 +40,8 @@ def parser():
         command.add_argument("run_id", help="Exact UUID returned by run.")
         command.add_argument("--workspace", default=workspace)
     from .images import RUNS_ROOT
+    isolation = commands.add_parser("isolation-check", help="Run the fixed approved Linux isolation and interrupted-recovery acceptance cases.")
+    isolation.add_argument("--sentinel-id", required=True, help="Exact already-approved unrelated container ID, inspected read-only.")
     commands.add_parser("publication-init", help="Initialize the fixed owned private local release store; refuse unrelated existing data.")
     publication = commands.add_parser("publish-reference", help="Publish exact eligible tested reference bytes to the fixed private local release store.")
     publication.add_argument("run_id", help="Exact eligible reference Run UUID.")
@@ -85,6 +87,10 @@ def main(arguments=None):
             request = make_request(run, platform=options.platform, scenario=options.scenario, base_run_id=options.base_run)
             value = PipelineSession(run, request).execute()
             status = 0 if value.get("reference_eligible") is True else 1
+        elif options.command == "isolation-check":
+            from .isolation_acceptance import acceptance
+            value = acceptance(options.sentinel_id)
+            status = 0 if value.get("status") == "passed" else 1
         elif options.command == "publication-init":
             from .publication import initialize_publication_root
             value = initialize_publication_root()
