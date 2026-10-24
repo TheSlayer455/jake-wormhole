@@ -2,6 +2,8 @@
 
 Private, container-only reference automation for verified source chunks, candidate-bound images, Terraform-managed targets, strict SSH/Ansible checks, native software inventories and attributable evidence.
 
+For the Build Jake ISO Pipeline chat, use the [single copy-and-paste handoff prompt](handoff/JAKE-ISO-PIPELINE-PROMPT.md).
+
 All 20 children WORM-002 through WORM-021 are Done at approved revision 2 with 66 passing criteria and solution comments under Jake's explicitly delegated normal Owner workflow. All 21 original delivery PRs are merged. [Merged verification](handoff/MERGED-VERIFICATION.md) records the tested main commit `c3d440a3c7eee9691f30315b49146eb72998d2df`, fresh source/CI checks and Ubuntu reference smoke. Minx remains authoritative for workflow state; this document is not a claim lease. Engineering review and Owner-directed automation are distinct from independent human examination.
 
 Latest actual runtime is the merged-source Ubuntu reference Run `8f14b817-486f-4340-87fd-85fe53a9aa6b`: all 43 required checks passed, the reference gate was eligible, cleanup finished with no pending resources and the unrelated sentinel was unchanged. Production ISO eligibility remains false.
