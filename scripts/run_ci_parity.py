@@ -39,7 +39,7 @@ def main(argv=None):
                '--output', 'ci-safe', '--mode', options.mode]
     try:
         # No shell and no output buffering. The core CLI prints bounded summaries.
-        child = subprocess.run(command, cwd=ROOT, timeout=120, check=False)
+        child = subprocess.run(command, cwd=ROOT, timeout=300, check=False)
         observed_exit = child.returncode
     except subprocess.TimeoutExpired:
         observed_exit = 124

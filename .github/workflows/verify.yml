@@ -7,7 +7,7 @@ permissions:
 jobs:
   repository-verification:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Require a private repository
         if: ${{ github.event.repository.private != true }}

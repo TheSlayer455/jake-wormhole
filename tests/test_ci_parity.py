@@ -35,7 +35,7 @@ class JobFailurePropagation(unittest.TestCase):
 
             seam = types.SimpleNamespace(read_export_files=read, write_export_files=write)
             completed = subprocess.CompletedProcess([], exit_code)
-            effect = subprocess.TimeoutExpired(['fixed'], 120) if timeout else None
+            effect = subprocess.TimeoutExpired(['fixed'], 300) if timeout else None
             original_path = sys.path.copy()
             try:
                 with patch.object(JOB, 'ROOT', root), patch.object(JOB.Path, 'cwd', return_value=root), \
@@ -56,7 +56,7 @@ class JobFailurePropagation(unittest.TestCase):
         self.assertEqual(calls, [('read', 'ci-safe'), ('write', 'ci-artifacts', True), ('read', 'ci-artifacts')])
         self.assertEqual(invocation.args[0], [sys.executable, '-B', '-m', 'wormhole.parity', 'run',
                                              '--output', 'ci-safe', '--mode', 'required-failure'])
-        self.assertEqual(invocation.kwargs['timeout'], 120)
+        self.assertEqual(invocation.kwargs['timeout'], 300)
         self.assertNotIn('shell', invocation.kwargs)
 
     def test_missing_or_unsafe_diagnostics_cannot_turn_success_green(self):

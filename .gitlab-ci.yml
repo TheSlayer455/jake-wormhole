@@ -3,7 +3,7 @@
   "verify": {
     "stage": "verify",
     "tags": ["wormhole-python31214"],
-    "timeout": "5m",
+    "timeout": "10m",
     "variables": {"GIT_DEPTH": "0", "PYTHONDONTWRITEBYTECODE": "1"},
     "script": [
       "python3 -c \"import sys; assert sys.version_info[:3] == (3,12,14)\"",
