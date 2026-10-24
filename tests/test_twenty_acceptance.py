@@ -156,10 +156,12 @@ class LifecycleTests(unittest.TestCase):
         self.patch(t, 'BatchValidationSession', return_value=self.validation)
         self.inventory = SimpleNamespace(collect=Mock(), require_passed=Mock())
         module = ModuleType('wormhole.fleet_inventory'); module.FleetInventorySession = Mock(return_value=self.inventory)
-        self.patch(sys, 'modules', {**sys.modules, 'wormhole.fleet_inventory': module})
-        self.inventory_factory = module.FleetInventorySession
         replay = ModuleType('wormhole.twenty_replay'); replay.RUNTIME = 'private/twenty-runtime.json'
-        sys.modules['wormhole.twenty_replay'] = replay
+        # Mutate the import cache in place. Replacing sys.modules itself can
+        # leave CPython's original cached modules active after full discovery.
+        modules = patch.dict(sys.modules, {'wormhole.fleet_inventory': module, 'wormhole.twenty_replay': replay})
+        modules.start(); self.addCleanup(modules.stop)
+        self.inventory_factory = module.FleetInventorySession
         self.patch(t.images, 'inspect', side_effect=lambda kind, identifier:
             {'Id': identifier, 'State': {'Pid': 0, 'Status': 'created', 'StartedAt': '0001-01-01T00:00:00Z'},
              'HostConfig': {'PidsLimit': 64}})
@@ -183,7 +185,10 @@ class LifecycleTests(unittest.TestCase):
         return read_json(paths[0])
 
     def test_coordinator_allocates_full_twenty_once_and_replays_after_exact_cleanup(self):
-        value = t.acceptance(SENTINEL, controller_concurrency=2)
+        try:
+            value = t.acceptance(SENTINEL, controller_concurrency=2)
+        except t.TwentyError as error:
+            self.fail('Synthetic adapter failure: ' + repr(error.__context__))
         self.assertEqual(value['status'], 'passed'); self.assertEqual(value['target_count'], 20)
         self.assertEqual(len(value['owned_resources']), 23); self.assertEqual(len(value['stopped_targets']), 20)
         self.assertFalse(value['reference_eligible']); self.assertFalse(value['production_iso_eligible'])
