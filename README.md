@@ -10,7 +10,7 @@ twenty-target candidate execution and production ISO eligibility remain separate
 
 Private, container-only reference automation for source integrity, Terraform-managed targets, SSH/Ansible checks and attributable engineering evidence.
 
-Minx tracks work under WORM-001. Completed components cover the CLI, Linux admission, real Terraform lifecycle, strict SSH/Ansible, scoped recovery, functional checks, five-target coordination, verified chunks, candidate binding, optional PowerShell, synthetic assessments, UBI/RPM containers and full observed software inventories. WORM-002 through WORM-016 are Done under Jake's delegated Owner workflow. WORM-017 is implementing the combined reference evidence/reporting gate. Tested-byte publication and twenty-target execution remain unfinished. Production ISO eligibility remains false.
+Minx tracks work under WORM-001. Completed components cover the CLI, Linux admission, real Terraform lifecycle, strict SSH/Ansible, scoped recovery, functional checks, five-target coordination, verified chunks, candidate binding, optional PowerShell, synthetic assessments, UBI/RPM containers, observed software inventories and the bounded combined reference pipeline. WORM-002 through WORM-017 are Done under Jake's delegated Owner workflow. WORM-018 is implementing private tested-byte publication; its actual acceptance remains pending. Twenty-target execution is unfinished. Production ISO eligibility remains false.
 
 Start with [AGENTS.md](AGENTS.md), [current state](docs/STATE.md) and [handoff](handoff/CURRENT.md). The [fidelity record](docs/FIDELITY.md) separates actual behavior from planned or simulated capabilities. [Repository controls](docs/REPOSITORY.md) records publication and CI observations.
 
@@ -30,7 +30,7 @@ python -m wormhole verify RUN_UUID --workspace WORKSPACE
 python -m wormhole cleanup RUN_UUID --workspace WORKSPACE
 ```
 
-The fixture executes fixed local stage adapters and records their actual outcomes. It does not provision targets or validate a candidate image. Its report remains labeled synthetic with production ISO eligibility false. `run` without `--fixture` records an unsupported attempt and returns nonzero until the required real stages exist. `publish-reference RUN_UUID --workspace WORKSPACE` also returns nonzero: publication is not implemented by this ticket. A fixture success cannot make publication eligible.
+The fixture executes fixed local stage adapters and records their actual outcomes. It does not provision targets or validate a candidate image. Its report remains labeled synthetic with production ISO eligibility false. `run` without `--fixture` records an unsupported attempt and returns nonzero; the actual reference pipeline uses its separate documented entrypoint. `publish-reference RUN_UUID --workspace WORKSPACE` refuses a fixture workspace. Only an eligible actual reference Run on the fixed approved storage may publish through the [private publication operation](docs/PUBLICATION.md).
 
 Cleanup retains the manifest and evidence and removes only private local state owned by the selected fixture run. It refuses unsupported resource ownership; it does not remove containers, other runs or a whole workspace. See [CLI and contract details](docs/CLI.md) for bounds and failure behavior.
 

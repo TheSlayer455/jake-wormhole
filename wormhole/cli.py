@@ -35,12 +35,17 @@ def parser():
         ("report", "Read validated portable records; never export private logs/state."),
         ("verify", "Validate artifact identity and the declared fixture subset, not runtime eligibility."),
         ("cleanup", "Clean a completed fixture, or reconcile exact real-run infrastructure; retain evidence."),
-        ("publish-reference", "Refuse publication: qualification/publication are not implemented."),
     ):
         command = commands.add_parser(name, help=help_text)
         command.add_argument("run_id", help="Exact UUID returned by run.")
         command.add_argument("--workspace", default=workspace)
     from .images import RUNS_ROOT
+    commands.add_parser("publication-init", help="Initialize the fixed owned private local release store; refuse unrelated existing data.")
+    publication = commands.add_parser("publish-reference", help="Publish exact eligible tested reference bytes to the fixed private local release store.")
+    publication.add_argument("run_id", help="Exact eligible reference Run UUID.")
+    publication.add_argument("--workspace", default=str(RUNS_ROOT), help="Only the fixed approved real-run storage is supported for publication.")
+    inspection = commands.add_parser("publication-status", help="Verify an existing local reference release without repairing or rewriting it.")
+    inspection.add_argument("run_id", help="Exact published reference Run UUID.")
     reference = commands.add_parser("reference-run", help="Run the bounded one-target container reference pipeline on approved Linux storage.")
     reference.add_argument("--platform", choices=("ubuntu", "ubi"), default="ubuntu")
     reference.add_argument("--scenario", choices=("healthy", "version-expectation-mismatch"), default="healthy")
@@ -80,6 +85,21 @@ def main(arguments=None):
             request = make_request(run, platform=options.platform, scenario=options.scenario, base_run_id=options.base_run)
             value = PipelineSession(run, request).execute()
             status = 0 if value.get("reference_eligible") is True else 1
+        elif options.command == "publication-init":
+            from .publication import initialize_publication_root
+            value = initialize_publication_root()
+            status = 0
+        elif options.command == "publish-reference":
+            from .images import RUNS_ROOT
+            if Path(options.workspace) != RUNS_ROOT:
+                raise RunError("publication_unsupported", "Publication supports only the approved real-run storage; synthetic fixtures cannot publish.")
+            from .publication import publish_reference
+            value = publish_reference(Run(RUNS_ROOT, options.run_id))
+            status = 0
+        elif options.command == "publication-status":
+            from .publication import inspect_publication
+            value = inspect_publication(options.run_id)
+            status = 0 if value.get("status") == "complete" else 1
         elif options.command in {"reference-report", "reference-gate"}:
             from .pipeline import gate_pipeline, report_pipeline
             run = Run(options.workspace, options.run_id)
