@@ -198,6 +198,17 @@ class FleetInventoryContracts(unittest.TestCase):
         cycle = record(); cycle['bad'] = cycle; self.rejects(cycle)
         value = record(); value['bad'] = 'SYNTHETIC-SENSITIVE' * f.MAX_RECORD_BYTES; self.rejects(value)
 
+    def test_free_text_cannot_export_private_paths_state_or_key_markers(self):
+        for text in ('/srv/homelab/SYNTHETIC-SENSITIVE', 'C:\\Users\\SYNTHETIC-SENSITIVE',
+                'private/credentials/SYNTHETIC-SENSITIVE', 'terraform.tfstate', 'saved.tfplan',
+                '-----BEGIN OPENSSH PRIVATE KEY-----', 'github_pat_' + 'S' * 24):
+            for field in ('name', 'kernel', 'check'):
+                value = record()
+                if field == 'name':value['observation']['os']['name'] = text
+                elif field == 'kernel':value['observation']['shared_kernel']['release'] = text
+                else:value['checks'][0]['expected'] = text
+                with self.subTest(text=text, field=field):self.rejects(value)
+
     def test_index_is_exactly_twenty_namespaces_with_concurrency_distinct_from_target_count(self):
         value = index(); copy = f.validate_index(value); self.assertEqual(copy, value)
         self.assertEqual(value['target_count'], 20); self.assertEqual(value['controller_concurrency'], 4)
