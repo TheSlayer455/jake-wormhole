@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import time
 import unittest
 from unittest.mock import patch
 
@@ -118,7 +119,14 @@ class OfflineTwentyReadiness(unittest.TestCase):
                     ('helper', 'auth-input', b'Synthetic fixed receiver complete')]:
                     qualification.attempt_record(self.run, self.session.receipt, role, self.session.stage_name(stage),
                         {'status': 'pass', 'returncode': 0, 'duration_seconds': .001, 'log': raw, 'log_truncated': False})
-        with patch.object(r, '_run_process', side_effect=f.probe): self.session.wait_ready()
+        # The retained packets/rows are created through the real coordinator
+        # after the old90-second window but inside the declared twenty budget.
+        clock = [1000.0]; self.session.began, self.session.deadline = clock[0], clock[0] + 120
+        def slow_known_response(arguments, **options):
+            clock[0] += 1.17
+            return f.probe(arguments, **options)
+        with patch.object(time, 'monotonic', side_effect=lambda: clock[0]), patch.object(r, '_run_process', side_effect=slow_known_response):
+            self.session.wait_ready()
         helper = f.helper(); self.session.cleanup()
         self.provisioned = {'targets': dict(f.target_resources), 'network_id': helper_fixture.fixture.NETWORK,
             'runtime': {'helper': helper, 'targets_live': {target: f.target(target) for target in f.target_plan.target_ids}}}
@@ -135,6 +143,23 @@ class OfflineTwentyReadiness(unittest.TestCase):
         value = self.report()
         self.assertEqual(value['passed_pairs'], 160)
         self.assertTrue(self.fixture.removed)
+        receipt = read_json(self.run.file('evidence/readiness.json'))
+        self.assertEqual(receipt['context_version'], 5)
+        self.assertEqual(receipt['readiness_budget_seconds'], 120)
+        self.assertAlmostEqual(receipt['targets'][-1]['transitions'][-1]['elapsed_seconds'], 117)
+
+    def test_changed_budget_context_or_late_elapsed_refuses_offline_after_cleanup(self):
+        context_path = self.run.file('private/readiness-controller.json'); original = read_json(context_path)
+        for mutate in (lambda value: value.update(context_version=4), lambda value: value.update(readiness_budget_seconds=90),
+            lambda value: value.update(readiness_budget_seconds=121), lambda value: value.update(readiness_budget_seconds=True)):
+            value = deepcopy(original); mutate(value); atomic_json(context_path, value)
+            with self.assertRaises(Exception): self.report()
+        atomic_json(context_path, original)
+        receipt_path = self.run.file('evidence/readiness.json'); receipt = read_json(receipt_path)
+        for mutate in (lambda value: value.update(readiness_budget_seconds=90),
+            lambda value: value['targets'][-1]['transitions'][-1].update(elapsed_seconds=120.001)):
+            value = deepcopy(receipt); mutate(value); atomic_json(receipt_path, value)
+            with self.assertRaises(Exception): self.report()
 
     def test_original_packet_mutation_rejects_even_when_retained_transition_grid_says_pass(self):
         value = read_json(self.run.file('evidence/readiness.json'))

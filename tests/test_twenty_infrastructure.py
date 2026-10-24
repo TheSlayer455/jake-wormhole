@@ -94,7 +94,10 @@ class TwentyHelper(unittest.TestCase):
         self.assertIn('/run/input:rw,nosuid,nodev,noexec,size=512k,mode=0700,uid=10001,gid=10001', calls[0])
         self.assertEqual(len(self.session.source_bindings()), 3)
         context = read_json(self.run.file('private/readiness-controller.json'))
-        self.assertEqual(context['context_version'], 4)
+        self.assertEqual(context['context_version'], 5)
+        self.assertEqual(context['readiness_budget_seconds'], 120)
+        self.assertEqual(self.session.receipt['readiness_budget_seconds'], 120)
+        self.assertAlmostEqual(self.session.deadline - self.session.began, 120)
         self.assertEqual(context['helper_policy'], {'wait_seconds': 300, 'input_tmpfs_bytes': 524288})
         self.assertTrue(context['fleet_inventory_enabled'])
         paths = [attempt['private_log'] for child in self.session.receipt['targets'] for attempt in child['attempts']]
@@ -122,6 +125,8 @@ class TwentyHelper(unittest.TestCase):
         for mutate in (lambda x: x['helper_policy'].update(wait_seconds=180),
             lambda x: x['helper_policy'].update(input_tmpfs_bytes=65536),
             lambda x: x['helper_policy'].update(wait_seconds=True), lambda x: x.update(context_version=3),
+            lambda x: x.update(context_version=4), lambda x: x.update(readiness_budget_seconds=90),
+            lambda x: x.update(readiness_budget_seconds=True),
             lambda x: x.update(fleet_inventory_enabled=False), lambda x: x.update(fleet_inventory_source_sha256='f' * 64),
             lambda x: x['target_resource_ids'].pop('target-020')):
             value = deepcopy(original); mutate(value); atomic_json(path, value)
@@ -144,12 +149,74 @@ class TwentyHelper(unittest.TestCase):
         self.assertEqual(self.session.receipt['status'], 'failed')
         self.assertIsNotNone(self.session.receipt['primary_failure'])
 
+    def test_twenty_shared_virtual117_seconds_passes_all160_pairs_with_unchanged_probe_caps(self):
+        self.session.start_helper()
+        clock = [1000.0]; self.session.began, self.session.deadline = clock[0], clock[0] + 120
+        def slow_known_response(arguments, **options):
+            request = runtime.request(base64.b64decode(arguments[-1]))
+            cap = {'tcp': 3, 'ssh': 8, 'python': 8, 'ansible-wait': 25, 'ansible-ping': 12}[request['operation']]
+            self.assertLessEqual(request['timeout_seconds'], cap)
+            clock[0] += 1.17
+            return self.probe(arguments, **options)
+        with patch.object(time, 'monotonic', side_effect=lambda: clock[0]), patch.object(r, '_run_process', side_effect=slow_known_response):
+            result = self.session.wait_ready()
+        self.assertEqual(result['status'], 'ready')
+        self.assertEqual(len(self.session.ready_target_ids), 20)
+        self.assertAlmostEqual(max(item['elapsed_seconds'] for child in result['targets'] for item in child['transitions']), 117)
+        f.validate_children(result, self.run.manifest(), self.target_plan, self.target_resources)
+
+    def test_known_final_probe_response_after120_fails_and_preserves_all_previous_ready_targets(self):
+        self.session.start_helper()
+        clock = [1000.0]; self.session.began, self.session.deadline = clock[0], clock[0] + 120
+        def late_known_response(arguments, **options):
+            request = runtime.request(base64.b64decode(arguments[-1]))
+            clock[0] += 5.17 if (request['target_id'], request['operation']) == ('target-020', 'ansible-ping') else 1.17
+            return self.probe(arguments, **options)
+        with patch.object(time, 'monotonic', side_effect=lambda: clock[0]), patch.object(r, '_run_process', side_effect=late_known_response), \
+            self.assertRaises(r.ReadinessError) as error:
+            self.session.wait_ready()
+        self.assertAlmostEqual(clock[0] - self.session.began, 121)
+        self.assertEqual(error.exception.code, 'deadline_exhausted')
+        self.assertEqual(len(self.session.ready_target_ids), 19)
+        self.assertEqual(self.session.target_state('target-020')['status'], 'failed')
+        self.assertFalse(self.session.receipt['unknown_outcome'])
+
+    def test_expired_unattempted_targets_are_unverified_by_deadline_not_claimed_unstarted(self):
+        self.session.start_helper()
+        self.session.deadline = time.monotonic() - 1
+        with self.assertRaises(r.ReadinessError) as error: self.session.wait_ready()
+        self.assertEqual(error.exception.code, 'deadline_exhausted')
+        self.assertTrue(all(item['primary_failure']['code'] == 'deadline_exhausted' and not item['transitions'] and not item['probes']
+            for item in self.session.receipt['targets']))
+        self.assertTrue(all(self.running.values()))
+
+    def test_observed_started_transition_clears_previous_never_started_classification(self):
+        with self.session.selected('target-020'):
+            self.session.last_pending = 'target_not_started'
+            self.session.transition('started')
+            self.assertEqual(self.session.last_pending, 'deadline_exhausted')
+
+    def test_actually_observed_created_target_retains_never_started_failure(self):
+        self.running['target-020'] = False
+        self.session.start_helper()
+        with patch.object(r, '_run_process', side_effect=self.probe): self.session.poll()
+        self.assertEqual(len(self.session.ready_target_ids), 19)
+        self.assertEqual(self.session.target_state('target-020')['transitions'][0]['check_id'], 'created')
+        self.session.deadline = time.monotonic() - 1
+        with self.assertRaises(r.ReadinessError) as error: self.session.wait_ready()
+        self.assertEqual(error.exception.code, 'target_not_started')
+        self.assertEqual(self.session.target_state('target-020')['primary_failure']['code'], 'target_not_started')
+
 
 class LegacyHelperPolicy(unittest.TestCase):
     def test_only_twenty_uses_larger_input_and_wait_and_projection_rejects_unbounded_or_boolean_size(self):
         for profile, expected in [('smoke', (180, 65536)), ('five-targets', (180, 65536)), ('twenty-targets', (300, 524288))]:
             session = r.ReadinessSession.__new__(r.ReadinessSession); session.target_plan = TargetPlan(profile)
             self.assertEqual(tuple(session.helper_policy().values()), expected)
+            self.assertEqual(f.readiness_budget(session.target_plan), 120 if profile == 'twenty-targets' else 90)
+            batch = f.BatchReadinessSession.__new__(f.BatchReadinessSession); batch.target_plan = session.target_plan
+            self.assertEqual(batch.context_version(), 5 if profile == 'twenty-targets' else 3)
+            if profile != 'twenty-targets': self.assertEqual(batch.context_policy(), {})
         from test_admission import observed
         from wormhole.admission import build_plan
         from types import SimpleNamespace
