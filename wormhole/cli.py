@@ -155,6 +155,8 @@ def main(arguments=None):
         failure = {"error": {"code": getattr(error, "code", "invalid_contract"), "message": str(error)}}
         if getattr(error, "run_id", None) is not None:
             failure["run_id"] = error.run_id
+        if getattr(error, "suite_run_id", None) is not None:
+            failure["suite_run_id"] = error.suite_run_id
         print(json.dumps(failure, sort_keys=True))
         return 2
     except OSError:
