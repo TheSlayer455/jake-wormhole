@@ -1,0 +1,163 @@
+{
+  "additional_root_cases": [
+    {
+      "previous_nonroot": "skipped 'Actual dropped-UID EACCES requires root fixture operator'",
+      "root_result": "ok",
+      "test": "test_actual_owned_visibility_probe_drops_groups_uid_and_observes_eacces (test_publication.PublicationFilesystem.test_actual_owned_visibility_probe_drops_groups_uid_and_observes_eacces)"
+    },
+    {
+      "previous_nonroot": "skipped 'Root-only disposable UID10001 permission fixture; no host/container changes'",
+      "root_result": "ok",
+      "test": "test_root0600_original_stays_private_and_uid10001_can_reopen_only_readonly_code_inode (test_readiness.PublicSourcePermissions.test_root0600_original_stays_private_and_uid10001_can_reopen_only_readonly_code_inode)"
+    },
+    {
+      "previous_nonroot": "skipped 'Root-owned synthetic Linux builder fixture; ALL Docker mocked'",
+      "root_result": "ok",
+      "test": "test_absent_or_substituted_eula_cannot_reach_image_commit (test_rpm_assembly.Builder.test_absent_or_substituted_eula_cannot_reach_image_commit)"
+    },
+    {
+      "previous_nonroot": "skipped 'Root-owned synthetic Linux builder fixture; ALL Docker mocked'",
+      "root_result": "ok",
+      "test": "test_exact_capped_offline_builder_commits_by_owned_tag_then_reconciles (test_rpm_assembly.Builder.test_exact_capped_offline_builder_commits_by_owned_tag_then_reconciles)"
+    },
+    {
+      "previous_nonroot": "skipped 'Root-owned synthetic Linux builder fixture; ALL Docker mocked'",
+      "root_result": "ok",
+      "test": "test_live_sampled_disk_overflow_stops_only_known_builder_before_commit (test_rpm_assembly.Builder.test_live_sampled_disk_overflow_stops_only_known_builder_before_commit)"
+    },
+    {
+      "previous_nonroot": "skipped 'Root-owned synthetic Linux builder fixture; ALL Docker mocked'",
+      "root_result": "ok",
+      "test": "test_no_signature_or_license_claim_can_reach_image_commit (test_rpm_assembly.Builder.test_no_signature_or_license_claim_can_reach_image_commit)"
+    },
+    {
+      "previous_nonroot": "skipped 'Root-owned synthetic Linux builder fixture; ALL Docker mocked'",
+      "root_result": "ok",
+      "test": "test_public_source_copy_is_rechecked_before_known_cleanup (test_rpm_assembly.Builder.test_public_source_copy_is_rechecked_before_known_cleanup)"
+    },
+    {
+      "previous_nonroot": "skipped 'Root-owned synthetic Linux builder fixture; ALL Docker mocked'",
+      "root_result": "ok",
+      "test": "test_unknown_commit_preserves_container_and_never_cleans_by_empty_sweep (test_rpm_assembly.Builder.test_unknown_commit_preserves_container_and_never_cleans_by_empty_sweep)"
+    }
+  ],
+  "audited_at": "2026-10-24T19:19:59.616541Z",
+  "auditor": "Codex subagent contracts",
+  "baseline": {
+    "check": "repository-baseline",
+    "comprehensive_secret_scan": false,
+    "errors": [],
+    "local_link_targets_checked": 266,
+    "passed": true,
+    "runtime_pipeline_tested": false,
+    "source_bytes": 4789143,
+    "source_revision": "3f7e3cf3db5715f88cd0d60fd8caf1426ae5df14",
+    "tracked_files": 298,
+    "working_tree_clean": true
+  },
+  "commands": [
+    {
+      "arguments": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "elapsed_seconds": 69.56931658299999,
+      "observed_returncode": 0
+    },
+    {
+      "arguments": [
+        "python3",
+        "-B",
+        "scripts/verify_repository.py"
+      ],
+      "elapsed_seconds": 0.08184851900000467,
+      "observed_returncode": 0
+    },
+    {
+      "arguments": [
+        "python3",
+        "-B",
+        "scripts/verify_acceptance_matrix.py"
+      ],
+      "elapsed_seconds": 0.03798928200001228,
+      "observed_returncode": 0
+    }
+  ],
+  "fixture_scope": {
+    "container_runtime_allocated": false,
+    "host_or_api_operations_by_auditor": false,
+    "producer_invoked_by_auditor": false,
+    "rpm_builder_cases_all_docker_mocked": 6,
+    "uid_permission_cases": 2
+  },
+  "full_suite": {
+    "passed": 786,
+    "remaining_skips": [
+      {
+        "reason": "'NTFS junction regression requires Windows'",
+        "test": "test_windows_junction_is_rejected_without_touching_target (test_runs.RunTests.test_windows_junction_is_rejected_without_touching_target)"
+      },
+      {
+        "reason": "'Windows fixed-leaf boundary regression'",
+        "test": "test_windows_registry_injection_cannot_launch_an_unreviewed_adapter (test_stages.StageTests.test_windows_registry_injection_cannot_launch_an_unreviewed_adapter)"
+      }
+    ],
+    "seconds": 69.179,
+    "skipped": 2,
+    "total": 788
+  },
+  "historical_evidence_index": {
+    "categories": 11,
+    "evidence_files": 16,
+    "rows": 83,
+    "scope": "historical evidence index only",
+    "status": "passed"
+  },
+  "local_environment": {
+    "pinned_parity_interpreter_claimed": false,
+    "platform": "Linux-6.18.40.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python_observed": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
+  },
+  "operation": "independent-root-fixture-audit-v1",
+  "preserved_nonqualifying_root_attempt": {
+    "cause_not_inferred_from_generic_error": true,
+    "error_type": "ValueError",
+    "logical_name": "WORM-021-linux-rootfinal.json",
+    "recorded_test_results": 0,
+    "sha256": "d89069a3735ecf8ea4206d3a600cf8252c3af779b10367ed13a01ed0251f2c1a",
+    "state": "FAILED"
+  },
+  "previous_parity_audit_unchanged": {
+    "logical_name": "WORM-021-independent-parity-audit.json",
+    "sha256": "51de32e1437d9009cbd370c02c0922eed5720c7a7713eccc41a394cd3a387b7c"
+  },
+  "production_iso_eligible": false,
+  "reference_eligible": false,
+  "root_execution_basis": {
+    "basis": "Pinned reviewed helper requires euid0 before cloning/execution; eight frozen source-guarded root-only tests are actually ok in the retained full-suite output. No new UID measurement is claimed.",
+    "helper_requires_euid": 0,
+    "receipt_has_direct_uid_field": false,
+    "retained_helper_sha256": "f0c4c6d5e9fd23077d2d37d4032be9fa9d71bb3ac35d36c53bf239caef856ec9",
+    "source_guarded_root_only_fixtures_executed": 8
+  },
+  "root_receipt": {
+    "logical_name": "WORM-021-linux-rootqualified.json",
+    "sha256": "69326a9a480538c82d43e67bd9b22fabb83156efaec6ae547bbb886c92b364f7",
+    "size_bytes": 149405,
+    "source_dirty": false
+  },
+  "schema_version": "1.0",
+  "source_fixture_sha256": {
+    "tests/test_publication.py": "692c47c14a472409037b100945f691a18101bb65e73e9bc8ee3cc6afae8c315e",
+    "tests/test_readiness.py": "26860c66d6a0f3861d31daa11fc1b70ee462a18fd431f5247eb081fd200b42cc",
+    "tests/test_rpm_assembly.py": "eb06a8b1b772b2d82c4b669b7953b5bf15e57ddc53b164d57c95ba6f2672684a"
+  },
+  "source_revision": "3f7e3cf3db5715f88cd0d60fd8caf1426ae5df14",
+  "status": "passed"
+}

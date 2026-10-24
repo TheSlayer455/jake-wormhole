@@ -8,10 +8,10 @@ Latest actual runtime is `825a594862b816401d4b963329e6242bd8ed8aeb`, Run `290ad1
 
 ## Next bounded work
 
-1. Complete/independently review the shared controlled runner, normalized records, fixed safe diagnostics and same-command GitHub/GitLab-compatible wiring. Fixtures are not homelab runtime proof.
-2. Root exercises manual and hosted GitHub modes at exact frozen source, including genuine required failure, nonzero job status and safe artifact bytes. Record versions/commands/hashes and compared semantics. GitLab official lint/runner execution stays unperformed unless actually done.
-3. Reconcile final tests/reviews/CI with the historical matrix. Preserve all original per-ticket evidence/review/checkpoint bytes. Append actual WORM-021 results, never planned success.
-4. Root submits criterion evidence, solution comment, source/privatePR links and Agent In Review/release. Honor current authorized decision guards; label delegated Owner automation. Finish parent WORM-001 last.
+1. Read the [actual WORM-021 checkpoint](WORM-021-checkpoint.md): frozen source3f7e3cf3 passed manual/hosted0/1/1 with byte-identical semantic projections, actual red jobs and safe diagnostics. No additional host operation is required.
+2. Refresh live WORM-021/WORM-001 and claim ownership through Minx. The source snapshot precedes review decisions. Root records six criterion outcomes, solution comment, exact code/privatePR links and Agent In Review/release; then the expressly delegated normal Owner decision.
+3. Finish parent WORM-001 from a fresh all-child ledger and bounded evidence. Do not repeat completed implementations, provision containers or overwrite another session's files based on this stale snapshot.
+4. GitLab official lint/runner availability/execution, VM/ISO/scanner and independent human examination remain unverified or excluded. Engineering checks and delegated Owner automation must stay honestly labeled.
 
 Available local checks:
 

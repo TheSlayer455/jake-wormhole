@@ -23,7 +23,8 @@ Records preserve original tested sources, reviewer scopes, actual checks, findin
 | [WORM-018](WORM-018.md) | Private tested-byte publication |
 | [WORM-019](WORM-019.md) | Overlap/interruption |
 | [WORM-020](WORM-020.md) | Actual stock twenty-target qualification |
+| [WORM-021](WORM-021.md) | Controlled manual/hosted parity, red-job diagnostics and original-source matrix |
 
-WORM-021 is In Progress; final source reviews/results will be added after actual implementation and comparison. See [historical acceptance](../../docs/acceptance-matrix.md) and [current handoff](../CURRENT.md).
+WORM-021 source reviews and actual controlled comparison are recorded; Minx review decisions are separate. See [historical acceptance](../../docs/acceptance-matrix.md) and [current handoff](../CURRENT.md).
 
 Keep credentials, raw captures, Terraform state/plans and environment dumps outside Git. Link original sanitized evidence. Minx owns criterion submissions/decisions. See the [review prompt](../../prompts/REVIEW.md).

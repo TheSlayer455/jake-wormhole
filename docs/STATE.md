@@ -11,7 +11,7 @@ WORM-021 implementation snapshot, October 24, 2026. Baseline delivery is `65db67
 | Private GitHub | Delivery `65db67b90fb104e1e58efffb5fb0e3d80f0c0871`, draft PR19, both hosted checks passed; PRs remain unmerged |
 | Local reference publication | Actual private Ubuntu/UBI filesystem bundles at original WORM-018 source; no image or remote release |
 | Minx snapshot | WORM-002 through WORM-020 Done by explicitly delegated normal Owner actions; WORM-021 approved/claimed In Progress; parent WORM-001 remains |
-| WORM-021 parity | Pending final controlled manual/GitHub comparison and failing-job safe artifact evidence; historical tests/CI do not prove it |
+| WORM-021 parity | Source3f7e3cf3: actual manual/hosted0/1/1 and byte-identical semantic projections; both red jobs retained valid diagnostics; [checkpoint](../handoff/WORM-021-checkpoint.md) |
 
 [WORM-020 evidence](../handoff/evidence/WORM-020.json) retains all four failed actual predecessors: nonmutating Terraform diagnostic truncation, readiness deadline exhaustion, sampler counter grammar refusal and inventory console overflow. Cleanup and later success do not rewrite failures.
 
@@ -19,7 +19,7 @@ The latest runtime has no pending transient graph. Images/private Run state are 
 
 All original per-ticket checkpoints/evidence/reviews remain unchanged under `handoff/`. The [matrix JSON](acceptance-matrix.json) gives exact source/file hashes and selectors. Earlier nested STATE/CURRENT versions remain in Git at the baseline commit.
 
-WORM-021 still needs final shared command/source; controlled normalized manual/GitHub plan/results/decision comparison; actual failing-job nonzero plus safe artifact hashes; runner/Python versions; truthful authored/local-checked GitLab scope; independent source review; delivery/CI/Minx decisions. Root owns live operations and appends results only after execution. Parent WORM-001 is last.
+WORM-021 implementation and actual source/CI parity passed at3f7e3cf3. Windows788/515pass273skips; local Linux788/786pass2Windows-onlyskips in isolated root fixtures. See the checkpoint for interpreter versions, additional nonroot coverage, exact failures and independent reviews. Delivery/Minx review decisions are separate; refresh their current state. Parent WORM-001 is last.
 
 Refresh Minx and use its supported scoped Agent token/API path. Verify actual deployed capabilities, roles, revision and claim guards; where normal Owner action remains required, record the authorized delegation honestly. Do not elevate roles or treat an obsolete browser-login path as the intended universal access method.
 

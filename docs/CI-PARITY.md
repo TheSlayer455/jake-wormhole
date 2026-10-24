@@ -58,14 +58,15 @@ genuine red controls; other branches run `all`. Diagnostics validate after a fai
 step. The uploader receives five literal paths only after validation. There is no
 `continue-on-error` or failure suppression.
 
-The JSON-subset `.gitlab-ci.yml` targets an existing `wormhole-python31214` runner
-with CPython 3.12.14/Git already installed. One job uses the same checks/wrapper and
+The JSON-subset `.gitlab-ci.yml` requires a pre-existing runner tagged
+`wormhole-python31214` with CPython 3.12.14/Git already installed. No runner
+availability was verified. One job uses the same checks/wrapper and
 staged diagnostics, with `allow_failure: false`; it installs no runner/interpreter.
 Local structural checks are implemented. Official GitLab lint and runner execution
 remain unperformed; authorship does not establish compatibility in an unobserved
 environment.
 
-Frozen-source manual/hosted results and reviews belong in WORM-021 evidence after
-execution. This document alone claims no hosted success, deployment, publication
+Frozen-source manual/hosted results and reviews are in the
+[WORM-021 checkpoint](../handoff/WORM-021-checkpoint.md). This document alone claims no deployment, publication
 or owner acceptance. Reference and production ISO eligibility stay false for
 every controlled parity outcome.

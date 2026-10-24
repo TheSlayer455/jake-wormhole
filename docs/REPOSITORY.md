@@ -14,7 +14,7 @@ Delivery `193a9fd78b31595861904df2a93c26323bec2834` failed both [push 4012208116
 
 The sole `fetch-depth: 0` correction preserved pinned actions, triggers, read-only permission, `persist-credentials: false` and all tests. Final [push 40122478923](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40122478923) and [PR 40122482009](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40122482009) passed at `65db67b90fb104e1e58efffb5fb0e3d80f0c0871`. Independent local shallow-clone reproduction first lacked the original blob, then passed all 12 targeted proof fixtures after normal unshallowing. It is a local test, not another hosted run. The [matrix JSON](acceptance-matrix.json) retains safe run metadata/private receipt hashes, not raw job logs or local paths.
 
-Earlier source CI remains historical. WORM-021 must establish controlled manual/GitHub normalized comparison, genuine failing-job status and safe artifact metadata. GitLab authored/local checks are distinct from official lint and runner execution.
+Earlier source CI remains historical. [WORM-021](../handoff/WORM-021-checkpoint.md) established controlled manual/GitHub normalized comparison, genuine failing-job status and safe artifact metadata at3f7e3cf3. Its single-job ten-minute workflow uses the additional pinned uploader, explicit reviewed-head checkout, preserved child failure and five literal validated artifact paths. GitLab authored/local checks are distinct from official lint and runner availability/execution.
 
 ## Review and rollback
 

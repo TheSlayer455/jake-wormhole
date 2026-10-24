@@ -1,0 +1,565 @@
+{
+  "additional_root_linux_qualification": {
+    "commands": [
+      [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      [
+        "python3",
+        "-B",
+        "scripts/verify_repository.py"
+      ],
+      [
+        "python3",
+        "-B",
+        "scripts/verify_acceptance_matrix.py"
+      ]
+    ],
+    "docker_operations_mocked": true,
+    "eight_root_only_fixtures_exercised": true,
+    "passed": 786,
+    "python_observed": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+    "receipt_sha256": "69326a9a480538c82d43e67bd9b22fabb83156efaec6ae547bbb886c92b364f7",
+    "runtime_allocation": false,
+    "seconds": 69.179,
+    "skipped": 2,
+    "source_revision": "3f7e3cf3db5715f88cd0d60fd8caf1426ae5df14",
+    "total": 788
+  },
+  "historical_index": {
+    "categories": 11,
+    "historical_results_are_final_source_reruns": false,
+    "original_evidence_files": 16,
+    "path": "docs/acceptance-matrix.json",
+    "rows": 83,
+    "sha256": "8bb7ecc3a1fa050219db7c60ed0a25c282322fe5188ce5d45311856cba7fed43"
+  },
+  "implementation_status": "passed-awaiting-review",
+  "independent_offline_audit": {
+    "audited_at": "2026-10-24T19:16:59.025925Z",
+    "auditor": "Codex subagent contracts",
+    "full_source_qualifications": [
+      {
+        "baseline_passed": true,
+        "historical_matrix_rows": 83,
+        "historical_runtime_parity_claimed": false,
+        "passed": 778,
+        "platform": "linux",
+        "python_observed": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "receipt_sha256": "2464ce6a555e3999b21a5c498bc75d2e57b0197d348663637d592d852c5df489",
+        "seconds": 69.004,
+        "skipped": 10,
+        "source_revision": "3f7e3cf3db5715f88cd0d60fd8caf1426ae5df14",
+        "total": 788
+      },
+      {
+        "baseline_passed": true,
+        "historical_matrix_rows": 83,
+        "historical_runtime_parity_claimed": false,
+        "passed": 515,
+        "platform": "windows",
+        "python_observed": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+        "receipt_sha256": "d3529a8f18ae21e8e2d0d4e73fff695af799446c503c1e504d0b1d4a99889457",
+        "seconds": 118.447,
+        "skipped": 273,
+        "source_revision": "3f7e3cf3db5715f88cd0d60fd8caf1426ae5df14",
+        "total": 788
+      }
+    ],
+    "hosted": {
+      "distinct_component_runs": 51,
+      "modes": [
+        {
+          "actual_job_conclusion": "success",
+          "artifact_id": 12572253090,
+          "branch": "codex/WORM-021-parity",
+          "computed_runner_returncode": 0,
+          "diagnostic_upload": "success",
+          "diagnostic_validation": "success",
+          "event": "push",
+          "files": {
+            "checksums.json": {
+              "sha256": "ff0a1b47521eb70e66aa124a2433d7c9f28fa0962524a24b9019a8864c55ce72",
+              "size_bytes": 694
+            },
+            "decision.json": {
+              "sha256": "579f1883834df86b692f49ee9ad6e3355401b7cde8f79f36317ec893ce306e4b",
+              "size_bytes": 426
+            },
+            "execution.json": {
+              "sha256": "dfd2188a5a9ba16052ed73b39d63239391c4da7be7405e05502a9cd38766b945",
+              "size_bytes": 4795
+            },
+            "plan.json": {
+              "sha256": "b5c4525dcf76b3b2a4b2005c36f03f9143e29154de4ed24cb77217ff0f998ab9",
+              "size_bytes": 5087
+            },
+            "results.json": {
+              "sha256": "306771f019cf1a4802a1e7b4abe8381bc4fc56707eec8e9cf7925338b1d8046f",
+              "size_bytes": 23518
+            }
+          },
+          "job_id": 120961951454,
+          "manual_semantic_files_byte_identical": [
+            "plan.json",
+            "results.json",
+            "decision.json"
+          ],
+          "mode": "all",
+          "private_original_job_log": {
+            "sha256": "2239bed30c707c97a03272edc2be8056b11c48dd5b0e48314cfaae57a0d06895",
+            "size_bytes": 201112
+          },
+          "receipt_sha256": "ce19d9006a54c0b8af2550284007a567bdf321b9660412f5489fe7fd477ef10b",
+          "run_id": 40124181051,
+          "selected_mode_step": "Run the controlled parity job",
+          "selected_mode_step_conclusion": "success",
+          "status": "passed",
+          "whitelisted_original_log_observations": {
+            "diagnostics_staged": true,
+            "full_fixtures": {
+              "passed": 778,
+              "seconds": 65.926,
+              "skipped": 10,
+              "total": 788
+            },
+            "job_returncode": 0,
+            "observed_child_returncode": 0,
+            "operating_system": {
+              "name": "Ubuntu",
+              "release": "LTS",
+              "version": "24.04.5"
+            },
+            "python_version": "3.12.14",
+            "runner_image": {
+              "name": "ubuntu-24.04",
+              "version": "20261012.334.1"
+            },
+            "runner_image_provisioner_version": "20261021.618",
+            "runner_version": "2.338.0"
+          }
+        },
+        {
+          "actual_job_conclusion": "failure",
+          "artifact_id": 12572298297,
+          "branch": "codex/WORM-021-required-failure",
+          "computed_runner_returncode": 1,
+          "diagnostic_upload": "success",
+          "diagnostic_validation": "success",
+          "event": "push",
+          "files": {
+            "checksums.json": {
+              "sha256": "98f28e024b9f6536a65f2901041c7f5b4f448539c89139ed043a8d5055bebaf2",
+              "size_bytes": 707
+            },
+            "decision.json": {
+              "sha256": "a94ebfdb25ad40e16f5286ad4e0f56f153797f00730a0798eb33c1fec7357dd9",
+              "size_bytes": 501
+            },
+            "execution.json": {
+              "sha256": "51b90aecb7ab3ceea872b87c9723b3ecbd4c3b9d45e0d832fbfbc820a5afa4cd",
+              "size_bytes": 4808
+            },
+            "plan.json": {
+              "sha256": "36ca61c47f8c5ed46f65300be8a4cb836d658f9273d5be06b474d976411b9870",
+              "size_bytes": 5098
+            },
+            "results.json": {
+              "sha256": "72e2000cf424380b306252bc3b1066cd059785ffca29e425f1de6a0e474c01b9",
+              "size_bytes": 23591
+            }
+          },
+          "job_id": 120961977621,
+          "manual_semantic_files_byte_identical": [
+            "plan.json",
+            "results.json",
+            "decision.json"
+          ],
+          "mode": "required-failure",
+          "private_original_job_log": {
+            "sha256": "9c3af6be665a293196eda5996918c04a912a5951d82faa78f0b2e67fa9c8c5ba",
+            "size_bytes": 201393
+          },
+          "receipt_sha256": "b111a67db701f9460e4c00fa630644d9de80afc0dfa56d7f970346f408dcd99a",
+          "run_id": 40124189750,
+          "selected_mode_step": "Prove required failure propagation",
+          "selected_mode_step_conclusion": "failure",
+          "status": "passed",
+          "whitelisted_original_log_observations": {
+            "diagnostics_staged": true,
+            "full_fixtures": {
+              "passed": 778,
+              "seconds": 94.079,
+              "skipped": 10,
+              "total": 788
+            },
+            "job_returncode": 1,
+            "observed_child_returncode": 1,
+            "operating_system": {
+              "name": "Ubuntu",
+              "release": "LTS",
+              "version": "24.04.5"
+            },
+            "python_version": "3.12.14",
+            "runner_image": {
+              "name": "ubuntu-24.04",
+              "version": "20261012.334.1"
+            },
+            "runner_image_provisioner_version": "20261012.601",
+            "runner_version": "2.338.0"
+          }
+        },
+        {
+          "actual_job_conclusion": "failure",
+          "artifact_id": 12572013471,
+          "branch": "codex/WORM-021-unexpected-success",
+          "computed_runner_returncode": 1,
+          "diagnostic_upload": "success",
+          "diagnostic_validation": "success",
+          "event": "push",
+          "files": {
+            "checksums.json": {
+              "sha256": "9422952331f8be45ee3f0839d3676b4673c833607a2fe433477bfdfa0a324508",
+              "size_bytes": 709
+            },
+            "decision.json": {
+              "sha256": "398d8d01961be69b87221823ad568de93a5d36fa64fd6dffa46d484eb41becf7",
+              "size_bytes": 501
+            },
+            "execution.json": {
+              "sha256": "85920fdbdeb53ba852a6c8adf90f8fcaad65bedc76501aa7316c15a2cb9b35eb",
+              "size_bytes": 4810
+            },
+            "plan.json": {
+              "sha256": "4ad285334e524c89ecc628a54de6ee81f0c4b2e4d822db03fe091228e25b1843",
+              "size_bytes": 5104
+            },
+            "results.json": {
+              "sha256": "752a88ab4dca402e75d91d19b765501454bfd164ae7af7d9a00e6cbca5676e22",
+              "size_bytes": 23595
+            }
+          },
+          "job_id": 120961985073,
+          "manual_semantic_files_byte_identical": [
+            "plan.json",
+            "results.json",
+            "decision.json"
+          ],
+          "mode": "unexpected-success",
+          "private_original_job_log": {
+            "sha256": "ee7a091d7c35c298fdb05d41b8dd0e76b131d403bb9901cb6d491ebcca57d27f",
+            "size_bytes": 201408
+          },
+          "receipt_sha256": "498f9e31558bcc974f75e0bfd0ad976382f5606f48f5213dac980912c400f107",
+          "run_id": 40124192027,
+          "selected_mode_step": "Prove unexpected negative success propagation",
+          "selected_mode_step_conclusion": "failure",
+          "status": "passed",
+          "whitelisted_original_log_observations": {
+            "diagnostics_staged": true,
+            "full_fixtures": {
+              "passed": 778,
+              "seconds": 60.57,
+              "skipped": 10,
+              "total": 788
+            },
+            "job_returncode": 1,
+            "observed_child_returncode": 1,
+            "operating_system": {
+              "name": "Ubuntu",
+              "release": "LTS",
+              "version": "24.04.5"
+            },
+            "python_version": "3.12.14",
+            "runner_image": {
+              "name": "ubuntu-24.04",
+              "version": "20261012.334.1"
+            },
+            "runner_image_provisioner_version": "20261012.601",
+            "runner_version": "2.338.0"
+          }
+        }
+      ],
+      "same_source_three_mode_parity": true,
+      "status": "passed"
+    },
+    "manual": {
+      "distinct_component_runs": 51,
+      "modes": [
+        {
+          "actual_assessment_statuses": [
+            "passed",
+            "rejected",
+            "failed",
+            "failed",
+            "failed"
+          ],
+          "canonical_five_files_valid": true,
+          "computed_runner_returncode": 0,
+          "deliberate_expectation_mismatch": [],
+          "files": {
+            "checksums.json": {
+              "sha256": "61d448686cb6fdf0fa6d7c5e506339273a2278857ca111e4f6e45433356cc00d",
+              "size_bytes": 694
+            },
+            "decision.json": {
+              "sha256": "579f1883834df86b692f49ee9ad6e3355401b7cde8f79f36317ec893ce306e4b",
+              "size_bytes": 426
+            },
+            "execution.json": {
+              "sha256": "dfb62ca4810d8fad05879a41a898e508d141afa61ad4c52815d8b0f8e8e9c46c",
+              "size_bytes": 4668
+            },
+            "plan.json": {
+              "sha256": "b5c4525dcf76b3b2a4b2005c36f03f9143e29154de4ed24cb77217ff0f998ab9",
+              "size_bytes": 5087
+            },
+            "results.json": {
+              "sha256": "306771f019cf1a4802a1e7b4abe8381bc4fc56707eec8e9cf7925338b1d8046f",
+              "size_bytes": 23518
+            }
+          },
+          "harness_failed_cases": 0,
+          "harness_passed_cases": 17,
+          "mode": "all",
+          "normalized_semantic_sha256": "58b18ee142af931461e956c17751f15737923e9be627441b788128d5c710f03c",
+          "observation_source": "retained-parent-subprocess-receipt",
+          "observed_runner_returncode": 0,
+          "private_fixture_cleanup_completed": true,
+          "python_version": "3.12.14",
+          "status": "passed"
+        },
+        {
+          "actual_assessment_statuses": [
+            "passed",
+            "rejected",
+            "failed",
+            "failed",
+            "failed"
+          ],
+          "canonical_five_files_valid": true,
+          "computed_runner_returncode": 1,
+          "deliberate_expectation_mismatch": [
+            "assessment-reject"
+          ],
+          "files": {
+            "checksums.json": {
+              "sha256": "e0e1b4bfcdd2341891c68d6b758fe38ef864b8bf54d05899e8dbaf9164944e48",
+              "size_bytes": 707
+            },
+            "decision.json": {
+              "sha256": "a94ebfdb25ad40e16f5286ad4e0f56f153797f00730a0798eb33c1fec7357dd9",
+              "size_bytes": 501
+            },
+            "execution.json": {
+              "sha256": "902ff32b1b2a6070f155c75ba158f778ecbb16bb90978af2a74234ae1bf0231c",
+              "size_bytes": 4681
+            },
+            "plan.json": {
+              "sha256": "36ca61c47f8c5ed46f65300be8a4cb836d658f9273d5be06b474d976411b9870",
+              "size_bytes": 5098
+            },
+            "results.json": {
+              "sha256": "72e2000cf424380b306252bc3b1066cd059785ffca29e425f1de6a0e474c01b9",
+              "size_bytes": 23591
+            }
+          },
+          "harness_failed_cases": 1,
+          "harness_passed_cases": 16,
+          "mode": "required-failure",
+          "normalized_semantic_sha256": "c27483a72fa8b678a066a5e167310181464885a81bfa870b2d08d27bd844ce89",
+          "observation_source": "retained-parent-subprocess-receipt",
+          "observed_runner_returncode": 1,
+          "private_fixture_cleanup_completed": true,
+          "python_version": "3.12.14",
+          "status": "passed"
+        },
+        {
+          "actual_assessment_statuses": [
+            "passed",
+            "rejected",
+            "failed",
+            "failed",
+            "failed"
+          ],
+          "canonical_five_files_valid": true,
+          "computed_runner_returncode": 1,
+          "deliberate_expectation_mismatch": [
+            "assessment-pass"
+          ],
+          "files": {
+            "checksums.json": {
+              "sha256": "3ae1abafe2627d5c951548a9932d304208c8af5460008aeaafad6289239feda8",
+              "size_bytes": 709
+            },
+            "decision.json": {
+              "sha256": "398d8d01961be69b87221823ad568de93a5d36fa64fd6dffa46d484eb41becf7",
+              "size_bytes": 501
+            },
+            "execution.json": {
+              "sha256": "f01c73417d80bf457715fe98c4c49892d9f1eeb401a0bb547b75020e38971b56",
+              "size_bytes": 4683
+            },
+            "plan.json": {
+              "sha256": "4ad285334e524c89ecc628a54de6ee81f0c4b2e4d822db03fe091228e25b1843",
+              "size_bytes": 5104
+            },
+            "results.json": {
+              "sha256": "752a88ab4dca402e75d91d19b765501454bfd164ae7af7d9a00e6cbca5676e22",
+              "size_bytes": 23595
+            }
+          },
+          "harness_failed_cases": 1,
+          "harness_passed_cases": 16,
+          "mode": "unexpected-success",
+          "normalized_semantic_sha256": "52ffd01c755416ca9078ab237425c770193b1c984e87efb437b9e602925190cb",
+          "observation_source": "retained-parent-subprocess-receipt",
+          "observed_runner_returncode": 1,
+          "private_fixture_cleanup_completed": true,
+          "python_version": "3.12.14",
+          "status": "passed"
+        }
+      ],
+      "receipt_sha256": "167a67517b86b5b9d4d216f305d6205aad107c13f3adc2e8837c3f44a01a2761",
+      "receipt_size_bytes": 7757,
+      "status": "passed"
+    },
+    "operation": "independent-synthetic-parity-audit-v1",
+    "previous_audit": {
+      "sha256": "d3ec7f9407e3f7dca444f12f235618da5045092123b790bcde030be255944fd7",
+      "size_bytes": 5926,
+      "status": "manual-passed-hosted-pending"
+    },
+    "schema_version": "1.0",
+    "scope": {
+      "credential_files_read": false,
+      "gitlab_execution_claimed": false,
+      "host_or_api_operations": false,
+      "offline_only": true,
+      "producer_invoked": false,
+      "production_iso_eligible": false,
+      "reference_eligible": false
+    },
+    "source_module_sha256": {
+      ".github/workflows/verify.yml": "65ff9e11432ccfbf1d24793a48e900d973fd7a0e4d27c43fa08eb29072a9b704",
+      ".python-version": "f50159fad3f4319868eb38717b91d55843c41e9803014c8de05e116a6d0bcfdc",
+      "scripts/run_ci_parity.py": "435ec48bb4f27da21c558bb7932ac4e9878e55165d99e70d42595f3641837b83",
+      "wormhole/contracts.py": "b8d8e71577c1109de8d023900acc74bc8bc3ae36fad4d17a31803d14c3a722fb",
+      "wormhole/parity.py": "3f6ab3600aa7ff4ea6ab1c259b7d29b5ee4b5be9e234b320806c177c0bd1cb3d",
+      "wormhole/parity_records.py": "b2be7928211ce1ee8e3cbae1991f0a2e8591cf2392ffa1c6dbb73a973abcb916",
+      "wormhole/runs.py": "39eeb99caa8939d929e4f05e8591aa27fcbfcb2ed3b2d5b9179b03abe3562bf5"
+    },
+    "source_revision": "3f7e3cf3db5715f88cd0d60fd8caf1426ae5df14",
+    "status": "passed"
+  },
+  "independent_offline_audit_sha256": "51de32e1437d9009cbd370c02c0922eed5720c7a7713eccc41a394cd3a387b7c",
+  "limits": [
+    "Controlled parity is synthetic, not a rerun of the historical container matrix.",
+    "GitLab is authored and locally structurally checked; official lint, runner availability and execution unverified.",
+    "Engineering subagent review and delegated Owner decisions are not independent human examination.",
+    "No VM, ISO, scanner, production artifact or remote release qualification; PR remains unmerged."
+  ],
+  "operation": "controlled-parity-and-historical-handoff-v1",
+  "preserved_failed_prequalification": {
+    "phase": "local Git file-transport ownership refusal before clone or tests",
+    "receipt_sha256": "d89069a3735ecf8ea4206d3a600cf8252c3af779b10367ed13a01ed0251f2c1a",
+    "resolution": "fixed hashed complete-history local bundle; no global Git trust exception",
+    "state": "failed"
+  },
+  "private_draft_pr": {
+    "base": "codex/WORM-020-twenty",
+    "base_commit": "65db67b90fb104e1e58efffb5fb0e3d80f0c0871",
+    "branch": "codex/WORM-021-parity",
+    "draft": true,
+    "merged": false,
+    "number": 20,
+    "owner": "TheSlayer455",
+    "private": true,
+    "receipt_sha256": "2c3ed45e3484f348c5d0b678b330a2b816e0f6f6b2b5ef032be837339f0e7684",
+    "repository": "TheSlayer455/jake-wormhole",
+    "repository_id": 1431014094,
+    "source_revision": "3f7e3cf3db5715f88cd0d60fd8caf1426ae5df14",
+    "url": "https://github.com/TheSlayer455/jake-wormhole/pull/20"
+  },
+  "production_iso_eligible": false,
+  "recorded_at": "2026-10-24T19:18:52.384782+00:00",
+  "reference_eligible": false,
+  "requirements_revision": 2,
+  "runtime_source_ci": {
+    "receipt_sha256": "4c850fd042a54c7963575be0c9100902b6848d7fedf2007d81511613616fd421",
+    "runs": [
+      {
+        "conclusion": "failure",
+        "created_at": "2026-10-24T19:11:57Z",
+        "event": "push",
+        "head_sha": "3f7e3cf3db5715f88cd0d60fd8caf1426ae5df14",
+        "html_url": "https://github.com/TheSlayer455/jake-wormhole/actions/runs/40124192027",
+        "id": 40124192027,
+        "status": "completed"
+      },
+      {
+        "conclusion": "failure",
+        "created_at": "2026-10-24T19:11:55Z",
+        "event": "push",
+        "head_sha": "3f7e3cf3db5715f88cd0d60fd8caf1426ae5df14",
+        "html_url": "https://github.com/TheSlayer455/jake-wormhole/actions/runs/40124189750",
+        "id": 40124189750,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "created_at": "2026-10-24T19:11:50Z",
+        "event": "pull_request",
+        "head_sha": "3f7e3cf3db5715f88cd0d60fd8caf1426ae5df14",
+        "html_url": "https://github.com/TheSlayer455/jake-wormhole/actions/runs/40124184502",
+        "id": 40124184502,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "created_at": "2026-10-24T19:11:48Z",
+        "event": "push",
+        "head_sha": "3f7e3cf3db5715f88cd0d60fd8caf1426ae5df14",
+        "html_url": "https://github.com/TheSlayer455/jake-wormhole/actions/runs/40124181051",
+        "id": 40124181051,
+        "status": "completed"
+      }
+    ]
+  },
+  "schema_version": "1.0",
+  "source_reviews": [
+    {
+      "commit": "04f86e9e1b148598611c2f06273bb0cb93e7ab3c",
+      "outcome": "clear",
+      "reviewer": "ui and brief_and_research",
+      "scope": "core final nofollow/replay/cleanup and tests"
+    },
+    {
+      "commit": "eeb0bdde9c0a25ba9525b0ea2f045c2eb318b681",
+      "outcome": "clear",
+      "reviewer": "root and contracts",
+      "scope": "pure closed projections and core interoperability"
+    },
+    {
+      "commit": "ae7a5a7b3075f9933f0902bf8abf471b42096f66",
+      "outcome": "clear",
+      "reviewer": "ui and root",
+      "scope": "historical exact grid and curated handoff"
+    },
+    {
+      "commit": "3f7e3cf3db5715f88cd0d60fd8caf1426ae5df14",
+      "outcome": "clear",
+      "reviewer": "contracts",
+      "scope": "root wrapper/config status and artifact routing"
+    }
+  ],
+  "tested_source_revision": "3f7e3cf3db5715f88cd0d60fd8caf1426ae5df14",
+  "ticket": "WORM-021"
+}

@@ -16,7 +16,7 @@ This is an actual container reference project using generated source and explici
 | Overlapping live coordinators | Allocation serialized; oversized-capacity refusal synthetic, not an actual overloaded host |
 | Twenty simultaneous stock targets | Actual 160/200/200 grids and twenty 123-package inventories; no twenty-target candidate pipeline |
 | 22-container resource interval | Two points/CPU deltas, not guaranteed peaks, hard disk quotas or full historical logs |
-| Hosted source fixture CI | Not homelab execution, final WORM-021 normalized parity or GitLab runner execution |
+| Hosted source fixture CI and controlled parity | Seventeen-case manual/GitHub comparison is source-bound and synthetic; not homelab execution or GitLab runner execution |
 
 UBI-only AUDIT_WRITE permits owned target authentication records in the shared kernel audit log. No audit read/control, extra KILL, PAM change, weakened authentication or host audit-setting change is established. Ubuntu keeps its original capability policy.
 
@@ -24,8 +24,8 @@ Expected-negative harnesses pass by observing declared underlying failure/refusa
 
 Source review, self-review, execution, push, CI and acceptance are separate facts. Independent engineering subagent review is recorded only against an identified source; it is not independent human examination. Explicitly delegated normal Owner decisions are Owner-directed automation, not impersonated human inspection.
 
-WORM-020's four failed actual predecessors and earlier histories remain preserved. Cleanup does not rewrite their outcomes. Incomplete publications must stay incomplete. Runtime source `825a594`, delivery/CI source `65db67b` and future WORM-021 source have distinct meanings.
+WORM-020's four failed actual predecessors and earlier histories remain preserved. Cleanup does not rewrite their outcomes. Incomplete publications must stay incomplete. Stock runtime source `825a594`, WORM-020 delivery/CI source `65db67b` and controlled parity source `3f7e3cf3` have distinct meanings.
 
-WORM-021 is In Progress. Final manual/GitHub parity and safe failing-job upload need their own actual evidence. GitLab authorship/local structural checks are distinct from official lint and runner execution. No homelab CI access, persistent runner, proprietary system, external model or other-chat orchestration is authorized here.
+The [WORM-021 checkpoint](../handoff/WORM-021-checkpoint.md) records actual normalized byte equality and both red jobs' successful safe uploads. Minx review decisions remain separate. GitLab authorship/local structural checks are distinct from official lint, runner availability and execution. No homelab CI access, persistent runner, proprietary system, external model or other-chat orchestration is authorized here.
 
 Production ISO eligibility is always false. Container/reference gates cannot establish production STIG, VM sizing, RHEL installation or ISO publication. Repository hygiene is selected-pattern checking, not comprehensive secret detection. See [state](STATE.md), [architecture](ARCHITECTURE.md) and [original evidence](acceptance-matrix.json).
