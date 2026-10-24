@@ -26,6 +26,23 @@ READINESS = Path('/opt/readiness/runtime.py')
 TARGET_IDS = tuple('target-' + str(i).zfill(3) for i in range(1, 21))
 BATCHES = {f'batch-{i + 1:03}': TARGET_IDS[i * 4:(i + 1) * 4] for i in range(5)}
 
+# Pinned Ansible2.21.5's ad-hoc minimal callback prints command stdout. Full
+# native packets belong only to the bounded aggregate, not the 4KiB console.
+# CallbackBase's inherited stdout handlers are no-ops; failures remain events
+# in CALLBACK and the actual Ansible return code still controls batch success.
+QUIET_CALLBACK_SOURCE = r'''from ansible.plugins.callback import CallbackBase
+DOCUMENTATION="""
+name: wormhole_stock_inventory_quiet
+type: stdout
+short_description: Fixed stock inventory console suppression
+description: Structured aggregate events remain authoritative.
+"""
+class CallbackModule(CallbackBase):
+ CALLBACK_VERSION=2.0
+ CALLBACK_TYPE='stdout'
+ CALLBACK_NAME='wormhole_stock_inventory_quiet'
+'''
+
 # The native read/query/dpkg parser is the reviewed SVD collector subset. No
 # candidate payload, manifest or application version is invented for stock images.
 STOCK_PROGRAM = r'''import base64,hashlib,json,os,re,signal,stat,subprocess,sys,time
@@ -234,6 +251,7 @@ def collect(value, rr=None):
     expected = {'batch_id': value['batch_id'], 'target_ids': ids, 'plan_sha256': value['plan_sha256']}
     image.write_private(attempt / 'expected.json', canonical(expected))
     image.write_private(callbacks / 'wormhole_stock_inventory.py', CALLBACK.encode())
+    image.write_private(callbacks / 'wormhole_stock_inventory_quiet.py', QUIET_CALLBACK_SOURCE.encode())
     config = attempt / 'ansible.cfg'
     image.write_private(config, b'[defaults]\nhost_key_checking = True\nretry_files_enabled = False\ninterpreter_python = /usr/bin/python3\n')
     hosts = {}
@@ -251,6 +269,7 @@ def collect(value, rr=None):
         '-a', json.dumps({'argv': command, 'expand_argument_vars': False}), '--forks', str(value['controller_concurrency']), '--timeout', '3']
     env = {**rr.environment(), 'ANSIBLE_CONFIG': str(config), 'ANSIBLE_CALLBACK_PLUGINS': str(callbacks),
         'ANSIBLE_CALLBACKS_ENABLED': 'wormhole_stock_inventory', 'ANSIBLE_LOAD_CALLBACK_PLUGINS': '1',
+        'ANSIBLE_STDOUT_CALLBACK': 'wormhole_stock_inventory_quiet',
         'PYTHONDONTWRITEBYTECODE': '1', 'WORMHOLE_STOCK_EXPECTED': str(attempt / 'expected.json')}
     rr.MAX_LOG = 4096  # Human console output is diagnostic; packets come only from the callback.
     budget = value['timeout_seconds'] - (time.monotonic() - began); require(budget > .05)

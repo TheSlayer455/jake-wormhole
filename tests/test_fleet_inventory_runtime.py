@@ -1,8 +1,10 @@
 """Synthetic packets/events and real local pipe bounds, never SSH or Docker."""
 import ast
 import base64
+from contextlib import redirect_stderr, redirect_stdout
 from copy import deepcopy
 import importlib.metadata
+import io
 import json
 import os
 from pathlib import Path
@@ -109,26 +111,64 @@ class NativeRuntime(unittest.TestCase):
         def invoke(argv, timeout, env):
             outer.assertIn('--forks', argv); outer.assertEqual(argv[argv.index('--forks') + 1], '4')
             outer.assertEqual(Path(env['ANSIBLE_CONFIG']).read_bytes().splitlines()[1], b'host_key_checking = True')
-            module = ModuleType('ansible.plugins.callback'); module.CallbackBase = type('CallbackBase', (), {'__init__': lambda self, *a, **k: None})
+            outer.assertEqual(env['ANSIBLE_STDOUT_CALLBACK'], 'wormhole_stock_inventory_quiet')
+            outer.assertEqual(env['ANSIBLE_CALLBACKS_ENABLED'], 'wormhole_stock_inventory')
+            outer.assertEqual(env['ANSIBLE_LOAD_CALLBACK_PLUGINS'], '1')
+            outer.assertEqual(env['PYTHONDONTWRITEBYTECODE'], '1')
+            callbacks = Path(env['ANSIBLE_CALLBACK_PLUGINS'])
+            outer.assertEqual({p.name for p in callbacks.iterdir()}, {'wormhole_stock_inventory.py', 'wormhole_stock_inventory_quiet.py'})
+            outer.assertEqual((callbacks / 'wormhole_stock_inventory_quiet.py').read_bytes(), r.QUIET_CALLBACK_SOURCE.encode())
+            outer.assertEqual((callbacks / 'wormhole_stock_inventory.py').read_bytes(), r.CALLBACK.encode())
+            outer.assertEqual(helper.MAX_LOG, 4096)
+            # CallbackBase supplies no-op event methods in pinned Ansible. The
+            # authored stdout subclass must not emit packet/error contents.
+            methods = {'__init__': lambda self, *a, **k: None}
+            methods.update({name: lambda self, *a, **k: None for name in (
+                'v2_runner_on_ok', 'v2_runner_on_failed', 'v2_runner_on_unreachable', 'v2_runner_on_skipped', 'v2_playbook_on_stats')})
+            module = ModuleType('ansible.plugins.callback'); module.CallbackBase = type('CallbackBase', (), methods)
             modules = {'ansible': ModuleType('ansible'), 'ansible.plugins': ModuleType('ansible.plugins'), 'ansible.plugins.callback': module}
-            namespace = {}
+            namespace, quiet_namespace = {}, {}
             with patch.dict(sys.modules, modules), patch.dict(os.environ, env), patch.object(importlib.metadata, 'version', return_value='2.21.5'):
                 exec(r.CALLBACK, namespace)
+                exec(r.QUIET_CALLBACK_SOURCE, quiet_namespace)
+                quiet = quiet_namespace['CallbackModule']()
+                outer.assertEqual((quiet.CALLBACK_TYPE, quiet.CALLBACK_NAME), ('stdout', env['ANSIBLE_STDOUT_CALLBACK']))
                 namespace['ROOT'] = self.root / 'stock-inventory'
                 callback = namespace['CallbackModule']()
                 command = json.loads(argv[argv.index('-a') + 1])['argv']
-                packet = base64.b64encode(r.canonical(observation())).decode()
+                native = observation()
+                native['packages'].extend({'name': 'synthetic-package-' + str(i).zfill(3), 'version': '1:2.3-4',
+                    'architecture': 'amd64'} for i in range(150))
+                native['packages'].sort(key=lambda item: (item['name'], item['architecture']))
+                packet_raw = r.canonical(native)
+                outer.assertLess(len(packet_raw), r.MAX_PACKET)
+                packet = base64.b64encode(packet_raw).decode()
+                outer.assertGreater(len(packet), helper.MAX_LOG)
                 targets = list(r.BATCHES['batch-001'])
+                console, errors = io.StringIO(), io.StringIO()
                 for index, target in enumerate(targets):
                     if action == 'missing' and index == 3: continue
                     result = SimpleNamespace(host=SimpleNamespace(get_name=lambda target=target: target),
                         task=SimpleNamespace(action='ansible.builtin.command', no_log=False),
                         result={'rc': 0, 'stdout': packet, 'stderr': '', 'cmd': command})
-                    event = 'skipped' if action == 'skipped' and index == 3 else 'unreachable' if action == 'unreachable' and index == 3 else 'ok'
-                    callback.record(result, event)
-                    if action == 'duplicate' and index == 0: callback.record(result, event)
+                    event = action if action in ('failed', 'skipped', 'unreachable') and index == 3 else 'ok'
+                    if event == 'failed': result.result.update(rc=2, stdout='', stderr='SYNTHETIC MODULE FAILURE', failed=True)
+                    with redirect_stdout(console), redirect_stderr(errors):
+                        getattr(quiet, 'v2_runner_on_' + event)(result)
+                    getattr(callback, 'v2_runner_on_' + event)(result)
+                    if action == 'duplicate' and index == 0: callback.v2_runner_on_ok(result)
                 callback.v2_playbook_on_stats(None)
-            return {'returncode': 2 if action == 'unreachable' else 0, 'timed_out': False, 'truncated': False, 'log': 'SYNTHETIC CONSOLE IS NOT EVIDENCE'}
+                with redirect_stdout(console), redirect_stderr(errors): quiet.v2_playbook_on_stats(None)
+                outer.assertEqual(console.getvalue(), ''); outer.assertEqual(errors.getvalue(), '')
+            if action in ('console-flood', 'nonzero'):
+                from readiness import runtime as rr
+                # Real bounded local child/pipe behavior, not an Ansible or SSH
+                # claim. Even valid aggregate files cannot hide these failures.
+                program = ('import sys,time;sys.stdout.write("x"*20000);sys.stdout.flush();time.sleep(10)' if action == 'console-flood'
+                    else 'import sys;sys.stdout.write("SYNTHETIC TERMINAL FAILURE\\n");sys.exit(3)')
+                with patch.object(rr, 'ROOT', self.root), patch.object(rr, 'MAX_LOG', helper.MAX_LOG):
+                    return rr.capture([sys.executable, '-I', '-B', '-c', program], 1, {'PATH': os.environ.get('PATH', '')})
+            return {'returncode': 2 if action in ('failed', 'unreachable') else 0, 'timed_out': False, 'truncated': False, 'log': ''}
         helper.capture = invoke
         with patch.object(importlib.metadata, 'version', return_value='2.21.5'):
             return r.collect(request(), helper)
@@ -140,16 +180,29 @@ class NativeRuntime(unittest.TestCase):
         self.assertTrue(all(item['collector_base64'] is not None for item in value['targets']))
         self.assertLess(len(r.canonical(value)), r.MAX_RESPONSE)
 
-    def test_missing_duplicate_skipped_or_unreachable_events_cannot_be_a_pass(self):
+    def test_missing_duplicate_failed_skipped_or_unreachable_events_cannot_be_a_pass(self):
         # Each iteration has its own actual private event directory, as real
         # attempts never reuse a completed helper batch.
-        for action in ('missing', 'duplicate', 'skipped', 'unreachable'):
+        for action in ('missing', 'duplicate', 'failed', 'skipped', 'unreachable'):
             with self.subTest(action=action), tempfile.TemporaryDirectory(dir=self.root) as folder:
                 previous = self.root; self.root = Path(folder); self.root.chmod(0o700)
                 try:
                     value = self.collect(action)
                     self.assertEqual(value['status'], 'fail')
                     self.assertTrue(any(item['status'] != 'pass' for item in value['targets']))
+                finally: self.root = previous
+
+    def test_real_console_flood_and_nonzero_exit_stay_failed_with_complete_aggregate(self):
+        for action in ('console-flood', 'nonzero'):
+            with self.subTest(action=action), tempfile.TemporaryDirectory(dir=self.root) as folder:
+                previous = self.root; self.root = Path(folder); self.root.chmod(0o700)
+                try:
+                    value = self.collect(action)
+                    self.assertEqual(value['status'], 'fail'); self.assertFalse(value['timed_out'])
+                    self.assertTrue(all(item['status'] == 'pass' and item['collector_base64'] is not None for item in value['targets']))
+                    self.assertNotEqual(value['returncode'], 0)
+                    self.assertEqual(value['diagnostic_truncated'], action == 'console-flood')
+                    self.assertEqual(value['diagnostic_bytes'], 4096 if action == 'console-flood' else 27)
                 finally: self.root = previous
 
     def test_twenty_functional_uses_fixed_quiet_stdout_and_original_complete_aggregate(self):
