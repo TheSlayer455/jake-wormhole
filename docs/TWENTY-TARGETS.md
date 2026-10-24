@@ -106,8 +106,9 @@ operation or overwrite its files.
 The twenty-target readiness context is version 5 and records a shared 120-second
 deadline. Creation, cleanup resume and offline replay bind that same policy in
 both context and receipt. Smoke and five-target profiles retain their existing
-90-second policy. Individual probe caps and the 300-second target/helper and
-600-second provisioner lifetimes are unchanged. A shared deadline exhausted
+90-second policy. Individual probe caps, target lifetime of 300 seconds, helper
+wait of 300 seconds with its 600-second supervisor lifetime, and provisioner
+lifetime of 600 seconds are unchanged. A shared deadline exhausted
 before a target is attempted is distinct from observing a target never started.
 
 After readiness, the first resource sample precedes full native inventory, then
