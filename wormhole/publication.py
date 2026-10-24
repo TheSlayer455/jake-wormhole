@@ -186,6 +186,7 @@ def initialize_publication_root():
     """Explicit fixed-root initialization; never adopt a preexisting unmarked dir."""
     _linux()
     parent = _directory(RELEASE_ROOT.parent)
+    root = None
     created = False
     try:
         try:
@@ -193,22 +194,42 @@ def initialize_publication_root():
             created = True
         except FileExistsError:
             pass
-        if created:
-            root = _directory(RELEASE_ROOT, private=True)
+        root = os.open(RELEASE_ROOT.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                       dir_fd=parent)
+        _directory_info(os.fstat(root), private=True)
+        def check_path():
+            current_parent = _directory(RELEASE_ROOT.parent)
+            current_root = None
             try:
-                _write_new(root, 'owner.json', _canonical(OWNER))
-                _write_new(root, 'publication.lock', b'')
-                _sync(root)
-                _sync(parent)
+                require((os.fstat(current_parent).st_dev, os.fstat(current_parent).st_ino) ==
+                        (os.fstat(parent).st_dev, os.fstat(parent).st_ino), 'publication_root_changed')
+                current_root = os.open(RELEASE_ROOT.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                                       dir_fd=current_parent)
+                _directory_info(os.fstat(current_root), private=True)
+                require((os.fstat(current_root).st_dev, os.fstat(current_root).st_ino) ==
+                        (os.fstat(root).st_dev, os.fstat(root).st_ino), 'publication_root_changed')
             finally:
-                os.close(root)
+                if current_root is not None:
+                    os.close(current_root)
+                os.close(current_parent)
+        # All writes stay anchored to the newly created leaf, even if a trusted
+        # parent is concurrently renamed. Never mark a replacement directory.
+        check_path()
+        if created:
+            _write_new(root, 'owner.json', _canonical(OWNER))
+            _write_new(root, 'publication.lock', b'')
+            _sync(root)
+            _sync(parent)
         with _root_locked() as (_, check):
             check()
+            check_path()
         return {'operation': 'reference-publication-root-init', 'initialized': True,
                 'created': created, 'remote_release': False, 'production_iso_eligible': False}
     except OSError:
         raise PublicationError('publication_root_unavailable', 'The fixed private publication root could not be initialized; preserve existing paths.') from None
     finally:
+        if root is not None:
+            os.close(root)
         os.close(parent)
 
 

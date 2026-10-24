@@ -255,6 +255,31 @@ class PublicationFilesystem(unittest.TestCase):
         self.assertEqual(child.stdout.strip(), b'publication_busy')
         self.assertEqual((self.root / 'publication.lock').stat().st_ino, inode)
 
+    def test_initializer_parent_rename_never_marks_a_replacement_unowned_directory(self):
+        parent = self.base / 'new-init-parent'
+        moved = self.base / 'moved-init-parent'
+        parent.mkdir(mode=0o700)
+        target = parent / 'releases'
+        original_mkdir = os.mkdir
+        changed = False
+        def mkdir(path, mode=0o777, *, dir_fd=None):
+            nonlocal changed
+            result = original_mkdir(path, mode, dir_fd=dir_fd)
+            if not changed and path == 'releases' and dir_fd is not None:
+                changed = True
+                parent.rename(moved)
+                original_mkdir(parent, 0o700)
+                original_mkdir(target, 0o700)
+                (target / 'unrelated-synthetic.txt').write_bytes(b'Untouched synthetic existing directory')
+                (target / 'unrelated-synthetic.txt').chmod(0o600)
+            return result
+        with patch.object(p, 'RELEASE_ROOT', target), patch.object(p.os, 'mkdir', side_effect=mkdir):
+            self.failed(p.initialize_publication_root, 'publication_root_changed')
+        self.assertTrue(changed)
+        self.assertEqual(list((moved / 'releases').iterdir()), [])
+        self.assertEqual([item.name for item in target.iterdir()], ['unrelated-synthetic.txt'])
+        self.assertEqual((target / 'unrelated-synthetic.txt').read_bytes(), b'Untouched synthetic existing directory')
+
     def crash(self, event):
         process = os.fork()
         if process == 0:
