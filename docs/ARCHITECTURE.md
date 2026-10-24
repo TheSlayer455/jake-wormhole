@@ -1,125 +1,37 @@
 # Architecture
 
-The [isolation qualification](ISOLATION.md) uses separate owned processes and the
-existing Run-lock then canonical-admission order. It keeps coordinator lifetimes
-overlapping while serializing actual resource graphs. Recovery uses the existing
-exact-source public operation. Only a positively proven terminal-teardown child
-or a filesystem-only publisher is interrupted. Fixed proof files bind all fresh
-Run IDs, both lock refusals, original state and full cleanup archives; the compact
-receipt cannot substitute for those actual observations.
+Jake Wormhole is a standard-library Python CLI/library with bounded Linux container adapters. There is no resident scheduler, dashboard, Kubernetes deployment, database, broker or model provider. [Current state](STATE.md) and [original acceptance](acceptance-matrix.md) distinguish implementation from execution.
 
-The current bounded source now includes the one-container Ubuntu/UBI reference
-pipeline and a separate [private exact-byte publisher](PUBLICATION.md). The
-publisher replays original evidence under the Run lock, then uses its own stable
-release-store lock, a closed file table and a final non-overwriting completion
-marker. Original source/candidate/evidence identity, consumer completeness,
-producer fsync acknowledgement and observed local privacy are separate facts.
-See [current state](STATE.md) for actual source and qualification; the foundation
-narrative below preserves earlier component decisions and may describe later
-completed work as planned. Minx remains the authority for contract/review state.
+| Boundary | Implemented responsibility |
+| --- | --- |
+| Run/source | UUID-owned storage outside Git/vaults, clean source identity, fixed plans, bounded atomic records and stable operation locks |
+| Admission | Fresh measured capacity, canonical Linux flock, build/runtime budgets and durable exact-ID journal; recovery cannot invent allocations |
+| Trusted provisioner | Pinned Terraform/provider in a separate constrained container; create stopped, inspect every PID cap before start, computed inventory and saved-plan destroy |
+| Validation helper | Qualified non-root Docker-free helper, fixed read-only source-file binds, ephemeral credentials, pinned host keys, SSH/Ansible and complete aggregate events |
+| Targets | Owned internal network, no host namespaces/socket/privileged mode, actual cgroups and finite lifetime; stock Ubuntu or explicitly bound UBI |
+| Evidence | Original capture/hash/identity replay, mandatory grids including blocked/unverified rows, full native SVD and matching JSON/text/JUnit |
+| Gate/publisher | Limited reference gate, then separate exact-tested-byte private filesystem publisher with closed file table and nonoverwriting completion protocol |
 
-WORM-002 establishes the repository baseline. WORM-003 adds a standard-library
-Python CLI and isolated local fixture runs, bounded fixed stage adapters and six
-versioned artifact contracts. WORM-004 adds [measured admission](ADMISSION.md),
-reviewed profiles and a canonical Linux shared lock/durable journal.
-WORM-005 adds [qualified Ubuntu target/helper images](IMAGES.md), per-run keys,
-strict SSH qualification, actual cgroup inspection and exact owned cleanup.
-WORM-006 adds the [Terraform adapter](TERRAFORM.md), fixed provisioner and bounded
-acceptance operator. WORM-007 provides strict SSH/Ansible readiness; WORM-008
-provides cancellation and exact-source recovery. WORM-009 adds actual read-only
-SSH/Ansible functional observations with frozen checks and capture-backed results.
-Their actual acceptance records are linked in the current checkpoint. Candidate
-binding, multi-target execution and the complete runtime pipeline remain unfinished. Minx owns requirements,
-assignment and review. The [owner-delegated workflow decision](decisions/0002-owner-delegated-workflow.md)
-describes authorized browser operations without changing Minx permissions.
+## Runtime and locking
 
-Start with [README](../README.md), [agent instructions](../AGENTS.md) and the
-[current handoff](../handoff/CURRENT.md). See [discovery](DISCOVERY.md),
-[fidelity](FIDELITY.md) and [decision 0001](decisions/0001-container-reference.md).
+Legacy fixture `run` executes only its labeled local preflight/SHA subset; v1 eligibility flags remain false. Separate `reference-smoke-v1` composes verified chunks, generated candidate image, admission, real Terraform/SSH/Ansible, candidate checks, native inventory, synthetic assessment, evidence, gate and cleanup. Optional PowerShell is a separate qualified variant, excluded from this combined pipeline.
 
-## Implemented local foundation
+Candidate-bound reference runs support one Ubuntu or UBI target. Stock scale qualification supports twenty actual Ubuntu targets in one graph, independently of Ansible forks four. This is not a twenty-target candidate publication pipeline. Five captures retain complete per-target inventories; the sampler binds all 22 owned live containers. See [bounds](TWENTY-TARGETS.md).
 
-The `wormhole` package is invoked as `python -m wormhole`. Its CLI calls the same
-run, contract and stage library exercised by tests. Run directories use UUIDs,
-explicit ownership markers and separate private/runtime and portable-evidence
-locations outside Git and vault paths. Atomic bounded JSON writes, symlink and
-junction refusal, per-run locks and fixed subprocess adapters protect this local
-path. Real Docker allocation adapters must hold the separate admission lease and
-verify applied limits before starting owned resources.
+Outer locking order is selected Run, canonical admission, then held component operations. Held variants prevent nested reacquisition of the same Run lock. Suites use distinct child UUIDs. WORM-019 proves live coordinator overlap while allocation intervals remain serialized; it does not authorize concurrent unbudgeted graphs.
 
-The synthetic fixture runs actual fixed local subprocesses for preflight and
-SHA256 checking. Declared real pipeline stages remain unsupported. Reports and
-verification cannot convert that subset into runtime or publication eligibility.
-See [CLI behavior](CLI.md) and the selected [dependency lock](../dependencies.lock.json).
+Terraform state/plans, authentication, known-hosts and raw bounded captures stay private. Recovery validates original source, current ownership, terminal records and uncertainty before exact cleanup. Unknown daemon outcomes block unsafe mutation until a specific reviewed proof resolves them; expiry never clears uncertainty. Primary errors and secondary cleanup failures remain separate. No global prune or ambiguous-prefix cleanup exists.
 
-## Planned runtime components
+## Userland and provenance
 
-| Component | Responsibility | Boundary |
-| --- | --- | --- |
-| Python CLI and library | Invoke reusable bounded stages and produce structured results | One code path for manual and CI execution; no resident service or agent scheduler |
-| Trusted provisioner | Run pinned Terraform with the Docker provider | Own Docker control; keep private key contents out of Terraform configuration, state and plans |
-| Validation helper | SSH, Ansible, collection and reporting | Run on the run network without Docker control |
-| Target containers | Exercise known payloads and package inventories | Minimal privilege; no host networking/PID namespace, privileged mode or Docker socket |
-| Evidence and gate | Check completeness, identity and reference eligibility | No production ISO approval; no automatic repair during validation |
-| Reference publisher | Publish the already tested bytes after rechecking evidence | Separate operation, unique destination and final completion manifest |
+Stock target/helper retain original WORM-005 build identities/pins. The provisioner uses the qualified stock target image with a separate fixed tools/runtime role; host Terraform/Ansible installation is unnecessary. Original image build SHA may differ from the controller only while exact recipe input hashes and actual immutable image identities remain verified.
 
-Image dependencies are pinned in images/images.lock.json: Ubuntu24.04,
-OpenSSH9.6p1, Python3.12.3 and Ansible Core2.21.5 with hash-pinned helper wheels.
-Actual installation and SSH observations are in the WORM-005 evidence. Future
-components must pin compatible dependencies and inspect their documentation. The observed
-host has no Terraform or Ansible executable in its discovered tool paths; this
-implementation does not install either on the host. No dashboard, Kubernetes deployment, database,
-broker or inference provider is needed.
+UBI uses official public metadata, exact RPM hashes/signatures, retained EULA, offline dependency solve and a separate installation manifest over the same candidate bytes. Validated UBI SSH adds only documented AUDIT_WRITE to ordinary target capabilities. This permits owned authentication records in the shared kernel audit log; it provides no separate kernel, audit read/control or host policy change. See [RPM target](RPM-TARGET.md).
 
-## Planned run contracts
+[Native SVD](SOFTWARE-INVENTORY.md) retains complete dpkg version/architecture and RPM NEVRA, separate virtual key headers, target/candidate/collector identity, helper/provisioner provenance and shared-kernel scope. [Assessment](ASSESSMENTS.md) is explicitly synthetic/reference-only. Scanner/STIG, VM/ISO and production claims are excluded.
 
-The intended sequence is preflight, source integrity, candidate build,
-provisioning, readiness, Ansible checks, observed SVD, synthetic assessment,
-evidence, gate, scoped cleanup and finalization. Publication follows separately.
-Each stage declares inputs, timeout, outputs, expected checks and failure category.
-Versioned JSON contracts are published under `schemas/` for these record families:
+## CI and handoff
 
-- Run manifest and plan: run identity, source commit, profile, expected targets,
-  checks, predeclared applicability and resource/concurrency limits.
-- Inventory and readiness: actual provisioned IDs/endpoints, trusted host-key
-  references and separate process, TCP, SSH trust/authentication and Ansible states.
-- Test results: expected/observed values, pass/fail/error/unreachable/skip status,
-  timings and bounded sanitized evidence references.
-- SVD and assessment: observed target contents, collector provenance, candidate
-  and image identity, plus explicit synthetic assessment/policy labels.
-- Decision and cleanup: completeness failures, reference eligibility, production
-  ineligibility, primary error, owned resources and separate cleanup outcomes.
+Hosted source fixture CI runs the same local library/tests; historical source proof tests require full Git history. WORM-021 controlled parity and safe failure diagnostics are being implemented separately. GitLab compatibility is not runner execution. No persistent runner, homelab CI credentials/tunnel, external model or other-chat orchestration is needed.
 
-The initial schemas and validators cover current local records. Images,
-Terraform, readiness, recovery and functional observations have actual one-target
-acceptance. Candidate binding, SVD, assessment and publication remain separate
-tickets; schema availability is not evidence that those operations ran. A real
-run must bind candidate hash, derived image, test plan and evidence; validating an
-unrelated stock image cannot validate the candidate. Text, JSON and JUnit reports
-must share result records. Missing checks, unexpected skips, stale/malformed
-evidence and wrong identity must not pass merely because no failures were recorded.
-
-## Planned execution and isolation
-
-Begin with one real target. Later profiles cover five and twenty, independently
-of Ansible concurrency. A measured admission check and actual shared run lock
-must account for builds, helpers, targets and host headroom before allocation.
-Planning budgets are not demonstrated capacity.
-
-Each run needs its own work directory, Terraform state, network, inventory,
-authentication, known-hosts file and owned resource IDs. Private runtime material
-stays outside Git and exportable evidence. A trusted provisioning channel must
-establish host-key identity; disabling host verification is not a fallback.
-Acceptance must use real SSH and Ansible from the validation environment.
-Runtime inspection may assist diagnostics, but cannot replace that path.
-
-Validation detects faults rather than repairing targets. Corrections require a
-new attributable attempt with fresh targets. Cancellation preserves bounded
-diagnostics before scoped teardown; state remains until owned infrastructure is
-accounted for. Cleanup must neither affect unrelated resources nor overwrite the
-primary failure.
-
-No real scanner package or compatible Evaluate-STIG invocation is established.
-Any optional PowerShell capability belongs in a separately qualified helper,
-not the host. Production policy is undecided; container and synthetic evidence
-must always leave production ISO eligibility false.
+See [CLI](CLI.md), [repository controls](REPOSITORY.md), [fidelity](FIDELITY.md), [original decision](decisions/0001-container-reference.md) and [handoff](../handoff/CURRENT.md). Original component contracts retain their versioned scope flags.

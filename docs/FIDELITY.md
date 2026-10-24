@@ -1,80 +1,31 @@
 # Fidelity and evidence limits
 
-## Observed WORM-019 scope, October 24, 2026
+This is an actual container reference project using generated source and explicitly synthetic assessment policy. It does not validate proprietary Lightspeed infrastructure or an installable OS image. The [historical matrix](acceptance-matrix.md) binds observations to original tested sources/evidence; it is not a final-source runtime rerun.
 
-[Original-source isolation evidence](../handoff/evidence/WORM-019.json) records
-actual overlapping live processes with deliberately serialized resource graphs.
-The interruption kills only an owned coordinator after terminal Terraform destroy
-and exact absence proof; normal recovery retains its failed primary status.
-A separate filesystem-only child exits before both publication markers exist.
-Its partial local files remain incomplete and cannot overwrite a destination.
-The fresh underlying Ubuntu reference pipeline passed independently.
+| Established observation | Limit |
+| --- | --- |
+| Owned Terraform, strict SSH/Ansible and recovery | No VM/KVM/libvirt/nested virtualization, ISO boot/install or unrelated host repair |
+| Candidate-bound Ubuntu/UBI targets | Separate userland/install manifests over the same content; shared kernel is not target-installed software |
+| Full native inventory | Helper/provisioner versions are execution provenance; virtual RPM key headers remain separate |
+| Separate pinned optional PowerShell | No host installation, PMC/provider registration, scanner or Evaluate-STIG compatibility |
+| Missing PowerShell diagnostic | Isolated empty local APT source/state, no network; ordinary helper/checks are independent, not stripped of packages |
+| Wrong-version/identity/applicability negatives | Controlled expected inputs, not a naturally broken production payload or repair |
+| Generated chunk integrity | Actual local/loopback fixtures; no proprietary media or remote download claim |
+| Synthetic assessment processing | Real local processing of synthetic records, not a real scanner or OS STIG result |
+| Tested-byte publication | Actual private local reference files; no image export, registry, remote release or production artifact |
+| Overlapping live coordinators | Allocation serialized; oversized-capacity refusal synthetic, not an actual overloaded host |
+| Twenty simultaneous stock targets | Actual 160/200/200 grids and twenty 123-package inventories; no twenty-target candidate pipeline |
+| 22-container resource interval | Two points/CPU deltas, not guaranteed peaks, hard disk quotas or full historical logs |
+| Hosted source fixture CI | Not homelab execution, final WORM-021 normalized parity or GitLab runner execution |
 
-The oversized-capacity case is explicitly synthetic and allocates nothing.
-It proves no actual twenty-target capacity or performance. Source fixture tests,
-actual host checks, engineering review, publishing, CI and delegated Owner decisions
-are separate facts. Production ISO eligibility remains false.
+UBI-only AUDIT_WRITE permits owned target authentication records in the shared kernel audit log. No audit read/control, extra KILL, PAM change, weakened authentication or host audit-setting change is established. Ubuntu keeps its original capability policy.
 
-## Observed WORM-018 scope, October 24, 2026
+Expected-negative harnesses pass by observing declared underlying failure/refusal and cleanup; underlying work remains failed/ineligible. Missing/blocked/unverified/skipped rows cannot disappear behind zero failures. Capture-backed records and typed replay bind actual identities, values, bytes and complete planned grids.
 
-The [source-bound publication evidence](../handoff/evidence/WORM-018.json)
-qualifies actual private local file bundles for one generated Ubuntu target and
-one generated UBI target. It retains exact original candidate/evidence bytes,
-full safe observed inventory, independent CLI inspection, actual unprivileged
-access denial, duplicate refusal and deliberate incomplete/failed cases.
-File publication is real; candidate input and assessment policy are reference
-fixtures. No image export, registry, remote release, VM/ISO boot, scanner/STIG
-acceptance or production eligibility follows. Twenty-target execution is separate.
-Earlier descriptions below may predate that bounded qualification.
+Source review, self-review, execution, push, CI and acceptance are separate facts. Independent engineering subagent review is recorded only against an identified source; it is not independent human examination. Explicitly delegated normal Owner decisions are Owner-directed automation, not impersonated human inspection.
 
-This is a container reference project, not a Lightspeed rewrite or a VM/ISO
-installation laboratory. Read [architecture](ARCHITECTURE.md),
-[discovery](DISCOVERY.md) and the [current handoff](../handoff/CURRENT.md).
+WORM-020's four failed actual predecessors and earlier histories remain preserved. Cleanup does not rewrite their outcomes. Incomplete publications must stay incomplete. Runtime source `825a594`, delivery/CI source `65db67b` and future WORM-021 source have distinct meanings.
 
-## Current baseline
+WORM-021 is In Progress. Final manual/GitHub parity and safe failing-job upload need their own actual evidence. GitLab authorship/local structural checks are distinct from official lint and runner execution. No homelab CI access, persistent runner, proprietary system, external model or other-chat orchestration is authorized here.
 
-Current source-bound component evidence covers real one/five-target Terraform,
-strict SSH/Ansible, original-source recovery, generated chunk reconstruction,
-candidate image binding, optional PowerShell, synthetic assessments and the
-four-case UBI/RPM extension. See [WORM-014 evidence](../handoff/evidence/WORM-014.json)
-for its exact tested source, ordinary Ubuntu regression and skipped checks.
-
-The full observed SVD, integrated runtime gate and tested-byte publication remain
-unfinished. No twenty-target execution, full VM/RHEL installation, ISO boot,
-scanner/STIG support or production eligibility is established. Runtime/kernel,
-helper/target, fixtures/observations, built/pushed and accepted remain distinct.
-
-## Evidence labels for future work
-
-Use **real execution** only for an operation actually run, with tested source
-commit, inputs, environment, command/exit status and retained evidence. A fixture
-is controlled test data. A simulation exercises a substitute behavior and must
-name that substitution. An unavailable dependency, skipped integration or missing
-measurement remains **unverified**, even when unit tests pass.
-
-A negative acceptance harness may pass because it observes the intended failure.
-The underlying run must retain its failed outcome and refusal to publish.
-Self-review and independent review are different facts; name an independent
-reviewer only when that review occurred against an identified commit.
-
-## Claims Wormhole cannot make
-
-- A container run does not demonstrate ISO installation/boot, operating-system
-  STIG compliance, VM sizing or RHEL/KVM compatibility.
-- An RPM derivative must keep its actual identity. Shared host-kernel observations
-  are not software installed in the target userland.
-- Helper/build-tool versions are execution provenance, not target packages.
-- PowerShell execution does not prove Evaluate-STIG controller, transport or
-  target support. No authorized scanner package or invocation is presently known.
-- Processing or repacking ISO bytes would prove only that stated file operation.
-  This baseline does not implement it or authorize restricted-media publication.
-- Authored/linted GitLab compatibility is not a GitLab runner result. GitHub
-  success cannot establish GitLab execution or manual/CI parity by itself.
-- A reference gate can never turn synthetic/container evidence into production
-  approval. Production ISO eligibility remains false, with explicit reasons.
-
-Lightspeed's reported completion percentage, infrastructure problems and prior
-PowerShell attempt are unverified context. No proprietary source or work system
-was accessed for this baseline, and no repair to that infrastructure is claimed.
-Repository creation, tested code, pushed commits, runtime results and human
-acceptance must be reported separately.
+Production ISO eligibility is always false. Container/reference gates cannot establish production STIG, VM sizing, RHEL installation or ISO publication. Repository hygiene is selected-pattern checking, not comprehensive secret detection. See [state](STATE.md), [architecture](ARCHITECTURE.md) and [original evidence](acceptance-matrix.json).

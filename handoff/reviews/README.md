@@ -1,27 +1,29 @@
-# Review records
+# Engineering review index
 
-Store concise sanitized reviews tied to an exact source commit here. Current records: [baseline](2026-10-23-baseline.md), [CLI](2026-10-23-cli.md), [admission](WORM-004.md) and [images/SSH](WORM-005.md), [Terraform](WORM-006.md), [readiness](WORM-007.md), [recovery](WORM-008.md) and [functional validation](WORM-009.md) and [chunk integrity](WORM-012.md). Engineering subagent review is separate from independent human examination and Owner-directed workflow decisions.
+Records preserve original tested sources, reviewer scopes, actual checks, findings and limits. Engineering subagent review is separate from self-review, independent human examination and delegated normal Owner actions. Later fixes do not erase earlier findings.
 
-See also [synthetic assessments](WORM-016.md).
+| Original review | Scope |
+| --- | --- |
+| [Baseline](2026-10-23-baseline.md) | WORM-002 portable context |
+| [CLI](2026-10-23-cli.md) | WORM-003 bounded local fixtures/contracts |
+| [WORM-004](WORM-004.md) | Admission |
+| [WORM-005](WORM-005.md) | Images/SSH |
+| [WORM-006](WORM-006.md) | Terraform |
+| [WORM-007](WORM-007.md) | Readiness |
+| [WORM-008](WORM-008.md) | Recovery |
+| [WORM-009](WORM-009.md) | Functional checks |
+| [WORM-010](WORM-010.md) | Five targets |
+| [WORM-011](WORM-011.md) | Optional PowerShell |
+| [WORM-012](WORM-012.md) | Chunk integrity |
+| [WORM-013](WORM-013.md) | Candidate binding |
+| [WORM-014](WORM-014.md) | UBI/RPM |
+| [WORM-015](WORM-015.md) | Native inventory |
+| [WORM-016](WORM-016.md) | Synthetic assessment |
+| [WORM-017](WORM-017.md) | Reference pipeline/gate |
+| [WORM-018](WORM-018.md) | Private tested-byte publication |
+| [WORM-019](WORM-019.md) | Overlap/interruption |
+| [WORM-020](WORM-020.md) | Actual stock twenty-target qualification |
 
-Each report should identify reviewer role and whether it is self-review or independent, reviewed SHA/base, Minx ticket and approved revision, environment, commands and actual outcomes, findings with source locations, skipped/unverified checks and limitations. Track each finding's disposition and the correction SHA without erasing the original finding. A later fix needs its own verification evidence.
+WORM-021 is In Progress; final source reviews/results will be added after actual implementation and comparison. See [historical acceptance](../../docs/acceptance-matrix.md) and [current handoff](../CURRENT.md).
 
-Do not include credentials, private keys, Terraform state/plans, environment dumps or unsanitized runtime logs. Link approved safe evidence rather than copying private stores. Minx remains authoritative for criterion evidence and human review decisions; repository reviews provide source context and do not automatically change ticket state. See [review prompt](../../prompts/REVIEW.md).
-
-See also [candidate source/image/test binding and exact-source recovery](WORM-013.md).
-
-
-<!-- WORM-010 actual qualification 1920c9621017190a8756affab36e5d25e6102978 -->
-
-[Five-target fleet review](WORM-010.md) records the exact WORM-010 source reviews and actual qualification limits.
-
-
-<!-- WORM-011 actual capability 88c8df01c38986fb909b3cfe231a97081f790bc1 -->
-
-[Optional PowerShell capability review](WORM-011.md) records exact source findings and actual qualification limits.
-
-See [native RPM reference and same-candidate qualification](WORM-014.md).
-
-See [observed native software inventory](WORM-015.md).
-
-See [limited reference pipeline review](WORM-017.md).
+Keep credentials, raw captures, Terraform state/plans and environment dumps outside Git. Link original sanitized evidence. Minx owns criterion submissions/decisions. See the [review prompt](../../prompts/REVIEW.md).

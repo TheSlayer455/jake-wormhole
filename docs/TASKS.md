@@ -1,6 +1,8 @@
 # Minx work index
 
-[WORM-001: Build Jake Wormhole](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-001) is the parent Epic. Minx is authoritative for each ticket's requirements revision, acceptance criteria, dependencies, assignment, approval and review state. This index is a navigation aid, not another editable ticket database. Open the ticket or its API handoff for the current dependency graph before choosing work.
+Minx [WORM-001](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-001) is the parent Epic and authority for current contracts, dependencies, claims and review state. This is navigation, not a second ticket database.
+
+Snapshot October 24: WORM-002 through WORM-020 are Done under explicitly delegated normal Owner actions; WORM-021 r2 is approved/claimed In Progress for controlled parity and handoff. Parent acceptance follows all children. Refresh Minx before writes; this source snapshot never grants a lease. See [state](STATE.md), [historical matrix](acceptance-matrix.md) and [continuation](../handoff/CURRENT.md).
 
 | Ticket | Bounded work |
 |---|---|
@@ -25,8 +27,6 @@
 | [WORM-020](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-020) | Measured twenty-target demonstration |
 | [WORM-021](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-021) | Manual/CI parity, failure matrix and final handoff |
 
-The attachment's milestone labels WORM-001 through WORM-007 are illustrative. Use the real Minx keys above; for example, the first target acceptance path is WORM-009, not WORM-002.
+The source attachment's WORM-001 through WORM-007 milestone labels are illustrative, not these real keys. Current server scope/revision/claim guards remain authoritative. Use one writer per worktree and one owner per task; renew/checkpoint explicitly. Expiry does not authorize overwriting work.
 
-The current source checkpoint and reported WORM-002 ownership are in [STATE.md](STATE.md). Refresh Minx rather than treating that snapshot as a lease. An Agent claims only a current approved contract with satisfied dependencies; blockers require truthful records. Claims expire and do not authorize overwriting another writer's files. Use one owner per task and one writer per worktree.
-
-For every submitted increment, map pass/fail/unverified evidence to all criterion IDs and add a solution comment with source references, actual commands/results, limitations and cleanup/rollback. Agent API completion submits In Review and releases the claim. Jake subsequently delegated the existing Owner browser workflow clicks for these WORM tickets; record the automation and evidence as described in [decision 0002](decisions/0002-owner-delegated-workflow.md), without claiming independent human review. A prerequisite awaiting review is not Done. Continue only after actual server guards pass.
+Each increment needs criterion evidence, solution comment, actual source/commands/results, reviewer limits and cleanup/leftovers. Agent review submission releases the claim. Record authorized normal Owner actions as delegated automation rather than independent human examination. Verify actual deployed capabilities; never extract credentials or elevate roles. Production ISO eligibility stays false.
