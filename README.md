@@ -1,3 +1,11 @@
+WORM-020's actual twenty-target stock graph passed at runtime
+`825a594862b816401d4b963329e6242bd8ed8aeb`: 160 readiness pairs, 200 functional
+rows and 200 inventory rows, full native inventories and measured resource usage.
+All 23 transient resources were removed; the unrelated sentinel was unchanged.
+See the [twenty-target checkpoint](handoff/WORM-020-checkpoint.md). Publishing,
+CI and Minx decisions remain separate. WORM-021 and parent acceptance are next;
+older descriptions below are historical. Production ISO eligibility stays false.
+
 Current WORM-019 qualification proves overlapping live coordinators with serialized
 resource graphs, exact-source interrupted recovery and a publication interrupted
 before both completion markers. All four declared cases passed at clean runtime

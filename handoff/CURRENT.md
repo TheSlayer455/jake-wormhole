@@ -1,4 +1,24 @@
-# Current continuation: WORM-019 delivery
+# Current continuation: WORM-020 delivery
+
+Read the [twenty-target checkpoint](WORM-020-checkpoint.md),
+[criterion evidence](evidence/WORM-020.json), [review](reviews/WORM-020.md)
+and [current state](../docs/STATE.md). Actual clean runtime is
+`825a594862b816401d4b963329e6242bd8ed8aeb`; later documentation commits are separate.
+Run `290ad14a-e6ec-4822-ae36-258d336ecc38` passed its full twenty-target graph,
+160/200/200 rows and original replay. All 23 transient resources are absent;
+no active host operation remains. Retain images, private Run state, earlier
+failures and intentionally incomplete publications. Do not repair their markers.
+
+Refresh Minx before writes. WORM-020 still needs publishing/CI, criterion evidence,
+solution comment, Agent review submission and Jake's explicitly delegated normal
+Owner decisions at this snapshot. Then approve/claim WORM-021 for actual controlled
+manual/CI parity, failure propagation, safe diagnostics and concise final handoff;
+finish parent WORM-001 last. Do not claim independent human acceptance, GitLab
+runner execution or production ISO eligibility. Current server guards remain in force.
+
+## Preserved WORM-019 continuation
+
+# Historical continuation: WORM-019 delivery
 
 Read the [isolation checkpoint](WORM-019-checkpoint.md),
 [criterion evidence](evidence/WORM-019.json), [engineering review](reviews/WORM-019.md)

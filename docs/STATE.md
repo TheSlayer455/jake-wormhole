@@ -1,4 +1,24 @@
-# Current engineering state: isolation and scoped recovery qualified
+# Current engineering state: actual twenty-target stock scale qualified
+
+October 24, 2026: Run `290ad14a-e6ec-4822-ae36-258d336ecc38` passed at clean
+runtime `825a594862b816401d4b963329e6242bd8ed8aeb`. All 160 readiness, 200 functional
+and 200 inventory rows passed. Twenty complete native inventories each contain
+123 observed installed packages. Configured Ansible concurrency is four.
+The 22-container measurement interval spans both inventory and functional work;
+it is not a guaranteed peak. All 23 transient resources are absent, admission is
+finished with zero pending, and the unrelated sentinel is unchanged.
+
+Source fixtures: Windows 741 cases, 472 pass/269 platform skips in 94.928 seconds;
+homelab Linux 741 cases, 739 pass/two Windows-only skips in 85.702 seconds.
+The original-source report/gate and 48-file original readback passed. Four prior
+actual attempts remain failed history. See the [checkpoint](../handoff/WORM-020-checkpoint.md)
+and [criterion evidence](../handoff/evidence/WORM-020.json). Publishing, hosted CI
+and explicitly delegated Owner decisions are pending at this documentation snapshot.
+Refresh Minx. WORM-021 and parent WORM-001 remain; production ISO eligibility is false.
+
+## Preserved WORM-019 checkpoint
+
+# Historical engineering state: isolation and scoped recovery qualified
 
 October 24, 2026: actual suite `c870d716-41b3-4f0f-baf1-9e0f710e9a27`
 passed all four cases at clean runtime
