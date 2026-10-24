@@ -364,8 +364,8 @@ class ProvisioningSession:
                 'source_scope', 'Real provisioning requires the exact clean recorded Linux source.')
         lease._active()
         require(lease.run_id == run.id and lease.source_revision == revision and lease.plan['synthetic'] is False and
-                lease.plan['profile'] in {'smoke', 'five-targets'} and lease.plan['target_count'] in {1, 5} and not lease._reconciliation_only,
-                'admission_scope', 'Only this exact admitted real smoke run may allocate.')
+                lease.plan['profile'] in {'smoke', 'five-targets', 'twenty-targets'} and lease.plan['target_count'] in {1, 5, 20} and not lease._reconciliation_only,
+                'admission_scope', 'Only this exact admitted real target profile may allocate.')
         self.target_plan = TargetPlan.from_lease(lease)
         require(manifest['profile'] == self.target_plan.profile, 'admission_scope', 'Run and lease profiles differ.')
         self.run, self.lease, self.toolchain = run, lease, toolchain
@@ -1050,7 +1050,7 @@ class ProvisioningSession:
         revision, dirty = source_identity()
         require(lease._reconciliation_only and lease.run_id == run.id and lease.source_revision == manifest['source_revision'] and
                 revision == manifest['source_revision'] and not dirty and not manifest['source_dirty'] and
-                lease.plan['profile'] in {'smoke', 'five-targets'} and lease.plan['synthetic'] is False,
+                lease.plan['profile'] in {'smoke', 'five-targets', 'twenty-targets'} and lease.plan['synthetic'] is False,
                 'recovery_scope', 'Destroy recovery requires this exact clean-source run and held reconciliation-only lease.')
         session = cls.__new__(cls)
         session.run, session.lease = run, lease

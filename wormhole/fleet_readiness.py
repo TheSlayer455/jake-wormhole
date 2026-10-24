@@ -20,7 +20,8 @@ STATE = ('receipt', 'scenario', 'target', 'provisioning', 'trust_address', 'pinn
 RECEIVER = r.qualification.INPUT_RECEIVER + r'''
 try:
     target=sys.argv[1]
-    if target not in tuple('target-'+str(i).zfill(3) for i in range(1,6)): raise ValueError('target identity')
+    counts={'smoke':1,'five-targets':5,'twenty-targets':20}
+    if len(sys.argv)!=3 or sys.argv[2] not in counts or target not in tuple('target-'+str(i).zfill(3) for i in range(1,counts[sys.argv[2]]+1)): raise ValueError('target identity')
     parent=Path('/run/input')
     if any(p.is_symlink() for p in (parent,*parent.parents)): raise ValueError('linked input')
     info=parent.lstat()
@@ -131,12 +132,13 @@ class TargetView:
 
 class BatchReadinessSession(r.ReadinessSession):
     """Run lock/lease/Docker scope remain caller-owned; readiness retries allocate nothing."""
-    def __init__(self, provisioning, *, scenarios=None, validation=True):
+    def __init__(self, provisioning, *, scenarios=None, validation=True, fleet_inventory=False):
         self.run, self.lease, self.parent_provisioning = provisioning.run, provisioning.lease, provisioning
         self.target_plan = TargetPlan.from_lease(self.lease)
         revision, dirty = source_identity(); manifest = self.run.manifest()
-        r.require(self.target_plan.profile in {'smoke', 'five-targets'} and self.target_plan == provisioning.target_plan and
+        r.require(self.target_plan.profile in {'smoke', 'five-targets', 'twenty-targets'} and self.target_plan == provisioning.target_plan and
             not self.lease._reconciliation_only and self.lease.plan['synthetic'] is False and validation is True and
+            type(fleet_inventory) is bool and (not fleet_inventory or self.target_plan.profile == 'twenty-targets') and
             revision == manifest['source_revision'] == self.lease.source_revision and dirty is False and
             manifest['source_dirty'] is False and manifest['mode'] == 'container-reference', 'readiness_scope')
         self.target_resources = provisioning.target_resources
@@ -153,10 +155,14 @@ class BatchReadinessSession(r.ReadinessSession):
         self.source_sha256, self.bind_path, self.bind_identity = r.runtime_hash(), self.run.file('private/helper-source/runtime.py'), None
         self.validation_enabled, self.validation_source_sha256 = True, r.code_hash(r.VALIDATION_RUNTIME)
         self.validation_bind_path, self.validation_bind_identity = self.run.file('private/helper-source/validation.py'), None
+        self.fleet_inventory_enabled = fleet_inventory
+        self.fleet_inventory_source_sha256 = r.code_hash(r.FLEET_INVENTORY_RUNTIME) if fleet_inventory else None
+        self.fleet_inventory_bind_path = self.run.file('private/helper-source/fleet-inventory.py')
+        self.fleet_inventory_bind_identity = None
         self.target, self.provisioning, self.scenario = next(iter(self.target_resources.values())), provisioning, 'healthy'
         self.trust_address, self.pinned_key, self.counts, self.last_pending, self.last_started_at = None, None, {}, 'target_not_started', None
         self._aggregate = {**common(manifest), 'operation': 'ssh-ansible-readiness', 'resource_layout': LAYOUT,
-            'context_version': 3, 'target_plan': self.target_plan.record(), 'target_resource_ids': dict(self.target_resources),
+            'context_version': self.context_version(), 'target_plan': self.target_plan.record(), 'target_resource_ids': dict(self.target_resources),
             'status': 'pending', 'helper_id': None, 'helper_image': r.HELPER_IMAGE, 'helper_build_run': r.HELPER_BUILD,
             'expected_pairs': [{'target_id': target, 'check_id': check} for target in self.target_plan.target_ids for check in r.EXPECTED],
             'targets': [], 'attempts': [], 'primary_failure': None, 'secondary_failures': [], 'cleanup': 'not-started',
@@ -170,6 +176,17 @@ class BatchReadinessSession(r.ReadinessSession):
                 provisioning=TargetView(provisioning, target), trust_address=None, pinned_key=None, counts={},
                 last_pending='target_not_started', last_started_at=None)
         self.receipt = self._aggregate
+        self._aggregate.update(self.context_policy())
+
+    def context_version(self):
+        return 4 if self.target_plan.profile == 'twenty-targets' else 3
+
+    def context_policy(self):
+        if self.context_version() == 3:
+            return {}
+        return {'helper_policy': self.helper_policy(), 'fleet_inventory_enabled': self.fleet_inventory_enabled,
+            'fleet_inventory_source_sha256': self.fleet_inventory_source_sha256,
+            'fleet_inventory_bind_identity': self.fleet_inventory_bind_identity}
 
     def held(self):
         super().held()
@@ -206,16 +223,16 @@ class BatchReadinessSession(r.ReadinessSession):
             record['primary_failure'] = next((item['primary_failure'] for item in record['targets'] if item['primary_failure']), None)
         if record['primary_failure'] is not None: record['status'] = 'failed'
         elif all(item['status'] == 'ready' for item in record['targets']): record['status'] = 'ready'
-        record.update(helper_id=self.helper, updated_at=now())
+        record.update(helper_id=self.helper, updated_at=now(), **self.context_policy())
         atomic_json(self.run.file('evidence/readiness.json'), record)
         atomic_json(self.run.file('private/readiness-controller.json'), {**common(self.run.manifest()),
-            'operation': 'readiness-helper', 'resource_layout': LAYOUT, 'context_version': 3,
+            'operation': 'readiness-helper', 'resource_layout': LAYOUT, 'context_version': self.context_version(),
             'target_plan': self.target_plan.record(), 'target_resource_ids': dict(self.target_resources),
             'helper_id': self.helper, 'helper_image': r.HELPER_IMAGE, 'network_id': self.network,
             'image_labels': self.image_labels, 'source_path': str(r.RUNTIME), 'source_sha256': self.source_sha256,
             'bind_path': str(self.bind_path), 'bind_identity': self.bind_identity, 'validation_enabled': True,
             'validation_source_sha256': self.validation_source_sha256, 'validation_bind_identity': self.validation_bind_identity,
-            'unknown_outcome': record['unknown_outcome'], 'cleanup': record['cleanup']})
+            'unknown_outcome': record['unknown_outcome'], 'cleanup': record['cleanup'], **self.context_policy()})
 
     def transition(self, check):
         super().transition(check)
@@ -228,7 +245,7 @@ class BatchReadinessSession(r.ReadinessSession):
         self.verify_helper(self.inspect('container', self.helper))
         path = self.run.file('private/credentials/id_ed25519')
         with path.open('rb') as stream: private = stream.read(1025)
-        r.require(1 <= len(private) <= 1024, 'invalid_auth')  # Five fixed Ed25519 inputs fit the existing64KiB tmpfs.
+        r.require(1 <= len(private) <= 1024, 'invalid_auth')
         with path.with_name('id_ed25519.pub').open('rb') as stream:
             other = r.qualification.public_key(stream.read(513).decode('ascii'))
         r.require(other != key, 'invalid_trust_fixture')
@@ -241,7 +258,8 @@ class BatchReadinessSession(r.ReadinessSession):
         began = time.monotonic()
         try:
             result = subprocess.run(['docker', '--config', images.docker_configuration(), '--host', images.SOCKET, 'exec', '-i',
-                '--user', '10001:10001', self.helper, '/opt/wormhole/venv/bin/python', '-I', '-S', '-c', RECEIVER, self.selected_target],
+                '--user', '10001:10001', self.helper, '/opt/wormhole/venv/bin/python', '-I', '-S', '-c', RECEIVER,
+                self.selected_target, self.target_plan.profile],
                 input=data.getvalue(), capture_output=True, timeout=self.timeout(15),
                 env={key: os.environ[key] for key in ('PATH', 'SYSTEMROOT', 'WINDIR') if key in os.environ})
         except subprocess.TimeoutExpired:
@@ -297,7 +315,12 @@ class BatchReadinessSession(r.ReadinessSession):
             self.save()
             if self._aggregate['primary_failure'] is not None:
                 raise r.ReadinessError(self._aggregate['primary_failure']['code'], 'One or more exact planned targets failed readiness.')
-            self.require_ready()
+            try:
+                self.require_ready()
+                self.timeout()
+            except Exception as error:
+                super().failure(error)
+                raise
             return deepcopy(self._aggregate)
         finally:
             self._on_poll = None
@@ -313,6 +336,7 @@ class BatchReadinessSession(r.ReadinessSession):
             budget = deadline - time.monotonic(); r.require(budget > .1, 'readiness_required')
             with self.selected(target): super().require_ready(inspection_timeout=min(20, budget))
         r.require(all(self._states[target]['receipt']['status'] == 'ready' for target in ids), 'readiness_required')
+        r.require(time.monotonic() < deadline, 'readiness_required')
         return True
 
     def target_state(self, target_id):
@@ -327,11 +351,16 @@ class BatchReadinessSession(r.ReadinessSession):
         lease._active(); revision, dirty = source_identity(); manifest = run.manifest()
         context = read_json(run.file('private/readiness-controller.json'))
         retained = r.readiness_status(run)
+        r.require(type(context) is dict, 'helper_recovery_scope')
+        plan = TargetPlan.from_record(context.get('target_plan'))
+        version = 4 if plan.profile == 'twenty-targets' else 3
         fields = set(common(manifest)) | {'operation', 'resource_layout', 'context_version', 'target_plan', 'target_resource_ids',
             'helper_id', 'helper_image', 'network_id', 'image_labels', 'source_path', 'source_sha256', 'bind_path', 'bind_identity',
             'validation_enabled', 'validation_source_sha256', 'validation_bind_identity', 'unknown_outcome', 'cleanup'}
+        if version == 4:
+            fields |= {'helper_policy', 'fleet_inventory_enabled', 'fleet_inventory_source_sha256', 'fleet_inventory_bind_identity'}
         r.require(type(context) is dict and set(context) == fields and common(context) == common(manifest) and
-            context['resource_layout'] == LAYOUT and context['context_version'] == 3 and context['operation'] == 'readiness-helper' and
+            context['resource_layout'] == LAYOUT and type(context['context_version']) is int and context['context_version'] == version and context['operation'] == 'readiness-helper' and
             context['helper_image'] == r.HELPER_IMAGE and context['validation_enabled'] is True and
             context['source_path'] == str(r.RUNTIME) and context['source_sha256'] == r.runtime_hash() and
             context['bind_path'] == str(run.file('private/helper-source/runtime.py')) and
@@ -340,15 +369,15 @@ class BatchReadinessSession(r.ReadinessSession):
             lease._reconciliation_only and lease.run_id == run.id and lease.source_revision == revision == manifest['source_revision'] and
             dirty is False and manifest['source_dirty'] is False and manifest['mode'] == 'container-reference' and
             lease.plan['synthetic'] is False, 'helper_recovery_scope')
-        plan = TargetPlan.from_record(context['target_plan']); targets = context['target_resource_ids']
-        r.require(plan == TargetPlan.from_lease(lease) and plan.profile in {'smoke', 'five-targets'} and
+        targets = context['target_resource_ids']
+        r.require(plan == TargetPlan.from_lease(lease) and plan.profile in {'smoke', 'five-targets', 'twenty-targets'} and
             type(targets) is dict and set(targets) == set(plan.target_ids) and
             all(type(x) is str and r.ID.fullmatch(x) for x in targets.values()) and len(set(targets.values())) == len(targets) and
             type(context['network_id']) is str and r.ID.fullmatch(context['network_id']) and
             (context['helper_id'] is None or type(context['helper_id']) is str and r.ID.fullmatch(context['helper_id'])), 'helper_recovery_scope')
         receipt = read_json(run.file('evidence/readiness.json'))
         r.require(common(receipt) == common(manifest) and receipt.get('target_plan') == plan.record() and
-            receipt.get('context_version') == 3 and receipt.get('resource_layout') == LAYOUT and
+            type(receipt.get('context_version')) is int and receipt['context_version'] == version and receipt.get('resource_layout') == LAYOUT and
             receipt.get('target_resource_ids') == targets and receipt.get('helper_id') == context['helper_id'] and
             receipt.get('cleanup') == context['cleanup'] and receipt.get('unknown_outcome') is False, 'helper_recovery_scope')
         validate_children(receipt, manifest, plan, targets)
@@ -381,6 +410,19 @@ class BatchReadinessSession(r.ReadinessSession):
         value.bind_path, value.bind_identity = run.file('private/helper-source/runtime.py'), context['bind_identity']
         value.validation_enabled, value.validation_source_sha256 = True, context['validation_source_sha256']
         value.validation_bind_path, value.validation_bind_identity = run.file('private/helper-source/validation.py'), context['validation_bind_identity']
+        value.fleet_inventory_enabled = context.get('fleet_inventory_enabled', False)
+        value.fleet_inventory_source_sha256 = context.get('fleet_inventory_source_sha256')
+        value.fleet_inventory_bind_path = run.file('private/helper-source/fleet-inventory.py')
+        value.fleet_inventory_bind_identity = context.get('fleet_inventory_bind_identity')
+        if version == 4:
+            policy = context['helper_policy']
+            r.require(type(policy) is dict and set(policy) == {'wait_seconds', 'input_tmpfs_bytes'} and
+                all(type(item) is int for item in policy.values()) and policy == value.helper_policy() and
+                type(value.fleet_inventory_enabled) is bool and
+                (value.fleet_inventory_source_sha256 == r.code_hash(r.FLEET_INVENTORY_RUNTIME) if value.fleet_inventory_enabled else
+                    value.fleet_inventory_source_sha256 is None and value.fleet_inventory_bind_identity is None) and
+                json.dumps({key: receipt.get(key) for key in value.context_policy()}, sort_keys=True) ==
+                    json.dumps(value.context_policy(), sort_keys=True), 'helper_recovery_scope')
         value.receipt = value._aggregate = receipt; value.reconciliation_only, value.selected_target, value._on_poll = True, None, None
         value._states = {item['target_id']: {'receipt': item} for item in receipt['targets']}
         r.require(set(value._states) == set(plan.target_ids), 'helper_recovery_scope')

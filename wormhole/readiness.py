@@ -26,6 +26,8 @@ RUNTIME = SOURCE_ROOT / 'readiness/runtime.py'
 SOURCE_MOUNT = '/opt/readiness/runtime.py'
 VALIDATION_RUNTIME = SOURCE_ROOT / 'validation/runtime.py'
 VALIDATION_MOUNT = '/opt/validation/runtime.py'
+FLEET_INVENTORY_RUNTIME = SOURCE_ROOT / 'fleet_inventory/runtime.py'
+FLEET_INVENTORY_MOUNT = '/opt/wormhole/fleet-inventory.py'
 SCENARIOS = ('healthy', 'wrong-key', 'wrong-user', 'configured-interpreter-unavailable')
 EXPECTED = ('created', 'started', 'endpoint-discovered', 'tcp-reachable', 'ssh-identity-accepted',
             'python-usable', 'ansible-usable', 'required-test-complete')
@@ -168,6 +170,13 @@ class ReadinessSession:
             'helper_image_mismatch')
         return image['Config'].get('Labels') or {}
 
+    def helper_policy(self):
+        """Exact profile policy, independent of mutable receipt/controller fields."""
+        profile = getattr(getattr(self, 'target_plan', None), 'profile', 'smoke')
+        require(profile in {'smoke', 'five-targets', 'twenty-targets'}, 'readiness_scope')
+        return {'wait_seconds': 300, 'input_tmpfs_bytes': 524288} if profile == 'twenty-targets' else {
+            'wait_seconds': 180, 'input_tmpfs_bytes': 65536}
+
     def source_bindings(self):
         """Fixed reviewed files only; callers cannot supply executable paths."""
         require(type(self.validation_enabled) is bool and
@@ -182,6 +191,18 @@ class ReadinessSession:
         else:
             require(self.validation_source_sha256 is None and self.validation_bind_identity is None,
                     'helper_source_invalid')
+        enabled = getattr(self, 'fleet_inventory_enabled', False)
+        require(type(enabled) is bool, 'helper_source_invalid')
+        if enabled:
+            require(getattr(getattr(self, 'target_plan', None), 'profile', None) == 'twenty-targets' and
+                self.fleet_inventory_bind_path == self.run.file('private/helper-source/fleet-inventory.py') and
+                type(self.fleet_inventory_source_sha256) is str and
+                re.fullmatch('[a-f0-9]{64}', self.fleet_inventory_source_sha256), 'helper_source_invalid')
+            bindings.append((FLEET_INVENTORY_RUNTIME, self.fleet_inventory_bind_path, self.fleet_inventory_source_sha256,
+                             'fleet_inventory_bind_identity', FLEET_INVENTORY_MOUNT))
+        else:
+            require(getattr(self, 'fleet_inventory_source_sha256', None) is None and
+                getattr(self, 'fleet_inventory_bind_identity', None) is None, 'helper_source_invalid')
         return bindings
 
     def prepare_source_copy(self):
@@ -282,8 +303,9 @@ class ReadinessSession:
             return
         host, config = value['HostConfig'], value['Config']
         expected = self.lease.plan['limits']['helper']['docker_create']
+        policy = self.helper_policy()
         require(config.get('User') == '10001:10001' and config.get('Entrypoint') ==
-            ['/opt/wormhole/venv/bin/python', '/opt/wormhole/runtime.py', 'helper'] and config.get('Cmd') == ['wait', '180'] and
+            ['/opt/wormhole/venv/bin/python', '/opt/wormhole/runtime.py', 'helper'] and config.get('Cmd') == ['wait', str(policy['wait_seconds'])] and
             {x for x in config.get('Env', []) if x.startswith('WORMHOLE_')} ==
             {'WORMHOLE_RUN_ID=' + self.run.id, 'WORMHOLE_RUNTIME_TTL_SECONDS=600'}, 'unsafe_helper')
         require(host.get('Memory') == expected['memory_bytes'] and host.get('MemorySwap') == expected['memory_swap_bytes'] and
@@ -304,7 +326,8 @@ class ReadinessSession:
             {(x['Source'], x['Destination']) for x in binds} == expected_binds and
             host.get('Tmpfs') == {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=10001,gid=10001',
                 '/tmp': 'rw,nosuid,nodev,noexec,size=16m,mode=1777',
-                '/run/input': 'rw,nosuid,nodev,noexec,size=64k,mode=0700,uid=10001,gid=10001'}, 'unsafe_helper_mounts')
+                '/run/input': 'rw,nosuid,nodev,noexec,size=' + ('512k' if policy['input_tmpfs_bytes'] == 524288 else '64k') +
+                    ',mode=0700,uid=10001,gid=10001'}, 'unsafe_helper_mounts')
         self.validate_source_copy()
         if stopped:
             require(value['State']['Running'] is False and value['State']['Status'] == 'created' and
@@ -318,8 +341,10 @@ class ReadinessSession:
         try:
             self.image_labels = self.helper_reference()
             self.prepare_source_copy()
+            policy = self.helper_policy()
             arguments = images.runtime_arguments(self.run, 'helper', HELPER_IMAGE, self.network,
-                                                self.lease.plan['limits']['helper'], helper_wait=180)
+                self.lease.plan['limits']['helper'], helper_wait=policy['wait_seconds'],
+                helper_input_tmpfs_bytes=policy['input_tmpfs_bytes'])
             additions = []
             for _, destination, _, _, mount in self.source_bindings():
                 additions += ['--mount', 'type=bind,source=' + str(images.safe_bind(destination)) + ',target=' + mount + ',readonly']
@@ -490,6 +515,8 @@ class ReadinessSession:
             'scenario': self.scenario, 'timeout_seconds': budget}
         if getattr(self, 'selected_target', None):
             request['resource_layout'] = 'indexed-targets-v1'
+            if self.target_plan.profile == 'twenty-targets':
+                request['target_plan'] = self.target_plan.record()
         encoded = base64.b64encode(json.dumps(request).encode()).decode('ascii')
         result = _run_process(('docker', '--config', images.docker_configuration(), '--host', images.SOCKET,
             'exec', '--user', '10001:10001', self.helper, '/opt/wormhole/venv/bin/python', '-I', '-B', SOURCE_MOUNT, encoded),

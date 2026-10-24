@@ -237,7 +237,7 @@ def limits_arguments(limits):
             "--security-opt", "no-new-privileges=true", "--restart", "no"]
 
 
-def runtime_arguments(run, role, image, network, limits, *, helper_wait=300):
+def runtime_arguments(run, role, image, network, limits, *, helper_wait=300, helper_input_tmpfs_bytes=65536):
     """Reviewed stopped-container projection for image qualification, not allocation.
 
     The trusted caller must journal intent, create stopped, inspect actual limits,
@@ -266,7 +266,10 @@ def runtime_arguments(run, role, image, network, limits, *, helper_wait=300):
             arguments.extend(("--cap-add", capability))
     else:
         require(type(helper_wait) is int and 1 <= helper_wait <= 600, "invalid_runtime_spec", "Helper diagnostic lifetime must be bounded.")
-        arguments.extend(("--tmpfs", "/run/input:rw,nosuid,nodev,noexec,size=64k,mode=0700,uid=10001,gid=10001"))
+        require(type(helper_input_tmpfs_bytes) is int and helper_input_tmpfs_bytes in {65536, 524288},
+                "invalid_runtime_spec", "Use a reviewed bounded helper input volume.")
+        size = '64k' if helper_input_tmpfs_bytes == 65536 else '512k'
+        arguments.extend(("--tmpfs", "/run/input:rw,nosuid,nodev,noexec,size=" + size + ",mode=0700,uid=10001,gid=10001"))
     arguments.append(image)
     if role == "helper":
         arguments.extend(("wait", str(helper_wait)))
