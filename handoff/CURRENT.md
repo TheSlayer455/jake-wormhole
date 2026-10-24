@@ -1,4 +1,22 @@
-# Current continuation: WORM-018 delivery
+# Current continuation: WORM-019 delivery
+
+Read the [isolation checkpoint](WORM-019-checkpoint.md),
+[criterion evidence](evidence/WORM-019.json), [engineering review](reviews/WORM-019.md)
+and [current state](../docs/STATE.md) first. Actual clean runtime is
+`973c24a4b9e196d8d3117a3b91d372bd0397394a`; later delivery changes are documentation.
+The four-case actual suite and original readback passed, with exact cleanup and
+zero pending canonical resources. Retain the intentionally incomplete publication,
+images, private state and original failures. Never repair its completion marker.
+
+Refresh Minx before mutations. WORM-019 still needs its delivery publishing,
+criterion evidence, solution comment, review submission and explicitly delegated
+Owner decisions at this documentation checkpoint. Continue WORM-020 actual twenty
+targets, WORM-021 parity/handoff, then parent WORM-001. Current normal server guards
+and scoped Agent claims remain in force. Do not call this independent human review.
+
+## Historical WORM-018 continuation
+
+# Historical continuation: WORM-018 delivery
 
 Read the [WORM-018 checkpoint](WORM-018-checkpoint.md),
 [criterion evidence](evidence/WORM-018.json), [source review](reviews/WORM-018.md)

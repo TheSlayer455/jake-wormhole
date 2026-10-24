@@ -1,4 +1,33 @@
-# Current engineering state: private reference publication qualified
+# Current engineering state: isolation and scoped recovery qualified
+
+October 24, 2026: actual suite `c870d716-41b3-4f0f-baf1-9e0f710e9a27`
+passed all four cases at clean runtime
+`973c24a4b9e196d8d3117a3b91d372bd0397394a`. Two live coordinator lifetimes
+overlapped while canonical admission serialized their one-target graphs.
+Competing allocation and both recovery barriers refused without Docker requests.
+Original-source recovery preserved the controlled interruption and retained state.
+The separate publisher's 23-file output has neither completion marker and remains
+incomplete. Capacity refusal used an isolated synthetic fixture with no allocation
+and earns no twenty-target runtime credit.
+
+Four original finished admission archives account for graphs of 3/3/3/6 resources;
+all transient resources are absent and the reference image is retained. The last
+canonical observation is finished with zero pending resources. Windows source
+fixtures: 627 cases, 394 pass/233 explicit platform skips, 60.293 seconds.
+Homelab Linux: 627 cases, 625 pass/two Windows-only skips, 47.599 seconds.
+Independent engineering reviews are clear. See the
+[checkpoint](../handoff/WORM-019-checkpoint.md) and
+[criterion evidence](../handoff/evidence/WORM-019.json).
+
+WORM-002 through WORM-018 are Done under Jake's explicitly delegated normal
+Owner workflow. WORM-019 publishing and review decisions are separate from this
+qualification; retrieve current Minx state. Next work is WORM-020's actual
+twenty-target graph, then WORM-021 parity/handoff and parent WORM-001. Production
+ISO eligibility remains false. Earlier entries retain their observation times.
+
+## Preserved WORM-018 qualification
+
+# Historical engineering state: private reference publication qualified
 
 October 24, 2026: clean runtime `85f4c56116f30679c083795bed17bb56f7b25d6d`
 passed the actual four-case WORM-018 suite

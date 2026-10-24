@@ -1,5 +1,20 @@
 # Fidelity and evidence limits
 
+## Observed WORM-019 scope, October 24, 2026
+
+[Original-source isolation evidence](../handoff/evidence/WORM-019.json) records
+actual overlapping live processes with deliberately serialized resource graphs.
+The interruption kills only an owned coordinator after terminal Terraform destroy
+and exact absence proof; normal recovery retains its failed primary status.
+A separate filesystem-only child exits before both publication markers exist.
+Its partial local files remain incomplete and cannot overwrite a destination.
+The fresh underlying Ubuntu reference pipeline passed independently.
+
+The oversized-capacity case is explicitly synthetic and allocates nothing.
+It proves no actual twenty-target capacity or performance. Source fixture tests,
+actual host checks, engineering review, publishing, CI and delegated Owner decisions
+are separate facts. Production ISO eligibility remains false.
+
 ## Observed WORM-018 scope, October 24, 2026
 
 The [source-bound publication evidence](../handoff/evidence/WORM-018.json)

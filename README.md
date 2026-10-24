@@ -1,3 +1,10 @@
+Current WORM-019 qualification proves overlapping live coordinators with serialized
+resource graphs, exact-source interrupted recovery and a publication interrupted
+before both completion markers. All four declared cases passed at clean runtime
+`973c24a4b9e196d8d3117a3b91d372bd0397394a`; actual twenty-target execution remains
+WORM-020. See the [isolation checkpoint](handoff/WORM-019-checkpoint.md) and
+[qualification operation](docs/ISOLATION.md). Refresh Minx for review decisions.
+
 <!-- WORM-017 actual qualification 753b67d7e550218f28e2f765d3e3abf254c31656 -->
 Current source-bound WORM-017 evidence qualifies the explicit one-container
 Ubuntu/UBI generated/synthetic reference pipeline. The actual wrong expected

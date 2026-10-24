@@ -1,5 +1,13 @@
 # Architecture
 
+The [isolation qualification](ISOLATION.md) uses separate owned processes and the
+existing Run-lock then canonical-admission order. It keeps coordinator lifetimes
+overlapping while serializing actual resource graphs. Recovery uses the existing
+exact-source public operation. Only a positively proven terminal-teardown child
+or a filesystem-only publisher is interrupted. Fixed proof files bind all fresh
+Run IDs, both lock refusals, original state and full cleanup archives; the compact
+receipt cannot substitute for those actual observations.
+
 The current bounded source now includes the one-container Ubuntu/UBI reference
 pipeline and a separate [private exact-byte publisher](PUBLICATION.md). The
 publisher replays original evidence under the Run lock, then uses its own stable
