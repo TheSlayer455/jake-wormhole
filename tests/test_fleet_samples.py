@@ -16,7 +16,7 @@ EXPECTED = {'memory_bytes': 256 * 1024**2, 'nano_cpus': 250_000_000, 'pids_limit
 def pair():
     first = {'schema_version': '1.0', 'run_id': '53727065-09e4-4ad7-81e5-2f2679a925a6',
         'source_revision': 'b' * 40, 'source_dirty': False, 'mode': 'container-reference',
-        'operation': 'twenty-owned-point-sample-v1', 'profile': 'twenty-targets', 'phase': 'before-checks',
+        'operation': 'twenty-owned-point-sample-v1', 'profile': 'twenty-targets', 'target_count': 20, 'phase': 'before-checks',
         'started_monotonic': 10.0, 'finished_monotonic': 20.0, 'containers': []}
     for number in range(1, 23):
         first['containers'].append({'target_id': 'target-' + str(number).zfill(3) if number <= 20 else None,
@@ -62,6 +62,17 @@ class PureSamples(unittest.TestCase):
             target = row if section == 'root' else row['usage']; target[key] = wrong
             with self.subTest(key=key), self.assertRaises(f.SamplingError): f.compare_samples(first, last)
 
+    def test_coordinated_duplicate_or_omitted_targets_in_both_samples_refuse(self):
+        for changed in ('duplicate-target', 'duplicate-helper', 'shared-resource-id', 'wrong-count', 'reordered'):
+            first, last = pair()
+            for value in (first, last):
+                if changed == 'duplicate-target': value['containers'][19] = deepcopy(value['containers'][18])
+                elif changed == 'duplicate-helper': value['containers'][21] = deepcopy(value['containers'][20])
+                elif changed == 'shared-resource-id': value['containers'][19]['resource_id'] = value['containers'][18]['resource_id']
+                elif changed == 'wrong-count': value['target_count'] = True
+                else: value['containers'][0], value['containers'][1] = value['containers'][1], value['containers'][0]
+            with self.subTest(changed=changed), self.assertRaises(f.SamplingError): f.compare_samples(first, last)
+
     def test_reset_boolean_or_negative_cpu_counters_and_late_measurements_refuse(self):
         for wrong in (0, -1, True, 1.5):
             first, last = pair(); last['containers'][0]['usage']['cpu_stat']['usage_usec'] = wrong
@@ -89,11 +100,19 @@ class PureSamples(unittest.TestCase):
         lease = SimpleNamespace(record={'resources': []})
         ps = SimpleNamespace(run=run, lease=lease, target_plan=SimpleNamespace(target_ids=ids),
             target_resources={name: format(number, '064x') for number, name in enumerate(ids, 1)},
-            provisioner='e' * 64, held=Mock(), receipt={'unknown_outcome': False})
+            provisioner='e' * 64, network_id='d' * 64, held=Mock(), receipt={'unknown_outcome': False})
         ready = SimpleNamespace(run=run, lease=lease, helper='f' * 64, held=Mock(), receipt={'unknown_outcome': False})
         with patch.object(f.images, 'inspect') as inspection:
             with self.assertRaises(f.SamplingError): f.resources(ps, ready)
         inspection.assert_not_called()
+        lease.record['resources'] = [{'kind': 'container', 'id': identifier, 'outcome': 'pending'} for identifier in
+            (*ps.target_resources.values(), ready.helper, ps.provisioner)] + [
+                {'kind': 'network', 'id': ps.network_id, 'outcome': 'pending'}]
+        self.assertEqual(len(f.resources(ps, ready)), 22)
+        lease.record['resources'][0]['outcome'] = 'absent'
+        with self.assertRaises(f.SamplingError): f.resources(ps, ready)
+        lease.record['resources'][0]['outcome'] = 'retained'
+        with self.assertRaises(f.SamplingError): f.resources(ps, ready)
 
 
 @unittest.skipUnless(sys.platform.startswith('linux'), 'Disposable Linux proc/cgroup-style filesystem fixtures')

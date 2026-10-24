@@ -23,6 +23,8 @@ PHASES = ('before-checks', 'after-checks')
 USAGE_FILES = ('memory.current', 'pids.current', 'cpu.stat', 'memory.events')
 LIMIT_FILES = ('memory.max', 'memory.swap.max', 'cpu.max', 'pids.max')
 MAX_INTEGER = 2**63 - 1
+GRID = tuple(('target-' + str(number).zfill(3), 'target') for number in range(1, 21)) + (
+    (None, 'helper'), (None, 'provisioner'))
 
 
 class SamplingError(RunError):
@@ -132,9 +134,23 @@ def resources(provisioning, readiness):
     require(len(result) == 22 and len({row[2] for row in result}) == 22 and
         all(type(row[2]) is str and re.fullmatch('[a-f0-9]{64}', row[2]) for row in result),
         'fleet_sample_resource_set')
-    graph = {(row['kind'], row['id']) for row in ps.lease.record['resources']}
-    require(all(('container', row[2]) in graph for row in result), 'fleet_sample_resource_set')
+    journal = ps.lease.record['resources']
+    require(len(journal) == 23 and all(row['outcome'] == 'pending' for row in journal) and
+        len({(row['kind'], row['id']) for row in journal}) == 23 and
+        {(row['kind'], row['id']) for row in journal} ==
+            {('container', row[2]) for row in result} | {('network', ps.network_id)}, 'fleet_sample_resource_set')
     return result
+
+
+def validate_grid(value):
+    require(type(value.get('target_count')) is int and value['target_count'] == 20 and
+        type(value.get('containers')) is list and len(value['containers']) == 22 and
+        tuple((row['target_id'], row['role']) for row in value['containers']) == GRID,
+        'fleet_sample_grid')
+    identifiers = [row['resource_id'] for row in value['containers']]
+    require(len(set(identifiers)) == 22 and all(type(item) is str and re.fullmatch('[a-f0-9]{64}', item)
+        for item in identifiers) and all(type(row['image_id']) is str and
+            re.fullmatch('sha256:[a-f0-9]{64}', row['image_id']) for row in value['containers']), 'fleet_sample_grid')
 
 
 def collect_sample(provisioning, readiness, phase):
@@ -165,6 +181,7 @@ def collect_sample(provisioning, readiness, phase):
                 'truncated': logs['log_truncated'], 'maximum_bytes': 65536, 'maximum_lines': 1000,
                 'full_history': False}})
     value['finished_monotonic'] = time.monotonic()
+    validate_grid(value)
     value['totals'] = {key: sum(row[field] if section is None else row[section][field] for row in value['containers'])
         for key, section, field in (('memory_current_bytes', 'usage', 'memory_current_bytes'),
             ('pids_current', 'usage', 'pids_current'), ('writable_layer_bytes', None, 'writable_layer_bytes'),
@@ -174,6 +191,7 @@ def collect_sample(provisioning, readiness, phase):
 
 
 def compare_samples(first, last):
+    validate_grid(first); validate_grid(last)
     require(first['operation'] == last['operation'] == 'twenty-owned-point-sample-v1' and
         common(first) == common(last) and first['profile'] == last['profile'] == 'twenty-targets' and
         first['phase'] == 'before-checks' and last['phase'] == 'after-checks' and
