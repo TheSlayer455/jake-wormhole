@@ -35,9 +35,18 @@ except Exception:
 '''
 
 
+def readiness_budget(plan):
+    """One shared absolute window; per-probe and container limits stay fixed."""
+    return 120 if plan.profile == 'twenty-targets' else r.TIMEOUT
+
+
 def validate_children(receipt, manifest, plan, targets):
     """Validate retained child outcomes before any executable recovery adapter."""
     from .recovery import valid_failure, _timestamp
+    budget = readiness_budget(plan)
+    r.require((type(receipt.get('readiness_budget_seconds')) is int and receipt['readiness_budget_seconds'] == budget and
+        type(receipt.get('context_version')) is int and receipt['context_version'] == 5) if plan.profile == 'twenty-targets' else
+        'readiness_budget_seconds' not in receipt, 'helper_recovery_scope')
     r.require(valid_failure(receipt.get('primary_failure')) and type(receipt.get('secondary_failures')) is list and
         len(receipt['secondary_failures']) <= 64 and all(value is not None and valid_failure(value)
             for value in receipt['secondary_failures']) and _timestamp(receipt.get('updated_at')) and
@@ -64,7 +73,7 @@ def validate_children(receipt, manifest, plan, targets):
             r.require(type(check) is dict and set(check) == {'check_id', 'target_id', 'status', 'observed_at', 'elapsed_seconds'} and
                 check['target_id'] == target and check['status'] == 'pass' and _timestamp(check['observed_at']) and
                 type(check['elapsed_seconds']) in (int, float) and math.isfinite(check['elapsed_seconds']) and
-                0 <= check['elapsed_seconds'] <= r.TIMEOUT, 'helper_recovery_scope')
+                0 <= check['elapsed_seconds'] <= budget, 'helper_recovery_scope')
         if item['status'] == 'ready':
             r.require(len(checks) == len(r.EXPECTED) and type(item.get('ready_started_at')) is str and
                 1 <= len(item['ready_started_at']) <= 40, 'helper_recovery_scope')
@@ -151,7 +160,8 @@ class BatchReadinessSession(r.ReadinessSession):
             all(value in r.SCENARIOS for value in scenarios.values()), 'unsupported_readiness_scenario')
         self.network, self.helper, self.image_labels = provisioning.network_id, None, None
         self.reconciliation_only, self.selected_target, self._on_poll = False, None, None
-        self.began, self.deadline = time.monotonic(), time.monotonic() + r.TIMEOUT
+        self.began = time.monotonic()
+        self.deadline = self.began + readiness_budget(self.target_plan)
         self.source_sha256, self.bind_path, self.bind_identity = r.runtime_hash(), self.run.file('private/helper-source/runtime.py'), None
         self.validation_enabled, self.validation_source_sha256 = True, r.code_hash(r.VALIDATION_RUNTIME)
         self.validation_bind_path, self.validation_bind_identity = self.run.file('private/helper-source/validation.py'), None
@@ -160,7 +170,8 @@ class BatchReadinessSession(r.ReadinessSession):
         self.fleet_inventory_bind_path = self.run.file('private/helper-source/fleet-inventory.py')
         self.fleet_inventory_bind_identity = None
         self.target, self.provisioning, self.scenario = next(iter(self.target_resources.values())), provisioning, 'healthy'
-        self.trust_address, self.pinned_key, self.counts, self.last_pending, self.last_started_at = None, None, {}, 'target_not_started', None
+        pending = 'deadline_exhausted' if self.target_plan.profile == 'twenty-targets' else 'target_not_started'
+        self.trust_address, self.pinned_key, self.counts, self.last_pending, self.last_started_at = None, None, {}, pending, None
         self._aggregate = {**common(manifest), 'operation': 'ssh-ansible-readiness', 'resource_layout': LAYOUT,
             'context_version': self.context_version(), 'target_plan': self.target_plan.record(), 'target_resource_ids': dict(self.target_resources),
             'status': 'pending', 'helper_id': None, 'helper_image': r.HELPER_IMAGE, 'helper_build_run': r.HELPER_BUILD,
@@ -174,17 +185,18 @@ class BatchReadinessSession(r.ReadinessSession):
                 'unknown_outcome': False, 'cleanup': 'not-started'}
             self._states[target] = dict(receipt=receipt, scenario=scenarios.get(target, 'healthy'), target=self.target_resources[target],
                 provisioning=TargetView(provisioning, target), trust_address=None, pinned_key=None, counts={},
-                last_pending='target_not_started', last_started_at=None)
+                last_pending=pending, last_started_at=None)
         self.receipt = self._aggregate
         self._aggregate.update(self.context_policy())
 
     def context_version(self):
-        return 4 if self.target_plan.profile == 'twenty-targets' else 3
+        return 5 if self.target_plan.profile == 'twenty-targets' else 3
 
     def context_policy(self):
         if self.context_version() == 3:
             return {}
-        return {'helper_policy': self.helper_policy(), 'fleet_inventory_enabled': self.fleet_inventory_enabled,
+        return {'readiness_budget_seconds': readiness_budget(self.target_plan),
+            'helper_policy': self.helper_policy(), 'fleet_inventory_enabled': self.fleet_inventory_enabled,
             'fleet_inventory_source_sha256': self.fleet_inventory_source_sha256,
             'fleet_inventory_bind_identity': self.fleet_inventory_bind_identity}
 
@@ -235,6 +247,10 @@ class BatchReadinessSession(r.ReadinessSession):
             'unknown_outcome': record['unknown_outcome'], 'cleanup': record['cleanup'], **self.context_policy()})
 
     def transition(self, check):
+        if self.target_plan.profile == 'twenty-targets' and check == 'started' and self.last_pending == 'target_not_started':
+            # A previous observation of a created container is superseded by
+            # this actual start; expiry must not later relabel it unstarted.
+            self.last_pending = 'deadline_exhausted'
         super().transition(check)
         if self._on_poll is not None:
             self._on_poll(time.monotonic() - self.began)
@@ -353,12 +369,12 @@ class BatchReadinessSession(r.ReadinessSession):
         retained = r.readiness_status(run)
         r.require(type(context) is dict, 'helper_recovery_scope')
         plan = TargetPlan.from_record(context.get('target_plan'))
-        version = 4 if plan.profile == 'twenty-targets' else 3
+        version = 5 if plan.profile == 'twenty-targets' else 3
         fields = set(common(manifest)) | {'operation', 'resource_layout', 'context_version', 'target_plan', 'target_resource_ids',
             'helper_id', 'helper_image', 'network_id', 'image_labels', 'source_path', 'source_sha256', 'bind_path', 'bind_identity',
             'validation_enabled', 'validation_source_sha256', 'validation_bind_identity', 'unknown_outcome', 'cleanup'}
-        if version == 4:
-            fields |= {'helper_policy', 'fleet_inventory_enabled', 'fleet_inventory_source_sha256', 'fleet_inventory_bind_identity'}
+        if version == 5:
+            fields |= {'readiness_budget_seconds', 'helper_policy', 'fleet_inventory_enabled', 'fleet_inventory_source_sha256', 'fleet_inventory_bind_identity'}
         r.require(type(context) is dict and set(context) == fields and common(context) == common(manifest) and
             context['resource_layout'] == LAYOUT and type(context['context_version']) is int and context['context_version'] == version and context['operation'] == 'readiness-helper' and
             context['helper_image'] == r.HELPER_IMAGE and context['validation_enabled'] is True and
@@ -414,9 +430,10 @@ class BatchReadinessSession(r.ReadinessSession):
         value.fleet_inventory_source_sha256 = context.get('fleet_inventory_source_sha256')
         value.fleet_inventory_bind_path = run.file('private/helper-source/fleet-inventory.py')
         value.fleet_inventory_bind_identity = context.get('fleet_inventory_bind_identity')
-        if version == 4:
+        if version == 5:
             policy = context['helper_policy']
-            r.require(type(policy) is dict and set(policy) == {'wait_seconds', 'input_tmpfs_bytes'} and
+            r.require(type(context['readiness_budget_seconds']) is int and context['readiness_budget_seconds'] == readiness_budget(plan) and
+                type(policy) is dict and set(policy) == {'wait_seconds', 'input_tmpfs_bytes'} and
                 all(type(item) is int for item in policy.values()) and policy == value.helper_policy() and
                 type(value.fleet_inventory_enabled) is bool and
                 (value.fleet_inventory_source_sha256 == r.code_hash(r.FLEET_INVENTORY_RUNTIME) if value.fleet_inventory_enabled else

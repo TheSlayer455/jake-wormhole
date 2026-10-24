@@ -190,10 +190,10 @@ def report_readiness(run, archive, provisioned):
     fields = set(common(manifest)) | {'operation', 'resource_layout', 'context_version', 'target_plan', 'target_resource_ids',
         'helper_id', 'helper_image', 'network_id', 'image_labels', 'source_path', 'source_sha256', 'bind_path', 'bind_identity',
         'validation_enabled', 'validation_source_sha256', 'validation_bind_identity', 'unknown_outcome', 'cleanup',
-        'helper_policy', 'fleet_inventory_enabled', 'fleet_inventory_source_sha256', 'fleet_inventory_bind_identity'}
+        'readiness_budget_seconds', 'helper_policy', 'fleet_inventory_enabled', 'fleet_inventory_source_sha256', 'fleet_inventory_bind_identity'}
     require(set(context) == fields and c.bound_common(context, manifest) and c.bound_common(receipt, manifest) and
         context['operation'] == 'readiness-helper' and context['resource_layout'] == receipt['resource_layout'] == LAYOUT and
-        type(context['context_version']) is int and context['context_version'] == receipt['context_version'] == 4 and
+        type(context['context_version']) is int and context['context_version'] == receipt['context_version'] == 5 and
         base.same(context['target_plan'], plan.record()) and base.same(receipt['target_plan'], plan.record()) and
         context['target_resource_ids'] == receipt['target_resource_ids'] == targets and
         context['network_id'] == provisioned['network_id'] and context['helper_id'] == receipt['helper_id'] and
@@ -214,7 +214,8 @@ def report_readiness(run, archive, provisioned):
         setattr(adapter, prefix + 'bind_identity', context[prefix + 'bind_identity'])
         setattr(adapter, prefix + 'bind_path', run.file('private/helper-source/' + path))
     require(base.same(context['helper_policy'], adapter.helper_policy()) and
-        all(base.same(receipt.get(key), value) for key, value in adapter.context_policy().items()))
+        all(base.same(context.get(key), value) and base.same(receipt.get(key), value)
+            for key, value in adapter.context_policy().items()))
     adapter.verify_helper(provisioned['runtime']['helper'])
     base.check_cgroups(receipt['cgroups'], archive['plan']['limits']['helper']['docker_create'])
     require(('container', adapter.helper) in {(row['kind'], row['id']) for row in archive['resources']})
