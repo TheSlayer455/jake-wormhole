@@ -20,6 +20,23 @@ SCENARIOS = ('healthy', 'version-expectation-mismatch', 'functional-expectation-
              'configured-interpreter-unavailable', 'unexpected-skip', 'unreachable')
 MAX_TREE = 65536
 
+# Pinned 2.21.5 CallbackBase is a no-op; TQM loads this fixed stdout plugin
+# separately from the authoritative aggregate. Twenty repeated command dumps
+# must not consume the unchanged bounded functional response.
+# https://github.com/ansible/ansible/blob/v2.21.5/lib/ansible/plugins/callback/__init__.py
+QUIET_CALLBACK_SOURCE = r'''from ansible.plugins.callback import CallbackBase
+DOCUMENTATION="""
+name: wormhole_validation_quiet
+type: stdout
+short_description: Fixed twenty-target console suppression
+description: Structured aggregate events remain authoritative.
+"""
+class CallbackModule(CallbackBase):
+ CALLBACK_VERSION=2.0
+ CALLBACK_TYPE='stdout'
+ CALLBACK_NAME='wormhole_validation_quiet'
+'''
+
 # Original fixed callback, embedded in this hash-bound helper source. Ansible's
 # pinned tree callback has no skipped handler. No imported callback code/path.
 CALLBACK_SOURCE = r'''import importlib.metadata,json,os,stat
@@ -92,8 +109,8 @@ class CallbackModule(CallbackModule):
   with path.open('rb') as stream: raw=stream.read(4097)
   self.expected=json.loads(raw)
   if not isinstance(self.expected,dict) or set(self.expected)!={'schema_version','target_ids','plan_sha256'} or self.expected['schema_version']!='1.0': raise ValueError('expected fields')
-  ids=self.expected['target_ids'];allowed=tuple('target-'+str(i).zfill(3) for i in range(1,6))
-  if not isinstance(ids,list) or not 1<=len(ids)<=5 or ids!=sorted(set(ids)) or any(x not in allowed for x in ids): raise ValueError('expected targets')
+  ids=self.expected['target_ids'];allowed=tuple('target-'+str(i).zfill(3) for i in range(1,21))
+  if not isinstance(ids,list) or not 1<=len(ids)<=20 or ids!=sorted(set(ids)) or any(x not in allowed for x in ids): raise ValueError('expected targets')
   import re
   if not isinstance(self.expected['plan_sha256'],str) or not re.fullmatch('[a-f0-9]{64}',self.expected['plan_sha256']): raise ValueError('plan hash')
  def record(self,result,event):
@@ -446,12 +463,13 @@ def decode_batch(raw):
         all(type(value[k]) is str and re.fullmatch('[a-f0-9]{64}', value[k]) for k in
             ('plan_sha256', 'expected_payload_sha256', 'readiness_source_sha256')) and
         type(value['timeout_seconds']) in (int, float) and math.isfinite(value['timeout_seconds']) and .1 <= value['timeout_seconds'] <= 45)
-    plan = value['target_plan']; require(type(plan) is dict and plan.get('profile') in {'smoke', 'five-targets'})
-    count = 1 if plan['profile'] == 'smoke' else 5
+    plan = value['target_plan']; require(type(plan) is dict and plan.get('profile') in {'smoke', 'five-targets', 'twenty-targets'})
+    count = {'smoke': 1, 'five-targets': 5, 'twenty-targets': 20}[plan['profile']]
     ids = ['target-' + str(i).zfill(3) for i in range(1, count + 1)]
     require(plan == {'schema_version': '1.0', 'resource_layout': 'indexed-targets-v1', 'profile': plan['profile'],
         'target_count': count, 'target_ids': ids} and type(value['controller_concurrency']) is int and
-        1 <= value['controller_concurrency'] <= min(count, 2) and type(value['targets']) is list and 1 <= len(value['targets']) <= count)
+        1 <= value['controller_concurrency'] <= min(count, 4 if count == 20 else 2) and
+        type(value['targets']) is list and 1 <= len(value['targets']) <= count)
     seen, addresses = [], set()
     for target in value['targets']:
         require(type(target) is dict and set(target) == {'target_id', 'address', 'scenario'} and target['target_id'] in ids and
@@ -490,6 +508,8 @@ def collect_batch(value, rr=None):
     ids = [target['target_id'] for target in value['targets']]
     module.write_private(attempt / 'expected.json', json.dumps({'schema_version': '1.0', 'target_ids': ids, 'plan_sha256': value['plan_sha256']}).encode())
     module.write_private(callbacks / 'wormhole_validation_batch.py', BATCH_CALLBACK_SOURCE.encode())
+    if value['target_plan']['profile'] == 'twenty-targets':
+        module.write_private(callbacks / 'wormhole_validation_quiet.py', QUIET_CALLBACK_SOURCE.encode())
     hosts = {}
     for target in value['targets']:
         root = rr.ROOT / target['target_id']
@@ -509,8 +529,9 @@ def collect_batch(value, rr=None):
         arguments.append('--check')
     env = {**rr.environment(), 'ANSIBLE_CONFIG': str(config), 'ANSIBLE_CALLBACK_PLUGINS': str(callbacks), 'ANSIBLE_CALLBACKS_ENABLED': 'wormhole_validation_batch',
         'ANSIBLE_LOAD_CALLBACK_PLUGINS': '1', 'PYTHONDONTWRITEBYTECODE': '1'}
+    if value['target_plan']['profile'] == 'twenty-targets': env['ANSIBLE_STDOUT_CALLBACK'] = 'wormhole_validation_quiet'
     budget = value['timeout_seconds'] - (time.monotonic() - began); require(budget > .05)
-    rr.MAX_LOG = 32768  # Explicit five-target response budget, in this one helper process only.
+    rr.MAX_LOG = 32768  # Existing functional diagnostic budget, in this helper process only.
     result = rr.capture(arguments, budget, env)
     completed = False
     expected_files = {target + '.json' for target in ids} | {'complete.json'}

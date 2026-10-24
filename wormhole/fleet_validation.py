@@ -20,9 +20,14 @@ EVIDENCE = ['evidence/batch-validation-plan.json', 'evidence/batch-validation-ob
 LOG = 'private/qualification-helper-batch-functional-validation-0.log'
 
 
+def exact(left, right):
+    return v.canonical(left) == v.canonical(right)
+
+
 def make_plan(run, target_plan, targets, network, concurrency, scenarios):
-    v.require(target_plan.profile in {'smoke', 'five-targets'} and type(concurrency) is int and
-        1 <= concurrency <= min(2, len(target_plan.target_ids)) and set(targets) == set(target_plan.target_ids), 'validation_scope')
+    v.require(target_plan.profile in {'smoke', 'five-targets', 'twenty-targets'} and type(concurrency) is int and
+        1 <= concurrency <= min(4 if target_plan.profile == 'twenty-targets' else 2,
+                                 len(target_plan.target_ids)) and set(targets) == set(target_plan.target_ids), 'validation_scope')
     recipe, files = images.recipe_identity()
     checks = []
     for target in target_plan.target_ids:
@@ -40,7 +45,7 @@ def make_plan(run, target_plan, targets, network, concurrency, scenarios):
 
 
 def validate_plan(run, value):
-    v.require(type(value) is dict and common(value) == common(run.manifest()) and
+    v.require(type(value) is dict and exact(common(value), common(run.manifest())) and
         value.get('source_dirty') is False and value.get('mode') == 'container-reference', 'validation_plan_changed')
     target_plan = TargetPlan.from_record(value['target_plan'])
     targets = value['target_resource_ids']; scenarios = value['scenarios']
@@ -48,7 +53,7 @@ def validate_plan(run, value):
         all(type(x) is str and re.fullmatch('[a-f0-9]{64}', x) for x in targets.values()) and
         type(value['network_id']) is str and re.fullmatch('[a-f0-9]{64}', value['network_id']) and
         type(scenarios) is dict and set(scenarios) == set(target_plan.target_ids) and all(x in runtime.SCENARIOS for x in scenarios.values()), 'validation_plan_changed')
-    v.require(value == make_plan(run, target_plan, targets, value['network_id'], value['controller_concurrency'], scenarios), 'validation_plan_changed')
+    v.require(exact(value, make_plan(run, target_plan, targets, value['network_id'], value['controller_concurrency'], scenarios)), 'validation_plan_changed')
     return target_plan
 
 
@@ -105,7 +110,7 @@ def validate_result(run, plan, result, observed):
     fields = set(common(run.manifest())) | {'operation', 'resource_layout', 'plan_sha256', 'status', 'attempted_targets',
         'blocked_targets', 'checks', 'attempts', 'capture', 'primary_failure', 'unknown_outcome', 'updated_at',
         'runtime_pipeline_complete', 'production_iso_eligible', 'candidate_binding'}
-    v.require(type(result) is dict and set(result) == fields and common(result) == common(run.manifest()) and
+    v.require(type(result) is dict and set(result) == fields and exact(common(result), common(run.manifest())) and
         result['operation'] == 'batch-ssh-ansible-functional-validation' and result['resource_layout'] == LAYOUT and
         result['plan_sha256'] == plan['plan_sha256'] and result['status'] in {'passed', 'failed'} and
         result['runtime_pipeline_complete'] is False and result['production_iso_eligible'] is False and
@@ -117,7 +122,7 @@ def validate_result(run, plan, result, observed):
     failure = result['primary_failure']
     v.require((result['status'] == 'failed') == (failure is not None) and valid_failure(failure), 'validation_result_invalid')
     obs_fields = set(common(run.manifest())) | {'operation', 'plan_sha256', 'targets'}
-    v.require(type(observed) is dict and set(observed) == obs_fields and common(observed) == common(run.manifest()) and
+    v.require(type(observed) is dict and set(observed) == obs_fields and exact(common(observed), common(run.manifest())) and
         observed['operation'] == 'batch-functional-observations' and observed['plan_sha256'] == plan['plan_sha256'] and
         type(observed['targets']) is list and [x.get('target_id') for x in observed['targets']] == list(target_plan.target_ids), 'validation_result_invalid')
     records = {item['target_id']: item for item in observed['targets']}
@@ -152,11 +157,11 @@ def validate_result(run, plan, result, observed):
             v.require(attempt['status'] == 'pass' and attempt['returncode'] == 0 and not attempt['log_truncated'], 'validation_capture_invalid')
             reply = parse_response(raw, plan, result['attempted_targets'], capture['budget_seconds'])
             for item in reply['targets']:
-                v.require(records[item['target_id']] == {**item, 'source': 'ansible'}, 'validation_capture_invalid')
+                v.require(exact(records[item['target_id']], {**item, 'source': 'ansible'}), 'validation_capture_invalid')
         else:
             v.require(result['status'] == 'failed' and all(records[target]['status'] == 'error' and records[target]['observation'] is None
                 for target in result['attempted_targets']), 'validation_capture_invalid')
-    expected = rows(plan, records); v.require(result['checks'] == expected, 'validation_result_invalid')
+    expected = rows(plan, records); v.require(exact(result['checks'], expected), 'validation_result_invalid')
     validate_artifact('test-results', {**common(result), 'status': 'pass' if result['status'] == 'passed' else 'fail', 'checks': result['checks']})
     passing = (len(result['attempted_targets']) == len(target_plan.target_ids) and not result['unknown_outcome'] and failure is None and
         capture is not None and capture['complete'] and all(item['status'] == 'pass' for item in result['checks']))
@@ -181,21 +186,25 @@ def report_batch_validation(run):
 
 
 class BatchValidationSession:
-    def __init__(self, readiness, *, scenarios=None):
+    def __init__(self, readiness, *, scenarios=None, controller_concurrency=None):
         self.readiness, self.run, self.lease = readiness, readiness.run, readiness.lease
         readiness.held(); revision, dirty = source_identity()
         self.target_plan = TargetPlan.from_lease(self.lease)
         v.require(readiness.target_plan == self.target_plan and readiness.validation_enabled is True and
             readiness.validation_source_sha256 == v.runtime_hash() and revision == self.run.manifest()['source_revision'] and
-            dirty is False and not self.lease._reconciliation_only and self.target_plan.profile in {'smoke', 'five-targets'}, 'validation_scope')
+            dirty is False and not self.lease._reconciliation_only and
+            self.target_plan.profile in {'smoke', 'five-targets', 'twenty-targets'}, 'validation_scope')
         scenarios = {} if scenarios is None else scenarios
         v.require(type(scenarios) is dict and set(scenarios) <= set(self.target_plan.target_ids) and
             all(x in runtime.SCENARIOS for x in scenarios.values()), 'unsupported_validation_scenario')
         self.scenarios = {target: scenarios.get(target, 'healthy') for target in self.target_plan.target_ids}
         build = v.qualification.build_reference(v.TARGET_BUILD, 'target')
         v.require(build['image_id'] == v.TARGET_IMAGE and build['source_revision'] == v.TARGET_BUILD_SOURCE, 'validation_image_mismatch')
+        cap = self.lease.plan['controller_concurrency']
+        concurrency = cap if controller_concurrency is None else controller_concurrency
+        v.require(type(cap) is int and type(concurrency) is int and 1 <= concurrency <= cap, 'validation_scope')
         self.plan = make_plan(self.run, self.target_plan, readiness.target_resources, readiness.network,
-                              self.lease.plan['controller_concurrency'], self.scenarios)
+                              concurrency, self.scenarios)
         v.require(not self.run.file('evidence/batch-validation-plan.json').exists(), 'validation_attempt_reused')
         atomic_json(self.run.file('evidence/batch-validation-plan.json'), self.plan)
         self.records = {target: blocked_record(target, 'not_attempted') for target in self.target_plan.target_ids}
@@ -234,7 +243,7 @@ class BatchValidationSession:
         try:
             v.require(before_probe is None or callable(before_probe), 'invalid_validation_coordinator')
             self.readiness.held(); validate_plan(self.run, self.plan)
-            v.require(read_json(self.run.file('evidence/batch-validation-plan.json')) == self.plan, 'validation_plan_changed')
+            v.require(exact(read_json(self.run.file('evidence/batch-validation-plan.json')), self.plan), 'validation_plan_changed')
             v.require(not self.readiness.receipt['unknown_outcome'], 'helper_outcome_unknown')
             targets = []
             for target in self.target_plan.target_ids:
@@ -263,7 +272,9 @@ class BatchValidationSession:
             self.readiness.verify_helper(helper)
             started = datetime.fromisoformat(helper['State']['StartedAt'].replace('Z', '+00:00'))
             elapsed = (datetime.now(timezone.utc) - started).total_seconds()
-            v.require(started.tzinfo is not None and 0 <= elapsed and 180 - elapsed >= TIMEOUT + 20, 'validation_lifetime_budget_insufficient')
+            lifetime = self.readiness.helper_policy()['wait_seconds'] if self.target_plan.profile == 'twenty-targets' else 180
+            v.require(started.tzinfo is not None and 0 <= elapsed and lifetime - elapsed >= TIMEOUT + 20,
+                      'validation_lifetime_budget_insufficient')
             if before_probe is not None: before_probe(); self.remaining(deadline)
             budget = self.remaining(deadline, 45); v.require(budget > 3, 'validation_timeout')
             request = {'schema_version': '1.0', 'run_id': self.run.id, 'source_revision': self.run.manifest()['source_revision'],
