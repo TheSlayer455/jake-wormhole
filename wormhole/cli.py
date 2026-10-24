@@ -42,6 +42,13 @@ def parser():
     from .images import RUNS_ROOT
     isolation = commands.add_parser("isolation-check", help="Run the fixed approved Linux isolation and interrupted-recovery acceptance cases.")
     isolation.add_argument("--sentinel-id", required=True, help="Exact already-approved unrelated container ID, inspected read-only.")
+    twenty = commands.add_parser("twenty-check", help="Run the fixed approved Linux stock twenty-target qualification and exact scoped teardown.")
+    twenty.add_argument("--sentinel-id", required=True, help="Exact approved unrelated container ID, inspected read-only.")
+    twenty.add_argument("--concurrency", type=int, choices=range(1, 5), default=4,
+        help="Operation concurrency; the target count remains twenty.")
+    for name in ("twenty-report", "twenty-gate"):
+        command = commands.add_parser(name, help="Replay original stock twenty-target evidence without allocating resources.")
+        command.add_argument("run_id", help="Exact existing stock twenty-target Run UUID.")
     commands.add_parser("publication-init", help="Initialize the fixed owned private local release store; refuse unrelated existing data.")
     publication = commands.add_parser("publish-reference", help="Publish exact eligible tested reference bytes to the fixed private local release store.")
     publication.add_argument("run_id", help="Exact eligible reference Run UUID.")
@@ -91,6 +98,17 @@ def main(arguments=None):
             from .isolation_acceptance import acceptance
             value = acceptance(options.sentinel_id)
             status = 0 if value.get("status") == "passed" else 1
+        elif options.command == "twenty-check":
+            from .twenty_acceptance import acceptance
+            value = acceptance(options.sentinel_id, controller_concurrency=options.concurrency)
+            status = 0 if value.get("status") == "passed" else 1
+        elif options.command in {"twenty-report", "twenty-gate"}:
+            from .images import RUNS_ROOT
+            from .twenty_acceptance import report_twenty, gate_twenty
+            run = Run(RUNS_ROOT, options.run_id)
+            with run.locked():
+                value = report_twenty(run) if options.command == "twenty-report" else gate_twenty(run)
+            status = 0 if value.get("stock_twenty_scope_complete") is True else 1
         elif options.command == "publication-init":
             from .publication import initialize_publication_root
             value = initialize_publication_root()
