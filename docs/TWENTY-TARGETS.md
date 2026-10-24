@@ -87,5 +87,33 @@ python scripts/verify_repository.py
 
 They verify same-record JSON/text, complete native values, packet/hash binding,
 fixed target/check grids, explicit failed/unverified outcomes, typed flags,
-bounds and namespace refusal. Actual resource enforcement/sampling and the
-twenty-target acceptance operator are separate integration work.
+bounds and namespace refusal. The actual Linux operator is explicit:
+
+```text
+python -B -m wormhole twenty-check --sentinel-id EXACT_APPROVED_CONTAINER_ID --concurrency 4
+python -B -m wormhole twenty-report EXACT_RETURNED_RUN_UUID
+python -B -m wormhole twenty-gate EXACT_RETURNED_RUN_UUID
+```
+
+Only the fixed approved Run/infrastructure stores are supported. The sentinel is
+inspected read-only. Concurrency is an integer from one through four, independent
+of the fixed twenty target count. One measured canonical admission owns the
+twenty targets, network, provisioner and helper through exact cleanup. A refusal
+or failed check returns nonzero and leaves actual scale qualification outstanding.
+Preserve its returned Run UUID and original failure; do not retry an unknown
+operation or overwrite its files.
+
+The operator retains full private stopped/live resource observations, original
+Terraform plans/outputs, readiness packets and Ansible captures. Reporting
+replays those originals after cleanup, including all 160 readiness pairs, 200
+functional rows and 200 inventory rows. Exported per-target JSON/text must match
+the replayed inventory bytes. A passing stock scale decision continues to set
+reference and production ISO eligibility false.
+
+Two identity-bound point samples span the checks for all 22 owned containers.
+Cgroup usage/limits and CPU counter deltas, writable layer sizes, bounded log-tail
+byte counts, Run logical file bytes and stage timings are observations. They do
+not establish a guaranteed peak, disk quota or complete historical log size.
+Finished admission must account for all 23 transient resources as absent before
+the operator can pass. Actual execution evidence belongs in the ticket checkpoint;
+source and fixture success alone do not establish that execution occurred.
