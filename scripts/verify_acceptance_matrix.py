@@ -14,6 +14,93 @@ CATEGORIES = (
 )
 
 
+# Reviewed original scenario grid. A category summary cannot authorize omissions.
+ORIGINAL_GRID = (
+    ('WORM-005', '/qualification_runs/0', 'healthy-reference', 'actual-container', '731eabee3d691404e22c9422e37ff1c6ccddfcf4'),
+    ('WORM-005', '/qualification_runs/1', 'healthy-reference', 'actual-container', '731eabee3d691404e22c9422e37ff1c6ccddfcf4'),
+    ('WORM-006', '/suite/cases/0', 'healthy-reference', 'actual-container', '06c19f16d45fe66cd0ebde0432372b2d060f7226'),
+    ('WORM-006', '/suite/cases/1', 'healthy-reference', 'actual-container', '06c19f16d45fe66cd0ebde0432372b2d060f7226'),
+    ('WORM-006', '/suite/cases/2', 'interruption-recovery', 'actual-container', '06c19f16d45fe66cd0ebde0432372b2d060f7226'),
+    ('WORM-007', '/suite/cases/0', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/1', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/2', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/3', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/4', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/5', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/6', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/7', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-007', '/suite/cases/8', 'readiness-auth-trust-network-python', 'actual-container', '9db5f24fc8e27228a7dbe7ba7b5c8d8263a17fa5'),
+    ('WORM-008', '/suite/cases/0', 'interruption-recovery', 'actual-container', '68bd82dd3202c27a63d03fcaad9a8c32a12521b2'),
+    ('WORM-008', '/suite/cases/1', 'interruption-recovery', 'actual-container', '68bd82dd3202c27a63d03fcaad9a8c32a12521b2'),
+    ('WORM-008', '/suite/cases/2', 'interruption-recovery', 'actual-container', '68bd82dd3202c27a63d03fcaad9a8c32a12521b2'),
+    ('WORM-008', '/suite/cases/3', 'interruption-recovery', 'actual-container', '68bd82dd3202c27a63d03fcaad9a8c32a12521b2'),
+    ('WORM-009', '/suite/cases/0', 'functional-version', 'actual-container', 'de745a6ee7f80cddb2007ced380e2f67f79395f5'),
+    ('WORM-009', '/suite/cases/1', 'functional-version', 'actual-container', 'de745a6ee7f80cddb2007ced380e2f67f79395f5'),
+    ('WORM-009', '/suite/cases/2', 'functional-version', 'actual-container', 'de745a6ee7f80cddb2007ced380e2f67f79395f5'),
+    ('WORM-009', '/suite/cases/3', 'functional-version', 'actual-container', 'de745a6ee7f80cddb2007ced380e2f67f79395f5'),
+    ('WORM-009', '/suite/cases/4', 'functional-version', 'actual-container', 'de745a6ee7f80cddb2007ced380e2f67f79395f5'),
+    ('WORM-009', '/suite/cases/5', 'functional-version', 'actual-container', 'de745a6ee7f80cddb2007ced380e2f67f79395f5'),
+    ('WORM-010', '/actual_suites/0/cases/0', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/1/cases/0', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/0', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/1', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/2', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/3', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/4', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/5', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/6', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/7', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/8', 'readiness-auth-trust-network-python', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-010', '/actual_suites/2/cases/9', 'functional-version', 'actual-container', '1920c9621017190a8756affab36e5d25e6102978'),
+    ('WORM-011', '/components/missing', 'powershell-source', 'actual-container', '88c8df01c38986fb909b3cfe231a97081f790bc1'),
+    ('WORM-011', '/components/ordinary', 'powershell-source', 'actual-container', '88c8df01c38986fb909b3cfe231a97081f790bc1'),
+    ('WORM-011', '/components/build', 'powershell-source', 'actual-container', '88c8df01c38986fb909b3cfe231a97081f790bc1'),
+    ('WORM-011', '/components/smoke', 'powershell-source', 'actual-container', '88c8df01c38986fb909b3cfe231a97081f790bc1'),
+    ('WORM-012', '/linux_acceptance/cases/0', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/1', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/2', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/3', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/4', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/5', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/6', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/7', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/8', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/9', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/10', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-012', '/linux_acceptance/cases/11', 'integrity-evidence', 'actual-local-fixture', '72d3e6ded014d3d2b40e70f836e8dfe1dea8bef3'),
+    ('WORM-013', '/qualification/cases/0', 'integrity-evidence', 'actual-container', 'dfff72bec8bbea050bae73e6bba846e388f449e9'),
+    ('WORM-013', '/qualification/cases/1', 'integrity-evidence', 'actual-container', 'dfff72bec8bbea050bae73e6bba846e388f449e9'),
+    ('WORM-013', '/qualification/cases/2', 'integrity-evidence', 'actual-container', 'dfff72bec8bbea050bae73e6bba846e388f449e9'),
+    ('WORM-013', '/qualification/cases/3', 'integrity-evidence', 'actual-container', 'dfff72bec8bbea050bae73e6bba846e388f449e9'),
+    ('WORM-014', '/qualification/cases/0', 'functional-version', 'actual-container', 'db5d8e74f54483a909faaed963c752962785653c'),
+    ('WORM-014', '/qualification/cases/1', 'functional-version', 'actual-container', 'db5d8e74f54483a909faaed963c752962785653c'),
+    ('WORM-014', '/qualification/cases/2', 'functional-version', 'actual-container', 'db5d8e74f54483a909faaed963c752962785653c'),
+    ('WORM-014', '/qualification/cases/3', 'functional-version', 'actual-container', 'db5d8e74f54483a909faaed963c752962785653c'),
+    ('WORM-015', '/qualification/cases/0', 'native-inventory', 'actual-container', '14d510044757f588c256e27c62a0cbad037d7ca1'),
+    ('WORM-015', '/qualification/cases/1', 'native-inventory', 'actual-container', '14d510044757f588c256e27c62a0cbad037d7ca1'),
+    ('WORM-015', '/qualification/cases/2', 'native-inventory', 'actual-container', '14d510044757f588c256e27c62a0cbad037d7ca1'),
+    ('WORM-015', '/qualification/cases/3', 'native-inventory', 'actual-container', '14d510044757f588c256e27c62a0cbad037d7ca1'),
+    ('WORM-015', '/qualification/cases/4', 'native-inventory', 'actual-container', '14d510044757f588c256e27c62a0cbad037d7ca1'),
+    ('WORM-015', '/qualification/cases/5', 'native-inventory', 'actual-container', '14d510044757f588c256e27c62a0cbad037d7ca1'),
+    ('WORM-016', '/actual_component_acceptance/cases/0', 'synthetic-assessment', 'actual-local-fixture', '3e11548a253fbd7799606dc978d69f5965c5cea0'),
+    ('WORM-016', '/actual_component_acceptance/cases/1', 'synthetic-assessment', 'actual-local-fixture', '3e11548a253fbd7799606dc978d69f5965c5cea0'),
+    ('WORM-016', '/actual_component_acceptance/cases/2', 'synthetic-assessment', 'actual-local-fixture', '3e11548a253fbd7799606dc978d69f5965c5cea0'),
+    ('WORM-016', '/actual_component_acceptance/cases/3', 'synthetic-assessment', 'actual-local-fixture', '3e11548a253fbd7799606dc978d69f5965c5cea0'),
+    ('WORM-016', '/actual_component_acceptance/cases/4', 'synthetic-assessment', 'actual-local-fixture', '3e11548a253fbd7799606dc978d69f5965c5cea0'),
+    ('WORM-017', '/qualification/cases/0', 'healthy-reference', 'actual-container', '753b67d7e550218f28e2f765d3e3abf254c31656'),
+    ('WORM-017', '/qualification/cases/1', 'healthy-reference', 'actual-container', '753b67d7e550218f28e2f765d3e3abf254c31656'),
+    ('WORM-017', '/qualification/cases/2', 'functional-version', 'actual-container', '753b67d7e550218f28e2f765d3e3abf254c31656'),
+    ('WORM-018', '/qualification/cases/0', 'publication', 'private-local-publication', '85f4c56116f30679c083795bed17bb56f7b25d6d'),
+    ('WORM-018', '/qualification/cases/1', 'publication', 'private-local-publication', '85f4c56116f30679c083795bed17bb56f7b25d6d'),
+    ('WORM-018', '/qualification/cases/2', 'publication', 'private-local-publication', '85f4c56116f30679c083795bed17bb56f7b25d6d'),
+    ('WORM-018', '/qualification/cases/3', 'publication', 'private-local-publication', '85f4c56116f30679c083795bed17bb56f7b25d6d'),
+    ('WORM-019', '/qualification/cases/0', 'overlap-resource-refusal', 'actual-container', '973c24a4b9e196d8d3117a3b91d372bd0397394a'),
+    ('WORM-019', '/qualification/cases/1', 'interruption-recovery', 'actual-container', '973c24a4b9e196d8d3117a3b91d372bd0397394a'),
+    ('WORM-019', '/qualification/cases/2', 'interruption-recovery', 'private-local-publication', '973c24a4b9e196d8d3117a3b91d372bd0397394a'),
+    ('WORM-019', '/qualification/cases/3', 'overlap-resource-refusal', 'synthetic-capacity', '973c24a4b9e196d8d3117a3b91d372bd0397394a'),
+    ('WORM-020', '/qualification', 'twenty-targets', 'actual-container', '825a594862b816401d4b963329e6242bd8ed8aeb'),
+)
+
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=True,
                       allow_nan=False).encode('ascii')
@@ -78,7 +165,11 @@ def validate(value, root=ROOT):
             value.get('gitlab_runner_executed') is False, 'fidelity_flags')
     require(value.get('categories') == list(CATEGORIES), 'declared_categories')
     rows = value.get('rows')
-    require(type(rows) is list and 1 <= len(rows) <= 128, 'rows_bound')
+    require(type(rows) is list and len(rows) == len(ORIGINAL_GRID), 'exact_original_grid')
+    for index, (row, expected) in enumerate(zip(rows, ORIGINAL_GRID), 1):
+        actual = (row['ticket'], row['evidence']['json_pointer'], row['category'],
+                  row['execution_kind'], row['tested_source_revision'])
+        require(row['id'] == f'H{index:03}' and actual == expected, 'exact_original_grid')
     require(len({row['id'] for row in rows}) == len(rows), 'unique_rows')
     require(set(row['category'] for row in rows) == set(CATEGORIES), 'category_coverage')
     sources = {}
