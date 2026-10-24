@@ -1,5 +1,7 @@
 # Current handoff: merged and verified
 
+External engineering agents, including Luna, should start with [EXTERNAL-INTEGRATION](../docs/EXTERNAL-INTEGRATION.md). It is the short public-source entry point; this handoff retains development history. Public source and private runtime data are distinguished in [decision 0006](../docs/decisions/0006-public-source.md).
+
 Read [AGENTS](../AGENTS.md), [merged verification](MERGED-VERIFICATION.md), [state](../docs/STATE.md), [architecture](../docs/ARCHITECTURE.md), [fidelity](../docs/FIDELITY.md) and the [historical matrix](../docs/acceptance-matrix.md). All 21 original delivery PRs are merged. Actual merged-source qualification is bound to `c3d440a3c7eee9691f30315b49146eb72998d2df`; later documentation commits have separate CI and do not change that attribution.
 
 All 20 children WORM-002 through WORM-021 have recorded Done/approved-revision-2 completion, 66 passing criteria and solution comments. Original parent/child ledgers and checkpoints remain unchanged as dated snapshots. Minx is authoritative for current workflow state; refresh before mutations. Owner actions were explicitly delegated automation, distinct from independent human examination. Do not elevate roles, extract Owner credentials or bypass guards.
