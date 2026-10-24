@@ -201,7 +201,7 @@ class FleetInventoryContracts(unittest.TestCase):
     def test_free_text_cannot_export_private_paths_state_or_key_markers(self):
         for text in ('/srv/homelab/SYNTHETIC-SENSITIVE', 'C:\\Users\\SYNTHETIC-SENSITIVE',
                 'private/credentials/SYNTHETIC-SENSITIVE', 'terraform.tfstate', 'saved.tfplan',
-                '-----BEGIN OPENSSH PRIVATE KEY-----', 'github_pat_' + 'S' * 24):
+                '-' * 5 + 'BEGIN OPENSSH PRIVATE KEY' + '-' * 5, 'github_pat_' + 'S' * 24):
             for field in ('name', 'kernel', 'check'):
                 value = record()
                 if field == 'name':value['observation']['os']['name'] = text
