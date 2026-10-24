@@ -2,7 +2,7 @@
 
 Minx [WORM-001](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-001) is the parent Epic and authority for current contracts, dependencies, claims and review state. This is navigation, not a second ticket database.
 
-Snapshot October 24: WORM-002 through WORM-020 are Done under explicitly delegated normal Owner actions; WORM-021 r2 is approved/claimed In Progress for controlled parity and handoff. Parent acceptance follows all children. Refresh Minx before writes; this source snapshot never grants a lease. See [state](STATE.md), [historical matrix](acceptance-matrix.md) and [continuation](../handoff/CURRENT.md).
+Snapshot October24: all20children WORM-002 through WORM-021 Done at approved revision2 with66current passes and solution comments. Parent acceptance is separate in live Minx; no approved child implementation remains. Refresh before writes; this snapshot never grants a lease. See [parent closeout](../handoff/WORM-001-checkpoint.md), [state](STATE.md), [historical matrix](acceptance-matrix.md) and [continuation](../handoff/CURRENT.md).
 
 | Ticket | Bounded work |
 |---|---|

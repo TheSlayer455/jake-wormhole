@@ -2,7 +2,7 @@
 
 Private, container-only reference automation for verified source chunks, candidate-bound images, Terraform-managed targets, strict SSH/Ansible checks, native software inventories and attributable evidence.
 
-WORM-002 through WORM-020 are Done under Jake's explicitly delegated normal Owner workflow. WORM-021 is In Progress; parent WORM-001 acceptance follows its completion. Refresh Minx before mutations: this source snapshot is not a claim lease. Engineering review and Owner-directed automated decisions are distinct from independent human review.
+All20 children WORM-002 through WORM-021 are Done at approved revision2 with66 passing criteria and solution comments under Jake's explicitly delegated normal Owner workflow. See [parent closeout](handoff/WORM-001-checkpoint.md); its final decision is authoritative in Minx. Refresh before mutations: this snapshot is not a claim lease. Engineering review and Owner-directed automation are distinct from independent human examination.
 
 Latest actual scale qualification: twenty simultaneous stock Ubuntu targets at `825a594862b816401d4b963329e6242bd8ed8aeb`, Run `290ad14a-e6ec-4822-ae36-258d336ecc38`, 160 readiness pairs, 200 functional rows, 200 inventory rows and twenty full 123-package inventories. All 23 transient resources were removed, admission finished with no pending resources and the unrelated sentinel unchanged. Two point samples/CPU deltas are not guaranteed peaks. See [WORM-020](handoff/WORM-020-checkpoint.md).
 
