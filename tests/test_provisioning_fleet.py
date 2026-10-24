@@ -94,8 +94,8 @@ class FleetLifecycle(unittest.TestCase):
             self.assertEqual(self.session.target_resources, self.identities)
             copied = self.session.target_resources; copied.clear()
             self.assertEqual(self.session.target_resources, self.identities)
-            self.assertEqual(len(self.session.owned), 6)
-            self.assertIsNone(self.session.target_inventory('target-005'))
+            self.assertEqual(len(self.session.owned), len(self.identities) + 1)
+            self.assertIsNone(self.session.target_inventory(list(self.identities)[-1]))
             self.assertFalse(any(self.running[x] for x in self.identities.values()))
             inventory = self.session.start_and_inventory()
             self.assertEqual(inventory['status'], 'pass')
@@ -107,27 +107,29 @@ class FleetLifecycle(unittest.TestCase):
             self.assertLess(update, first_start)
             self.assertIn(('inspect', 'container', identifier), self.calls[update+1:first_start])
         self.assertEqual(result['cleanup'], 'completed')
-        self.assertEqual(len(result['resources']), 6)
+        self.assertEqual(len(result['resources']), len(self.identities) + 1)
         self.assertFalse(any(call[:2] == ('docker', 'rm') and call[-1] in self.identities.values() for call in self.calls))
         self.assertTrue(all(x['outcome'] == 'absent' for x in self.lease.record['resources']))
 
     def test_four_then_one_start_has_no_fabricated_pending_ip_and_no_repeat(self):
         with self.patches():
             self.session.create_stopped()
-            inventory = self.session.start_and_inventory(list(self.identities)[:4])
-            self.assertEqual(inventory['status'], 'unverified'); self.assertEqual(len(inventory['targets']), 4)
-            self.assertEqual(self.session.receipt['pending_target_ids'], ['target-005'])
-            self.assertIsNone(self.session.target_inventory('target-005'))
-            inventory = self.session.start_and_inventory(['target-005'])
-            self.assertEqual(inventory['status'], 'pass'); self.assertEqual(len(inventory['targets']), 5)
-            with self.assertRaises(p.ProvisioningError): self.session.start_targets(['target-005'])
-        self.assertEqual(self.calls.count(('docker', 'start', self.identities['target-005'])), 1)
+            last = list(self.identities)[-1]
+            inventory = self.session.start_and_inventory(list(self.identities)[:-1])
+            self.assertEqual(inventory['status'], 'unverified'); self.assertEqual(len(inventory['targets']), len(self.identities) - 1)
+            self.assertEqual(self.session.receipt['pending_target_ids'], [last])
+            self.assertIsNone(self.session.target_inventory(last))
+            inventory = self.session.start_and_inventory([last])
+            self.assertEqual(inventory['status'], 'pass'); self.assertEqual(len(inventory['targets']), len(self.identities))
+            with self.assertRaises(p.ProvisioningError): self.session.start_targets([last])
+        self.assertEqual(self.calls.count(('docker', 'start', self.identities[last])), 1)
 
     def test_ambiguous_verification_and_bad_start_identity_never_start(self):
         with self.patches():
             self.session.create_stopped()
             with self.assertRaises(Exception): self.session.verify_target(self.container(base.CID), stopped=True)
-            for values in ([], ['target-006'], ['target-001', 'target-001'], '../target-001'):
+            outside = 'target-' + str(len(self.identities) + 1).zfill(3)
+            for values in ([], [outside], ['target-000'], ['target-001', 'target-001'], '../target-001'):
                 with self.assertRaises(p.ProvisioningError): self.session.start_targets(values)
         self.assertFalse(any(call[:2] == ('docker', 'start') and call[-1] in self.identities.values() for call in self.calls))
 
@@ -147,7 +149,7 @@ class FleetLifecycle(unittest.TestCase):
         from wormhole.recovery import _resources
         with self.patches(): self.session.create_stopped()
         rows = _resources(self.session, self.lease)
-        self.assertEqual(sum(row['role'] == 'terraform-target' for row in rows), 5)
+        self.assertEqual(sum(row['role'] == 'terraform-target' for row in rows), len(self.identities))
         self.assertEqual(sum(row['role'] == 'terraform-network' for row in rows), 1)
         self.assertEqual(sum(row['role'] == 'provisioner' for row in rows), 1)
 
@@ -158,12 +160,12 @@ class FleetLifecycle(unittest.TestCase):
         original = deepcopy(self.session.owned)
         with self.patches():
             retained = p.ProvisioningSession.resume_destroy(self.run, self.lease)
-            self.assertEqual(retained.target_plan, TargetPlan('five-targets'))
+            self.assertEqual(retained.target_plan, TargetPlan(self.fixture_profile))
             self.assertEqual(retained.owned, original)
             with patch.object(retained, 'operation', side_effect=self.operation): result = retained.destroy()
         self.assertEqual(result['cleanup'], 'completed')
         self.assertEqual(retained.owned, original)
-        self.assertEqual(len(result['resources']), 6)
+        self.assertEqual(len(result['resources']), len(self.identities) + 1)
         self.assertFalse(any(call[:2] == ('docker', 'rm') and call[-1] in self.identities.values() for call in self.calls))
 
     def test_changed_controller_layout_cannot_start_retained_recovery(self):
@@ -183,13 +185,19 @@ class FleetLifecycle(unittest.TestCase):
         inspect.assert_not_called()
         self.assertEqual(self.lease.record['resources'], [])
 
-    def test_twenty_target_plan_does_not_authorize_runtime_allocation(self):
+    def test_mismatched_target_plan_does_not_authorize_runtime_allocation(self):
         from wormhole.admission import build_plan
         from test_admission import observed
-        self.lease.plan = build_plan('twenty-targets', observed()); self.lease.plan['synthetic'] = False
+        other = 'five-targets' if self.fixture_profile == 'twenty-targets' else 'twenty-targets'
+        self.lease.plan = build_plan(other, observed()); self.lease.plan['synthetic'] = False
         with patch.object(images, 'docker') as docker:
             with self.assertRaises(p.ProvisioningError): p.ProvisioningSession(self.run, self.lease)
         docker.assert_not_called()
+
+
+class TwentyLifecycle(FleetLifecycle):
+    """Same mocked Terraform lifecycle at the full twenty-resource boundary."""
+    fixture_profile = 'twenty-targets'
 
 
 if __name__ == '__main__': unittest.main()

@@ -24,9 +24,10 @@ class FleetHelper(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory(prefix='wormhole-fleet-helper-synthetic-')
         self.addCleanup(temporary.cleanup)
-        self.run = create_run(Path(temporary.name) / 'runs', fixture=False, identity=(SHA, False), profile='five-targets')
-        self.lease = Lease(self.run); self.lease.plan = admission.build_plan('five-targets', host_observations()); self.lease.plan['synthetic'] = False
-        self.target_plan = TargetPlan('five-targets')
+        profile = getattr(self, 'fixture_profile', 'five-targets')
+        self.run = create_run(Path(temporary.name) / 'runs', fixture=False, identity=(SHA, False), profile=profile)
+        self.lease = Lease(self.run); self.lease.plan = admission.build_plan(profile, host_observations()); self.lease.plan['synthetic'] = False
+        self.target_plan = TargetPlan(profile)
         self.target_resources = {target: format(index, '064x') for index, target in enumerate(self.target_plan.target_ids, 11)}
         self.starts = {target: datetime.now(timezone.utc).isoformat() for target in self.target_plan.target_ids}
         self.running = {target: True for target in self.target_plan.target_ids}
@@ -55,7 +56,7 @@ class FleetHelper(unittest.TestCase):
             (r.ReadinessSession, 'public_key', {'return_value': HOST_KEY}), (f.BatchReadinessSession, 'inject_inputs', {}),
             (v.v.qualification, 'build_reference', {'return_value': {'image_id': v.v.TARGET_IMAGE, 'source_revision': v.v.TARGET_BUILD_SOURCE}})):
             setting = patch.object(module, name, **options); setting.start(); self.addCleanup(setting.stop)
-        self.session = f.BatchReadinessSession(self.ps)
+        self.session = f.BatchReadinessSession(self.ps, fleet_inventory=getattr(self, 'fixture_inventory', False))
         self.failures = {}
 
     def verify_target(self, actual, *, target_id, **_):

@@ -39,11 +39,16 @@ def request(raw):
     value = json.loads(raw, object_pairs_hook=unique, parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
     fields = {'schema_version', 'run_id', 'source_revision', 'target_id', 'address', 'operation', 'attempt', 'scenario', 'timeout_seconds'}
     batch = type(value) is dict and value.get('resource_layout') == 'indexed-targets-v1'
-    require(type(value) is dict and set(value) == fields | ({'resource_layout'} if batch else set()))
+    twenty = batch and 'target_plan' in value
+    if twenty:
+        expected = {'schema_version': '1.0', 'resource_layout': 'indexed-targets-v1', 'profile': 'twenty-targets',
+            'target_count': 20, 'target_ids': ['target-' + str(i).zfill(3) for i in range(1, 21)]}
+        require(type(value['target_plan']) is dict and type(value['target_plan'].get('target_count')) is int and value['target_plan'] == expected)
+    require(type(value) is dict and set(value) == fields | ({'resource_layout'} if batch else set()) | ({'target_plan'} if twenty else set()))
     from uuid import UUID
     require(value['schema_version'] == '1.0' and type(value['run_id']) is str and str(UUID(value['run_id'])) == value['run_id'] and
         type(value['source_revision']) is str and re.fullmatch('[a-f0-9]{40}', value['source_revision']) and
-        value['target_id'] in (tuple('target-' + str(i).zfill(3) for i in range(1, 6)) if batch else ('target-001',)) and
+        value['target_id'] in (tuple('target-' + str(i).zfill(3) for i in range(1, 21 if twenty else 6)) if batch else ('target-001',)) and
         value['operation'] in OPERATIONS and value['scenario'] in SCENARIOS and
         type(value['attempt']) is int and 1 <= value['attempt'] <= 64 and
         type(value['timeout_seconds']) in (int, float) and 0.1 <= value['timeout_seconds'] <= 30)
