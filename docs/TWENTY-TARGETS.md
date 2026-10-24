@@ -50,6 +50,9 @@ Logical references `captures/stock-inventory/batch-001` through `batch-005` are
 not copied raw log files. The domain resolves them to fixed private captures.
 Reports contain no raw capture, private key, Terraform state, environment or host
 filesystem path. Pure validation performs no file reads or resource inspection.
+Closed fields and narrow path/private-key-marker checks protect printable free
+text as well; this is not a comprehensive secret scanner. Unexpected data is
+refused rather than silently removed from an apparently complete inventory.
 
 The domain writes each namespace as:
 

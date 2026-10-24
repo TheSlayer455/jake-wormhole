@@ -36,6 +36,8 @@ LIMITS = ('Stock Ubuntu container userland, not a candidate-derived image or a c
     'The observed kernel is shared with the host, not installed target userland.',
     'Structural validity does not prove collection, twenty live targets or measured capacity.',
     'Complete reference pipeline and production ISO eligibility remain false.')
+UNSAFE_TEXT = re.compile(r'-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----|private/|(?i:tfstate|tfplan)|'
+    r'[A-Za-z]:[\\/]|/(?:srv|home|root|Users)/|(?:gh[pousr]_|github_pat_)[A-Za-z0-9_]{20,}')
 
 
 class FleetInventoryRecordError(RunError):
@@ -152,10 +154,21 @@ def _bounded(definition, value, maximum):
         _bounded_json(value)
         require(len(canonical(value)) <= maximum, 'fleet_inventory_record_bound')
         _validate(definition, value, '$')
+        _safe_projection(value)
     except FleetInventoryRecordError:
         raise
     except (ContractError, ValueError, TypeError, KeyError, RecursionError, UnicodeError):
         raise FleetInventoryRecordError('fleet_inventory_record_invalid', 'Stock fleet inventory is malformed or exceeds its bound.') from None
+
+
+def _safe_projection(value):
+    """Closed fields plus narrow accidental-secret/path checks, not a scanner."""
+    if type(value) is str:
+        require(UNSAFE_TEXT.search(value) is None, 'fleet_inventory_unsafe_projection')
+    elif type(value) is dict:
+        for item in value.values():_safe_projection(item)
+    elif type(value) is list:
+        for item in value:_safe_projection(item)
 
 
 def _dates(value):
