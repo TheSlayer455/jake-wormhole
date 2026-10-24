@@ -350,12 +350,15 @@ def acceptance(sentinel_id, *, controller_concurrency=4):
                     readiness_summary(run, targets)
                     first = stage('sample-before', lambda: collect_sample(ps, ready, 'before-checks'))
                     atomic_json(run.file(SAMPLE_BEFORE), first)
-                    validation = BatchValidationSession(ready, controller_concurrency=controller_concurrency)
-                    stage('functional', validation.validate); validation.require_passed()
-                    functional_summary(run, targets, controller_concurrency)
+                    # Consume the larger remaining-lifetime requirement first.
+                    # Both stages retain their own deadlines and refuse expired
+                    # targets; no container lifetime is extended for scale.
                     inventory = FleetInventorySession(ready, controller_concurrency=controller_concurrency)
                     stage('inventory', inventory.collect); inventory.require_passed()
                     inventory_summary(run, targets, controller_concurrency)
+                    validation = BatchValidationSession(ready, controller_concurrency=controller_concurrency)
+                    stage('functional', validation.validate); validation.require_passed()
+                    functional_summary(run, targets, controller_concurrency)
                     last = stage('sample-after', lambda: collect_sample(ps, ready, 'after-checks'))
                     atomic_json(run.file(SAMPLE_AFTER), last)
                     atomic_json(run.file(USAGE), compare_samples(first, last))

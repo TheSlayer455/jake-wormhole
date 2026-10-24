@@ -185,6 +185,13 @@ class LifecycleTests(unittest.TestCase):
         return read_json(paths[0])
 
     def test_coordinator_allocates_full_twenty_once_and_replays_after_exact_cleanup(self):
+        ordered = []
+        self.inventory.collect.side_effect = lambda: ordered.append('inventory')
+        self.validation.validate.side_effect = lambda: ordered.append('functional')
+        def sample(_ps, _ready, phase):
+            ordered.append(phase)
+            return {'totals': {'memory_current_bytes': 1, 'pids_current': 1, 'writable_layer_bytes': 1}}
+        t.collect_sample.side_effect = sample
         try:
             value = t.acceptance(SENTINEL, controller_concurrency=2)
         except t.TwentyError as error:
@@ -195,6 +202,7 @@ class LifecycleTests(unittest.TestCase):
         self.admission.assert_called_once(); self.ps.create_stopped.assert_called_once(); self.cleanup.assert_called_once()
         self.lease.finish.assert_called_once_with(reconciliation_complete=True)
         self.inventory_factory.assert_called_once_with(self.ready, controller_concurrency=2)
+        self.assertEqual(ordered, ['before-checks','inventory','functional','after-checks'])
 
     def test_capacity_refusal_has_no_domain_or_cleanup_allocation_and_durable_failed_attempt(self):
         self.admission.side_effect = t.admission.AdmissionError('capacity_refused', 'Synthetic private diagnostic')
@@ -205,12 +213,19 @@ class LifecycleTests(unittest.TestCase):
         self.assertFalse(value['stock_twenty_scope_complete']); self.assertEqual(value['status'], 'failed')
         self.assertNotIn('private diagnostic', json.dumps(value))
 
-    def test_functional_failure_preserves_first_primary_and_always_cleans_without_inventory(self):
+    def test_functional_failure_preserves_first_primary_and_always_cleans_after_inventory(self):
         self.validation.require_passed.side_effect = RunError('synthetic_functional_failure', 'PRIVATE FIXTURE')
         with self.assertRaises(RunError): t.acceptance(SENTINEL)
-        self.cleanup.assert_called_once(); self.inventory.collect.assert_not_called()
+        self.cleanup.assert_called_once(); self.inventory.collect.assert_called_once()
         value = self.only_receipt(); self.assertEqual(value['primary_failure'], self.ps.receipt['primary_failure'])
         self.assertEqual(value['status'], 'failed'); self.assertFalse(value['stock_twenty_scope_complete'])
+
+    def test_inventory_failure_prevents_functional_stage_and_still_cleans(self):
+        self.inventory.require_passed.side_effect = RunError('synthetic_inventory_failure', 'PRIVATE FIXTURE')
+        with self.assertRaises(RunError): t.acceptance(SENTINEL)
+        self.cleanup.assert_called_once(); self.validation.validate.assert_not_called()
+        self.assertEqual(self.only_receipt()['primary_failure'], self.ps.receipt['primary_failure'])
+        self.assertFalse(self.only_receipt()['stock_twenty_scope_complete'])
 
     def test_cleanup_unknown_preserves_original_primary_and_never_finishes_admission(self):
         self.validation.validate.side_effect = RunError('original_failure', 'PRIVATE FIXTURE')
