@@ -1,4 +1,29 @@
-# Current continuation: WORM-017 delivery
+# Current continuation: WORM-018 delivery
+
+Read the [WORM-018 checkpoint](WORM-018-checkpoint.md),
+[criterion evidence](evidence/WORM-018.json), [source review](reviews/WORM-018.md)
+and [current state](../docs/STATE.md) first. Actual runtime source is
+`85f4c56116f30679c083795bed17bb56f7b25d6d`; final delivery documentation may have a
+later commit. Publication uses exact original tested bytes and a unique private
+local destination. Consumer completeness and producer durability acknowledgement
+remain distinct. No remote image/release or production ISO is eligible.
+
+No active host operation remained after qualification. Last canonical admission
+Run `f42c3797-a4cb-4856-af21-f674d37cfa22` is finished with six recorded resources
+and zero pending. Owned containers/networks are absent; images, private Run state,
+two completed local file releases and the incomplete interrupted destination are
+retained. Never overwrite or advertise the incomplete destination as a release.
+
+Refresh Minx before any mutation. Root owns the WORM-018 claim and final delivery;
+implementation qualification does not replace its recorded Owner decision. Once
+WORM-018 is Done, use a new isolated WORM-019 branch and distinct session to prove
+overlapping process lifetimes with serialized canonical resource leases, exact
+recovery and bounded admission refusal. WORM-020 requires an actual twenty-target
+graph, and WORM-021 needs manual/CI parity and final handoff. Finish parent001 last.
+
+## Preserved earlier continuation
+
+# WORM-017 delivery
 
 <!-- WORM-017 actual qualification 753b67d7e550218f28e2f765d3e3abf254c31656 -->
 ## WORM-017 actual limited reference pipeline

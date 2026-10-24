@@ -1,5 +1,15 @@
 # Architecture
 
+The current bounded source now includes the one-container Ubuntu/UBI reference
+pipeline and a separate [private exact-byte publisher](PUBLICATION.md). The
+publisher replays original evidence under the Run lock, then uses its own stable
+release-store lock, a closed file table and a final non-overwriting completion
+marker. Original source/candidate/evidence identity, consumer completeness,
+producer fsync acknowledgement and observed local privacy are separate facts.
+See [current state](STATE.md) for actual source and qualification; the foundation
+narrative below preserves earlier component decisions and may describe later
+completed work as planned. Minx remains the authority for contract/review state.
+
 WORM-002 establishes the repository baseline. WORM-003 adds a standard-library
 Python CLI and isolated local fixture runs, bounded fixed stage adapters and six
 versioned artifact contracts. WORM-004 adds [measured admission](ADMISSION.md),

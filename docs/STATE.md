@@ -1,4 +1,32 @@
-# Current engineering state: limited reference pipeline qualified
+# Current engineering state: private reference publication qualified
+
+October 24, 2026: clean runtime `85f4c56116f30679c083795bed17bb56f7b25d6d`
+passed the actual four-case WORM-018 suite
+`7cfbc355-3649-4b88-99b1-15ff2a7ec589`. Fresh Ubuntu and UBI runs published
+byte-identical tested candidate files and safe reference evidence locally.
+Independent CLI inspections, duplicate preservation and actual unprivileged
+EACCES observations passed. The marker-linked interrupted publisher remains
+incomplete; the wrong-version pipeline remains failed and cannot publish.
+Every pipeline completed exact-owned cleanup with the unrelated sentinel unchanged.
+
+Windows: 590 cases, 369 pass and 221 explicit platform skips in 60.809 seconds.
+Homelab Linux: 590 cases, 588 pass and two Windows-only skips in 46.754 seconds.
+Both source reviews and the proof-gated original readback checks are recorded in
+[criterion evidence](../handoff/evidence/WORM-018.json) and the
+[publication checkpoint](../handoff/WORM-018-checkpoint.md). The first attempt's
+storage-owner refusal is preserved as a failure; its correction changed no host
+permissions, mounts, accounts or services.
+
+This publishes local files and reference evidence. Image digests are metadata;
+no image or remote release was published. Generated candidate and synthetic
+assessment limits remain, with production eligibility false. Refresh Minx for
+requirements and review decisions. WORM-019 overlap/recovery, WORM-020 actual
+twenty-target execution, WORM-021 parity/handoff and parent acceptance remain
+separate work. Earlier checkpoints below retain their original observation times.
+
+## Preserved historical checkpoints
+
+# Limited reference pipeline qualified
 
 <!-- WORM-017 actual qualification 753b67d7e550218f28e2f765d3e3abf254c31656 -->
 ## WORM-017 actual limited reference pipeline

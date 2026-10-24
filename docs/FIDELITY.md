@@ -1,5 +1,17 @@
 # Fidelity and evidence limits
 
+## Observed WORM-018 scope, October 24, 2026
+
+The [source-bound publication evidence](../handoff/evidence/WORM-018.json)
+qualifies actual private local file bundles for one generated Ubuntu target and
+one generated UBI target. It retains exact original candidate/evidence bytes,
+full safe observed inventory, independent CLI inspection, actual unprivileged
+access denial, duplicate refusal and deliberate incomplete/failed cases.
+File publication is real; candidate input and assessment policy are reference
+fixtures. No image export, registry, remote release, VM/ISO boot, scanner/STIG
+acceptance or production eligibility follows. Twenty-target execution is separate.
+Earlier descriptions below may predate that bounded qualification.
+
 This is a container reference project, not a Lightspeed rewrite or a VM/ISO
 installation laboratory. Read [architecture](ARCHITECTURE.md),
 [discovery](DISCOVERY.md) and the [current handoff](../handoff/CURRENT.md).
