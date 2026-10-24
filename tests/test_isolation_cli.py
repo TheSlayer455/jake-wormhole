@@ -39,6 +39,15 @@ class IsolationCLITests(unittest.TestCase):
         self.assertEqual(status, 2)
         self.assertEqual(receipt['error']['code'], 'infrastructure_busy')
 
+    def test_failed_suite_and_child_identities_survive_cli_error(self):
+        error = RunError('controlled_interruption', 'Retain the original failure.')
+        error.run_id = 'c18794ab-62af-47df-8129-dbd944ac3fe0'
+        error.suite_run_id = '1cf70cee-d163-483f-aace-9dff39beef39'
+        status, receipt, _ = self.invoke(error=error)
+        self.assertEqual(status, 2)
+        self.assertEqual(receipt['run_id'], error.run_id)
+        self.assertEqual(receipt['suite_run_id'], error.suite_run_id)
+
     def test_no_operator_selected_profile_root_or_fault(self):
         for extra in (('--workspace', '/tmp/other'), ('--profile', 'twenty'), ('--fault', 'arbitrary')):
             with self.subTest(extra=extra), redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
