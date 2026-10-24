@@ -168,9 +168,16 @@ def check(row, name, observed, passed):
 
 def raw_fingerprint(path):
     _owned(path)
-    before = path.stat(); require(before.st_size <= 262144, 'parity_record_bound')
-    with path.open('rb') as stream: raw = stream.read(262145)
-    require(len(raw) == before.st_size and identity(path.stat()) == identity(before), 'parity_record_changed')
+    before = path.lstat(); require(0 < before.st_size <= 262144, 'parity_record_bound')
+    fd = os.open(path, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0))
+    try:
+        require(identity(os.fstat(fd)) == identity(before), 'parity_record_changed')
+        with os.fdopen(fd, 'rb', closefd=False) as stream: raw = stream.read(262145)
+        require(len(raw) == before.st_size and identity(os.fstat(fd)) == identity(before) and
+            identity(path.lstat()) == identity(before), 'parity_record_changed')
+        _path_chain(path)
+    finally:
+        os.close(fd)
     return digest(raw)
 
 
