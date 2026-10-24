@@ -197,6 +197,20 @@ class ParityTests(unittest.TestCase):
             self.assertEqual([item.name for item in target.iterdir()], ['unrelated.txt'])
             self.assertEqual(list((old / 'safe').iterdir()), [])
 
+    @unittest.skipUnless(os.name == 'posix', 'POSIX original-record nofollow race fixture')
+    def test_original_fingerprint_refuses_file_swapped_to_symlink(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'record'; path.write_bytes(b'original'); path.chmod(0o600)
+            outside = Path(folder) / 'outside'; outside.write_bytes(b'keep'); outside.chmod(0o600)
+            actual_open = os.open
+            def swap(name, *args, **kwargs):
+                if name == path:
+                    path.unlink(); path.symlink_to(outside)
+                return actual_open(name, *args, **kwargs)
+            with patch.object(p.os, 'open', side_effect=swap), self.assertRaises((p.RunError, OSError)):
+                p.raw_fingerprint(path)
+            self.assertEqual(outside.read_bytes(), b'keep')
+
     @unittest.skipUnless(os.name == 'posix', 'POSIX child fd/name replacement fixture')
     def test_destination_rename_during_write_refuses(self):
         with tempfile.TemporaryDirectory() as folder:
