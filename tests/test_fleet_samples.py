@@ -11,6 +11,11 @@ from wormhole import fleet_samples as f
 
 ID = 'a' * 64
 EXPECTED = {'memory_bytes': 256 * 1024**2, 'nano_cpus': 250_000_000, 'pids_limit': 64}
+# Actual key spellings observed by the separate read-only host diagnostic.
+# These values are synthetic; this fixture is not a live CPU measurement.
+CPU_STAT = ('usage_usec 100000\nuser_usec 60000\nsystem_usec 40000\ncore_sched.force_idle_usec 0\n'
+    'nr_periods 80\nnr_throttled 2\nthrottled_usec 400\nnr_bursts 0\nburst_usec 0')
+CPU_REQUIRED = ('usage_usec', 'user_usec', 'system_usec')
 
 
 def pair():
@@ -89,6 +94,43 @@ class PureSamples(unittest.TestCase):
         for value in ('usage_usec 1\nusage_usec 2', 'user_usec 2', 'usage_usec NaN', 'usage_usec 1 extra'):
             with self.subTest(value=value), self.assertRaises(f.SamplingError): f.counters(value, ('usage_usec',))
 
+    def test_observed_dotted_kernel_key_shape_preserves_all_synthetic_counters(self):
+        value = f.counters(CPU_STAT, CPU_REQUIRED)
+        self.assertEqual(value, {'usage_usec': 100000, 'user_usec': 60000, 'system_usec': 40000,
+            'core_sched.force_idle_usec': 0, 'nr_periods': 80, 'nr_throttled': 2, 'throttled_usec': 400,
+            'nr_bursts': 0, 'burst_usec': 0})
+        self.assertEqual(f.counters('oom 0\noom_kill 0\noom_group_kill 0', ('oom', 'oom_kill')),
+            {'oom': 0, 'oom_kill': 0, 'oom_group_kill': 0})
+
+    def test_dotted_counter_names_require_nonempty_ascii_components_and_total64_bound(self):
+        name = 'a' * 31 + '.' + 'b' * 32
+        self.assertEqual(f.counters(name + ' 1', (name,)), {name: 1})
+        for key in (name + 'b', '.core_sched', 'core_sched.', 'core_sched..force_idle_usec',
+            'core_sched./force_idle_usec', r'core_sched.\force_idle_usec', 'core_sched.force-idle-usec',
+            'Core_sched.force_idle_usec', 'core_sched.1force_idle_usec', 'core_sched.\x00force_idle_usec',
+            'core_sched.\x1bforce_idle_usec', 'core_sched.f\u00f6rce_idle_usec', 'core_sched.force idle_usec'):
+            with self.subTest(key=key), self.assertRaises(f.SamplingError): f.counters(key + ' 1', ())
+
+    def test_extra_dotted_counter_cannot_hide_duplicates_or_invalid_values(self):
+        for extra in ('core_sched.force_idle_usec 0', 'usage_usec 2', 'core_sched.force_idle_usec -1',
+            'core_sched.force_idle_usec 01', 'core_sched.force_idle_usec NaN', 'core_sched.force_idle_usec max',
+            'core_sched.force_idle_usec ' + str(2**63), 'core_sched.force_idle_usec 1 extra'):
+            with self.subTest(extra=extra), self.assertRaises(f.SamplingError): f.counters(CPU_STAT + '\n' + extra, CPU_REQUIRED)
+        # Validate an optional field's value too, rather than ignoring it.
+        for value in ('-1', '01', str(2**63), 'NaN', 'max'):
+            with self.subTest(value=value), self.assertRaises(f.SamplingError):
+                f.counters('usage_usec 1\ncore_sched.force_idle_usec ' + value, ('usage_usec',))
+
+    def test_required_cpu_oom_fields_and_counter_line_bound_remain_mandatory(self):
+        for required in CPU_REQUIRED:
+            raw = '\n'.join(row for row in CPU_STAT.splitlines() if not row.startswith(required + ' '))
+            with self.subTest(missing=required), self.assertRaises(f.SamplingError): f.counters(raw, CPU_REQUIRED)
+        for raw in ('oom 0', 'oom_kill 0', 'oom.extra 0\noom_kill 0'):
+            with self.subTest(raw=raw), self.assertRaises(f.SamplingError): f.counters(raw, ('oom', 'oom_kill'))
+        rows = ['usage_usec 0'] + ['optional.field_' + str(i) + ' 0' for i in range(31)]
+        self.assertEqual(len(f.counters('\n'.join(rows), ('usage_usec',))), 32)
+        with self.assertRaises(f.SamplingError): f.counters('\n'.join(rows + ['optional.extra 0']), ('usage_usec',))
+
     def test_unsupported_platform_refuses_before_any_inspection(self):
         with patch.object(f.sys, 'platform', 'win32'), patch.object(f.images, 'inspect') as inspection:
             with self.assertRaises(f.SamplingError): f.collect_sample(None, None, 'before-checks')
@@ -127,7 +169,7 @@ class KernelNodeFixtures(unittest.TestCase):
         self.folder = self.cg / self.location[1:]; self.folder.mkdir(parents=True)
         contents = {'memory.max': str(EXPECTED['memory_bytes']), 'memory.swap.max': '0',
             'cpu.max': '25000 100000', 'pids.max': '64', 'memory.current': '1024', 'memory.peak': '2048',
-            'pids.current': '4', 'cpu.stat': 'usage_usec 100000\nuser_usec 60000\nsystem_usec 40000\nnr_throttled 2',
+            'pids.current': '4', 'cpu.stat': CPU_STAT,
             'memory.events': 'low 0\nhigh 0\nmax 0\noom 0\noom_kill 0'}
         for name, value in contents.items(): (self.folder / name).write_text(value + '\n')
         a = patch.object(f, 'PROC_ROOT', self.proc); a.start(); self.addCleanup(a.stop)
@@ -138,6 +180,8 @@ class KernelNodeFixtures(unittest.TestCase):
         self.assertEqual(value['memory_current_bytes'], 1024)
         self.assertEqual(value['pids_current'], 4)
         self.assertEqual(value['cpu_stat']['usage_usec'], 100000)
+        self.assertEqual(value['cpu_stat']['core_sched.force_idle_usec'], 0)
+        self.assertEqual(len(value['cpu_stat']), 9)
         self.assertEqual(value['memory_peak_status'], 'observed')
         self.assertEqual(value['cgroup'], self.location[1:])
 

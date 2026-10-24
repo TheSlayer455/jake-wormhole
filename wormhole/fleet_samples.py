@@ -76,7 +76,8 @@ def counters(value, required):
     result = {}
     for line in value.splitlines():
         fields = line.split()
-        require(len(fields) == 2 and re.fullmatch('[a-z][a-z0-9_]{0,63}', fields[0]) and
+        require(len(fields) == 2 and len(fields[0]) <= 64 and
+            re.fullmatch(r'[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*', fields[0]) and
             fields[0] not in result, 'fleet_sample_counters')
         result[fields[0]] = counter(fields[1])
     require(set(required) <= set(result), 'fleet_sample_counters')
