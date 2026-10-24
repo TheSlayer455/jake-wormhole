@@ -103,6 +103,19 @@ or failed check returns nonzero and leaves actual scale qualification outstandin
 Preserve its returned Run UUID and original failure; do not retry an unknown
 operation or overwrite its files.
 
+The twenty-target readiness context is version 5 and records a shared 120-second
+deadline. Creation, cleanup resume and offline replay bind that same policy in
+both context and receipt. Smoke and five-target profiles retain their existing
+90-second policy. Individual probe caps and the 300-second target/helper and
+600-second provisioner lifetimes are unchanged. A shared deadline exhausted
+before a target is attempted is distinct from observing a target never started.
+
+After readiness, the first resource sample precedes full native inventory, then
+functional validation and the second sample. Inventory requires more remaining
+target lifetime, so it runs first. Existing per-stage deadlines and remaining
+lifetime guards still refuse unsafe work; this order and the readiness budget
+do not guarantee that a real graph will pass within its fixed lifetimes.
+
 The operator retains full private stopped/live resource observations, original
 Terraform plans/outputs, readiness packets and Ansible captures. Reporting
 replays those originals after cleanup, including all 160 readiness pairs, 200
