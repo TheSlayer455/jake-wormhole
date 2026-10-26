@@ -139,12 +139,69 @@ class FleetHelper(unittest.TestCase):
         self.assertEqual(error.exception.code, 'ssh_key_rejected')
         self.assertEqual(self.session.ready_target_ids, ('target-001', 'target-003', 'target-004', 'target-005'))
         validation = v.BatchValidationSession(self.session)
-        with patch.object(v, '_run_process', side_effect=self.batch), self.assertRaises(v.v.ValidationError): validation.validate()
+        with patch.object(v, '_run_process', side_effect=self.batch), self.assertRaises(v.v.ValidationError): validation.validate(diagnostic_subset=True)
         report = v.report_batch_validation(self.run)['result']
         self.assertEqual(len(report['checks']), 50)
         self.assertEqual(sum(item['status'] == 'pass' for item in report['checks']), 40)
         self.assertEqual(report['blocked_targets'], {'target-002': 'ssh_key_rejected'})
         self.assertEqual(self.ps.receipt['primary_failure']['code'], 'required_batch_check_failed')
+
+    def test_incomplete_readiness_blocks_full_catalog_and_accounts_for_every_row(self):
+        self.failures['target-002'] = 'ssh_key_rejected'; self.session.start_helper()
+        with patch.object(r, '_run_process', side_effect=self.probe), self.assertRaises(r.ReadinessError):
+            self.session.wait_ready()
+        validation = v.BatchValidationSession(self.session)
+        with patch.object(v, '_run_process') as execute, self.assertRaises(v.v.ValidationError) as error:
+            validation.validate()
+        self.assertEqual(error.exception.code, 'readiness_required')
+        execute.assert_not_called()
+        report = v.report_batch_validation(self.run)
+        self.assertEqual(report['result']['attempted_targets'], [])
+        self.assertEqual(len(report['result']['checks']), 50)
+        self.assertEqual(len(report['result']['blocked_targets']), 5)
+        self.assertEqual(report['result']['primary_failure']['code'], 'ssh_key_rejected')
+        self.assertEqual(report['progress']['summary']['tests_blocked'], 50)
+        self.assertEqual(report['progress']['summary']['targets_ansible_ready'], 4)
+        invocation = read_json(self.run.file(v.INVOCATION))
+        self.assertEqual(invocation['scope'], 'full-fleet-acceptance')
+        self.assertEqual(invocation['outcome'], 'failed')
+        self.assertIsNotNone(invocation['finished_at'])
+
+    def test_expired_inherited_deadline_never_invokes_catalog_and_persists_failure(self):
+        self.make_ready(); validation = v.BatchValidationSession(self.session)
+        with patch.object(v, '_run_process') as execute, self.assertRaises(v.v.ValidationError) as error:
+            validation.validate(absolute_deadline=time.monotonic() - 1)
+        self.assertEqual(error.exception.code, 'validation_timeout'); execute.assert_not_called()
+        result = v.report_batch_validation(self.run)['result']
+        self.assertEqual(result['status'], 'failed'); self.assertEqual(len(result['checks']), 50)
+        self.assertEqual(read_json(self.run.file(v.INVOCATION))['budget_seconds'], 0)
+
+    def test_unexpected_dispatch_exception_remains_failed_with_complete_grid(self):
+        self.make_ready(); validation = v.BatchValidationSession(self.session)
+        failure = RuntimeError('Controlled dispatch failure')
+        with patch.object(v, '_run_process', side_effect=failure), self.assertRaises(RuntimeError) as error:
+            validation.validate()
+        self.assertIs(error.exception, failure)
+        result = v.report_batch_validation(self.run)['result']
+        self.assertEqual(result['status'], 'failed'); self.assertEqual(len(result['checks']), 50)
+        self.assertEqual(result['attempted_targets'], [])
+        self.assertEqual(read_json(self.run.file(v.INVOCATION))['outcome'], 'failed')
+
+    def test_later_timing_write_error_does_not_replace_dispatch_failure(self):
+        self.make_ready(); validation = v.BatchValidationSession(self.session)
+        original = v.atomic_json; writes = 0
+        def write(path, value):
+            nonlocal writes
+            if path == self.run.file(v.INVOCATION):
+                writes += 1
+                if writes == 2: raise OSError('Controlled timing evidence failure')
+            return original(path, value)
+        failure = RuntimeError('Controlled original dispatch failure')
+        with patch.object(v, '_run_process', side_effect=failure), patch.object(v, 'atomic_json', side_effect=write), \
+                self.assertRaises(RuntimeError) as error:
+            validation.validate()
+        self.assertIs(error.exception, failure)
+        self.assertEqual(self.ps.receipt['secondary_failures'][-1]['code'], 'validation_evidence_write_failed')
 
     def test_delayed_target_does_not_repin_others_and_distinct_logs_survive(self):
         self.running['target-005'] = False; self.session.start_helper()

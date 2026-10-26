@@ -79,6 +79,40 @@ def test_contract():
             'collector': 'fixed-ssh-ansible-candidate-v1', 'iso_processing': 'none', 'production_iso_eligible': False}
 
 
+def input_identity(source_sha256):
+    """Content dependencies exclude controller/tests and attempt provenance.
+
+    The immutable builder image identifies its installed tools. This key permits
+    comparison of construction inputs; it does not authorize image reuse without
+    the existing image, artifact and source-bound evidence verification.
+    """
+    from .provisioning import TARGET_IMAGE
+    require(type(source_sha256) is str and re.fullmatch('[a-f0-9]{64}', source_sha256), 'candidate_source_unverified')
+    inputs = {'base_image': TARGET_IMAGE, 'source_sha256': source_sha256,
+        'customization': {name: sha((CONTEXT / name).read_bytes()) for name in ('payload.py', 'install.py')},
+        'configuration': deepcopy(CONFIG), 'version': VERSION,
+        'build_tool_identity': {'image_id': TARGET_IMAGE, 'entrypoint': 'python3-fixed-installer-v1'}}
+    return {'build_inputs': inputs, 'input_sha256': sha(canonical(inputs))}
+
+
+def input_record(run, manifest):
+    return {**common(run.manifest()), 'operation': 'candidate-construction-inputs-v1',
+        **input_identity(manifest['source_sha256']), 'generation_attempt': run.id,
+        'candidate_sha256': sha(canonical(manifest)), 'production_iso_eligible': False}
+
+
+def compare_inputs(previous, current):
+    """A reuse *decision input*, not a cache hit or qualification decision."""
+    for value in (previous, current):
+        require(type(value) is dict and set(value) == {'build_inputs', 'input_sha256'} and
+            type(value['build_inputs']) is dict and value['input_sha256'] == sha(canonical(value['build_inputs'])),
+            'candidate_inputs_invalid')
+    changed = sorted(key for key in set(previous['build_inputs']) | set(current['build_inputs'])
+        if canonical(previous['build_inputs'].get(key)) != canonical(current['build_inputs'].get(key)))
+    return {'content_reusable': not changed, 'changed_dependencies': changed,
+        'artifact_verification_required': True, 'qualification_reuse_authorized': False}
+
+
 def validate_manifest(value):
     try:
         _bounded_json(value); _validate(MANIFEST, value, '$')
@@ -123,12 +157,16 @@ def prepare_candidate(run):
         'test_contract_sha256': sha(canonical(test_contract())), 'production_iso_eligible': False})
     atomic_bytes(folder / 'manifest.json', canonical(value), limit=16384)
     atomic_json(run.file('evidence/candidate-manifest.json'), value)
+    atomic_json(run.file('evidence/candidate-inputs.json'), input_record(run, value))
     return validate_bundle(run)
 
 
 def validate_bundle(run):
     value = validate_manifest(read_json(run.file('evidence/candidate-manifest.json')))
     require(bound_common(value, run.manifest()), 'candidate_source_changed')
+    inputs_path = run.file('evidence/candidate-inputs.json')
+    if inputs_path.exists():
+        require(canonical(read_json(inputs_path)) == canonical(input_record(run, value)), 'candidate_inputs_changed')
     folder = run.file('private/candidate'); _owned(folder, directory=True)
     require(set(os.listdir(folder)) == set(NAMES) | {'manifest.json'}, 'candidate_file_set')
     require(bounded_file(folder / 'manifest.json', 16384) == canonical(value), 'candidate_manifest_changed')

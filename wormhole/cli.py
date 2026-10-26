@@ -23,10 +23,15 @@ def doctor():
 
 
 def parser():
-    root = argparse.ArgumentParser(prog="python -m wormhole", description="Private container reference automation and explicitly labeled local fixtures.")
+    root = argparse.ArgumentParser(prog="python -m wormhole", description="Container reference automation and explicitly labeled local fixtures.")
     root.add_argument("--version", action="version", version=__version__)
     commands = root.add_subparsers(dest="command", required=True)
     commands.add_parser("doctor", help="Read local source/tool presence without provisioning or network calls.")
+    progress = commands.add_parser('progress', help='Read current atomic readiness progress; this does not decide qualification.')
+    progress.add_argument('run_id')
+    from .images import RUNS_ROOT
+    progress.add_argument('--workspace', default=str(RUNS_ROOT))
+    progress.add_argument('--format', choices=('json', 'text'), default='text')
     workspace = str(Path.home() / ".wormhole-runs")
     run = commands.add_parser("run", help="Persist an attempt; --fixture runs only the synthetic fixture subset.")
     run.add_argument("--workspace", default=workspace, help="Dedicated absolute storage outside Git and vaults.")
@@ -82,6 +87,11 @@ def main(arguments=None):
     try:
         if options.command == "doctor":
             value, status = doctor(), 0
+        elif options.command == 'progress':
+            from .execution_state import report_progress, render_text
+            value = report_progress(Run(options.workspace, options.run_id))
+            rendered = render_text(value) if options.format == 'text' else None
+            status = 0
         elif options.command == "run":
             run = create_run(options.workspace, fixture=options.fixture)
             with run.locked():

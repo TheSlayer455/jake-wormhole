@@ -14,6 +14,7 @@ from xml.etree import ElementTree as ET
 from .contracts import ContractError, _bounded_json, _validate
 from .runs import RunError
 from . import observed_svd
+from .execution_state import READINESS_CHECKS
 
 POLICY = 'reference-smoke-v1'
 PLAN_OPERATION = 'reference-pipeline-plan-v1'
@@ -31,8 +32,7 @@ LIMITATIONS = (
     'No VM installation, ISO boot, production approval or remote publication is established.',
     'Production ISO eligibility is always false; optional PowerShell is excluded.',
 )
-READINESS = ('created', 'started', 'endpoint-discovered', 'tcp-reachable', 'ssh-identity-accepted',
-             'python-usable', 'ansible-usable', 'required-test-complete')
+READINESS = READINESS_CHECKS
 UBUNTU_FUNCTIONAL = ('candidate-userland', 'candidate-source-sha256', 'candidate-manifest-sha256',
     'candidate-payload-sha256', 'candidate-version', 'candidate-configuration', 'candidate-function')
 UBI_FUNCTIONAL = ('rpm-userland', 'rpm-python3', 'rpm-openssh', 'rpm-openssh-server', 'rpm-shadow-utils',

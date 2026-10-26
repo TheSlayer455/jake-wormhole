@@ -52,6 +52,7 @@ class ReadinessPolicy(unittest.TestCase):
         self.run = create_run(Path(temporary.name) / 'runs', fixture=False, identity=(SHA, False))
         self.lease = Lease(self.run)
         self.started = True
+        self.target_started_at = datetime.now(timezone.utc).isoformat()
         self.helper_started = False
         self.removed = False
         self.calls = []
@@ -72,7 +73,7 @@ class ReadinessPolicy(unittest.TestCase):
 
     def target(self):
         return {'Id': TARGET, 'State': {'Status': 'running' if self.started else 'created', 'Running': self.started,
-            'StartedAt': datetime.now(timezone.utc).isoformat() if self.started else '0001-01-01T00:00:00Z'},
+            'StartedAt': self.target_started_at if self.started else '0001-01-01T00:00:00Z'},
             'NetworkSettings': {'Networks': {'run': {'NetworkID': NETWORK, 'IPAddress': '172.31.77.2'}}}}
 
     def helper(self):
@@ -206,6 +207,27 @@ class ReadinessPolicy(unittest.TestCase):
         before = len(self.calls)
         with self.assertRaises(r.ReadinessError): self.session.cleanup()
         self.assertFalse(any(x[:2] == ('docker', 'stop') for x in self.calls[before:]))
+
+    def test_nonzero_runtime_exit_before_authentication_is_primary_initialization_failure(self):
+        target = self.target()
+        target['State'].update(Status='exited', Running=False, ExitCode=23)
+        with patch.object(self.session, 'inspect', return_value=target), self.assertRaises(r.ReadinessError) as error:
+            self.session.poll()
+        self.assertEqual(error.exception.code, 'target_initialization_failed')
+        self.assertEqual(self.session.receipt['primary_failure']['code'], 'target_initialization_failed')
+        self.assertFalse(self.session.receipt['probes'])
+
+    def test_restart_after_partial_readiness_cannot_reuse_pre_restart_observations(self):
+        self.session.start_helper()
+        self.session.endpoint()
+        self.session.transition('tcp-reachable')
+        before = deepcopy(self.session.receipt['transitions'])
+        self.target_started_at = datetime.now(timezone.utc).isoformat()
+        with self.assertRaises(r.ReadinessError) as error:
+            self.session.poll()
+        self.assertEqual(error.exception.code, 'readiness_stale')
+        self.assertEqual(self.session.receipt['transitions'], before)
+        self.assertFalse(self.session.receipt['probes'])
 
     def test_completed_receipt_with_wrong_identity_or_fake_pong_is_rejected(self):
         self.session.start_helper()
