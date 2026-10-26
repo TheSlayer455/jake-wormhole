@@ -137,7 +137,7 @@ clear uncertainty or change an admitted plan. No global cleanup is performed.
 
 PowerShell execution does not prove Evaluate-STIG controller, transport or target
 compatibility. There is no authorized scanner package or documented compatible
-method, and no Lightspeed policy or scanner invocation is invented. Production
+method, and no production-system policy or scanner invocation is invented. Production
 ISO eligibility and complete-pipeline claims remain false for every outcome.
 
 <!-- WORM-011 actual capability 88c8df01c38986fb909b3cfe231a97081f790bc1 -->

@@ -1,5 +1,11 @@
 # Architecture
 
+The [active follow-up](FAILURE-REPRODUCTION.md) centralizes the readiness observation
+contract in `execution_state.py`. Normal fleet dispatch requires complete readiness;
+subset diagnostics are explicit and remain ineligible. Progress is a projection
+of existing records, with a separate terminal outcome and unknown initialization
+where no independent observation exists. It is not a second execution framework.
+
 Jake Wormhole is a standard-library Python CLI/library with bounded Linux container adapters. There is no resident scheduler, dashboard, Kubernetes deployment, database, broker or model provider. [Current state](STATE.md) and [original acceptance](acceptance-matrix.md) distinguish implementation from execution.
 
 | Boundary | Implemented responsibility |

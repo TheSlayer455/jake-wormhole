@@ -1,5 +1,9 @@
 # Jake Wormhole
 
+Active engineering: [failure reproduction and readiness follow-up](docs/FAILURE-REPRODUCTION.md).
+Use `python -m wormhole progress RUN_UUID` for readable atomic readiness snapshots;
+qualification still requires the existing original-evidence replay gates.
+
 Container-only reference automation for verified source chunks, candidate-bound images, Terraform-managed targets, strict SSH/Ansible checks, native software inventories and attributable evidence. The source repository is public by [Jake's October 24 decision](docs/decisions/0006-public-source.md); runtime inputs, credentials and raw evidence remain private.
 
 **Luna and external engineering agents: [start here](docs/EXTERNAL-INTEGRATION.md).** The short guide maps capabilities to source and tests, with explicit integration limits.

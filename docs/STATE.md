@@ -1,5 +1,12 @@
 # Current engineering state
 
+The owner-authorized [failure-reproduction follow-up](FAILURE-REPRODUCTION.md) is
+in progress. It adds strict fleet readiness admission, shared observation
+projections, explicit diagnostic scope, inherited deadline support and candidate
+input fingerprints. Fresh runtime acceptance is blocked by operator access to
+retained project state. The original qualification below is not evidence for the
+new source. Current test/review status is recorded in the follow-up checkpoint.
+
 Post-merge verification, October 24, 2026. All 21 original delivery PRs are merged. The qualified main source is `c3d440a3c7eee9691f30315b49146eb72998d2df`, tree `f5a69b447b224840c66229c00f0fd2e102812449`. See [merged verification](../handoff/MERGED-VERIFICATION.md). Original ticket evidence and tested revisions remain unchanged.
 
 | Fact | Recorded scope |

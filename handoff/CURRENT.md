@@ -1,5 +1,15 @@
 # Current handoff: merged and verified
 
+## Active follow-up
+
+The [failure-reproduction rebuild](../docs/FAILURE-REPRODUCTION.md) is in progress
+on its own review branch. Normal fleet validation now requires all planned
+targets; selected ready-subset execution is explicitly diagnostic. Shared
+progress reports retain unknown initialization and complete missing/blocked
+accounting. Current runtime verification requires an existing operator route to
+retained private project state. No resources were allocated for this follow-up.
+The original merged qualification below remains attributed to its original source.
+
 External engineering agents, including Luna, should start with [EXTERNAL-INTEGRATION](../docs/EXTERNAL-INTEGRATION.md). It is the short public-source entry point; this handoff retains development history. Public source and private runtime data are distinguished in [decision 0006](../docs/decisions/0006-public-source.md).
 
 Read [AGENTS](../AGENTS.md), [merged verification](MERGED-VERIFICATION.md), [state](../docs/STATE.md), [architecture](../docs/ARCHITECTURE.md), [fidelity](../docs/FIDELITY.md) and the [historical matrix](../docs/acceptance-matrix.md). All 21 original delivery PRs are merged. Actual merged-source qualification is bound to `c3d440a3c7eee9691f30315b49146eb72998d2df`; later documentation commits have separate CI and do not change that attribution.

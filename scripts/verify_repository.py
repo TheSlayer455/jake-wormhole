@@ -19,6 +19,7 @@ REQUIRED = {
 }
 PRIVATE_KEY = re.compile(rb'-----BEGIN (?:OPENSSH |RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----')
 TOKEN = re.compile(rb'\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{60,})\b')
+PRIVATE_ENDPOINT = re.compile(rb'https?://[^\s/()]+\.ts\.net(?=[:/\s)]|$)', re.I)
 LINK = re.compile(r'(?<!!)\[[^\]]+\]\((<[^>]+>|[^\s)]+)(?:\s+"[^"]*")?\)')
 
 
@@ -56,6 +57,8 @@ def verify():
         raw = target.read_bytes()
         if PRIVATE_KEY.search(raw) or TOKEN.search(raw):
             errors.append('Possible private key or known token format in: ' + name)
+        if PRIVATE_ENDPOINT.search(raw):
+            errors.append('Private runtime endpoint must remain outside public source: ' + name)
         if relative.suffix.lower() != '.md':
             continue
         for match in LINK.finditer(raw.decode('utf-8')):

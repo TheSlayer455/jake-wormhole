@@ -1,6 +1,6 @@
 # Fidelity and evidence limits
 
-This is an actual container reference project using generated source and explicitly synthetic assessment policy. It does not validate proprietary Lightspeed infrastructure or an installable OS image. The [historical matrix](acceptance-matrix.md) binds observations to original tested sources/evidence; it is not a final-source runtime rerun.
+This is an actual container reference project using generated source and explicitly synthetic assessment policy. It does not validate proprietary production-system infrastructure or an installable OS image. The [historical matrix](acceptance-matrix.md) binds observations to original tested sources/evidence; it is not a final-source runtime rerun.
 
 | Established observation | Limit |
 | --- | --- |
