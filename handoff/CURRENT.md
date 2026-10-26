@@ -1,4 +1,4 @@
-# Current handoff: merged and verified
+# Current handoff
 
 ## Active follow-up
 
@@ -9,6 +9,17 @@ progress reports retain unknown initialization and complete missing/blocked
 accounting. Current runtime verification requires an existing operator route to
 retained private project state. No resources were allocated for this follow-up.
 The original merged qualification below remains attributed to its original source.
+
+Continue from tested implementation `ba9d1a23ac591a122c0d0b3017d5c5a80afc31db`
+and [draft PR 27](https://github.com/TheSlayer455/jake-wormhole/pull/27).
+805 tests passed with explicit skips on Windows and Linux; hosted CI passed, and
+manual/hosted mode-all semantic files matched exactly. Manual negative modes
+returned 1. Source and fixture evidence is separate from new container acceptance,
+which was not executed. Obtain the existing authorized runtime operator route,
+then implement/exercise the target initialization and hardening fault adapters
+before advancing the remaining rebuild phases. The full rebuild and independent
+review remain outstanding. Current retained source-test evidence is described
+in the active checkpoint; no new containers remain from this follow-up.
 
 External engineering agents, including Luna, should start with [EXTERNAL-INTEGRATION](../docs/EXTERNAL-INTEGRATION.md). It is the short public-source entry point; this handoff retains development history. Public source and private runtime data are distinguished in [decision 0006](../docs/decisions/0006-public-source.md).
 

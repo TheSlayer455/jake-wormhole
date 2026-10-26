@@ -7,6 +7,15 @@ input fingerprints. Fresh runtime acceptance is blocked by operator access to
 retained project state. The original qualification below is not evidence for the
 new source. Current test/review status is recorded in the follow-up checkpoint.
 
+Implementation `ba9d1a23ac591a122c0d0b3017d5c5a80afc31db` passed 805 tests on
+Windows (273 skips) and Linux nonroot (10 skips), plus hosted CI. Manual controlled
+parity observed 0/1/1; all three mode-all semantic files matched hosted output byte
+for byte. [Draft PR 27](https://github.com/TheSlayer455/jake-wormhole/pull/27)
+contains the increment. Runtime acceptance, additional fault adapters and actual
+image reuse remain outstanding; no independent review or full rebuild completion
+is claimed. See the checkpoint for commands, timings and the retained failed
+test-fixture predecessor.
+
 Post-merge verification, October 24, 2026. All 21 original delivery PRs are merged. The qualified main source is `c3d440a3c7eee9691f30315b49146eb72998d2df`, tree `f5a69b447b224840c66229c00f0fd2e102812449`. See [merged verification](../handoff/MERGED-VERIFICATION.md). Original ticket evidence and tested revisions remain unchanged.
 
 | Fact | Recorded scope |

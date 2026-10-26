@@ -6,6 +6,14 @@ marked approved/completed in Minx. Work in bounded review branches, retain exact
 tested revisions and continue the remaining runtime/fault-adapter work from that
 checkpoint. Do not reopen or claim a completed ticket as a new authorization.
 
+The first increment is in [draft PR 27](https://github.com/TheSlayer455/jake-wormhole/pull/27),
+tested at `ba9d1a23ac591a122c0d0b3017d5c5a80afc31db` with 805 tests on Windows
+and Linux (explicit skips) and matching manual/hosted semantic records. Remaining
+work: observed initialization/configuration lifecycle, container fault adapters,
+expected restart recovery, actual verified image reuse, fresh runtime/fleet and
+publication acceptance, performance measurements, and independent review. Runtime
+operator access is unresolved. This source increment does not complete that list.
+
 Minx WORM-001 is the parent Epic and authority for current contracts, dependencies, claims and review state. This is navigation, not a second ticket database.
 
 Snapshot October24: all20children WORM-002 through WORM-021 Done at approved revision2 with66current passes and solution comments. Parent acceptance is separate in live Minx; no approved child implementation remains. Refresh before writes; this snapshot never grants a lease. See [parent closeout](../handoff/WORM-001-checkpoint.md), [state](STATE.md), [historical matrix](acceptance-matrix.md) and [continuation](../handoff/CURRENT.md).

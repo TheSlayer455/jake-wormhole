@@ -58,6 +58,49 @@ recomputes it. `compare_inputs` reports content reuse potential only. Existing
 image identity, Run attribution and artifact checks still apply, and actual build
 reuse remains unimplemented.
 
+## Tested increment
+
+Implementation revision: `ba9d1a23ac591a122c0d0b3017d5c5a80afc31db`.
+Review branch: `codex/WORM-001-failure-reproduction`.
+[Draft PR 27](https://github.com/TheSlayer455/jake-wormhole/pull/27) is the review
+boundary; the full rebuild is not complete and has not received independent review.
+
+| Execution | Observed result |
+| --- | --- |
+| Windows, CPython 3.12.14 | 805 tests: 532 passed, 273 platform skips; 121.339 seconds |
+| Linux nonroot, CPython 3.12.3 | 805 tests: 795 passed, 10 explicit skips; 100.214 seconds |
+| Repository hygiene and original acceptance index | Passed on both environments; original 83 rows/16 evidence files preserved |
+| [Hosted PR workflow](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40419128433) | Successful source suite, controlled parity, diagnostic validation and artifact upload at the implementation revision |
+| Manual controlled parity | Fresh checkout per mode; observed process exits 0/1/1 for all/required-failure/unexpected-success; all diagnostics staged |
+| Manual versus hosted semantic records | plan.json, results.json and decision.json matched byte for byte for mode all at the same revision; downloaded archive matched the provider digest |
+| New mixed-twenty regression | Nineteen ready target fixtures plus one authentication failure: zero catalog dispatches and all 200 required rows retained as blocked |
+| New Docker/SSH/Ansible/scale/publication acceptance | Not executed: retained project runtime store inaccessible to the available operator |
+
+Commands were `python -B scripts/verify_repository.py`,
+`python -B scripts/verify_acceptance_matrix.py`,
+`python -B -m unittest discover -s tests -v`, and
+`python -B scripts/run_ci_parity.py --mode MODE` (python3 on Linux).
+The intentionally failing parity modes remained nonzero; they were not new
+intentionally red hosted jobs. Raw test logs and the parity comparison are in
+private engineering evidence, outside Git. Hosted artifacts contain only the
+existing five validated synthetic projections.
+
+The first full-suite predecessor at `3791ca4` failed on both platforms because the
+new twenty-target test selected a five-target helper fixture. The correction
+reuses the existing twenty-target policy fixture; runtime limits were unchanged.
+Those failure logs remain retained. Source suite timings include seventeen new
+tests and are not runtime performance benchmarks or evidence of a speedup.
+
+Self-review covered the dispatch gate, diagnostic ineligibility, earliest failure
+retention, restart invalidation, readonly progress and public-tree changes.
+Initialization/configuration completion remains explicitly unobserved where the
+old receipts do not establish it. No external reviewer or model was contacted.
+No containers were allocated by this follow-up; a final read-only Docker query
+found no containers carrying Wormhole run labels. Existing private Run/image
+state was not adopted, modified or reinterpreted. Source test checkouts/logs remain
+retained. A later documentation commit has separate CI and does not relabel these
+observations as executions of that commit.
+
 ## Remaining execution boundary
 
 The configured homelab operator reaches Docker but cannot read the retained
