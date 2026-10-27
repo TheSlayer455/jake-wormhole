@@ -1,0 +1,113 @@
+"""Source/fixture checks only; no test here claims an installed VM."""
+import json
+import os
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+from uuid import uuid4
+
+from wormhole import admission as a, vm_admission as v, vm_inputs as i
+from wormhole.runs import RunError, atomic_json, now
+from test_admission import observed
+
+
+class Inputs(unittest.TestCase):
+    def test_boot_entries_preserve_iso_kernel_and_add_unattended_serial(self):
+        original = 'set timeout=30\n linux /casper/vmlinuz  ---\n initrd /casper/initrd\n'
+        result = i.boot_config(original)
+        self.assertIn('timeout=1', result)
+        self.assertIn('/casper/vmlinuz  autoinstall console=ttyS0,115200n8 ---', result)
+        self.assertIn('initrd /casper/initrd', result)
+        for wrong in ('linux /other/kernel ---', result):
+            with self.assertRaises(RunError):
+                i.boot_config(wrong)
+
+    def test_seed_contains_no_bootstrap_or_private_key_and_retains_host_key(self):
+        text = i.cloud_config(str(uuid4()), 'ssh-ed25519 ' + 'A' * 68, '192.0.2.10/24', '52:54:00:11:22:33')
+        value = json.loads(text.split('\n', 1)[1])['autoinstall']
+        self.assertNotIn('identity', value)
+        self.assertEqual([], value['user-data']['users'])
+        self.assertFalse(value['user-data']['ssh_deletekeys'])
+        self.assertFalse(value['refresh-installer']['update'])
+        self.assertFalse(value['ssh']['allow-pw'])
+        self.assertIn('curtin', text)
+        self.assertIn('WORMHOLE_INSTALLATION_FAILED', text)
+        self.assertIn('lab.service', text)
+        with self.assertRaises(RunError):
+            i.cloud_config(str(uuid4()), 'ssh-ed25519 A;echo secret', '192.0.2.10/24', '52:54:00:11:22:33')
+
+    def test_terraform_contract_is_empty_disk_real_cdrom_isolated_network(self):
+        value = i.terraform_config('wormhole-vm-0123456789ab', '/lab/pool', '/lab/candidate.iso',
+                                   '/lab/seed.iso', '192.0.2.0/24', '52:54:00:11:22:33')
+        resource = value['resource']
+        domain = resource['libvirt_domain']['run']
+        self.assertEqual(domain['type'], 'kvm')
+        self.assertEqual(domain['memory'], 8192)
+        self.assertNotIn('kernel', domain)
+        self.assertNotIn('firmware', domain)  # explicit BIOS profile
+        self.assertEqual(domain['boot_device']['dev'], ['hd', 'cdrom'])
+        self.assertNotIn('source', resource['libvirt_volume']['disk'])
+        self.assertEqual(resource['libvirt_network']['run']['mode'], 'none')
+        self.assertFalse(resource['libvirt_network']['run']['dhcp']['enabled'])
+
+
+@unittest.skipUnless(os.name == 'posix', 'Linux private storage/flock fixtures')
+class SharedAdmission(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp.name) / 'infrastructure'
+        self.patch = patch.object(a, 'CANONICAL_INFRASTRUCTURE_ROOT', self.root)
+        self.patch.start()
+        with a.AdmissionLease(self.root, str(uuid4()), 'a' * 40,
+                              collector=lambda _: observed(), allow_synthetic=True) as lease:
+            lease.finish(reconciliation_complete=True)
+
+    def tearDown(self):
+        self.patch.stop()
+        self.temp.cleanup()
+
+    def test_vm_exit_does_not_imply_cleanup_or_allow_container_admission(self):
+        with v.VMLease(self.root, str(uuid4()), 'b' * 40) as lease:
+            lease.intent('domain', 'owned-domain')
+            with self.assertRaises(RunError):
+                lease.finish()
+        with self.assertRaises(RunError) as failure:
+            with a.AdmissionLease(self.root, str(uuid4()), 'a' * 40,
+                                  collector=lambda _: observed(), allow_synthetic=True):
+                self.fail('Unreconciled VM admitted a container run')
+        self.assertEqual(failure.exception.code, 'unreconciled_vm_run')
+
+    def test_finished_vm_requires_durable_matching_archive(self):
+        with v.VMLease(self.root, str(uuid4()), 'b' * 40) as lease:
+            lease.intent('installer_iso', '/private/candidate.iso')
+            lease.reconciled('installer_iso', '/private/candidate.iso', retained_input=True)
+            lease.finish()
+            identifier = lease.id
+        v.require_vm_reconciled(self.root)
+        (self.root / 'vm-history' / (identifier + '.json')).unlink()
+        with self.assertRaises(OSError):
+            v.require_vm_reconciled(self.root)
+
+    def test_vm_rejects_container_unreconciled_and_same_live_lock(self):
+        with a.AdmissionLease(self.root, str(uuid4()), 'a' * 40,
+                              collector=lambda _: observed(), allow_synthetic=True):
+            with self.assertRaises(RunError):
+                with v.VMLease(self.root, str(uuid4()), 'b' * 40):
+                    self.fail('Concurrent backends admitted')
+        with self.assertRaises(RunError) as failure:
+            with v.VMLease(self.root, str(uuid4()), 'b' * 40):
+                self.fail('Unreconciled container admitted a VM')
+        self.assertEqual(failure.exception.code, 'unreconciled_container_run')
+
+
+class VMJournal(unittest.TestCase):
+    def test_closed_backend_and_production_boundary(self):
+        value = {'schema_version': '1.0', 'backend': 'libvirt-iso', 'run_id': str(uuid4()),
+            'source_revision': 'b' * 40, 'state': 'active', 'created_at': now(), 'updated_at': now(),
+            'resources': [{'kind': 'domain', 'identity': 'owned', 'outcome': 'pending'}],
+            'production_iso_eligible': False}
+        v.validate_record(value)
+        for change in ({'backend': 'docker'}, {'production_iso_eligible': True}, {'state': 'finished'}):
+            with self.assertRaises(RunError):
+                v.validate_record({**value, **change})

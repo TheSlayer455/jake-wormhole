@@ -18,7 +18,7 @@ from .runs import RunError, _owned, _path_chain, atomic_json, read_json, workspa
 
 BLOCK = 1024 * 1024
 MAX_BYTES = 32 * 1024**3
-MAX_CHUNKS = 4096
+MAX_CHUNKS = 512
 DEFAULT_CHUNK = 64 * BLOCK
 RESERVE = 512 * BLOCK
 SHA = re.compile(r'[a-f0-9]{64}\Z')

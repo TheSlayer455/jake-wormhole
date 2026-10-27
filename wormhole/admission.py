@@ -381,6 +381,10 @@ class AdmissionLease:
                 _require(not self._reconciliation_only, "invalid_archive", "Reconciliation requires the existing history directory.")
                 history.mkdir(mode=0o700)
             _owned(history, directory=True)
+            # Both backends share this lock. A dead VM coordinator does not make
+            # its durable resource intents safe to ignore or adopt.
+            from .vm_admission import require_vm_reconciled
+            require_vm_reconciled(self.root)
             journal = self.root / "admission.json"
             if self._reconciliation_only:
                 self.record = _journal(read_json(journal))

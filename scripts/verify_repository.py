@@ -47,7 +47,7 @@ def verify():
             continue
         if relative.parts[0] in {'runs', 'state', 'private', '.wormhole', '.venv', '.terraform'} or \
                 relative.name in {'.env', 'id_rsa', 'id_ed25519'} or \
-                re.search(r'\.(?:sqlite(?:-wal|-shm)?|db|tfstate(?:\..*)?|tfplan|pem)$', name):
+                re.search(r'\.(?:sqlite(?:-wal|-shm)?|db|tfstate(?:\..*)?|tfplan|pem|iso|qcow2|raw|vmdk)$', name, re.I):
             errors.append('Mutable state or private material must stay outside Git: ' + name)
         size = target.stat().st_size
         total += size
