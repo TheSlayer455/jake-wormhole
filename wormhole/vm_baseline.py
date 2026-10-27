@@ -20,7 +20,7 @@ from uuid import uuid4
 import xml.etree.ElementTree as ET
 
 from .admission import CANONICAL_INFRASTRUCTURE_ROOT, collect_observations
-from .runs import SOURCE_ROOT, RunError, atomic_json, now, source_identity, workspace_path
+from .runs import SOURCE_ROOT, RunError, atomic_json, now, read_json, run_id, source_identity, workspace_path
 from .vm_admission import VMLease, require
 from .vm_inputs import UBUNTU, build_ubuntu, sha256, terraform_config
 
@@ -49,14 +49,16 @@ while time.monotonic()<deadline:
   r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],check],capture_output=True,text=True,timeout=min(12,max(1,deadline-time.monotonic())))
   if r.returncode==0 and r.stdout.strip().startswith('/dev/'):
    ready=True;break
+  print(json.dumps({'stage':'final-authentication','returncode':r.returncode,'ready':False}),flush=True)
  except subprocess.TimeoutExpired:pass
  time.sleep(min(3,max(0,deadline-time.monotonic())))
 if not ready:
  print(json.dumps({'final_authentication':False,'ansible_ready':False,'catalog_started':False,'outcome':'readiness-failed'}));sys.exit(1)
-env=dict(os.environ,ANSIBLE_HOST_KEY_CHECKING='True',ANSIBLE_LOCAL_TEMP='/tmp/ansible')
+print(json.dumps({'stage':'final-authentication','returncode':0,'ready':True}),flush=True)
+env=dict(os.environ,HOME='/tmp',ANSIBLE_HOME='/tmp/.ansible',ANSIBLE_HOST_KEY_CHECKING='True',ANSIBLE_LOCAL_TEMP='/tmp/ansible')
 common='-o StrictHostKeyChecking=yes -o UserKnownHostsFile='+str(known)+' -o IdentitiesOnly=yes'
 base=['/opt/wormhole/venv/bin/ansible','all','-i',c['address']+',','-u','lab.service','--private-key',str(key),
-      '-e','ansible_python_interpreter=/usr/bin/python3','--ssh-common-args',common]
+      '-e','ansible_python_interpreter=/usr/bin/python3','--ssh-common-args='+common]
 for label,args in [('ansible-readiness',['-m','ping']),('functional',['-b','-m','command','-a','/usr/bin/id -u']),
                    ('inventory',['-m','command','-a',"dpkg-query -W -f='${Package}=${Version}\\n'"])]:
  remaining=deadline-time.monotonic()
@@ -101,7 +103,7 @@ def preflight(source):
     return observation
 
 
-def execute(source, terraform):
+def execute(source, terraform, *, reuse_run=None):
     os.umask(0o077)
     revision, dirty = source_identity()
     require(not dirty and sha256(terraform) == TF_SHA, 'unverified_execution_inputs')
@@ -162,7 +164,16 @@ def execute(source, terraform):
             for kind, identity in [('installer_iso', str(candidate)), ('seed_iso', str(seed))]:
                 lease.intent(kind, identity)
             started = time.monotonic()
-            manifest = build_ubuntu(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac)
+            reuse = None
+            if reuse_run is not None:
+                origin = workspace_path(ROOT / 'vm-runs' / run_id(reuse_run))
+                original_result = read_json(origin / 'result.json')
+                original_manifest = read_json(origin / 'inputs/build-manifest.json')
+                require(original_result.get('build') == original_manifest and original_result.get('cleanup') ==
+                        'verified-absent-inputs-retained', 'candidate_origin_unreconciled')
+                reuse = (SHARED / reuse_run / 'candidate.iso', original_manifest)
+                result['candidate_origin_run'] = reuse_run
+            manifest = build_ubuntu(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac, reuse=reuse)
             result['stages'].append({'stage': 'candidate-build', 'elapsed_seconds': round(time.monotonic()-started, 3), 'returncode': 0})
             result['build'] = manifest;save()
             for path in (candidate, seed):
@@ -233,8 +244,13 @@ def execute(source, terraform):
             command(args, 'controller-create')
             unknown = False
             payload = json.dumps({'address': ADDRESS, 'host_key': host_key, 'private_key': (run / 'ssh-key').read_text(),
-                                  'seconds': max(1, int(deadline-time.monotonic()-180))}).encode()
+                                  'seconds': max(1, min(300, int(deadline-time.monotonic()-180)))}).encode()
             command(['docker', 'start', '-ai', helper], 'ssh-ansible-inventory', timeout=max(1, deadline-time.monotonic()-180), data=payload)
+            rows = [json.loads(line) for line in (run / 'ssh-ansible-inventory.log').read_text().splitlines() if line.startswith('{')]
+            terminal = rows[-1] if rows else {}
+            require(terminal.get('outcome') == 'baseline-passed' and terminal.get('final_authentication') is True and
+                    terminal.get('ansible_ready') is True and {x.get('stage') for x in rows if x.get('returncode') == 0} >=
+                    {'final-authentication', 'ansible-readiness', 'functional', 'inventory'}, 'controller_results_incomplete')
             result.update(outcome='baseline-passed', installed=True, final_authentication=True, ansible_ready=True)
         except Exception as error:
             result.update(outcome='unknown' if unknown else 'failed', error_category=getattr(error, 'code', type(error).__name__))
@@ -287,8 +303,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', required=True)
     parser.add_argument('--terraform', required=True)
+    parser.add_argument('--reuse-run', help='Exact reconciled baseline run whose unchanged ISO bytes may be reused; a new seed and acceptance are required.')
     options = parser.parse_args()
-    value = execute(options.source, options.terraform)
+    value = execute(options.source, options.terraform, reuse_run=options.reuse_run)
     print(json.dumps(value, indent=2))
     return 0 if value['outcome'] == 'baseline-passed' and value['cleanup'] != 'unreconciled' else 1
 

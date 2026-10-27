@@ -8,6 +8,7 @@ import ipaddress
 import json
 from pathlib import Path
 import re
+import shutil
 import subprocess
 
 from .runs import RunError, atomic_json, run_id
@@ -97,7 +98,7 @@ touch /var/lib/wormhole/installation-complete
     return '#cloud-config\n' + json.dumps(value, indent=2) + '\n'
 
 
-def build_ubuntu(source, destination, seed_dir, identifier, public_key, guest_address, mac):
+def build_ubuntu(source, destination, seed_dir, identifier, public_key, guest_address, mac, *, reuse=None):
     source, destination, seed_dir = map(Path, (source, destination, seed_dir))
     if source.stat().st_size != UBUNTU['bytes'] or sha256(source) != UBUNTU['sha256']:
         raise RunError('source_identity_mismatch', 'The pinned Ubuntu source identity does not match.')
@@ -124,8 +125,26 @@ def build_ubuntu(source, destination, seed_dir, identifier, public_key, guest_ad
         content = re.sub(r'^[a-f0-9]{32}(\s+\.?/?boot/grub/' + re.escape(name) + r')$',
                          lambda match: digest + match[1], content, flags=re.M)
     index.write_text(content, encoding='utf-8')
-    command(['xorriso', '-indev', str(source), '-outdev', str(destination), '-boot_image', 'any', 'replay',
-             *changed, '-map', str(index), '/md5sum.txt'])
+    if reuse is None:
+        command(['xorriso', '-indev', str(source), '-outdev', str(destination), '-boot_image', 'any', 'replay',
+                 *changed, '-map', str(index), '/md5sum.txt'])
+    else:
+        previous_iso, previous_manifest = reuse
+        if (previous_manifest.get('capability') != 'ubuntu-iso-installation-baseline' or
+                previous_manifest.get('source') != UBUNTU or
+                sha256(previous_iso) != previous_manifest.get('candidate_sha256')):
+            raise RunError('stale_candidate', 'The original baseline candidate identity is invalid.')
+        # Version-1 baseline ISOs customize boot files only; installation content
+        # is a separately bound seed. Verify actual current boot inputs as well
+        # as bytes, so a valid old hash cannot hide a changed boot recipe.
+        for name in ('grub.cfg', 'loopback.cfg'):
+            actual = work / ('reused-' + name)
+            command(['xorriso', '-osirrox', 'on', '-indev', str(previous_iso), '-extract', '/boot/grub/' + name, str(actual)])
+            if actual.read_bytes() != (work / name).read_bytes():
+                raise RunError('stale_candidate', 'The candidate does not contain the current boot configuration.')
+        shutil.copyfile(previous_iso, destination)
+        if sha256(destination) != previous_manifest['candidate_sha256']:
+            raise RunError('candidate_copy_mismatch', 'Reused candidate bytes changed during copy.')
     (seed_dir / 'user-data').write_text(cloud_config(identifier, public_key, guest_address, mac), encoding='utf-8')
     (seed_dir / 'meta-data').write_text(json.dumps({'instance-id': identifier, 'local-hostname': 'wormhole-lab'}), encoding='utf-8')
     seed = destination.with_name('seed.iso')
@@ -136,6 +155,7 @@ def build_ubuntu(source, destination, seed_dir, identifier, public_key, guest_ad
         'installation_input_sha256': sha256(seed_dir / 'user-data'), 'seed_required': True,
         'firmware': 'bios', 'machine': 'pc-i440fx-8.2', 'guest_memory_mib': 8192,
         'guest_vcpus': 2, 'guest_disk_bytes': 64 * 1024**3, 'hardening_complete': False,
+        'candidate_reused': reuse is not None,
         'real_assessment_complete': False, 'lab_iso_qualified': False, 'production_iso_eligible': False}
     atomic_json(seed_dir / 'build-manifest.json', manifest)
     return manifest
