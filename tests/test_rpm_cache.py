@@ -10,7 +10,7 @@ from unittest.mock import Mock,patch
 
 from wormhole import candidate as c,candidate_cache as cache,chunks,images,pipeline_replay as replay
 from wormhole import rpm_candidate as rc,rpm_target as rt
-from wormhole.runs import atomic_json,create_run,read_json,common,RunError
+from wormhole.runs import atomic_bytes,atomic_json,create_run,read_json,common,RunError
 from test_candidate import SHA,DERIVED
 from test_rpm_candidate import RpmFixture,binding_for
 REPLAY_BUILD=replay.replay_rpm_build
@@ -109,7 +109,7 @@ class RpmCache(RpmFixture,unittest.TestCase):
         atomic_json(run.file('private/rpm-assembly-request.json'),{**common(run.manifest()),'operation':'ubi9-assembly-request-v1',
             'manifest':self.binding['manifest'],'candidate_sha256':self.binding['candidate_sha256'],
             'source_files':self.binding['source_files'],'recipe_sha256':self.binding['recipe_sha256'],'resolution':resolution})
-        raw=c.canonical(resolution)+b'\n';run.file('private/rpm-resolution.log').write_bytes(raw)
+        raw=c.canonical(resolution)+b'\n';atomic_bytes(run.file('private/rpm-resolution.log'),raw)
         recipe,files=rpm_resolution.recipe_identity()
         receipt={**common(run.manifest()),'operation':'ubi-offline-resolution','status':'passed','unknown_outcome':False,
             'primary_failure':None,'cleanup':'completed','recipe_sha256':recipe,'source_files':files,
