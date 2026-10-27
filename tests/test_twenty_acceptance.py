@@ -150,6 +150,9 @@ class LifecycleTests(unittest.TestCase):
             self.ps.receipt['primary_failure'] = {'code': getattr(error, 'code', 'cleanup_failed'), 'recorded_at': '2026-10-24T17:00:00Z'}
         self.ps.failure = fail
         self.patch(t, 'ProvisioningSession', return_value=self.ps)
+        self.initialization=SimpleNamespace(wait_complete=Mock())
+        self.patch(t,'InitializationSession',return_value=self.initialization)
+        self.patch(t,'initialization_summary',return_value={'targets_initialized':20,'targets_configured':20,'synthetic':True})
         self.ready = SimpleNamespace(helper=graph()[22]['id'], start_helper=Mock(), wait_ready=Mock(), verify_helper=Mock(), receipt={'primary_failure': None})
         self.patch(t, 'BatchReadinessSession', return_value=self.ready)
         self.validation = SimpleNamespace(validate=Mock(), require_passed=Mock())
@@ -203,6 +206,15 @@ class LifecycleTests(unittest.TestCase):
         self.lease.finish.assert_called_once_with(reconciliation_complete=True)
         self.inventory_factory.assert_called_once_with(self.ready, controller_concurrency=2)
         self.assertEqual(ordered, ['before-checks','inventory','functional','after-checks'])
+        self.assertEqual(self.initialization.wait_complete.call_count,20)
+
+    def test_initialization_failure_prevents_ssh_inventory_and_full_playbook_and_still_cleans(self):
+        self.initialization.wait_complete.side_effect=RunError('initialization_command_failed','Controlled initialization failure')
+        with self.assertRaises(RunError):t.acceptance(SENTINEL)
+        self.ready.start_helper.assert_not_called();self.ready.wait_ready.assert_not_called()
+        self.inventory.collect.assert_not_called();self.validation.validate.assert_not_called()
+        self.cleanup.assert_called_once()
+        self.assertEqual(self.only_receipt()['primary_failure']['code'],'initialization_command_failed')
 
     def test_capacity_refusal_has_no_domain_or_cleanup_allocation_and_durable_failed_attempt(self):
         self.admission.side_effect = t.admission.AdmissionError('capacity_refused', 'Synthetic private diagnostic')

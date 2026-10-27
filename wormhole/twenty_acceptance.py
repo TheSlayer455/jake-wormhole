@@ -22,13 +22,14 @@ from .provisioning_acceptance import disk_sample, scan_private_material, snapsho
 from .recovery import cleanup_session, safe_code, valid_failure
 from .runs import Run, RunError, atomic_bytes, atomic_json, common, create_run, now, read_json, source_identity
 from .targets import TargetPlan
+from .initialization import InitializationSession,report_initialization
 
 EVIDENCE = 'evidence/twenty-acceptance.json'
 SAMPLE_BEFORE = 'evidence/twenty-sample-before.json'
 SAMPLE_AFTER = 'evidence/twenty-sample-after.json'
 USAGE = 'evidence/twenty-usage.json'
 TARGET_IDS = tuple('target-' + str(number).zfill(3) for number in range(1, 21))
-OPERATION = 'real-stock-twenty-target-acceptance-v1'
+OPERATION = 'real-stock-twenty-target-acceptance-v2'
 MAX_RECORD = 262144
 
 
@@ -43,6 +44,12 @@ def require(value, code='twenty_acceptance_invalid'):
 
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False, ensure_ascii=True).encode('ascii')
+
+
+def initialization_summary(run):
+    value=report_initialization(run,require_passed=True)
+    require(value['expected_targets']==list(TARGET_IDS),'twenty_initialization_incomplete')
+    return {'targets_initialized':20,'targets_configured':20,'record':fingerprint(run,'evidence/initialization.json')}
 
 
 def fingerprint(run, relative):
@@ -239,7 +246,7 @@ def _report_twenty(run):
             row['status'] == 'created' and row['started_at'] == '0001-01-01T00:00:00Z' and
             type(row['pids_limit']) is int and row['pids_limit'] == 64 for row in value['stopped_targets']),
         'twenty_stopped_grid')
-    actual = {'readiness': readiness_summary(run, targets),
+    actual = {'initialization':initialization_summary(run),'readiness': readiness_summary(run, targets),
         'functional': functional_summary(run, targets, value['controller_concurrency']),
         'inventory': inventory_summary(run, targets, value['controller_concurrency']),
         'usage': usage_summary(run, value['owned_resources']),
@@ -252,7 +259,7 @@ def _report_twenty(run):
     require(canonical(interval) == canonical(read_json(run.file(USAGE))) and canonical(value['cleanup']['archive']) == canonical(archive) and
         value['cleanup']['status'] == 'completed' and value['cleanup']['unknown_outcome'] is False and
         value['checks']['sentinel_unchanged'] is True and
-        set(value['checks']) == {'readiness', 'functional', 'inventory', 'usage', 'originals', 'sentinel_unchanged', 'sentinel',
+        set(value['checks']) == {'initialization','readiness', 'functional', 'inventory', 'usage', 'originals', 'sentinel_unchanged', 'sentinel',
             'credential_scan_before_cleanup', 'credential_scan_after_cleanup'} and
         set(value['checks']['sentinel']) == {'resource_id', 'before_sha256', 'after_sha256'} and
         re.fullmatch('[a-f0-9]{64}', value['checks']['sentinel']['resource_id']) and
@@ -331,7 +338,12 @@ def acceptance(sentinel_id, *, controller_concurrency=4):
                             'started_at': observed['State']['StartedAt'], 'pids_limit': observed['HostConfig']['PidsLimit']})
                     require(len(value['stopped_targets']) == 20, 'twenty_stopped_grid')
                     stage('start-targets', ps.start_and_inventory)
-                    ready = BatchReadinessSession(ps, validation=True, fleet_inventory=True)
+                    initialization=InitializationSession(ps,absolute_deadline=start+240)
+                    def initialize():
+                        for target in TARGET_IDS:initialization.wait_complete(target)
+                    stage('initialization',initialize)
+                    value['checks']['initialization']=initialization_summary(run)
+                    ready = BatchReadinessSession(ps, validation=True, fleet_inventory=True,initialization=initialization)
                     stage('start-helper', ready.start_helper)
                     value['owned_resources'] = owned_graph(ps, ready)
                     require(sentinel_id not in {row['id'] for row in value['owned_resources']}, 'twenty_sentinel_owned')

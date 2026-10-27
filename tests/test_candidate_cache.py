@@ -84,6 +84,20 @@ class Cache(CandidateFixture,unittest.TestCase):
         self.assertIsNone(cache.select(self.current))
         self.assertFalse(self.current.file(cache.SELECTION).exists())
 
+    def test_new_controller_revision_reuses_old_bytes_with_separate_source_attribution(self):
+        revision='f'*40
+        newer=create_run(self.run.workspace,fixture=False,identity=(revision,False))
+        with patch.object(c,'source_identity',return_value=(revision,False)),patch.object(chunks,'source_identity',return_value=(revision,False)):
+            chunks.execute_fixture(newer)
+            with newer.locked():c.prepare_candidate(newer)
+            cache.select(newer);lease=self.lease_for(newer);lease.source_revision=revision
+            with patch.object(images,'inspect',return_value=self.image()),patch.object(images,'docker') as docker:
+                binding=cache.reuse(newer,lease)
+        docker.assert_not_called()
+        self.assertEqual(binding['source_revision'],revision)
+        self.assertEqual(binding['manifest']['source_revision'],SHA)
+        self.assertEqual(binding['image_id'],DERIVED)
+
     def test_stale_index_changed_capture_and_origin_reuse_chains_are_refused(self):
         path=cache.index_path(self.current);saved=read_json(path)
         altered=deepcopy(saved);altered['input_sha256']='0'*64;atomic_json(path,altered)

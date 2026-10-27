@@ -41,7 +41,8 @@ def records():
     return pipeline_records
 
 
-def make_request(run,platform='ubuntu',scenario='healthy',base_run_id=None):
+def make_request(run,platform='ubuntu',scenario='healthy',base_run_id=None,*,observed_initialization=True):
+    require(type(observed_initialization) is bool,'pipeline_selection_invalid')
     require(type(platform) is str and platform in {'ubuntu','ubi'} and type(scenario) is str and scenario in SCENARIOS and
         (scenario=='healthy' or platform=='ubuntu'),'pipeline_selection_invalid')
     try:base_valid=base_run_id is None if platform=='ubuntu' else type(base_run_id) is str and str(UUID(base_run_id))==base_run_id
@@ -50,11 +51,14 @@ def make_request(run,platform='ubuntu',scenario='healthy',base_run_id=None):
     value={**common(run.manifest()),'operation':'reference-pipeline-request-v1','platform':platform,'scenario':scenario,
         'profile':'smoke','capabilities':[],'base_run_id':base_run_id,'assessment_case':'pass',
         'assessment_sha256':c.sha(a.fixture('pass')),'assessment_plan_sha256':a.make_plan(run,a.FIXTURE_EXPECTED)['plan_sha256']}
+    if observed_initialization:value['execution_contract']='observed-initialization-v1'
     return {**value,'request_sha256':c.sha(c.canonical(value))}
 
 
 def validate_request(run,value):
-    expected=make_request(run,value.get('platform'),value.get('scenario'),value.get('base_run_id'))
+    require('execution_contract' not in value or value['execution_contract']=='observed-initialization-v1','pipeline_request_changed')
+    expected=make_request(run,value.get('platform'),value.get('scenario'),value.get('base_run_id'),
+        observed_initialization='execution_contract' in value)
     require(c.canonical(value)==c.canonical(expected),'pipeline_request_changed');return value
 
 
@@ -123,6 +127,7 @@ def assemble_record(run):
         context['request_sha256']==request['request_sha256'] and valid_failure(context['primary_failure']) and
         type(context['unknown_outcome']) is bool and type(context['pending_resources']) is int and 0<=context['pending_resources']<=128 and
         type(context['secondary_failures']) is list and len(context['secondary_failures'])<=64 and all(valid_failure(item) for item in context['secondary_failures']),'pipeline_context_invalid')
+    require('execution_contract' not in request or context.get('initialization_policy')=='observed-v1','pipeline_context_invalid')
     artifacts=[_artifact(run,'request',REQUEST,'plan'),_artifact(run,'execution-plan',PLAN,'plan')]
     rowmap={};errors=[];binding=None;targets=[];archive=None;cleanup={'status':'not-started','admission_finished':False,'archive_sha256':None,'pending_resources':0}
     def set_rows(component,values=None,status='pass',reason='verified',evidence=None):
@@ -319,6 +324,7 @@ class PipelineSession:
         require(type(reuse_candidates) is bool,'pipeline_selection_invalid')
         self.reuse_candidates=reuse_candidates
         self.run=run;self.request=validate_request(run,request)
+        require(self.request.get('execution_contract')=='observed-initialization-v1','pipeline_execution_contract_required')
         require(run.workspace==images.RUNS_ROOT and sys.platform.startswith('linux'),'pipeline_host_scope')
         replay.source(run);require(not any(run.file(path).exists() for path in (REQUEST,PLAN,RECORD,CONTEXT)),'pipeline_attempt_reused')
         self.context={**common(run.manifest()),'operation':'reference-pipeline-controller-v1','request_sha256':request['request_sha256'],

@@ -119,6 +119,7 @@ def report_provisioning(run, archive):
         'public_input': str(run.file('private/target-input')), 'target_ids': list(TARGET_IDS),
         'target_limits': deepcopy(archive['plan']['limits']['target']['terraform']),
         'target_capabilities': list(session.target_runtime_policy.capabilities)}
+    if 'mutable_home' in session.variables:expected_variables['mutable_home']=False
     expected_variables['target_limits'].pop('start'); expected_variables['target_limits'].pop('must_run')
     require(base.same(session.variables, expected_variables), 'twenty_original_input_changed')
     session.check_inputs()
