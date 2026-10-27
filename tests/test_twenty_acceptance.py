@@ -155,7 +155,8 @@ class LifecycleTests(unittest.TestCase):
         self.patch(t,'initialization_summary',return_value={'targets_initialized':20,'targets_configured':20,'synthetic':True})
         self.ready = SimpleNamespace(helper=graph()[22]['id'], start_helper=Mock(), wait_ready=Mock(), verify_helper=Mock(), receipt={'primary_failure': None})
         self.patch(t, 'BatchReadinessSession', return_value=self.ready)
-        self.validation = SimpleNamespace(validate=Mock(), require_passed=Mock())
+        result={'checks':[{'target_id':target,'check_id':check,'status':'pass'} for target,check in t.EXPECTED_RESULTS]}
+        self.validation = SimpleNamespace(validate=Mock(return_value=result), require_passed=Mock(),receipt=result)
         self.patch(t, 'BatchValidationSession', return_value=self.validation)
         self.inventory = SimpleNamespace(collect=Mock(), require_passed=Mock())
         module = ModuleType('wormhole.fleet_inventory'); module.FleetInventorySession = Mock(return_value=self.inventory)
@@ -190,7 +191,7 @@ class LifecycleTests(unittest.TestCase):
     def test_coordinator_allocates_full_twenty_once_and_replays_after_exact_cleanup(self):
         ordered = []
         self.inventory.collect.side_effect = lambda: ordered.append('inventory')
-        self.validation.validate.side_effect = lambda: ordered.append('functional')
+        self.validation.validate.side_effect = lambda: ordered.append('functional') or self.validation.receipt
         def sample(_ps, _ready, phase):
             ordered.append(phase)
             return {'totals': {'memory_current_bytes': 1, 'pids_current': 1, 'writable_layer_bytes': 1}}
@@ -207,6 +208,7 @@ class LifecycleTests(unittest.TestCase):
         self.inventory_factory.assert_called_once_with(self.ready, controller_concurrency=2)
         self.assertEqual(ordered, ['before-checks','inventory','functional','after-checks'])
         self.assertEqual(self.initialization.wait_complete.call_count,20)
+        self.assertEqual(len(value['expected_results']),200)
 
     def test_initialization_failure_prevents_ssh_inventory_and_full_playbook_and_still_cleans(self):
         self.initialization.wait_complete.side_effect=RunError('initialization_command_failed','Controlled initialization failure')
@@ -215,6 +217,8 @@ class LifecycleTests(unittest.TestCase):
         self.inventory.collect.assert_not_called();self.validation.validate.assert_not_called()
         self.cleanup.assert_called_once()
         self.assertEqual(self.only_receipt()['primary_failure']['code'],'initialization_command_failed')
+        rows=self.only_receipt()['expected_results'];self.assertEqual(len(rows),200)
+        self.assertTrue(all(row['status']=='blocked' for row in rows))
 
     def test_capacity_refusal_has_no_domain_or_cleanup_allocation_and_durable_failed_attempt(self):
         self.admission.side_effect = t.admission.AdmissionError('capacity_refused', 'Synthetic private diagnostic')
