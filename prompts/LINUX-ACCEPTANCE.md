@@ -1,8 +1,8 @@
-# Jake Lightspeed: Verify the Current Retry, Repair Remaining Defects, and Complete Linux Acceptance
+# Linux image pipeline: Verify the Current Retry, Repair Remaining Defects, and Complete Linux Acceptance
 
 ## Mission
 
-Work in the existing Jake Lightspeed repository and authorized GitLab environment. Complete the Linux acceptance workflow using evidence from real executions.
+Work in the existing Linux image pipeline repository and authorized GitLab environment. Complete the Linux acceptance workflow using evidence from real executions.
 
 This is an execution assignment, not a request for another architecture proposal, project-wide audit, or rewrite. Preserve the working implementation. Make focused repairs where observations establish that a repair is needed.
 
@@ -20,8 +20,8 @@ The project primarily uses Bash, Python, YAML, and some PowerShell. Preserve tha
 
 * GitLab Package Registry holds chunked stock RHEL 8, RHEL 9, RHEL 10, and Ubuntu media.
 * Forge produces custom candidate ISOs, manifests, and hashes.
-* jakeboom1 hosts RKE2 GitLab runners and the pipeline helper image. It is the automation control node and persistent evidence destination.
-* jakeboom7 is the RHEL/KVM host for the temporary guest fleet.
+* ansible control node hosts RKE2 GitLab runners and the pipeline helper image. It is the automation control node and persistent evidence destination.
+* rhel kvm host is the RHEL/KVM host for the temporary guest fleet.
 * Terraform provisions guests. Ansible operates from the designated control environment.
 * The current acceptance plan contains 13 guests. Read their actual OS/profile assignments from that plan. Do not infer the distribution or expand to 20 guests during this repair.
 * The RHEL 10 candidate includes a custom container. Preserve its existing acceptance requirements.
@@ -31,7 +31,7 @@ Identify the real execution location of each command. A successful SSH test from
 
 ## 2. Begin with the current retry, not another change
 
-The latest report states that the acceptance job staged four hash-bound candidates, passed the read-only host/Foreman/control-node gate, created 13 VMs, injected the expected public key, and started the remote supervisor.
+The latest report states that the acceptance job staged four hash-bound candidates, passed the read-only host/provisioning-service/control-node gate, created 13 VMs, injected the expected public key, and started the remote supervisor.
 
 The reported failures were downstream:
 

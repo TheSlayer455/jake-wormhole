@@ -19,6 +19,7 @@ from scripts import qualify_images as qualification
 from . import images
 from .runs import Run, RunError, SOURCE_ROOT, atomic_json, common, now, read_json, source_identity
 from .stages import _run_process
+from .execution_state import READINESS_CHECKS, readiness_complete
 
 HELPER_BUILD = '9e864d00-ea9f-4a85-bdb5-f5873166e4d7'
 HELPER_IMAGE = 'sha256:4f7f306ecd431b4b48169777966d88c1f09f2139506176a6b85203f5bae69a71'
@@ -29,8 +30,7 @@ VALIDATION_MOUNT = '/opt/validation/runtime.py'
 FLEET_INVENTORY_RUNTIME = SOURCE_ROOT / 'fleet_inventory/runtime.py'
 FLEET_INVENTORY_MOUNT = '/opt/wormhole/fleet-inventory.py'
 SCENARIOS = ('healthy', 'wrong-key', 'wrong-user', 'configured-interpreter-unavailable')
-EXPECTED = ('created', 'started', 'endpoint-discovered', 'tcp-reachable', 'ssh-identity-accepted',
-            'python-usable', 'ansible-usable', 'required-test-complete')
+EXPECTED = READINESS_CHECKS
 ID = re.compile('[a-f0-9]{64}\\Z')
 TIMEOUT = 90
 RETRY_SLEEP = .2
@@ -90,7 +90,7 @@ class ReadinessSession:
     on_poll is a trusted in-process coordinator callback, never imported text,
     ticket code, an executable argument or a second admission lease.
     """
-    def __init__(self, provisioning, *, scenario='healthy', helper_build_run=HELPER_BUILD, validation=False):
+    def __init__(self, provisioning, *, scenario='healthy', helper_build_run=HELPER_BUILD, validation=False, initialization=None):
         self.provisioning, self.run, self.lease = provisioning, provisioning.run, provisioning.lease
         self.lease._active()
         manifest = self.run.manifest()
@@ -107,6 +107,8 @@ class ReadinessSession:
                 set(provisioning.owned) == {'docker_container.target', 'docker_network.run'}) and
                 provisioning.receipt['unknown_outcome'] is False, 'provisioning_not_ready')
         self.scenario, self.reconciliation_only = scenario, False
+        self.initialization = initialization
+        require(initialization is None or initialization.provisioning is provisioning, 'initialization_scope')
         self.network = provisioning.owned['docker_network.run']
         self.target = indexed['target-001'] if type(indexed) is dict else provisioning.owned['docker_container.target']
         self.helper = None
@@ -114,6 +116,7 @@ class ReadinessSession:
         self.began = time.monotonic()
         self.deadline = self.began + TIMEOUT
         self.trust_address = None
+        self.last_started_at = None
         self.pinned_key = None
         self.counts = {}
         self.last_pending = 'target_not_started'
@@ -386,7 +389,12 @@ class ReadinessSession:
         if target['State']['Status'] == 'created':
             self.last_pending = 'target_not_started'
             return None
-        require(target['State']['Running'] is True, 'target_exited')
+        if target['State']['Running'] is not True:
+            before_authentication = 'ssh-identity-accepted' not in {item['check_id'] for item in self.receipt['transitions']}
+            code = 'target_initialization_failed' if before_authentication and target['State'].get('ExitCode', 0) != 0 else 'target_exited'
+            raise ReadinessError(code, 'The exact owned target stopped; inspect its bounded runtime diagnostics before authentication.')
+        previous_start = self.last_started_at
+        require(previous_start is None or previous_start == target['State']['StartedAt'], 'readiness_stale')
         self.transition('started')
         started = datetime.fromisoformat(target['State']['StartedAt'].replace('Z', '+00:00'))
         self.last_started_at = target['State']['StartedAt']
@@ -565,6 +573,11 @@ class ReadinessSession:
         address = self.endpoint()
         if address is None:
             return False
+        initialization = getattr(self, 'initialization', None)
+        if initialization is not None and not initialization.require_complete(
+                getattr(self, 'selected_target', None) or 'target-001', allow_pending=True):
+            self.last_pending = 'configuration_pending'
+            return False
         if self.receipt['status'] == 'ready':
             require(self.receipt['ready_started_at'] == self.last_started_at, 'readiness_stale')
             return True
@@ -618,9 +631,10 @@ class ReadinessSession:
 
     def require_ready(self, *, inspection_timeout=20):
         self.held()
-        require(self.receipt['status'] == 'ready' and self.receipt['primary_failure'] is None and
-            not self.receipt['unknown_outcome'] and [x['check_id'] for x in self.receipt['transitions']] == list(EXPECTED),
-            'readiness_required')
+        initialization = getattr(self, 'initialization', None)
+        if initialization is not None:
+            initialization.require_complete(getattr(self, 'selected_target', None) or 'target-001')
+        require(readiness_complete(self.receipt), 'readiness_required')
         # Revalidate an existing snapshot later without resetting the original
         # window for establishing new readiness. No checks are added here.
         original_deadline = self.deadline
@@ -635,6 +649,26 @@ class ReadinessSession:
         finally:
             self.deadline = original_deadline
         return True
+
+    def invalidate(self, *, expected_restart=False):
+        """Retain the old epoch; an expected restart may not discard a trust pin."""
+        self.held()
+        require(type(expected_restart) is bool and self.receipt['primary_failure'] is None and
+            self.receipt['unknown_outcome'] is False, 'readiness_cannot_resume_failed_epoch')
+        if expected_restart:
+            require(self.pinned_key is None and 'ssh-identity-accepted' not in
+                {item['check_id'] for item in self.receipt['transitions']}, 'restart_trust_pin_retained')
+        path = self.run.file('evidence/readiness-history.json')
+        history = read_json(path) if path.exists() else {**common(self.run.manifest()), 'epochs': {}}
+        require(common(history) == common(self.run.manifest()) and type(history['epochs']) is dict, 'readiness_history_invalid')
+        target = getattr(self, 'selected_target', None) or 'target-001'
+        epochs = history['epochs'].setdefault(target, [])
+        require(len(epochs) < 4, 'readiness_epoch_bound')
+        epochs.append(deepcopy(self.receipt)); atomic_json(path, history)
+        self.receipt.update(status='waiting', transitions=[])
+        self.receipt.pop('ready_started_at', None)
+        if expected_restart: self.last_started_at = None
+        self.save()
 
     def cleanup(self):
         self.held()

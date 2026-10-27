@@ -6,9 +6,30 @@ import tempfile
 import unittest
 
 from wormhole.runs import SOURCE_ROOT
+from wormhole.runs import atomic_json, common
 
 
 class CLITests(unittest.TestCase):
+    def test_live_progress_is_readonly_and_missing_readiness_is_unknown(self):
+        _, manifest = self.command('run', '--workspace', str(self.workspace))
+        identifier = manifest['run_id']
+        status, missing = self.command('progress', identifier, '--workspace', str(self.workspace), '--format', 'json')
+        self.assertEqual(status, 2)
+        self.assertEqual(missing['error']['code'], 'progress_unavailable')
+        path = self.workspace / identifier / 'evidence' / 'readiness.json'
+        value = {**common(manifest), 'target_id': 'target-001', 'status': 'waiting',
+            'unknown_outcome': False, 'primary_failure': None, 'transitions': [
+                {'target_id': 'target-001', 'check_id': 'created', 'status': 'pass',
+                 'elapsed_seconds': .01, 'observed_at': '2026-01-01T00:00:00Z'}]}
+        atomic_json(path, value); before = path.read_bytes()
+        status, report = self.command('progress', identifier, '--workspace', str(self.workspace), '--format', 'json')
+        self.assertEqual(status, 0); self.assertEqual(path.read_bytes(), before)
+        self.assertFalse(report['test_plan_observed'])
+        self.assertEqual(report['targets'][0]['current_phase'], 'created')
+        self.assertEqual(report['targets'][0]['terminal_outcome'], 'pending')
+        self.assertIsNone(report['summary']['targets_initialized'])
+        self.assertFalse(report['production_iso_eligible'])
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)

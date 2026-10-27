@@ -1,6 +1,6 @@
 # Fidelity and evidence limits
 
-This is an actual container reference project using generated source and explicitly synthetic assessment policy. It does not validate proprietary Lightspeed infrastructure or an installable OS image. The [historical matrix](acceptance-matrix.md) binds observations to original tested sources/evidence; it is not a final-source runtime rerun.
+This is an actual container reference project using generated source and explicitly synthetic assessment policy. It does not validate proprietary production-system infrastructure or an installable OS image. The [historical matrix](acceptance-matrix.md) binds observations to original tested sources/evidence; it is not a final-source runtime rerun.
 
 | Established observation | Limit |
 | --- | --- |
@@ -17,6 +17,20 @@ This is an actual container reference project using generated source and explici
 | Twenty simultaneous stock targets | Actual 160/200/200 grids and twenty 123-package inventories; no twenty-target candidate pipeline |
 | 22-container resource interval | Two points/CPU deltas, not guaranteed peaks, hard disk quotas or full historical logs |
 | Hosted source fixture CI and controlled parity | Seventeen-case manual/GitHub comparison is source-bound and synthetic; not homelab execution or GitLab runner execution |
+| New lifecycle, initialization, fault and cache source fixtures | Deterministic/mocked verification; fresh Docker execution, actual cross-Run reuse, updated twenty-target acceptance and publication remain unverified |
+
+The account-expectation fault is labeled a simulated identity failure and queries
+a deliberately absent identity. Its separate SSH diagnostic must reject that
+identity before the negative experiment can pass. It does not remove a real
+image account. Home/key/hardening faults operate on disposable
+target tmpfs. The installation-source outcome is explicitly simulated. The stale
+input and cleanup-error injections are controlled simulations. Expected negative
+success credits the experiment, while its underlying execution stays failed.
+Ubuntu and UBI cache selection preserve original build and image identities and
+rerun acceptance; neither reuses qualification. UBI requires original package,
+signature, resolver and license evidence. Coordinator-interruption recovery
+requires the original known provider snapshot; it cannot clear other unknown
+mutation categories. These remain source-tested rather than newly runtime-proven.
 
 UBI-only AUDIT_WRITE permits owned target authentication records in the shared kernel audit log. No audit read/control, extra KILL, PAM change, weakened authentication or host audit-setting change is established. Ubuntu keeps its original capability policy.
 

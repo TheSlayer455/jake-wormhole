@@ -248,7 +248,7 @@ def qualify_case(profile, scenario, sentinel):
                     require(delay['invoked'] and delay['elapsed_seconds'] >= 2, 'delay_not_exercised')
                     value['checks']['delayed_start'] = {'status': 'pass', **delay}
                 validation_error = None
-                try: validation.validate()
+                try: validation.validate(diagnostic_subset=scenario in READINESS_FAILURES)
                 except ValidationError as error: validation_error = error.code
                 expected_validation = 'required_batch_check_failed' if expected_primary else None
                 require(validation_error == expected_validation, 'unexpected_validation_outcome')

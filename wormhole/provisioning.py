@@ -76,6 +76,16 @@ def target_specs(target_plan=None):
         (identifier, target_plan.address_for(identifier)) for identifier in target_plan.target_ids]
 
 
+def target_tmpfs(variables):
+    value = variables.get('mutable_home', False)
+    require(type(value) is bool, 'unsafe_plan', 'The initialization home policy must be a literal boolean.')
+    result = {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0',
+              '/tmp': 'rw,nosuid,nodev,noexec,size=16m,mode=1777'}
+    if value:
+        result['/home/wormhole'] = 'rw,nosuid,nodev,noexec,size=4m,mode=0750,uid=10001,gid=10001'
+    return result
+
+
 def resources(value, target_plan=None):
     allowed = layout_addresses(target_plan)
     require(type(value) is dict, 'unsafe_state', 'State must be a structured Terraform result.')
@@ -242,8 +252,7 @@ def validate_plan(value, variables, *, operation='create', owned=None, target_pl
                 type(caps[0]['add']) is list and len(caps[0]['add']) == len(runtime_policy.capabilities) and
                 all(type(x) is str for x in caps[0]['add']) and set(caps[0]['add']) == set(runtime_policy.capabilities) and caps[0]['drop'] == ['ALL'],
                 'unsafe_plan', 'Only the qualified SSH target capabilities are permitted.')
-        require(target.get('tmpfs') == {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0',
-                '/tmp': 'rw,nosuid,nodev,noexec,size=16m,mode=1777'} and
+        require(target.get('tmpfs') == target_tmpfs(variables) and
                 set(target.get('env') or []) == {'WORMHOLE_RUN_ID=' + variables['run_id'], 'WORMHOLE_RUNTIME_TTL_SECONDS=300'},
                 'unsafe_plan', 'Only fixed tmpfs and bounded target environment are permitted.')
         volumes = target.get('volumes')
@@ -355,8 +364,9 @@ def target_binding_policy(binding, *, version=None):
 
 class ProvisioningSession:
     """Caller owns run.locked(), docker_scope(run) and the canonical held lease."""
-    def __init__(self, run, lease, *, toolchain=None, scenario='healthy', target_binding=None):
+    def __init__(self, run, lease, *, toolchain=None, scenario='healthy', target_binding=None, mutable_home=False):
         require(type(scenario) is str and scenario in SCENARIOS, 'invalid_scenario', 'Only fixed reviewed scenarios are supported.')
+        require(type(mutable_home) is bool, 'invalid_scenario', 'Only the fixed bounded initialization home profile is supported.')
         manifest = run.manifest()
         revision, dirty = source_identity()
         require(os.name == 'posix' and manifest['mode'] == 'container-reference' and
@@ -394,7 +404,8 @@ class ProvisioningSession:
         self.receipt['target_runtime_policy'] = self.target_runtime_policy.record()
         self.variables = {'run_id': run.id, 'source_revision': revision, 'image': self.target_image_id,
             'public_input': str(images.safe_bind(run.file('private/target-input'))), 'target_ids': list(self.target_plan.target_ids),
-            'target_limits': deepcopy(lease.plan['limits']['target']['terraform']), 'target_capabilities':list(self.target_runtime_policy.capabilities)}
+            'target_limits': deepcopy(lease.plan['limits']['target']['terraform']), 'target_capabilities':list(self.target_runtime_policy.capabilities),
+            'mutable_home': mutable_home}
         self.variables['target_limits'].pop('start'); self.variables['target_limits'].pop('must_run')
         self.inputs = {}
 
@@ -699,8 +710,7 @@ class ProvisioningSession:
                 'unsafe_target', 'Only the exact public authorized-key input may be mounted into a target.')
         require(not host.get('Binds') or host['Binds'] == [self.variables['public_input'] + ':/run/input:ro'],
                 'unsafe_target', 'An unapproved legacy bind is forbidden.')
-        require(host.get('Tmpfs') == {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0',
-                '/tmp': 'rw,nosuid,nodev,noexec,size=16m,mode=1777'}, 'unsafe_target', 'Actual target tmpfs bounds differ.')
+        require(host.get('Tmpfs') == target_tmpfs(self.variables), 'unsafe_target', 'Actual target tmpfs bounds differ.')
         expected_network = 'wormhole-' + self.run.id + '-network'
         endpoints = actual.get('NetworkSettings', {}).get('Networks', {})
         require(type(endpoints) is dict and set(endpoints) == {expected_network} and
@@ -1039,12 +1049,8 @@ class ProvisioningSession:
         return deepcopy(self.receipt)
 
     @classmethod
-    def resume_destroy(cls, run, lease):
-        """Only the retained exact controller; never create a replacement.
-
-        General leftover adoption/migration is WORM-008. An uncertain previous
-        daemon result is outside this narrow adapter and remains blocked.
-        """
+    def _load_retained(cls, run, lease, *, initialization=None):
+        """Read/verify the retained controller without executing or starting it."""
         lease._active()
         manifest = run.manifest()
         revision, dirty = source_identity()
@@ -1090,9 +1096,14 @@ class ProvisioningSession:
         require(session.variables.get('target_capabilities') == list(session.target_runtime_policy.capabilities),
                 'recovery_scope', 'Retained target capability input differs from the fixed platform policy.')
         session.receipt = read_json(run.file('evidence/provisioning.json'))
+        contained=False
+        if initialization is not None:
+            from .initialization_recovery import InitializationProof
+            require(type(initialization) is InitializationProof,'recovery_scope','Only an exact contained-operation proof may reconcile initialization.')
+            contained=initialization.validate(run,lease,session.receipt)
         require(common(session.receipt) == common(manifest) and session.receipt.get('scenario') == session.scenario and
                 session.receipt.get('provisioner_id', session.provisioner) == session.provisioner and
-                session.receipt.get('unknown_outcome') is False,
+                (session.receipt.get('unknown_outcome') is False or contained),
                 'daemon_outcome_unknown', 'Uncertain daemon work remains blocked for separately reviewed recovery; time passing is insufficient.')
         require((new_layout and session.receipt.get('resource_layout') == LAYOUT and session.receipt.get('target_plan') == session.target_plan.record()) or
                 (not new_layout and 'target_ids' not in session.variables), 'recovery_scope', 'Evidence and controller layout must match without conversion.')
@@ -1107,7 +1118,8 @@ class ProvisioningSession:
         required = {('container', session.provisioner)} | {('container' if address.startswith('docker_container.') else 'network', identifier)
                        for address, identifier in session.owned.items()}
         recorded = {(x['kind'], x['id']) for x in lease.record['resources']}
-        require(pending <= required <= recorded and len(required) == len(session.owned) + 1,
+        allowed=set() if initialization is None else initialization.allowed_pending
+        require(pending <= required|allowed and required <= recorded and len(required) == len(session.owned) + 1,
                 'recovery_scope', 'The retained historical IDs must match the journal and no unexplained pending resource may exist.')
         for item in lease.record['resources']:
             if (item['kind'], item['id']) in required and item['outcome'] == 'absent':
@@ -1136,6 +1148,12 @@ class ProvisioningSession:
                 session.mounts['/state'] == (str(session.state), True) and session.mounts['/var/run/docker.sock'] == ('/var/run/docker.sock', True) and
                 session.mounts['/opt/toolchain'] == (str(session.toolchain['root']), False),
                 'recovery_scope', 'Retained mounts do not match the exact fixed reviewed source/state/toolchain/socket boundaries.')
+        return session
+
+    @classmethod
+    def resume_destroy(cls,run,lease):
+        """Resume only known exact teardown; never clear unknown daemon work."""
+        session=cls._load_retained(run,lease)
         actual = images.inspect('container', session.provisioner, missing=True)
         if actual is None:
             session._final_state_proof()

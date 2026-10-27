@@ -3,7 +3,7 @@
 WORM-012 implements an independent local operation, not the complete candidate
 pipeline. It creates small deterministic binary fixtures, splits them into
 ordered chunks and reconstructs verified bytes. No Docker, external registry,
-GitLab, Foreman, installation media or proprietary inputs are involved.
+GitLab, provisioning-service, installation media or proprietary inputs are involved.
 Candidate-derived payload/image binding belongs to WORM-013. These bytes are
 named `.synthetic.bin`, never `.iso`. Production ISO eligibility and reference
 release eligibility remain false.

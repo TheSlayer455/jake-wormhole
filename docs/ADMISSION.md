@@ -3,7 +3,7 @@
 The admission library and read-only commands are implemented. Actual Docker allocation,
 image assembly and target execution are later integrations. Passing a synthetic
 capacity test does not establish host headroom, applied limits or a twenty-target run.
-Minx [WORM-004](https://jakeubuntu.taila85348.ts.net:4317/tickets/WORM-004) owns this
+Minx WORM-004 owns this
 contract; [architecture](ARCHITECTURE.md) and [fidelity](FIDELITY.md) explain the
 larger reference-only boundary.
 

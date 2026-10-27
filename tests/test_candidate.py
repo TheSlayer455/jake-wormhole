@@ -34,6 +34,59 @@ class CandidateFixture:
 
 
 class Bundle(CandidateFixture, unittest.TestCase):
+    def test_installed_contract_marker_keeps_legacy_validation_explicit(self):
+        value=deepcopy(self.bundle['manifest'])
+        self.assertEqual(value['artifact_contract'],'installed-payload-v1')
+        value.pop('artifact_contract')
+        with self.assertRaises(c.CandidateError):c.validate_manifest(value)
+        value['test_contract_sha256']=c.sha(c.canonical(c.test_contract()))
+        c.validate_manifest(value)
+        value['artifact_contract']='unrecognized-protocol'
+        with self.assertRaises(c.CandidateError):c.validate_manifest(value)
+
+    def test_dependency_fingerprint_excludes_attempt_source_and_controller_test_code(self):
+        value = read_json(self.run.file('evidence/candidate-inputs.json'))
+        self.assertEqual(value['generation_attempt'], self.run.id)
+        identity = {key: value[key] for key in ('build_inputs', 'input_sha256')}
+        current = c.input_identity(self.bundle['manifest']['source_sha256'])
+        self.assertEqual(identity, current)
+        decision = c.compare_inputs(identity, current)
+        self.assertTrue(decision['content_reusable'])
+        self.assertTrue(decision['artifact_verification_required'])
+        self.assertFalse(decision['qualification_reuse_authorized'])
+        self.assertNotIn('source_revision', current['build_inputs'])
+        self.assertNotIn('test_contract_sha256', current['build_inputs'])
+        self.assertEqual(set(current['build_inputs']['customization']), {'payload.py', 'install.py'})
+
+    def test_content_changes_and_postbuild_modification_cannot_reuse_input_conclusion(self):
+        current = c.input_identity(self.bundle['manifest']['source_sha256'])
+        for dependency in ('source_sha256', 'configuration', 'customization', 'base_image', 'build_tool_identity', 'version'):
+            changed = deepcopy(current)
+            changed['build_inputs'][dependency] = {'changed': True}
+            changed['input_sha256'] = c.sha(c.canonical(changed['build_inputs']))
+            decision = c.compare_inputs(current, changed)
+            self.assertFalse(decision['content_reusable'])
+            self.assertEqual(decision['changed_dependencies'], [dependency])
+        value = read_json(self.run.file('evidence/candidate-inputs.json'))
+        value['input_sha256'] = '0' * 64
+        atomic_json(self.run.file('evidence/candidate-inputs.json'), value)
+        with self.assertRaises(c.CandidateError) as error: c.validate_bundle(self.run)
+        self.assertEqual(error.exception.code, 'candidate_inputs_changed')
+
+    def test_actual_customization_and_configuration_bytes_invalidate_content_key(self):
+        initial = c.input_identity(self.bundle['manifest']['source_sha256'])
+        context = self.root / 'customization'; context.mkdir()
+        for name in ('payload.py', 'install.py'):
+            (context / name).write_bytes((c.CONTEXT / name).read_bytes())
+        with patch.object(c, 'CONTEXT', context):
+            self.assertEqual(c.input_identity(self.bundle['manifest']['source_sha256']), initial)
+            (context / 'controller_test_only.py').write_text('not an installed input')
+            self.assertEqual(c.input_identity(self.bundle['manifest']['source_sha256']), initial)
+            (context / 'install.py').write_bytes(b'changed installation content')
+            self.assertFalse(c.compare_inputs(initial, c.input_identity(self.bundle['manifest']['source_sha256']))['content_reusable'])
+        with patch.object(c, 'CONFIG', {**c.CONFIG, 'greeting': 'different-installed-value'}):
+            self.assertFalse(c.compare_inputs(initial, c.input_identity(self.bundle['manifest']['source_sha256']))['content_reusable'])
+
     def test_sanitized_actual_qualified_base_keeps_inherited_ubuntu_label(self):
         # Actual immutable005 image observation, October23; no runtime action in this fixture.
         labels = {'org.opencontainers.image.version': '24.04',

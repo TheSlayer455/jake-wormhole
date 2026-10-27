@@ -1,5 +1,34 @@
 # Architecture
 
+The [active follow-up](FAILURE-REPRODUCTION.md) centralizes the readiness observation
+contract in `execution_state.py`. Normal fleet dispatch requires complete readiness;
+subset diagnostics are explicit and remain ineligible. Progress is a projection
+of existing records, with a separate terminal outcome and unknown initialization
+where no independent observation exists. It is not a second execution framework.
+
+`lifecycle.py` journals independently observed initialization, configuration,
+availability, final authentication, Ansible and test outcomes. `initialization.py`
+runs a fixed program only inside verified owned targets. Normal reference and
+stock-twenty execution require these observations before readiness/catalog use.
+The fault operator composes the existing Terraform, helper, admission and cleanup
+adapters; target-local durable results reconcile a lost initialization observer.
+The existing recovery command also handles interrupted contained initialization.
+It replays the hash-bound pre-exec provider receipt and unchanged operation/input
+history through the same retained-controller loader, without restarting it. Only
+the exact target/start's terminal marker or confirmed stop resolves that exec.
+Unknown allocation and image-commit state retain the original refusal rules.
+
+`candidate_cache.py` is a private content-addressed index under canonical
+admission, not a service. Ubuntu and UBI reuse retain the original manifest/image and
+records a new Run binding, verifies installed dependencies and immutable image
+identity, then reruns acceptance. Publication copies the original tested bundle.
+UBI additionally replays package resolution, original package/signature/install
+evidence, license and the requested base-package identity. A cache miss retains
+the established full assembly path. New artifacts have an explicit installed
+format marker; current test/collector contracts live in each validation plan and
+do not invalidate unchanged installed bytes. Source, controller/test revision,
+build origin, tested bytes and qualification are distinct identities.
+
 Jake Wormhole is a standard-library Python CLI/library with bounded Linux container adapters. There is no resident scheduler, dashboard, Kubernetes deployment, database, broker or model provider. [Current state](STATE.md) and [original acceptance](acceptance-matrix.md) distinguish implementation from execution.
 
 | Boundary | Implemented responsibility |

@@ -312,6 +312,23 @@ def _recover_run(run):
             require(common(bound_provisioning) == common(manifest) and valid_failure(bound_provisioning.get('primary_failure')) and
                     type(bound_provisioning.get('unknown_outcome')) is bool,
                     'identity_mismatch', 'Provisioning status must be bound to this exact run and source before component cleanup.')
+            initialization_path=run.file('evidence/initialization.json')
+            if initialization_path.exists():
+                from .initialization import InitializationSession
+                initial=read_json(initialization_path)
+                require(common(initial)==common(manifest) and type(initial.get('unknown_outcome')) is bool,
+                    'initialization_recovery_scope','Initialization intent must belong to this exact source and Run.')
+                if initial['unknown_outcome']:
+                    resumed=InitializationSession.resume(run,lease)
+                    target=resumed.record['attempts'][-1]['target_id']
+                    try:
+                        terminal=resumed.reconcile(target)
+                        code=terminal['category'] if terminal['status']=='failed' else 'coordinator_interrupted'
+                    except Exception:
+                        resumed.cancel_and_confirm(target)
+                        code='coordinator_interrupted'
+                    resumed.provisioning.failure(RecoveryError(code,'Interrupted initialization was reconciled; acceptance was not resumed.'))
+                    bound_provisioning=read_json(run.file('evidence/provisioning.json'))
             if run.file('private/readiness-controller.json').exists():
                 from .readiness import ReadinessSession, readiness_status
                 helper_summary['unknown_outcome'] = True  # Missing/invalid status cannot conceal uncertainty.

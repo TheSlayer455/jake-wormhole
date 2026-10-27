@@ -1,4 +1,35 @@
-# Current handoff: merged and verified
+# Current handoff
+
+## Active follow-up
+
+Continue the [failure-reproduction rebuild](../docs/FAILURE-REPRODUCTION.md) from
+tested implementation `492aa1051d3c298bd8ac71d602803f035d3f6501` on
+`codex/WORM-001-failure-reproduction`, [draft PR 27](https://github.com/TheSlayer455/jake-wormhole/pull/27).
+The 862-test suite passed on Windows (581 pass/281 skip), Linux nonroot (852
+pass/10 skip) and local WSL Linux root (860 pass/two skip), with successful hosted
+CI. Manual controlled parity returned 0/1/1 and validated its diagnostics.
+
+Normal fleet validation requires every planned target's initialization and
+SSH/Ansible conditions. The version-2 stock-twenty record retains all 200 blocked
+functional rows when initialization prevents execution. Fixed fault experiments
+use the existing admission, Terraform, helper and cleanup adapters. The absent
+identity is explicitly simulated and requires a separate rejected SSH diagnostic.
+
+Ubuntu and UBI can reuse an immutable original image only after input, build and
+artifact replay; UBI includes original package/resolution/signature/license proof
+and the requested base package set. New manifests separate installed-format
+identity from the current Run's test/collector contracts. Publication retains
+the original tested bytes. `recover` can reconcile an interrupted contained
+initialization using its known pre-exec provider receipt and exact target/start.
+It cannot clear an unknown create, Terraform operation or image commit.
+
+Actual runtime acceptance is still unexecuted because the available operator
+cannot read the canonical private Run/admission store. No new project containers
+were allocated, no prior runtime state adopted, and no independent reviewer was
+contacted. Obtain an existing authorized operator connection, reconcile current
+ownership, then run the focused/fault, mixed/fleet/twenty-target, fresh/reused
+Ubuntu/UBI reference and publication acceptance with measured timings. Preserve
+the source-vs-runtime distinction and all original historical qualification below.
 
 External engineering agents, including Luna, should start with [EXTERNAL-INTEGRATION](../docs/EXTERNAL-INTEGRATION.md). It is the short public-source entry point; this handoff retains development history. Public source and private runtime data are distinguished in [decision 0006](../docs/decisions/0006-public-source.md).
 

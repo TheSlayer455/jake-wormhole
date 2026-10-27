@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 import re
+import sys
 import time
 
 from . import images, validation as v
@@ -13,11 +14,13 @@ from .contracts import validate_artifact
 from .runs import SOURCE_ROOT, _owned, atomic_json, common, now, read_json, source_identity
 from .stages import _run_process
 from .targets import TargetPlan, LAYOUT
+from . import execution_state
 from validation import runtime
 
 TIMEOUT = 60
 EVIDENCE = ['evidence/batch-validation-plan.json', 'evidence/batch-validation-observations.json']
 LOG = 'private/qualification-helper-batch-functional-validation-0.log'
+INVOCATION = 'evidence/batch-validation-invocation.json'
 
 
 def exact(left, right):
@@ -182,7 +185,17 @@ def report_batch_validation(run):
     for item in result['checks']:
         lines.extend([item['target_id'] + ' / ' + item['check_id'] + ': ' + item['status'],
             '  expected: ' + item['expected'], '  observed: ' + item['observed'], '  evidence: ' + ', '.join(item['evidence'])])
-    return {'result': deepcopy(result), 'text': '\n'.join(lines) + '\n'}
+    initialization=lifecycle=None
+    if run.file('evidence/initialization.json').exists():
+        from .initialization import report_initialization
+        initialization=report_initialization(run)
+    if run.file('evidence/lifecycle.json').exists():
+        from .lifecycle import report_lifecycle
+        lifecycle=report_lifecycle(run,expected_targets=plan['target_plan']['target_ids'])
+    progress = execution_state.project(plan, read_json(run.file('evidence/readiness.json')), result,
+        initialization=initialization,lifecycle=lifecycle)
+    return {'result': deepcopy(result), 'text': '\n'.join(lines) + '\n',
+        'progress': progress, 'progress_text': execution_state.render_text(progress)}
 
 
 class BatchValidationSession:
@@ -229,6 +242,8 @@ class BatchValidationSession:
     def failure(self, error):
         code = getattr(error, 'code', 'validation_failed')
         code = code if type(code) is str and re.fullmatch('[a-z][a-z0-9_]{0,79}', code) else 'validation_failed'
+        if code == 'readiness_required' and self.readiness.receipt.get('primary_failure'):
+            code = self.readiness.receipt['primary_failure']['code']
         self.readiness.held(); ps = self.readiness.parent_provisioning
         v.require(ps.run.id == self.run.id and ps.run.path == self.run.path and ps.lease is self.lease, 'validation_scope')
         ps.held()
@@ -237,10 +252,25 @@ class BatchValidationSession:
         if self.receipt['primary_failure'] is None: self.receipt['primary_failure'] = {'code': code, 'recorded_at': now()}
         self.receipt['status'] = 'failed'; self.save()
 
-    def validate(self, *, before_probe=None):
+    def validate(self, *, before_probe=None, diagnostic_subset=False, absolute_deadline=None):
+        """Normal acceptance requires every target; subsets are explicit diagnostics.
+
+        An inherited absolute deadline can only shorten this operation. Diagnostic
+        execution retains the full grid and can never establish passing acceptance.
+        """
         v.require(not self.started, 'validation_attempt_reused'); self.started = True
-        deadline = time.monotonic() + TIMEOUT
+        began = time.monotonic()
+        v.require(type(diagnostic_subset) is bool and (absolute_deadline is None or
+            type(absolute_deadline) in (int, float) and math.isfinite(absolute_deadline)), 'validation_scope')
+        deadline = min(began + TIMEOUT, absolute_deadline) if absolute_deadline is not None else began + TIMEOUT
+        invocation = {**common(self.run.manifest()), 'operation': 'batch-validation-invocation-v1',
+            'plan_sha256': self.plan['plan_sha256'],
+            'scope': 'diagnostic-ready-subset' if diagnostic_subset else 'full-fleet-acceptance',
+            'budget_seconds': max(0, deadline - began), 'started_at': now(), 'finished_at': None,
+            'duration_seconds': None, 'outcome': 'running'}
         try:
+            atomic_json(self.run.file(INVOCATION), invocation)
+            self.remaining(deadline)
             v.require(before_probe is None or callable(before_probe), 'invalid_validation_coordinator')
             self.readiness.held(); validate_plan(self.run, self.plan)
             v.require(exact(read_json(self.run.file('evidence/batch-validation-plan.json')), self.plan), 'validation_plan_changed')
@@ -260,8 +290,12 @@ class BatchValidationSession:
                     code = failure['code'] if failure is not None else code
                     self.records[target] = blocked_record(target, code); self.receipt['blocked_targets'][target] = code
             self.remaining(deadline)
-            if not targets:
-                raise v.ValidationError('readiness_required', 'No planned target has a valid ready snapshot.')
+            if not targets or (not diagnostic_subset and len(targets) != len(self.target_plan.target_ids)):
+                for target in targets:
+                    identifier = target['target_id']
+                    self.records[identifier] = blocked_record(identifier, 'fleet_readiness_incomplete')
+                    self.receipt['blocked_targets'][identifier] = 'fleet_readiness_incomplete'
+                raise v.ValidationError('readiness_required', 'All required targets must be ready before the full catalog starts.')
             attempted = [target['target_id'] for target in targets]
             for target in attempted:
                 self.receipt['blocked_targets'].pop(target, None)
@@ -298,7 +332,7 @@ class BatchValidationSession:
             self.receipt['capture']['complete'] = True
             for record in value['targets']: self.records[record['target_id']] = {**record, 'source': 'ansible'}
             self.remaining(deadline)
-            passed = not self.receipt['blocked_targets'] and value['status'] == 'pass' and all(row['status'] == 'pass' for row in rows(self.plan, self.records))
+            passed = not diagnostic_subset and not self.receipt['blocked_targets'] and value['status'] == 'pass' and all(row['status'] == 'pass' for row in rows(self.plan, self.records))
             if not passed:
                 raise v.ValidationError('required_batch_check_failed', 'The complete target/check grid did not pass.')
             self.receipt['status'] = 'passed'; self.save(); self.require_passed(); self.remaining(deadline)
@@ -313,6 +347,23 @@ class BatchValidationSession:
                 self.receipt['attempted_targets'] = []
             if self.receipt['primary_failure'] is None: self.failure(error)
             raise
+        finally:
+            invocation.update(finished_at=now(), duration_seconds=time.monotonic() - began,
+                outcome='passed' if self.receipt['status'] == 'passed' else 'failed')
+            original_error = sys.exc_info()[1]
+            try:
+                atomic_json(self.run.file(INVOCATION), invocation)
+            except OSError:
+                evidence_error = v.ValidationError('validation_evidence_write_failed', 'Invocation evidence could not be persisted.')
+                if original_error is None:
+                    self.failure(evidence_error)
+                    raise
+                # Retain the original dispatch/readiness exception. The existing
+                # provisioner journal owns secondary operational failures.
+                try:
+                    self.readiness.parent_provisioning.failure(evidence_error)
+                except OSError:
+                    pass  # Storage failure cannot replace the original error.
 
     def require_passed(self):
         observed = {**common(self.run.manifest()), 'operation': 'batch-functional-observations', 'plan_sha256': self.plan['plan_sha256'],

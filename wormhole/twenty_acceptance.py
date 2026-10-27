@@ -22,14 +22,16 @@ from .provisioning_acceptance import disk_sample, scan_private_material, snapsho
 from .recovery import cleanup_session, safe_code, valid_failure
 from .runs import Run, RunError, atomic_bytes, atomic_json, common, create_run, now, read_json, source_identity
 from .targets import TargetPlan
+from .initialization import InitializationSession,report_initialization
 
 EVIDENCE = 'evidence/twenty-acceptance.json'
 SAMPLE_BEFORE = 'evidence/twenty-sample-before.json'
 SAMPLE_AFTER = 'evidence/twenty-sample-after.json'
 USAGE = 'evidence/twenty-usage.json'
 TARGET_IDS = tuple('target-' + str(number).zfill(3) for number in range(1, 21))
-OPERATION = 'real-stock-twenty-target-acceptance-v1'
+OPERATION = 'real-stock-twenty-target-acceptance-v2'
 MAX_RECORD = 262144
+EXPECTED_RESULTS=tuple((target,check) for target in TARGET_IDS for check in v.CHECKS)
 
 
 class TwentyError(RunError):
@@ -43,6 +45,12 @@ def require(value, code='twenty_acceptance_invalid'):
 
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False, ensure_ascii=True).encode('ascii')
+
+
+def initialization_summary(run):
+    value=report_initialization(run,require_passed=True)
+    require(value['expected_targets']==list(TARGET_IDS),'twenty_initialization_incomplete')
+    return {'targets_initialized':20,'targets_configured':20,'record':fingerprint(run,'evidence/initialization.json')}
 
 
 def fingerprint(run, relative):
@@ -217,18 +225,26 @@ def _report_twenty(run):
     require(set(value) == set(common(run.manifest())) | {'operation', 'profile', 'target_count', 'controller_concurrency',
         'status', 'phase', 'created_at', 'updated_at', 'primary_failure', 'checks', 'owned_resources', 'stopped_targets',
         'stage_seconds', 'disk_samples', 'cleanup', 'artifacts', 'stock_twenty_scope_complete', 'reference_eligible',
-        'production_iso_eligible', 'simulation'} and
+        'production_iso_eligible', 'simulation','expected_results'} and
         canonical(common(value)) == canonical(common(run.manifest())) and value['operation'] == OPERATION and
         value['profile'] == 'twenty-targets' and type(value['target_count']) is int and value['target_count'] == 20 and
         type(value['controller_concurrency']) is int and 1 <= value['controller_concurrency'] <= 4 and
         value['production_iso_eligible'] is False and value['reference_eligible'] is False and
         value['simulation'] is False and value['status'] in ('passed', 'failed'), 'twenty_record_invalid')
+    require(type(value['expected_results']) is list and
+        [(row['target_id'],row['check_id']) for row in value['expected_results']]==list(EXPECTED_RESULTS) and
+        all(set(row)=={'target_id','check_id','status'} and row['status'] in
+            {'pass','fail','error','unreachable','blocked','unverified','skipped'} for row in value['expected_results']),
+        'twenty_result_grid_invalid')
     if value['status'] == 'failed':
         require(value['primary_failure'] is not None and valid_failure(value['primary_failure']) and
             value['stock_twenty_scope_complete'] is False, 'twenty_false_pass')
         return deepcopy(value)
     require(value['primary_failure'] is None and value['stock_twenty_scope_complete'] is True,
         'twenty_false_pass')
+    original=report_batch_validation(run)['result']['checks']
+    require(value['expected_results']==[{key:row[key] for key in ('target_id','check_id','status')} for row in original] and
+        all(row['status']=='pass' for row in value['expected_results']),'twenty_result_grid_invalid')
     validate_graph(value['owned_resources'])
     targets = {row['target_id']: row['id'] for row in value['owned_resources'] if row['role'] == 'target'}
     require(tuple(targets) == TARGET_IDS, 'twenty_graph_invalid')
@@ -239,7 +255,7 @@ def _report_twenty(run):
             row['status'] == 'created' and row['started_at'] == '0001-01-01T00:00:00Z' and
             type(row['pids_limit']) is int and row['pids_limit'] == 64 for row in value['stopped_targets']),
         'twenty_stopped_grid')
-    actual = {'readiness': readiness_summary(run, targets),
+    actual = {'initialization':initialization_summary(run),'readiness': readiness_summary(run, targets),
         'functional': functional_summary(run, targets, value['controller_concurrency']),
         'inventory': inventory_summary(run, targets, value['controller_concurrency']),
         'usage': usage_summary(run, value['owned_resources']),
@@ -252,7 +268,7 @@ def _report_twenty(run):
     require(canonical(interval) == canonical(read_json(run.file(USAGE))) and canonical(value['cleanup']['archive']) == canonical(archive) and
         value['cleanup']['status'] == 'completed' and value['cleanup']['unknown_outcome'] is False and
         value['checks']['sentinel_unchanged'] is True and
-        set(value['checks']) == {'readiness', 'functional', 'inventory', 'usage', 'originals', 'sentinel_unchanged', 'sentinel',
+        set(value['checks']) == {'initialization','readiness', 'functional', 'inventory', 'usage', 'originals', 'sentinel_unchanged', 'sentinel',
             'credential_scan_before_cleanup', 'credential_scan_after_cleanup'} and
         set(value['checks']['sentinel']) == {'resource_id', 'before_sha256', 'after_sha256'} and
         re.fullmatch('[a-f0-9]{64}', value['checks']['sentinel']['resource_id']) and
@@ -301,7 +317,7 @@ def acceptance(sentinel_id, *, controller_concurrency=4):
         'created_at': now(), 'updated_at': now(), 'primary_failure': None, 'checks': {}, 'owned_resources': [],
         'stopped_targets': [], 'stage_seconds': {}, 'disk_samples': [], 'cleanup': None, 'artifacts': {},
         'stock_twenty_scope_complete': False, 'reference_eligible': False, 'production_iso_eligible': False,
-        'simulation': False}
+        'simulation': False,'expected_results':[{'target_id':target,'check_id':check,'status':'blocked'} for target,check in EXPECTED_RESULTS]}
     def save():
         value['updated_at'] = now()
         atomic_bytes(run.file(EVIDENCE), canonical(value) + b'\n', limit=MAX_RECORD)
@@ -317,7 +333,7 @@ def acceptance(sentinel_id, *, controller_concurrency=4):
             value['phase'] = 'measured-admission'; save()
             with admission.AdmissionLease(images.INFRASTRUCTURE, run.id, revision, 'twenty-targets') as lease:
                 ps = ProvisioningSession(run, lease)
-                ready = None; primary = None; cleaned = None
+                ready = None; primary = None; cleaned = None;validation=None
                 runtime = {**common(run.manifest()), 'operation': 'twenty-runtime-observations-v1',
                     'targets_stopped': {}, 'targets_live': {}}
                 try:
@@ -331,7 +347,12 @@ def acceptance(sentinel_id, *, controller_concurrency=4):
                             'started_at': observed['State']['StartedAt'], 'pids_limit': observed['HostConfig']['PidsLimit']})
                     require(len(value['stopped_targets']) == 20, 'twenty_stopped_grid')
                     stage('start-targets', ps.start_and_inventory)
-                    ready = BatchReadinessSession(ps, validation=True, fleet_inventory=True)
+                    initialization=InitializationSession(ps,absolute_deadline=start+240)
+                    def initialize():
+                        for target in TARGET_IDS:initialization.wait_complete(target)
+                    stage('initialization',initialize)
+                    value['checks']['initialization']=initialization_summary(run)
+                    ready = BatchReadinessSession(ps, validation=True, fleet_inventory=True,initialization=initialization)
                     stage('start-helper', ready.start_helper)
                     value['owned_resources'] = owned_graph(ps, ready)
                     require(sentinel_id not in {row['id'] for row in value['owned_resources']}, 'twenty_sentinel_owned')
@@ -357,7 +378,9 @@ def acceptance(sentinel_id, *, controller_concurrency=4):
                     stage('inventory', inventory.collect); inventory.require_passed()
                     inventory_summary(run, targets, controller_concurrency)
                     validation = BatchValidationSession(ready, controller_concurrency=controller_concurrency)
-                    stage('functional', validation.validate); validation.require_passed()
+                    result=stage('functional', validation.validate)
+                    value['expected_results']=[{key:row[key] for key in ('target_id','check_id','status')} for row in result['checks']]
+                    validation.require_passed()
                     functional_summary(run, targets, controller_concurrency)
                     last = stage('sample-after', lambda: collect_sample(ps, ready, 'after-checks'))
                     atomic_json(run.file(SAMPLE_AFTER), last)
@@ -371,6 +394,9 @@ def acceptance(sentinel_id, *, controller_concurrency=4):
                     value['disk_samples'].append(disk_sample(run, 'twenty-before-cleanup'))
                 except BaseException as error:
                     primary = error
+                    if validation is not None and type(getattr(validation,'receipt',None)) is dict:
+                        value['expected_results']=[{key:row[key] for key in ('target_id','check_id','status')}
+                            for row in validation.receipt['checks']]
                     if ps.receipt['primary_failure'] is None: ps.failure(error)
                     failures = [receipt.get('primary_failure') for receipt in
                         (ps.receipt, ready.receipt if ready is not None else {})]

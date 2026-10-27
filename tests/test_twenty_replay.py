@@ -85,6 +85,12 @@ class OfflineTwentyTerraform(unittest.TestCase):
         atomic_json(self.ps.state / 'controller.json', context)
         with self.assertRaises(replay.TwentyReplayError): self.report()
 
+    def test_mutable_fault_home_cannot_be_replayed_as_stock_twenty_qualification(self):
+        path=self.ps.state/'terraform.tfvars.json'
+        variables=read_json(path);variables['mutable_home']=True;atomic_json(path,variables)
+        with self.assertRaises(replay.TwentyReplayError) as error:self.report()
+        self.assertEqual(error.exception.code,'twenty_original_input_changed')
+
     def test_missing_target020_or_changed_runtime_pid_policy_refuses(self):
         path = self.run.file(replay.RUNTIME); original = read_json(path)
         for mutate in (lambda value: value['targets_live'].pop('target-020'),

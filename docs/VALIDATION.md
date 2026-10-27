@@ -137,7 +137,7 @@ Expectation/input negatives are labeled as such, rather than falsely claiming
 actual package removal or a defective target function. All underlying failures
 remain failed when a negative harness confirms the expected outcome or cleanup
 succeeds. Complete-pipeline, publication and production ISO eligibility remain
-false. No VM/ISO boot/STIG or Lightspeed repair conclusion follows.
+false. No VM/ISO boot/STIG or production-system repair conclusion follows.
 
 Scoped fixtures: `python -m unittest discover -s tests -p test_validation.py -v`.
 Primary implementation evidence: pinned Ansible

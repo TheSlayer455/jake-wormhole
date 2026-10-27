@@ -23,10 +23,20 @@ def doctor():
 
 
 def parser():
-    root = argparse.ArgumentParser(prog="python -m wormhole", description="Private container reference automation and explicitly labeled local fixtures.")
+    root = argparse.ArgumentParser(prog="python -m wormhole", description="Container reference automation and explicitly labeled local fixtures.")
     root.add_argument("--version", action="version", version=__version__)
     commands = root.add_subparsers(dest="command", required=True)
     commands.add_parser("doctor", help="Read local source/tool presence without provisioning or network calls.")
+    from .failure_scenarios import SCENARIOS as REPRODUCTION_SCENARIOS
+    reproduce=commands.add_parser('reproduce',help='Execute one owned-container fault experiment; negative execution remains nonzero.')
+    reproduce.add_argument('--profile',choices=('smoke','five-targets','twenty-targets'),default='smoke')
+    reproduce.add_argument('--scenario',choices=REPRODUCTION_SCENARIOS,default='healthy')
+    reproduce.add_argument('--sentinel-id',required=True)
+    progress = commands.add_parser('progress', help='Read current atomic readiness progress; this does not decide qualification.')
+    progress.add_argument('run_id')
+    from .images import RUNS_ROOT
+    progress.add_argument('--workspace', default=str(RUNS_ROOT))
+    progress.add_argument('--format', choices=('json', 'text'), default='text')
     workspace = str(Path.home() / ".wormhole-runs")
     run = commands.add_parser("run", help="Persist an attempt; --fixture runs only the synthetic fixture subset.")
     run.add_argument("--workspace", default=workspace, help="Dedicated absolute storage outside Git and vaults.")
@@ -59,6 +69,7 @@ def parser():
     reference.add_argument("--platform", choices=("ubuntu", "ubi"), default="ubuntu")
     reference.add_argument("--scenario", choices=("healthy", "version-expectation-mismatch"), default="healthy")
     reference.add_argument("--base-run", help="Existing qualified public UBI base-probe UUID; required only for UBI.")
+    reference.add_argument('--fresh-candidate', action='store_true', help='Build fresh candidate bytes instead of selecting a verified cached image.')
     for name in ("reference-report", "reference-gate"):
         command = commands.add_parser(name, help="Replay original reference evidence and retain explicit completeness failures.")
         command.add_argument("run_id", help="Exact existing reference Run UUID.")
@@ -82,6 +93,15 @@ def main(arguments=None):
     try:
         if options.command == "doctor":
             value, status = doctor(), 0
+        elif options.command=='reproduce':
+            from .failure_reproduction import reproduce
+            value=reproduce(options.profile,options.scenario,options.sentinel_id)
+            status=0 if value['status']=='passed' else 2 if value['status']=='unknown' else 1
+        elif options.command == 'progress':
+            from .execution_state import report_progress, render_text
+            value = report_progress(Run(options.workspace, options.run_id))
+            rendered = render_text(value) if options.format == 'text' else None
+            status = 0
         elif options.command == "run":
             run = create_run(options.workspace, fixture=options.fixture)
             with run.locked():
@@ -92,7 +112,7 @@ def main(arguments=None):
             from .pipeline import PipelineSession, make_request
             run = create_run(RUNS_ROOT, fixture=False, kernel_lock=True)
             request = make_request(run, platform=options.platform, scenario=options.scenario, base_run_id=options.base_run)
-            value = PipelineSession(run, request).execute()
+            value = PipelineSession(run, request, reuse_candidates=not options.fresh_candidate).execute()
             status = 0 if value.get("reference_eligible") is True else 1
         elif options.command == "isolation-check":
             from .isolation_acceptance import acceptance

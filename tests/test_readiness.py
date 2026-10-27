@@ -52,6 +52,7 @@ class ReadinessPolicy(unittest.TestCase):
         self.run = create_run(Path(temporary.name) / 'runs', fixture=False, identity=(SHA, False))
         self.lease = Lease(self.run)
         self.started = True
+        self.target_started_at = datetime.now(timezone.utc).isoformat()
         self.helper_started = False
         self.removed = False
         self.calls = []
@@ -72,7 +73,7 @@ class ReadinessPolicy(unittest.TestCase):
 
     def target(self):
         return {'Id': TARGET, 'State': {'Status': 'running' if self.started else 'created', 'Running': self.started,
-            'StartedAt': datetime.now(timezone.utc).isoformat() if self.started else '0001-01-01T00:00:00Z'},
+            'StartedAt': self.target_started_at if self.started else '0001-01-01T00:00:00Z'},
             'NetworkSettings': {'Networks': {'run': {'NetworkID': NETWORK, 'IPAddress': '172.31.77.2'}}}}
 
     def helper(self):
@@ -153,6 +154,28 @@ class ReadinessPolicy(unittest.TestCase):
         self.assertFalse(result['runtime_pipeline_complete']); self.assertFalse(result['production_iso_eligible'])
         self.assertNotIn('synthetic transport result', json.dumps(result['probes']))
 
+    def test_pending_or_failed_final_configuration_blocks_every_transport_probe(self):
+        self.session.start_helper()
+        initialized=SimpleNamespace(require_complete=Mock(return_value=False))
+        self.session.initialization=initialized
+        with patch.object(self.session,'probe') as probe:
+            self.assertFalse(self.session._poll())
+            self.assertEqual(self.session.last_pending,'configuration_pending')
+            initialized.require_complete.side_effect=r.ReadinessError('final_account_missing','Controlled account failure')
+            with self.assertRaises(r.ReadinessError) as error:self.session._poll()
+        probe.assert_not_called();self.assertEqual(error.exception.code,'final_account_missing')
+
+    def test_expected_restart_retains_epoch_without_extending_deadline_and_never_discards_trust(self):
+        self.session.start_helper();self.session.endpoint()
+        deadline=self.session.deadline
+        self.session.invalidate(expected_restart=True)
+        self.assertEqual(self.session.deadline,deadline)
+        self.assertIsNone(self.session.last_started_at)
+        self.assertEqual(len(read_json(self.run.file('evidence/readiness-history.json'))['epochs']['target-001']),1)
+        self.session.pinned_key=HOST_KEY
+        with self.assertRaises(r.ReadinessError) as error:self.session.invalidate(expected_restart=True)
+        self.assertEqual(error.exception.code,'restart_trust_pin_retained');self.assertEqual(self.session.pinned_key,HOST_KEY)
+
     def test_delayed_and_never_start_have_measured_transitions_and_bounded_failure(self):
         self.started = False; self.session.start_helper()
         polls = []
@@ -206,6 +229,27 @@ class ReadinessPolicy(unittest.TestCase):
         before = len(self.calls)
         with self.assertRaises(r.ReadinessError): self.session.cleanup()
         self.assertFalse(any(x[:2] == ('docker', 'stop') for x in self.calls[before:]))
+
+    def test_nonzero_runtime_exit_before_authentication_is_primary_initialization_failure(self):
+        target = self.target()
+        target['State'].update(Status='exited', Running=False, ExitCode=23)
+        with patch.object(self.session, 'inspect', return_value=target), self.assertRaises(r.ReadinessError) as error:
+            self.session.poll()
+        self.assertEqual(error.exception.code, 'target_initialization_failed')
+        self.assertEqual(self.session.receipt['primary_failure']['code'], 'target_initialization_failed')
+        self.assertFalse(self.session.receipt['probes'])
+
+    def test_restart_after_partial_readiness_cannot_reuse_pre_restart_observations(self):
+        self.session.start_helper()
+        self.session.endpoint()
+        self.session.transition('tcp-reachable')
+        before = deepcopy(self.session.receipt['transitions'])
+        self.target_started_at = datetime.now(timezone.utc).isoformat()
+        with self.assertRaises(r.ReadinessError) as error:
+            self.session.poll()
+        self.assertEqual(error.exception.code, 'readiness_stale')
+        self.assertEqual(self.session.receipt['transitions'], before)
+        self.assertFalse(self.session.receipt['probes'])
 
     def test_completed_receipt_with_wrong_identity_or_fake_pong_is_rejected(self):
         self.session.start_helper()
