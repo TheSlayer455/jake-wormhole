@@ -39,6 +39,15 @@ def require(value,code):
     if not value: raise RunError(code,'The declared fault experiment did not satisfy its bounded execution contract.')
 
 
+def expectation_met(record,profile):
+    expected=EXPECTED.get(record['scenario']);codes={expected}
+    if record['scenario']=='never-ready' and profile=='twenty-targets':codes.add('deadline_exhausted')
+    observed=(record['status']=='passed' and expected is None and record['primary_failure'] is None) or (
+        record['status']=='failed' and expected is not None and (record['primary_failure'] or {}).get('code') in codes)
+    return (observed and record['unknown_outcome'] is False and not record['remaining_owned_resources'] and
+        record['cleanup'] is not None and record['cleanup']['status']=='completed' and record.get('sentinel_unchanged') is True)
+
+
 def reproduce(profile,scenario,sentinel_id):
     require(profile in {'smoke','five-targets','twenty-targets'} and scenario in SCENARIOS,'reproduction_selection')
     require(type(sentinel_id) is str and re.fullmatch('[a-f0-9]{64}',sentinel_id),'invalid_sentinel')
@@ -229,10 +238,7 @@ def reproduce(profile,scenario,sentinel_id):
                             journal.event(target,'failure',evidence='lifecycle/controller',category=safe_code(failure))
                 journal.finalize();record['lifecycle_outcome']=journal.record['terminal_outcome']
             record['status']='unknown' if record['unknown_outcome'] else 'failed' if failure else 'passed'
-            expected=EXPECTED.get(scenario)
-            if scenario=='never-ready' and profile=='twenty-targets':expected='deadline_exhausted'
-            record['scenario_expectation_met']=((failure is None and expected is None) or
-                (record['primary_failure'] or {}).get('code')==expected) and record['cleanup'] is not None and record['cleanup']['status']=='completed' and record.get('sentinel_unchanged') is True
+            record['scenario_expectation_met']=expectation_met(record,profile)
             save()
             if journal is not None:
                 from .failure_reports import write

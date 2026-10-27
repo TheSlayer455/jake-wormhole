@@ -54,5 +54,17 @@ class FailureContracts(unittest.TestCase):
         self.assertEqual(f.EXPECTED['initialization-command-fails'],'initialization_command_failed')
         self.assertEqual(f.EXPECTED['controller-deadline'],'validation_timeout')
 
+    def test_negative_credit_requires_actual_declared_failure_known_state_and_complete_cleanup(self):
+        record={'scenario':'never-ready','status':'failed','primary_failure':{'code':'target_not_started'},
+            'unknown_outcome':False,'remaining_owned_resources':[],'cleanup':{'status':'completed'},'sentinel_unchanged':True}
+        self.assertTrue(f.expectation_met(record,'twenty-targets'))
+        record['primary_failure']['code']='deadline_exhausted'
+        self.assertTrue(f.expectation_met(record,'twenty-targets'))
+        self.assertFalse(f.expectation_met(record,'smoke'))
+        for field,value in (('unknown_outcome',True),('remaining_owned_resources',[{'outcome':'pending'}]),
+            ('status','passed'),('cleanup',{'status':'blocked'}),('sentinel_unchanged',False)):
+            changed={**record,field:value}
+            self.assertFalse(f.expectation_met(changed,'twenty-targets'))
+
 
 if __name__=='__main__':unittest.main()
