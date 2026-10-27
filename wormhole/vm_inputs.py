@@ -145,7 +145,7 @@ def terraform_config(name, pool_path, installer, seed, network, mac):
                 'autostart': False, 'dhcp': {'enabled': False}, 'dns': {'enabled': False}}},
             'libvirt_domain': {'run': {'name': name, 'description': 'jake-wormhole libvirt-iso ' + name,
                 'type': 'kvm', 'arch': 'x86_64', 'machine': 'pc-i440fx-8.2', 'memory': 8192,
-                'vcpu': 2, 'autostart': False, 'qemu_agent': False,
+                'vcpu': 2, 'autostart': False, 'qemu_agent': False, 'running': False,
                 'cpu': {'mode': 'host-passthrough'}, 'boot_device': {'dev': ['hd', 'cdrom']},
                 'disk': [{'volume_id': '${libvirt_volume.disk.id}'}, {'file': str(installer)}, {'file': str(seed)}],
                 'network_interface': {'network_id': '${libvirt_network.run.id}', 'mac': mac, 'wait_for_lease': False},

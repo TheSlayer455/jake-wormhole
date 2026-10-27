@@ -10,9 +10,9 @@ from pathlib import Path
 
 from . import admission as docker
 from .media_store import file_lock
-from .runs import RunError, atomic_json, now, read_json, run_id, workspace_path
+from .runs import RunError, _owned, now, read_json, run_id, workspace_path
 
-KINDS = {'domain', 'network', 'pool', 'disk', 'installer_iso', 'seed_iso'}
+KINDS = {'domain', 'network', 'pool', 'disk', 'installer_iso', 'seed_iso', 'controller_container'}
 
 
 def require(value, code):
@@ -66,6 +66,8 @@ class VMLease:
         self.root = workspace_path(self.root)
         self.lock = file_lock(self.root / 'infrastructure.lock')
         self.lock.__enter__()
+        info = (self.root / 'infrastructure.lock').stat()
+        self.lock_identity = info.st_dev, info.st_ino
         try:
             require(read_json(self.root / 'owner.json') == {'application': docker.PROJECT,
                 'schema_version': '1.0', 'kind': 'shared-infrastructure-root'}, 'ownership_mismatch')
@@ -90,11 +92,15 @@ class VMLease:
     def _check(self):
         require(self.lock is not None and self.pid == os.getpid() and self.record is not None and
                 self.record['state'] == 'active', 'vm_lease_inactive')
+        path = self.root / 'infrastructure.lock'
+        _owned(path)
+        info = path.stat()
+        require((info.st_dev, info.st_ino) == self.lock_identity, 'vm_lock_changed')
         require(read_json(self.root / 'vm-admission.json') == self.record, 'vm_journal_changed')
 
     def _save(self):
         self.record['updated_at'] = now()
-        atomic_json(self.root / 'vm-admission.json', validate_record(self.record))
+        docker._sync_json(self.root / 'vm-admission.json', validate_record(self.record))
 
     def intent(self, kind, identity):
         self._check()
@@ -114,8 +120,8 @@ class VMLease:
         completed = deepcopy(self.record)
         completed.update(state='finished', updated_at=now())
         validate_record(completed)
-        atomic_json(self.root / 'vm-history' / (self.id + '.json'), completed)
-        atomic_json(self.root / 'vm-admission.json', completed)
+        docker._sync_json(self.root / 'vm-history' / (self.id + '.json'), completed)
+        docker._sync_json(self.root / 'vm-admission.json', completed)
         self.record = completed
 
     def __exit__(self, *args):
