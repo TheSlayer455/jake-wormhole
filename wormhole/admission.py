@@ -586,7 +586,11 @@ def infrastructure_status(infrastructure_root):
     _require(marker == {"application": PROJECT, "schema_version": "1.0", "kind": "shared-infrastructure-root"}, "ownership_mismatch")
     path = root / "admission.json"
     value = _journal(read_json(path)) if path.exists() else None
-    return {"application": PROJECT, "admission": value, "allocation_performed": False, "production_iso_eligible": False}
+    from .vm_admission import validate_record
+    vm_path = root / 'vm-admission.json'
+    vm_value = validate_record(read_json(vm_path)) if vm_path.exists() or vm_path.is_symlink() else None
+    return {"application": PROJECT, "admission": value, "vm_admission": vm_value,
+            "allocation_performed": False, "production_iso_eligible": False}
 
 
 def main(arguments=None):

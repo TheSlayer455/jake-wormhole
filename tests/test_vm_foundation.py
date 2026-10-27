@@ -90,6 +90,9 @@ class SharedAdmission(unittest.TestCase):
     def test_vm_exit_does_not_imply_cleanup_or_allow_container_admission(self):
         with v.VMLease(self.root, str(uuid4()), 'b' * 40) as lease:
             lease.intent('domain', 'owned-domain')
+            status = a.infrastructure_status(self.root)
+            self.assertEqual(status['admission']['state'], 'finished')
+            self.assertEqual(status['vm_admission']['state'], 'active')
             with self.assertRaises(RunError):
                 lease.finish()
         with self.assertRaises(RunError) as failure:

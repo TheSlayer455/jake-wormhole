@@ -8,8 +8,8 @@ Container runtime acceptance is established at the sources in the current checkp
 
 | Area | Demonstrated in Wormhole | Not demonstrated by Wormhole |
 | --- | --- | --- |
-| Provisioning | Terraform-managed Docker targets; one candidate-bound Ubuntu/UBI target per reference run; 20 coexisting stock Ubuntu targets with task forks four | Terraform/libvirt VMs; RHEL/KVM installation and boot; customized ISO installation |
-| Validation | Container SSH, Ansible checks, Ubuntu/UBI native software inventories, synthetic assessment processing | Real Evaluate-STIG or Nessus execution; operating-system compliance; production ISO qualification |
+| Provisioning | Terraform-managed Docker targets; candidate-bound Ubuntu/UBI; 20 coexisting stock targets; one real Terraform/libvirt Ubuntu 22.04.5 BIOS installation from remastered media and a declared seed | RHEL ISO installation, hardened ISO acceptance, UEFI/Secure Boot |
+| Validation | Container checks and inventories; installed Ubuntu VM final SSH, actual Ansible ping/become and 610 package/version records | Real assessment execution, full VM functional catalog, post-hardening access, operating-system compliance, production ISO qualification |
 | Delivery | Source-bound reference qualification and exact-tested-byte private filesystem publication | Proprietary GitLab integration; actual GitLab runner execution; customer portal or remote artifact publication |
 
 The [verification report](../handoff/MERGED-VERIFICATION.md) binds the latest recorded 43-check Ubuntu reference run to `c3d440a3` and the earlier twenty-target qualification to `825a594`. These are different operations, not a scaling benchmark. See [fidelity limits](FIDELITY.md) for details. Wormhole is a reference implementation; production adapters and production evidence are separate work.
