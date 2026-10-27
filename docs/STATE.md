@@ -19,17 +19,27 @@ test-fixture predecessor.
 The current implementation adds observed initialization/configuration, an explicit
 lifecycle with separate terminal outcomes, nineteen fixed fault scenarios,
 bounded contained-exec reconciliation, per-target reports and verified immutable
-Ubuntu image reuse. New complete-reference and stock-twenty paths require
+Ubuntu and UBI image reuse. New complete-reference and stock-twenty paths require
 initialization before SSH/Ansible. Reference publication preserves original
 tested bytes on reuse. Current source verification and runtime limitations are
-tracked in the same checkpoint. Actual Docker execution, benchmarks, independent
-review and cross-Run UBI reuse remain outstanding.
+tracked in the same checkpoint. The existing recovery command now reconciles
+contained initialization after coordinator interruption while preserving unknown
+Terraform/create/commit refusals. Actual Docker execution, benchmarks and
+independent review remain outstanding.
 
-Current tested implementation `6a8f7bf46b45f07332d0ca4bb1570aab74149839` passed
+Earlier tested implementation `6a8f7bf46b45f07332d0ca4bb1570aab74149839` passed
 840 tests: Windows 564 passed/276 skips; Linux nonroot 830 passed/10 skips.
 Its hosted PR workflow passed. Manual/hosted semantic parity matched at the
 separately recorded predecessor `a6d5109`. No new Docker acceptance or runtime
 performance result is established by those source checks.
+
+Latest tested implementation `492aa1051d3c298bd8ac71d602803f035d3f6501` passed
+862 tests: Windows 581 passed/281 skips; Linux nonroot 852 passed/10 skips; local
+WSL Linux root 860 passed/two skips. Hosted CI passed. Manual controlled parity
+at that source returned 0/1/1 with validated diagnostics. The final source checks
+include collector-only reuse, original UBI package/license replay, interrupted
+initialization proof and no-catalog admission regressions. No new homelab
+containers were allocated and no independent review has occurred.
 
 Post-merge verification, October 24, 2026. All 21 original delivery PRs are merged. The qualified main source is `c3d440a3c7eee9691f30315b49146eb72998d2df`, tree `f5a69b447b224840c66229c00f0fd2e102812449`. See [merged verification](../handoff/MERGED-VERIFICATION.md). Original ticket evidence and tested revisions remain unchanged.
 

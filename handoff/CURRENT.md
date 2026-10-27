@@ -2,34 +2,34 @@
 
 ## Active follow-up
 
-The [failure-reproduction rebuild](../docs/FAILURE-REPRODUCTION.md) is in progress
-on its own review branch. Normal fleet validation now requires all planned
-targets; selected ready-subset execution is explicitly diagnostic. Shared
-progress reports retain unknown initialization and complete missing/blocked
-accounting. Current runtime verification requires an existing operator route to
-retained private project state. No resources were allocated for this follow-up.
-The original merged qualification below remains attributed to its original source.
+Continue the [failure-reproduction rebuild](../docs/FAILURE-REPRODUCTION.md) from
+tested implementation `492aa1051d3c298bd8ac71d602803f035d3f6501` on
+`codex/WORM-001-failure-reproduction`, [draft PR 27](https://github.com/TheSlayer455/jake-wormhole/pull/27).
+The 862-test suite passed on Windows (581 pass/281 skip), Linux nonroot (852
+pass/10 skip) and local WSL Linux root (860 pass/two skip), with successful hosted
+CI. Manual controlled parity returned 0/1/1 and validated its diagnostics.
 
-Continue from tested implementation `ba9d1a23ac591a122c0d0b3017d5c5a80afc31db`
-and [draft PR 27](https://github.com/TheSlayer455/jake-wormhole/pull/27).
-805 tests passed with explicit skips on Windows and Linux; hosted CI passed, and
-manual/hosted mode-all semantic files matched exactly. Manual negative modes
-returned 1. Source and fixture evidence is separate from new container acceptance,
-which was not executed. Obtain the existing authorized runtime operator route,
-then exercise the now-implemented initialization/hardening fault adapters,
-immutable Ubuntu reuse and updated complete-reference/stock-twenty paths.
-The latest source verification is in the active checkpoint. The full rebuild and independent
-review remain outstanding. Current retained source-test evidence is described
-in the active checkpoint; no new containers remain from this follow-up.
+Normal fleet validation requires every planned target's initialization and
+SSH/Ansible conditions. The version-2 stock-twenty record retains all 200 blocked
+functional rows when initialization prevents execution. Fixed fault experiments
+use the existing admission, Terraform, helper and cleanup adapters. The absent
+identity is explicitly simulated and requires a separate rejected SSH diagnostic.
 
-Latest tested implementation: `6a8f7bf46b45f07332d0ca4bb1570aab74149839`,
-840 tests on both platforms (Windows 564 pass/276 skip; Linux nonroot 830 pass/10
-skip), and successful hosted PR workflow. The version-2 stock-twenty record keeps
-all 200 functional rows blocked when initialization prevents execution. Read the
-current checkpoint before using `reproduce`, Ubuntu cache reuse or the updated
-reference/scale contracts: their real Docker acceptance and performance remain
-unverified. UBI still uses its established full build path. Existing unknown
-allocation state cannot be cleared by the contained-init reconciliation helper.
+Ubuntu and UBI can reuse an immutable original image only after input, build and
+artifact replay; UBI includes original package/resolution/signature/license proof
+and the requested base package set. New manifests separate installed-format
+identity from the current Run's test/collector contracts. Publication retains
+the original tested bytes. `recover` can reconcile an interrupted contained
+initialization using its known pre-exec provider receipt and exact target/start.
+It cannot clear an unknown create, Terraform operation or image commit.
+
+Actual runtime acceptance is still unexecuted because the available operator
+cannot read the canonical private Run/admission store. No new project containers
+were allocated, no prior runtime state adopted, and no independent reviewer was
+contacted. Obtain an existing authorized operator connection, reconcile current
+ownership, then run the focused/fault, mixed/fleet/twenty-target, fresh/reused
+Ubuntu/UBI reference and publication acceptance with measured timings. Preserve
+the source-vs-runtime distinction and all original historical qualification below.
 
 External engineering agents, including Luna, should start with [EXTERNAL-INTEGRATION](../docs/EXTERNAL-INTEGRATION.md). It is the short public-source entry point; this handoff retains development history. Public source and private runtime data are distinguished in [decision 0006](../docs/decisions/0006-public-source.md).
 

@@ -10,9 +10,11 @@ The first increment is in [draft PR 27](https://github.com/TheSlayer455/jake-wor
 tested at `ba9d1a23ac591a122c0d0b3017d5c5a80afc31db` with 805 tests on Windows
 and Linux (explicit skips) and matching manual/hosted semantic records. The next
 source increment implements observed initialization/configuration lifecycle,
-container fault adapters, pre-authentication restart recovery and verified Ubuntu
-image reuse. Remaining work includes fresh runtime/fleet and publication
-acceptance, performance measurements, cross-Run UBI reuse and independent review. Runtime
+container fault adapters, pre-authentication restart recovery, verified Ubuntu/UBI
+image reuse and contained initialization recovery after coordinator interruption.
+The latest implementation is `492aa10`, with 862 source tests on Windows and
+Linux root/nonroot and successful CI. Remaining work includes fresh runtime/fleet
+and publication acceptance, performance measurements and independent review. Runtime
 operator access is unresolved. This source increment does not complete that list.
 
 Minx WORM-001 is the parent Epic and authority for current contracts, dependencies, claims and review state. This is navigation, not a second ticket database.

@@ -21,8 +21,8 @@ at discovery. Existing real execution evidence retains its original source.
 | Initialization failure | A fixed target-side command failure retains its actual exit before dependent probes; account/home/key checks have distinct categories. The original early target-exit diagnosis remains |
 | Restart during partial readiness | A changed actual start invalidates cached observations. An explicit pre-authentication restart retains its old epoch and absolute deadline; it cannot discard an established trust pin |
 | Deadlines and terminal reporting | Existing readiness windows and owned process bounds preserved. Batch validation accepts only a shortening inherited deadline and persists invocation scope, timing and outcome |
-| Observer lifecycle | Fixed contained initialization writes a durable target-side result before exit. Bounded reconciliation verifies the exact resource/start; a separately confirmed stop resolves only that contained exec. Unknown creates/Terraform/image operations retain their existing recovery boundary |
-| Candidate freshness | Ubuntu reference runs select a small content-addressed index, replay original build/bundle proof and inspect the exact immutable image under admission. Current test/controller provenance stays separate from the original embedded manifest; every acceptance check reruns |
+| Observer lifecycle | Fixed contained initialization writes durable intent, the pre-exec known provider receipt and a target-side result. Live and interrupted-coordinator recovery verify unchanged provider history and exact resource/start before retrieval or confirmed stop. Unknown creates/Terraform/image operations remain blocked |
+| Candidate freshness | Ubuntu and UBI runs use the content-addressed index, original build/bundle proof and immutable image inspection under admission. UBI also replays resolution, package files, signature/install records, license and requested base-package identity. Every current acceptance check reruns |
 | Reporting | JSON and readable per-target progress derive from the same records. Missing checks stay missing, blocked rows remain counted, and unobserved initialization stays unknown |
 | Failure scenarios | Nineteen focused/fleet scenarios compose existing adapters. New target operations cover command failure, account expectation, home/key loss, hardening regression and observer loss; simulations are explicitly labeled |
 | Twenty targets | Original actual stock twenty-target capability retained. New mixed-readiness source regression accounts for 200 blocked rows and launches no catalog. This is not a new actual scale execution |
@@ -59,13 +59,26 @@ image identity, Run attribution and artifact checks still apply. Ubuntu
 `reference-run` now selects and verifies a retained original image when its
 construction inputs match. `--fresh-candidate` explicitly builds a new image.
 An invalid index, missing original proof or mismatched image refuses execution;
-it cannot silently substitute different bytes after the plan freezes. UBI keeps
-its existing full build/resolution path; cross-Run UBI image reuse is not claimed.
+it cannot silently substitute different bytes after the plan freezes. UBI reuse
+also requires its original resolver capture, approved package bytes,
+installation/signature evidence, license and immutable base. The explicitly
+requested base observation must contain the same installed package set. Missing
+proof refuses execution. A cache miss follows the existing full build/resolution
+path on either platform.
 
 The reused image keeps its original embedded manifest and labels. A new binding
 records the current Run/source and original build identity. Qualification results
 are never reused. Publication copies the original tested manifest and payload
 bytes, rather than the new attempt's unused preparation manifest.
+
+New manifests declare `artifact_contract=installed-payload-v1`. Their historical
+`test_contract_sha256` field binds the installed format; each validation plan
+separately freezes `execution_contract_sha256`, collector/source hashes and the
+complete check grid. Changing a collector alone keeps candidate bytes unchanged.
+Installed configuration, payload, package policy, base or recipe changes
+invalidate reuse. Legacy manifests retain their original contract checks.
+Introducing the explicit marker changes manifest bytes once and requires a fresh
+build, rather than relabeling an older image.
 
 `python -m wormhole reproduce --profile smoke --scenario healthy --sentinel-id
 EXACT_APPROVED_CONTAINER_ID` runs the focused stock experiment. Profiles
@@ -80,7 +93,10 @@ and an unchanged unrelated sentinel.
 The fixed home faults require a dedicated 4MiB target tmpfs. They change only its
 owner's directory permissions; the host root filesystem, SELinux and policy are
 untouched. The missing-account scenario queries an intentionally absent expected
-identity; it does not delete the image's real account. Stale-input and pre-cleanup
+identity and is labeled a simulated identity failure. A separately scoped SSH
+diagnostic must reject that same identity using verified host-key handling; it
+cannot establish readiness or authorize the full catalog. It does not delete the
+image's real account. Stale-input and pre-cleanup
 error injections are labeled controlled simulations. Installation-source failure
 is a separately labeled target-runtime simulation, never ISO installation proof.
 
@@ -154,13 +170,16 @@ restart recovery and Ubuntu verified reuse are now implemented in the follow-up
 commits. The current source verification checkpoint follows below. Fresh focused,
 mixed-fleet, twenty-target, reused-candidate and publication runtime acceptance
 and equivalent-input performance comparisons remain blocked by runtime access.
-The automatic bounded reconciliation path covers contained initialization execs;
-it does not override unknown allocation/commit state or claim general recovery
-after a whole coordinator crash. UBI cross-Run reuse remains a separate extension.
+The existing `recover` command can reconcile contained initialization after a
+coordinator interruption. A hash-bound original known provider receipt must match
+current resources, inputs and operation history. Its resumed adapter cannot start
+work or extend acceptance. Only the exact target/start's durable result or
+confirmed stopped state clears that contained uncertainty. Unknown creates,
+Terraform operations and image commits still refuse recovery.
 Preserve stock fleet versus candidate-bound single-target scope. Production ISO
 eligibility remains false. No independent review has been claimed.
 
-## Current source verification
+## Earlier full source checkpoint
 
 Implementation commits add the lifecycle/initialization, immutable Ubuntu reuse,
 and fixed fault harness as separate review checkpoints on PR 27. Source fixtures
@@ -204,8 +223,9 @@ run focused healthy/initialization/home/key/restart/observer cases, mixed and
 twenty-target execution, fresh and reused Ubuntu reference acceptance, and exact
 publication. Retain the actual CLI exits, complete grids, cleanup/sentinel proof
 and stage timings. Validate Ubuntu and UBI initialization on the real images.
-Continue the remaining UBI reuse/recovery extensions only with their original
-package/build evidence available; do not weaken the established binding checks.
+UBI reuse and interrupted initialization recovery are now implemented with their
+original evidence checks; actual runtime execution remains unverified until the
+canonical operator route is available.
 
 Predecessor `1c8bd04b1a24c79a2cefe72c860ae2b1273e229f` passed 834 Windows tests
 (273 skips; 121.989 seconds). Its Linux nonroot suite and hosted CI caught a
@@ -213,3 +233,41 @@ twenty-target replay compatibility defect: the new explicit `mutable_home=false`
 input was missing from that replayer's expected variables. The correction accepts
 the literal normal default and still refuses the fault-enabled home policy.
 Those failed logs are retained privately rather than relabeled as a passing run.
+
+## Latest continuation checkpoint
+
+Tested implementation: `492aa1051d3c298bd8ac71d602803f035d3f6501`.
+Continuation commits add UBI reuse and original license publication; separate
+installed artifact identity from current collector/test contracts; extend the
+existing recovery command for contained initialization after interruption; and
+preserve initialization failure priority before dependent diagnostics. Failed
+returned results and blocked cleanup receive failed stage timings. The simulated
+absent identity has a separate actual rejected-SSH diagnostic requirement.
+
+| Execution | Observed result |
+| --- | --- |
+| Windows CPython 3.12.14 | 862 tests: 581 passed, 281 platform skips; 149.905 seconds |
+| Linux nonroot CPython 3.12.3 | 862 tests: 852 passed, 10 explicit skips; 113.546 seconds |
+| Local WSL Linux root CPython 3.12.3 | 862 tests: 860 passed, two Windows-only skips; 80.795 seconds |
+| [Hosted PR workflow](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40438573829) | Passed full source suite, controlled parity, diagnostic validation and upload |
+| Manual controlled parity | Fresh checkout per mode at the tested source; expected exits 0/1/1; all diagnostics validated; passing semantic files matched hosted output byte for byte and downloaded ZIP matched the provider digest |
+| Repository/acceptance index and diff checks | Passed; original historical 83-row/16-file evidence index unchanged |
+| New real Docker/fleet/reuse/recovery/publication and performance acceptance | Unexecuted; canonical runtime operator access remains unavailable |
+
+Full suites used the same commands recorded above. Local root testing ran only
+source fixtures in disposable WSL test storage with mocked Docker boundaries. It
+neither provided remote root access nor qualified an actual target. No new speedup
+is inferred from source-suite durations across different machines/interpreters.
+Self-review and tests are distinct from independent review, which is not claimed.
+
+Predecessor `94d79f3` passed 857 Windows tests (281 skips) and the local Linux-root
+suite (two skips). Its nonroot Linux suite and hosted CI correctly rejected a new
+test capture created with ordinary permissions. The fixture now uses the existing
+private atomic writer; the storage guard was retained. Failure logs remain private.
+
+Only source test checkouts and private logs/artifact comparisons remain from this
+continuation. No project fleet was allocated or existing runtime state adopted.
+The operator still cannot read the root-owned canonical store, and no existing
+Wormhole operator helper/service or usable root SSH route was found. Continue
+actual acceptance through an existing authorized operator connection; do not
+replace the shared admission lock or weaken private-storage permissions.

@@ -12,13 +12,21 @@ runs a fixed program only inside verified owned targets. Normal reference and
 stock-twenty execution require these observations before readiness/catalog use.
 The fault operator composes the existing Terraform, helper, admission and cleanup
 adapters; target-local durable results reconcile a lost initialization observer.
-An unknown allocation is still blocked by the original recovery rules.
+The existing recovery command also handles interrupted contained initialization.
+It replays the hash-bound pre-exec provider receipt and unchanged operation/input
+history through the same retained-controller loader, without restarting it. Only
+the exact target/start's terminal marker or confirmed stop resolves that exec.
+Unknown allocation and image-commit state retain the original refusal rules.
 
 `candidate_cache.py` is a private content-addressed index under canonical
-admission, not a service. Ubuntu reuse retains the original manifest/image and
+admission, not a service. Ubuntu and UBI reuse retain the original manifest/image and
 records a new Run binding, verifies installed dependencies and immutable image
 identity, then reruns acceptance. Publication copies the original tested bundle.
-UBI retains its established full assembly path. Source, controller/test revision,
+UBI additionally replays package resolution, original package/signature/install
+evidence, license and the requested base-package identity. A cache miss retains
+the established full assembly path. New artifacts have an explicit installed
+format marker; current test/collector contracts live in each validation plan and
+do not invalidate unchanged installed bytes. Source, controller/test revision,
 build origin, tested bytes and qualification are distinct identities.
 
 Jake Wormhole is a standard-library Python CLI/library with bounded Linux container adapters. There is no resident scheduler, dashboard, Kubernetes deployment, database, broker or model provider. [Current state](STATE.md) and [original acceptance](acceptance-matrix.md) distinguish implementation from execution.
