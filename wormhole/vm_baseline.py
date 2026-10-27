@@ -6,7 +6,7 @@ the journal and resources for inspection; there is no automatic takeover.
 """
 import argparse
 import fcntl
-import grp
+import pwd
 import ipaddress
 import json
 import os
@@ -146,7 +146,8 @@ def execute(source, terraform):
             atomic_json(run / 'preflight.json', preflight(source))
             for query in ('list', 'net-list', 'pool-list'):
                 require(name not in virsh(query, '--all', '--name').split(), 'vm_resource_conflict')
-            group = grp.getgrnam('libvirt-qemu').gr_gid
+            qemu = pwd.getpwnam('libvirt-qemu')
+            group = qemu.pw_gid
             if not SHARED.exists():
                 create_qemu_directory(SHARED, group)
             require(not SHARED.is_symlink() and SHARED.stat().st_uid == 0 and SHARED.stat().st_gid == group and
@@ -168,7 +169,7 @@ def execute(source, terraform):
                 os.chown(path, 0, group);path.chmod(0o640)
             tfdir = run / 'terraform';tfdir.mkdir(mode=0o700)
             shutil.copyfile(SOURCE_ROOT / 'provisioning/libvirt/.terraform.lock.hcl', tfdir / '.terraform.lock.hcl')
-            atomic_json(tfdir / 'main.tf.json', terraform_config(name, pool, candidate, seed, NETWORK, mac))
+            atomic_json(tfdir / 'main.tf.json', terraform_config(name, pool, candidate, seed, NETWORK, mac, qemu.pw_uid, group))
             tf = [terraform, '-chdir=' + str(tfdir)]
             command([*tf, 'init', '-input=false', '-lockfile=readonly'], 'terraform-init')
             command([*tf, 'validate', '-no-color'], 'terraform-validate')

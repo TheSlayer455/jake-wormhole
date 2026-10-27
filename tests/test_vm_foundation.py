@@ -39,7 +39,7 @@ class Inputs(unittest.TestCase):
 
     def test_terraform_contract_is_empty_disk_real_cdrom_isolated_network(self):
         value = i.terraform_config('wormhole-vm-0123456789ab', '/lab/pool', '/lab/candidate.iso',
-                                   '/lab/seed.iso', '192.0.2.0/24', '52:54:00:11:22:33')
+                                   '/lab/seed.iso', '192.0.2.0/24', '52:54:00:11:22:33', 1001, 1002)
         resource = value['resource']
         domain = resource['libvirt_domain']['run']
         self.assertEqual(domain['type'], 'kvm')
@@ -49,6 +49,8 @@ class Inputs(unittest.TestCase):
         self.assertIn('/domain/devices/graphics', domain['xml']['xslt'])
         self.assertEqual(domain['boot_device']['dev'], ['hd', 'cdrom'])
         self.assertNotIn('source', resource['libvirt_volume']['disk'])
+        self.assertIn('<owner>1001</owner><group>1002</group>', resource['libvirt_volume']['disk']['xml']['xslt'])
+        self.assertIn('<mode>0600</mode>', resource['libvirt_volume']['disk']['xml']['xslt'])
         self.assertEqual(resource['libvirt_network']['run']['mode'], 'none')
         self.assertFalse(resource['libvirt_network']['run']['dhcp']['enabled'])
 
