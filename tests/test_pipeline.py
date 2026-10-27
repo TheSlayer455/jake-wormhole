@@ -12,7 +12,7 @@ import sys
 from datetime import datetime,timezone,timedelta
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock,patch
 from uuid import uuid4
 
 from wormhole import pipeline as w,pipeline_replay as replay,assessments as a,admission,images,rpm_validation,software_inventory as svd,validation as v
@@ -176,6 +176,26 @@ class CoordinatorBoundaries(unittest.TestCase):
         self.assertEqual(session.timed('initialization',lambda:{'status':'failed'})['status'],'failed')
         session.timed('cleanup',lambda:None)
         self.assertEqual([item['outcome'] for item in session.timings['stages']],['failed','failed'])
+
+    def test_completed_ubi_resolver_cleanup_finishes_preassembly_failure_but_unknown_or_pending_refuse(self):
+        from wormhole.runs import create_run
+        from wormhole.rpm_resolution import recipe_identity
+        for unknown,pending in ((False,False),(True,False),(False,True)):
+            with self.subTest(unknown=unknown,pending=pending),tempfile.TemporaryDirectory() as folder:
+                session=w.PipelineSession.__new__(w.PipelineSession)
+                session.run=create_run(Path(folder)/'runs',fixture=False,identity=(SHA,False))
+                session.lifecycle=session.session=None;session.request={'platform':'ubi'}
+                session.context={**common(session.run.manifest()),'primary_failure':{'code':'rpm_source_preparation_failed'},
+                    'secondary_failures':[],'unknown_outcome':False,'cleanup_status':'not-started','pending_resources':0}
+                session.lease=SimpleNamespace(record={'phase':'assembling','resources':[{'outcome':'pending'}] if pending else []},finish=Mock())
+                recipe,files=recipe_identity()
+                atomic_json(session.run.file('evidence/rpm-resolution.json'),{**common(session.run.manifest()),
+                    'operation':'ubi-offline-resolution','status':'failed','recipe_sha256':recipe,'source_files':files,
+                    'cleanup':'completed','unknown_outcome':unknown,'secondary_cleanup_failure':None})
+                session._cleanup(w.PipelineError('rpm_source_preparation_failed','Controlled failure'))
+                self.assertEqual(session.context['primary_failure']['code'],'rpm_source_preparation_failed')
+                self.assertEqual(session.context['cleanup_status'],'blocked' if unknown or pending else 'completed')
+                self.assertEqual(session.lease.finish.called,not (unknown or pending))
 
     @unittest.skipUnless(sys.platform.startswith('linux'),'Real mode source/lock coordinator fixture, no Docker calls')
     def test_capacity_refusal_retains_complete_failed_grid_and_never_calls_old_unsupported_pipeline(self):

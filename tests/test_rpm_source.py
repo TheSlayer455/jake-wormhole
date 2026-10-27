@@ -15,7 +15,7 @@ import unittest
 from unittest.mock import MagicMock, Mock, patch
 
 from wormhole import rpm_source as s
-from wormhole.runs import create_run, common, atomic_json
+from wormhole.runs import create_run, common, atomic_json, atomic_bytes
 
 SPEC=importlib.util.spec_from_file_location('fixed_offline_rpm_resolver',s.SOURCE_ROOT/'rpm/resolve.py')
 resolver=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(resolver)
@@ -57,6 +57,39 @@ def fixtures(run, additional=()):
 
 
 class PublicSources(unittest.TestCase):
+    def test_worker_reuses_exact_retained_metadata_without_contacting_mutable_repository(self):
+        from wormhole import images
+        with tempfile.TemporaryDirectory() as folder:
+            workspace=Path(folder)/'runs'
+            old=create_run(workspace,fixture=False,identity=(SHA,False))
+            lock,_,_,original=fixtures(old)
+            current=create_run(workspace,fixture=False,identity=(SHA,False))
+            with patch.object(images,'RUNS_ROOT',workspace),patch.object(s,'source_identity',return_value=(SHA,False)),\
+                    patch.object(s,'load_lock',return_value=lock),patch.object(s,'fetch') as network:
+                s._worker(current,'metadata')
+                network.assert_not_called()
+                actual=s.validate_metadata(current,lock)
+            for item in s.metadata_items(lock):
+                self.assertEqual((actual/item['path']).read_bytes(),(original/item['path']).read_bytes())
+            proof=json.loads(current.file('private/rpm-source-reuse.json').read_text())
+            self.assertEqual(len(proof['inputs']),2)
+            self.assertTrue(all(row['origin_run_id']==old.id for row in proof['inputs']))
+
+    def test_retained_source_hash_mismatch_and_nonpublic_path_cannot_be_reused(self):
+        from wormhole import images
+        with tempfile.TemporaryDirectory() as folder:
+            workspace=Path(folder)/'runs'
+            old=create_run(workspace,fixture=False,identity=(SHA,False))
+            current=create_run(workspace,fixture=False,identity=(SHA,False))
+            relative='private/rpm-sources/packages/example.rpm'
+            for run in (old,current):run.file(relative).parent.mkdir(parents=True,mode=0o700)
+            atomic_bytes(old.file(relative),b'bad')
+            with patch.object(images,'RUNS_ROOT',workspace):
+                self.assertFalse(s.reuse_pinned_source(current,{'bytes':3,'sha256':s.sha(b'rpm')},current.file(relative)))
+                self.assertFalse(current.file(relative).exists())
+                with self.assertRaises(s.SourceError):
+                    s.reuse_pinned_source(current,{'bytes':3,'sha256':s.sha(b'bad')},current.file('private/credentials/private-input'))
+
     def test_official_plus_package_paths_work_without_traversal_or_windows_ads(self):
         # Observed in pinned UBI primary c5ee79e94b0f13bd8167ed6c0008e880e93c46564c5d42174393c81e775cd0d3.
         actual='Packages/l/libstdc++-11.5.0-14.el9.x86_64.rpm'
