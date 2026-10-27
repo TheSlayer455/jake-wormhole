@@ -17,6 +17,9 @@ installation baseline with no hardening/assessment claim. The 883-test source
 suite and hosted CI passed at `8cce6674eae525944a62d05cc2d453e475e856eb`.
 Authorized RHEL media remains unavailable. See the checkpoint for exact limits
 and [proven solutions](../handoff/solutions/README.md).
+PR 29 merged as `44f33f8dccfec0f7806524cb229674e5f4b08336`; fresh post-merge VM
+acceptance passed in 201.816 seconds, with complete inventory, verified cleanup
+and [green main CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40604686004).
 
 ## Final runtime recovery checkpoint
 

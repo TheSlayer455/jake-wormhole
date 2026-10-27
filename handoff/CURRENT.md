@@ -2,7 +2,8 @@
 
 ## Active home ISO extension
 
-Continue [ISO foundation](ISO-FOUNDATION.md) on `codex/WORM-001-iso-foundation`.
+Continue [ISO foundation](ISO-FOUNDATION.md) from current `main`; the
+`codex/WORM-001-iso-foundation` branch is its merged delivery history.
 The owner explicitly authorized the separate KVM/libvirt profile and routine
 verified incremental merges. Use the recovered private operator route below.
 The first increment streams genuine Ubuntu media and passed a real empty-disk
@@ -10,6 +11,14 @@ Ubuntu installation, final SSH and Ansible at `31eca5832db3225ca7c10a5c4147c03ec
 Final runtime source `55bb2fb1ba657149d836a916dfc6be318b43a430` repeated it in 201
 seconds with complete inventory, verified cleanup and passing CI. [PR 29](https://github.com/TheSlayer455/jake-wormhole/pull/29)
 delivers this baseline, not the complete ISO extension.
+Implementation merge: `44f33f8dccfec0f7806524cb229674e5f4b08336`. A fresh real
+VM run on that merge passed in 201.816 seconds with all 610 inventory records,
+strict final SSH/Ansible and verified teardown. [Post-merge CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40604686004)
+passed. No owned domains, disks, pools, networks or controllers remain; failed
+attempts/media stay private. The live VM also excluded a real parallel Docker
+admission attempt before allocation. Continue with pinned Ubuntu guest-side
+assessment dependencies and installation-time hardening; obtain authorized RHEL
+9 DVD media/checksum for the other OS path. No additional authentication setup is needed.
 RHEL media, installation-time hardening, actual assessments and
 two-OS lab qualification remain outstanding. Preserve active VM ownership and
 reconcile both backend journals before any further allocation. No independent
