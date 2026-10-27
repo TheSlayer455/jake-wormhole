@@ -71,7 +71,8 @@ def prepared_manifest(run,platform):
     from . import rpm_candidate as rc,rpm_target as rt
     value=deepcopy(manifest);value.update(operation='ubi9-reference-candidate',applicability=deepcopy(rc.APPLICABILITY),
         source_candidate_manifest=manifest,source_candidate_sha256=bundle['candidate_sha256'],content_sha256=rc.content_identity(manifest),
-        base_reference=rt.BASE,base_image=rt.BASE_ID,packages=deepcopy(rc.PACKAGE_VERSIONS),test_contract_sha256=c.sha(c.canonical(rc.test_contract())))
+        base_reference=rt.BASE,base_image=rt.BASE_ID,packages=deepcopy(rc.PACKAGE_VERSIONS),
+        artifact_contract='installed-payload-v1',test_contract_sha256=c.sha(c.canonical(rc.installed_contract())))
     return rc.validate_manifest(value)
 
 
@@ -345,7 +346,11 @@ class PipelineSession:
         def save():atomic_json(self.run.file('evidence/pipeline-timings.json'),self.timings)
         save()
         try:
-            value=action();timing['outcome']='passed';return value
+            value=action()
+            failed=(type(value) is dict and value.get('status') in {'failed','fail','error','blocked','pending'}) or (
+                name=='cleanup' and self.context.get('cleanup_status')!='completed')
+            timing['outcome']='failed' if failed else 'passed'
+            return value
         except BaseException:
             timing['outcome']='failed';raise
         finally:

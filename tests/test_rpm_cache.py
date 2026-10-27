@@ -82,6 +82,20 @@ class RpmCache(RpmFixture,unittest.TestCase):
             self.assertIsNone(cache.select(self.current,'ubi'))
         self.assertNotEqual(cache.key(self.current,'ubi'),cache.key(self.current,'ubuntu'))
 
+    def test_collector_only_change_reuses_image_and_freezes_the_new_run_contract(self):
+        from validation import runtime
+        from wormhole import rpm_validation
+        old_key=cache.key(self.current,'ubi')
+        before=rpm_validation.make_plan(self.current,self.binding,'d'*64,'e'*64,'healthy')
+        with patch.object(runtime,'RPM_PROGRAM',runtime.RPM_PROGRAM+'\n# authored changed test collector\n'):
+            self.assertEqual(cache.key(self.current,'ubi'),old_key)
+            self.assertEqual(cache.select(self.current,'ubi'),self.binding['manifest'])
+            after=rpm_validation.make_plan(self.current,self.binding,'d'*64,'e'*64,'healthy')
+        self.assertEqual(before['candidate_sha256'],after['candidate_sha256'])
+        self.assertNotEqual(before['collector_sha256'],after['collector_sha256'])
+        self.assertNotEqual(before['execution_contract_sha256'],after['execution_contract_sha256'])
+        self.assertEqual(before['test_contract_sha256'],after['test_contract_sha256'])
+
     def test_missing_resolution_proof_and_tampered_input_receipt_refuse_before_inspection(self):
         self.replay.side_effect=FileNotFoundError('Controlled missing resolution')
         with patch.object(images,'inspect') as inspect,self.assertRaises(OSError):cache.select(self.current,'ubi')

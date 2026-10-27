@@ -53,6 +53,16 @@ def test_contract():
         'iso_processing':'none','production_iso_eligible':False}
 
 
+def installed_contract():
+    return {'operation':'installed-payload-v1','version':c.VERSION,'configuration':deepcopy(c.CONFIG),
+        'files':list(c.NAMES),'applicability':deepcopy(APPLICABILITY),'packages':deepcopy(PACKAGE_VERSIONS),
+        'production_iso_eligible':False}
+
+
+def manifest_contract(value):
+    return installed_contract() if value.get('artifact_contract')=='installed-payload-v1' else test_contract()
+
+
 def schema():
     return {'$schema':'https://json-schema.org/draft/2020-12/schema','$id':'urn:jake-wormhole:ubi-candidate-manifest:1.0',
         'title':'Fixed UBI9 reference installation manifest v1',**deepcopy(MANIFEST)}
@@ -67,7 +77,7 @@ def validate_manifest(value):
             value['source_candidate_sha256']==c.sha(c.canonical(original)) and
             value['content_sha256']==content_identity(original) and value['files']==original['files'] and
             all(value[key]==original[key] for key in ('version','configuration','source_sha256','chunk_plan_sha256','chunk_manifest_sha256')) and
-            value['test_contract_sha256']==c.sha(c.canonical(test_contract())), 'rpm_candidate_manifest_invalid')
+            value['test_contract_sha256']==c.sha(c.canonical(manifest_contract(value))), 'rpm_candidate_manifest_invalid')
     except (ValueError,TypeError,KeyError,RecursionError):
         raise t.RpmError('rpm_candidate_manifest_invalid','A complete fixed UBI installation manifest is required.') from None
     return value
@@ -78,7 +88,7 @@ def prepare_manifest(run):
     value=deepcopy(original);value.update(operation='ubi9-reference-candidate',applicability=deepcopy(APPLICABILITY),
         source_candidate_manifest=original,source_candidate_sha256=bundle['candidate_sha256'],content_sha256=content_identity(original),
         base_reference=t.BASE,base_image=t.BASE_ID,packages=deepcopy(PACKAGE_VERSIONS),
-        test_contract_sha256=c.sha(c.canonical(test_contract())))
+        artifact_contract='installed-payload-v1',test_contract_sha256=c.sha(c.canonical(installed_contract())))
     validate_manifest(value)
     directory=run.file('private/rpm-candidate');directory.mkdir(mode=0o700)
     for record in value['files']:

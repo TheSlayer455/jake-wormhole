@@ -166,6 +166,10 @@
       "type": "boolean",
       "const": false
     },
+    "artifact_contract": {
+      "type": "string",
+      "const": "installed-payload-v1"
+    },
     "source_candidate_manifest": {
       "type": "object",
       "properties": {
@@ -315,6 +319,10 @@
         "production_iso_eligible": {
           "type": "boolean",
           "const": false
+        },
+        "artifact_contract": {
+          "type": "string",
+          "const": "installed-payload-v1"
         }
       },
       "required": [

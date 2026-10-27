@@ -48,7 +48,8 @@ def make_plan(run,binding,target,network,scenario):
     value={**common(run.manifest()),'operation':'ubi9-rpm-validation-plan','scenario':scenario,'target_id':'target-001',
         'target_resource_id':target,'network_id':network,'target_image':binding['image_id'],'candidate_sha256':binding['candidate_sha256'],
         'content_sha256':binding['content_sha256'],'source_candidate_sha256':binding['source_candidate_sha256'],
-        'test_contract_sha256':binding['test_contract_sha256'],'validation_source_sha256':v.runtime_hash(),
+        'test_contract_sha256':binding['test_contract_sha256'],'execution_contract_sha256':c.sha(c.canonical(rc.test_contract())),
+        'validation_source_sha256':v.runtime_hash(),
         'readiness_source_sha256':hashlib.sha256((SOURCE_ROOT/'readiness/runtime.py').read_bytes()).hexdigest(),
         'collector_sha256':c.sha(runtime.RPM_PROGRAM.encode()),
         'checks':[{'target_id':'target-001','check_id':key,'required':True,'expected':values[key]} for key in check_ids(scenario)],
@@ -68,7 +69,11 @@ def validate_plan(run,plan):
         provisioning.get('target_image')==binding['image_id'] and owned.get('docker_container.target["target-001"]')==plan['target_resource_id'] and
         owned.get('docker_network.run')==plan['network_id'],'rpm_plan_changed')
     if plan['scenario']=='missing-optional-package':
-        build=read_json(run.file('evidence/rpm-candidate-build.json'))
+        build_run=run
+        if 'reuse' in binding:
+            from .candidate_cache import origin
+            build_run,_=origin(run,binding['reuse'])
+        build=read_json(build_run.file('evidence/rpm-candidate-build.json'))
         t.require(not any(row['name']=='openssh-clients' for row in build['installed']['installed_packages']),'rpm_missing_fixture_unavailable')
     return binding
 

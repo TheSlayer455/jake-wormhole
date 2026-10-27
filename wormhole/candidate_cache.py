@@ -48,7 +48,7 @@ def input_record(run,manifest):
 
 def key(run,platform='ubuntu'):
     return c.sha(c.canonical({'inputs':input_identity(run,platform),
-        'installed_manifest_contract':c.sha(c.canonical(policy(platform).test_contract()))}))
+        'installed_manifest_contract':c.sha(c.canonical(policy(platform).installed_contract()))}))
 
 
 def index_path(run,platform='ubuntu'):
@@ -82,7 +82,8 @@ def origin(run, selection):
     intended=c.validate_bundle(run)['manifest']
     if platform=='ubi':
         from . import rpm_candidate as rc
-        intended.update(applicability=deepcopy(rc.APPLICABILITY),test_contract_sha256=c.sha(c.canonical(rc.test_contract())))
+        intended.update(applicability=deepcopy(rc.APPLICABILITY),
+            test_contract_sha256=c.sha(c.canonical(rc.manifest_contract(binding['manifest']))))
     c.require(all(binding['manifest'][name]==intended[name] for name in
         ('files','version','configuration','source_sha256','applicability','test_contract_sha256')),
         'candidate_stale')

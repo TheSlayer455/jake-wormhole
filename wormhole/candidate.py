@@ -67,6 +67,7 @@ MANIFEST = obj({**_COMMON, 'operation': {'const': 'synthetic-reference-candidate
         'path': {'type': 'string', 'enum': list(NAMES)}, 'sha256': SHA,
         'size': {'type': 'integer', 'minimum': 1, 'maximum': chunks.MAX_TOTAL}})},
     'test_contract_sha256': SHA, 'production_iso_eligible': {'type': 'boolean', 'const': False}})
+MANIFEST['properties']['artifact_contract']={'type':'string','const':'installed-payload-v1'}
 
 
 def schema():
@@ -79,6 +80,17 @@ def test_contract():
             'collector': 'fixed-ssh-ansible-candidate-v1', 'iso_processing': 'none', 'production_iso_eligible': False}
 
 
+def installed_contract():
+    """Stable installed format; current checks/collectors belong to each Run."""
+    return {'operation':'installed-payload-v1','version':VERSION,'configuration':deepcopy(CONFIG),
+        'files':list(NAMES),'applicability':{'os_id':'ubuntu','os_version':'24.04','platform':'linux/amd64'},
+        'production_iso_eligible':False}
+
+
+def manifest_contract(value):
+    return installed_contract() if value.get('artifact_contract')=='installed-payload-v1' else test_contract()
+
+
 def input_identity(source_sha256):
     """Content dependencies exclude controller/tests and attempt provenance.
 
@@ -89,6 +101,7 @@ def input_identity(source_sha256):
     from .provisioning import TARGET_IMAGE
     require(type(source_sha256) is str and re.fullmatch('[a-f0-9]{64}', source_sha256), 'candidate_source_unverified')
     inputs = {'base_image': TARGET_IMAGE, 'source_sha256': source_sha256,
+        'artifact_contract':'installed-payload-v1',
         'customization': {name: sha((CONTEXT / name).read_bytes()) for name in ('payload.py', 'install.py')},
         'configuration': deepcopy(CONFIG), 'version': VERSION,
         'build_tool_identity': {'image_id': TARGET_IMAGE, 'entrypoint': 'python3-fixed-installer-v1'}}
@@ -117,7 +130,7 @@ def validate_manifest(value):
     try:
         _bounded_json(value); _validate(MANIFEST, value, '$')
         require([item['path'] for item in value['files']] == list(NAMES) and
-            value['test_contract_sha256'] == sha(canonical(test_contract())) and
+            value['test_contract_sha256'] == sha(canonical(manifest_contract(value))) and
             sum(item['size'] for item in value['files']) <= MAX_BUNDLE and value['source_dirty'] is False and
             value['mode'] == 'container-reference' and value['files'][0]['sha256'] == value['source_sha256'])
     except (ValueError, TypeError, KeyError, RecursionError):
@@ -154,7 +167,8 @@ def prepare_candidate(run):
         'version': VERSION, 'source_sha256': sha(source_bytes), 'chunk_plan_sha256': report['result']['plan_sha256'],
         'applicability': {'os_id': 'ubuntu', 'os_version': '24.04', 'platform': 'linux/amd64'},
         'chunk_manifest_sha256': report['result']['manifest_sha256'], 'configuration': deepcopy(CONFIG), 'files': files,
-        'test_contract_sha256': sha(canonical(test_contract())), 'production_iso_eligible': False})
+        'artifact_contract':'installed-payload-v1',
+        'test_contract_sha256': sha(canonical(installed_contract())), 'production_iso_eligible': False})
     atomic_bytes(folder / 'manifest.json', canonical(value), limit=16384)
     atomic_json(run.file('evidence/candidate-manifest.json'), value)
     atomic_json(run.file('evidence/candidate-inputs.json'), input_record(run, value))

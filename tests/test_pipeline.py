@@ -167,6 +167,16 @@ class CoordinatorBoundaries(unittest.TestCase):
         self.assertIs(error.exception,original)
         self.assertEqual(session.context['secondary_failures'][0]['code'],'pipeline_timing_write_failed')
 
+    def test_failed_return_value_and_blocked_cleanup_never_get_passing_stage_timings(self):
+        from wormhole.runs import create_run
+        temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup)
+        session=w.PipelineSession.__new__(w.PipelineSession)
+        session.run=create_run(Path(temporary.name)/'runs',fixture=False,identity=(SHA,False))
+        session.timings={'stages':[]};session.context={'cleanup_status':'blocked'}
+        self.assertEqual(session.timed('initialization',lambda:{'status':'failed'})['status'],'failed')
+        session.timed('cleanup',lambda:None)
+        self.assertEqual([item['outcome'] for item in session.timings['stages']],['failed','failed'])
+
     @unittest.skipUnless(sys.platform.startswith('linux'),'Real mode source/lock coordinator fixture, no Docker calls')
     def test_capacity_refusal_retains_complete_failed_grid_and_never_calls_old_unsupported_pipeline(self):
         from wormhole.runs import create_run

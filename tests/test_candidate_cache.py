@@ -98,6 +98,19 @@ class Cache(CandidateFixture,unittest.TestCase):
         self.assertEqual(binding['manifest']['source_revision'],SHA)
         self.assertEqual(binding['image_id'],DERIVED)
 
+    def test_test_only_contract_change_reuses_bytes_but_binds_the_new_execution_contract(self):
+        from wormhole import candidate_validation
+        old_key=cache.key(self.current)
+        old_plan=candidate_validation.make_plan(self.current,self.binding,'d'*64,'e'*64,'healthy')
+        changed={**c.test_contract(),'collector':'fixed-ssh-ansible-candidate-v2'}
+        with patch.object(c,'test_contract',return_value=changed):
+            self.assertEqual(cache.key(self.current),old_key)
+            self.assertEqual(cache.select(self.current),self.binding['manifest'])
+            plan=candidate_validation.make_plan(self.current,self.binding,'d'*64,'e'*64,'healthy')
+        self.assertEqual(plan['candidate_sha256'],old_plan['candidate_sha256'])
+        self.assertNotEqual(plan['execution_contract_sha256'],old_plan['execution_contract_sha256'])
+        self.assertEqual(plan['test_contract_sha256'],old_plan['test_contract_sha256'])
+
     def test_stale_index_changed_capture_and_origin_reuse_chains_are_refused(self):
         path=cache.index_path(self.current);saved=read_json(path)
         altered=deepcopy(saved);altered['input_sha256']='0'*64;atomic_json(path,altered)

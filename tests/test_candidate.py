@@ -34,6 +34,16 @@ class CandidateFixture:
 
 
 class Bundle(CandidateFixture, unittest.TestCase):
+    def test_installed_contract_marker_keeps_legacy_validation_explicit(self):
+        value=deepcopy(self.bundle['manifest'])
+        self.assertEqual(value['artifact_contract'],'installed-payload-v1')
+        value.pop('artifact_contract')
+        with self.assertRaises(c.CandidateError):c.validate_manifest(value)
+        value['test_contract_sha256']=c.sha(c.canonical(c.test_contract()))
+        c.validate_manifest(value)
+        value['artifact_contract']='unrecognized-protocol'
+        with self.assertRaises(c.CandidateError):c.validate_manifest(value)
+
     def test_dependency_fingerprint_excludes_attempt_source_and_controller_test_code(self):
         value = read_json(self.run.file('evidence/candidate-inputs.json'))
         self.assertEqual(value['generation_attempt'], self.run.id)
