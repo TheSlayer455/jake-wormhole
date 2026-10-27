@@ -8,6 +8,8 @@ The Ubuntu baseline is verified at `55bb2fb` and delivered through [PR 29](https
 RHEL media/installation, hardening, real assessment, the lab gate/publication and
 remaining VM negatives are still outstanding; no original Minx ticket is
 reopened or marked complete by this checkpoint.
+Implementation merge `44f33f8` passed a fresh post-merge Ubuntu VM run and main
+CI. Continue from current main; the merged feature branch is historical.
 
 Runtime recovery is verified at `f8e5f0e` on `codex/WORM-001-runtime-recovery`; [PR 28](https://github.com/TheSlayer455/jake-wormhole/pull/28) is the delivery record. See [actual runtime acceptance](../handoff/RUNTIME-ACCEPTANCE.md) for Ubuntu/UBI, faults, reuse, mixed/twenty-target, recovery and publication execution. Operator access is recovered, admission is reconciled and no temporary resources remain. Original Done tickets retain their historical authority and attribution; this checkpoint does not mutate Minx completion or claim independent review.
 

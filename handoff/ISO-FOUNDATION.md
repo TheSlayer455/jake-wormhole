@@ -7,6 +7,19 @@ implementation `f8e5f0ef8f3764617516f5716840fcbb751589f6`. Preserve its evidence
 ## Verified Ubuntu installation baseline
 
 Delivery: [PR 29](https://github.com/TheSlayer455/jake-wormhole/pull/29).
+Submitted revision `507751655248a79da3da79f21db81963d0e70688` merged as
+`44f33f8dccfec0f7806524cb229674e5f4b08336`. The merged runtime modules matched
+tested source `55bb2fb` byte for byte. A new empty-disk VM on the merged source
+passed in **201.816 seconds**, including 138.022 s to final host-key emission and
+44.091 s for final SSH/Ansible/inventory. All 610 native version records and
+candidate identity matched, exact-owned teardown finished, K3s stayed active and
+the unrelated sentinel was unchanged. Both journals finished with zero pending
+resources. A real concurrent Docker admission attempt was refused by the live
+VM's shared lock before observation or allocation.
+[Main CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40604686004)
+passed. Historical failures, media and native evidence remain private; this
+documentation update does not claim hardening or assessment execution.
+
 Final runtime confirmation at `55bb2fb1ba657149d836a916dfc6be318b43a430` repeated
 the complete baseline with a new empty disk and seed, preserving the original
 ISO hash. It passed in **201.471 seconds**: input reuse 7.394 s; installation
