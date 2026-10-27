@@ -1,5 +1,36 @@
 # Current handoff
 
+## Final runtime recovery
+
+PR [27](https://github.com/TheSlayer455/jake-wormhole/pull/27) is merged at
+`01b1e806dc18fc581ea78f89747460fc0c6dfc0f`, with passing post-merge CI. The
+older draft references below retain their historical attribution. Current
+recovery branch: `codex/WORM-001-runtime-recovery`; application code is unchanged.
+
+On the approved Linux host, that exact clean merged source passed local doctor
+(exit 0), but canonical admission status returned exit 2,
+`observation_unavailable`. Filesystem discovery confirms the available SSH
+identity cannot access the root-owned private store, sudo needs authentication,
+the existing service-account login rejects the available key, and no Wormhole
+operator helper is installed. Another application's operator service is not a
+Wormhole access route. No credentials, permissions or host services were changed.
+
+The operator must make an existing authenticated connection as the canonical
+store owner available to this task. Preserve private ownership; storage checks
+require the executing UID to match, so merely granting read permission is not a
+solution. Reconcile original-source retained Runs and admission before allocating.
+Then begin with `reference-run --platform ubuntu --fresh-candidate` through the
+existing CLI, followed by its report/gate and verified cleanup. Continue the
+existing fault, Ubuntu/UBI reuse, mixed/twenty-target, interruption and publication
+entry points only after their prerequisites are proven.
+
+Read-only project-label queries found zero containers, zero networks and 29
+retained images. This is not proof of reconciled journals or valid cache entries.
+No new resources were allocated and no runtime acceptance or performance result
+was produced. Evidence remains private outside Git. Full source tests were not
+repeated for this documentation-only checkpoint. Runtime-dependent changes must
+remain unmerged until actually verified; production ISO eligibility stays false.
+
 ## Active follow-up
 
 Continue the [failure-reproduction rebuild](../docs/FAILURE-REPRODUCTION.md) from

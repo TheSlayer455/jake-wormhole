@@ -1,5 +1,15 @@
 # Minx work index
 
+Final runtime recovery continues from merged main `01b1e80` on dedicated branch
+`codex/WORM-001-runtime-recovery`. See the [current access checkpoint](STATE.md#final-runtime-recovery-checkpoint).
+The actual admission-status probe returned 2 (`observation_unavailable`), before
+allocation. An authenticated connection as the existing canonical store owner is
+required; changing permissions alone would not satisfy storage ownership checks.
+After access: reconcile retained state, then one real healthy Ubuntu reference
+run, controlled faults, Ubuntu/UBI freshness and reuse, mixed/twenty-target runs,
+recovery and tested-byte publication. Measure runtime only after these execute.
+No original Done ticket or historical acceptance evidence is reclassified.
+
 Active owner-authorized follow-up: [architecture and failure reproduction](FAILURE-REPRODUCTION.md).
 Original Done contracts below remain historical; this assignment has not been
 marked approved/completed in Minx. Work in bounded review branches, retain exact

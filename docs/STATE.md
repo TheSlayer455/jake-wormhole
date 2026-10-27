@@ -1,5 +1,34 @@
 # Current engineering state
 
+## Final runtime recovery checkpoint
+
+PR [27](https://github.com/TheSlayer455/jake-wormhole/pull/27) is merged at
+`01b1e806dc18fc581ea78f89747460fc0c6dfc0f`; its final tree equals the tested PR
+tree. [Merged-source CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40439732359)
+passed. References to the draft below describe earlier checkpoints.
+
+Fresh read-only discovery used that exact clean main revision on the approved
+Linux host. `python3 -B -m wormhole doctor` returned 0. Canonical
+`python3 -B -m wormhole.admission status` returned 2, `observation_unavailable`.
+The available SSH identity cannot traverse the root-owned private store;
+passwordless sudo is unavailable. An existing service identity rejected the
+available key, and no installed Wormhole operator helper was found. The
+unrelated operator service is outside this project's access scope.
+
+Project ownership-label queries found zero containers, zero networks and 29
+retained images. These observations do not reconcile retained Run journals or
+establish usable image provenance. No allocation, permission change, cleanup or
+new acceptance execution occurred. Raw discovery evidence remains private.
+
+The minimal operator action is to make an existing authenticated connection as
+the canonical store owner available for this task. The private-storage guard
+requires matching ownership, not merely read access; no ACL relaxation, ownership
+migration or replacement admission root is proposed. Reconcile retained state
+through the existing exact-source recovery before a healthy Ubuntu reference
+run. Fault, Ubuntu/UBI reuse, twenty-target, recovery, publication and performance
+acceptance remain unverified. No runtime-dependent code change or completion
+claim accompanies this checkpoint; production ISO eligibility remains false.
+
 The owner-authorized [failure-reproduction follow-up](FAILURE-REPRODUCTION.md) is
 in progress. It adds strict fleet readiness admission, shared observation
 projections, explicit diagnostic scope, inherited deadline support and candidate
