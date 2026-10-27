@@ -20,7 +20,7 @@ from uuid import uuid4
 import xml.etree.ElementTree as ET
 
 from .admission import CANONICAL_INFRASTRUCTURE_ROOT, collect_observations
-from .runs import RunError, atomic_json, now, source_identity, workspace_path
+from .runs import SOURCE_ROOT, RunError, atomic_json, now, source_identity, workspace_path
 from .vm_admission import VMLease, require
 from .vm_inputs import UBUNTU, build_ubuntu, sha256, terraform_config
 
@@ -80,7 +80,7 @@ def create_qemu_directory(path, group):
 
 def preflight(source):
     require(os.geteuid() == 0, 'runtime_owner_required')
-    require(all(shutil.which(x) for x in ('virsh', 'qemu-system-x86_64', 'xorriso', 'dnsmasq', 'ssh-keygen', 'docker')),
+    require(all(shutil.which(x) for x in ('virsh', 'qemu-system-x86_64', 'xorriso', 'dnsmasq', 'xsltproc', 'ssh-keygen', 'docker')),
             'missing_vm_tool')
     observation = collect_observations(CANONICAL_INFRASTRUCTURE_ROOT)
     require(observation['memory_available_bytes'] >= 13 * 1024**3, 'vm_memory_headroom')
@@ -167,9 +167,10 @@ def execute(source, terraform):
             for path in (candidate, seed):
                 os.chown(path, 0, group);path.chmod(0o640)
             tfdir = run / 'terraform';tfdir.mkdir(mode=0o700)
+            shutil.copyfile(SOURCE_ROOT / 'provisioning/libvirt/.terraform.lock.hcl', tfdir / '.terraform.lock.hcl')
             atomic_json(tfdir / 'main.tf.json', terraform_config(name, pool, candidate, seed, NETWORK, mac))
             tf = [terraform, '-chdir=' + str(tfdir)]
-            command([*tf, 'init', '-input=false'], 'terraform-init')
+            command([*tf, 'init', '-input=false', '-lockfile=readonly'], 'terraform-init')
             command([*tf, 'validate', '-no-color'], 'terraform-validate')
             command([*tf, 'plan', '-input=false', '-out=run.tfplan', '-no-color'], 'terraform-plan')
             require(sha256(candidate) == manifest['candidate_sha256'] and sha256(seed) == manifest['seed_sha256'], 'attached_media_changed')
