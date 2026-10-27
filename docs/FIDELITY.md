@@ -1,10 +1,10 @@
 # Fidelity and evidence limits
 
-This is an actual container reference project using generated source and explicitly synthetic assessment policy. It does not validate proprietary production-system infrastructure or an installable OS image. The [historical matrix](acceptance-matrix.md) binds observations to original tested sources/evidence; it is not a final-source runtime rerun.
+The verified container reference uses generated source and explicitly synthetic assessment policy. The newly authorized [real-ISO extension](../handoff/ISO-FOUNDATION.md) is incomplete and has separate evidence. Neither capability validates proprietary production infrastructure. The [historical matrix](acceptance-matrix.md) binds observations to original tested sources/evidence; it is not a final-source runtime rerun.
 
 | Established observation | Limit |
 | --- | --- |
-| Owned Terraform, strict SSH/Ansible and recovery | No VM/KVM/libvirt/nested virtualization, ISO boot/install or unrelated host repair |
+| Container Terraform, strict SSH/Ansible and recovery | Container evidence proves no VM boot/install; real-ISO experiments have a separate checkpoint and cannot authorize unrelated host repair |
 | Candidate-bound Ubuntu/UBI targets | Separate userland/install manifests over the same content; shared kernel is not target-installed software |
 | Full native inventory | Helper/provisioner versions are execution provenance; virtual RPM key headers remain separate |
 | Separate pinned optional PowerShell | No host installation, PMC/provider registration, scanner or Evaluate-STIG compatibility |

@@ -381,6 +381,10 @@ class AdmissionLease:
                 _require(not self._reconciliation_only, "invalid_archive", "Reconciliation requires the existing history directory.")
                 history.mkdir(mode=0o700)
             _owned(history, directory=True)
+            # Both backends share this lock. A dead VM coordinator does not make
+            # its durable resource intents safe to ignore or adopt.
+            from .vm_admission import require_vm_reconciled
+            require_vm_reconciled(self.root)
             journal = self.root / "admission.json"
             if self._reconciliation_only:
                 self.record = _journal(read_json(journal))
@@ -582,7 +586,11 @@ def infrastructure_status(infrastructure_root):
     _require(marker == {"application": PROJECT, "schema_version": "1.0", "kind": "shared-infrastructure-root"}, "ownership_mismatch")
     path = root / "admission.json"
     value = _journal(read_json(path)) if path.exists() else None
-    return {"application": PROJECT, "admission": value, "allocation_performed": False, "production_iso_eligible": False}
+    from .vm_admission import validate_record
+    vm_path = root / 'vm-admission.json'
+    vm_value = validate_record(read_json(vm_path)) if vm_path.exists() or vm_path.is_symlink() else None
+    return {"application": PROJECT, "admission": value, "vm_admission": vm_value,
+            "allocation_performed": False, "production_iso_eligible": False}
 
 
 def main(arguments=None):

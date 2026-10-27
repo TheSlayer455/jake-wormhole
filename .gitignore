@@ -15,3 +15,7 @@ __pycache__/
 *.pem
 /ci-safe/
 /ci-artifacts/
+*.iso
+*.qcow2
+*.raw
+*.vmdk

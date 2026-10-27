@@ -27,6 +27,10 @@ def parser():
     root.add_argument("--version", action="version", version=__version__)
     commands = root.add_subparsers(dest="command", required=True)
     commands.add_parser("doctor", help="Read local source/tool presence without provisioning or network calls.")
+    media_split=commands.add_parser('media-split',help='Stream an operator-supplied ISO into a private local artifact store; no qualification.')
+    media_split.add_argument('source');media_split.add_argument('--store',required=True);media_split.add_argument('--sha256',required=True)
+    media_assemble=commands.add_parser('media-assemble',help='Verify/reconstruct ordered ISO chunks, resuming only verified partial bytes.')
+    media_assemble.add_argument('manifest');media_assemble.add_argument('--store',required=True);media_assemble.add_argument('--output',required=True)
     from .failure_scenarios import SCENARIOS as REPRODUCTION_SCENARIOS
     reproduce=commands.add_parser('reproduce',help='Execute one owned-container fault experiment; negative execution remains nonzero.')
     reproduce.add_argument('--profile',choices=('smoke','five-targets','twenty-targets'),default='smoke')
@@ -93,6 +97,12 @@ def main(arguments=None):
     try:
         if options.command == "doctor":
             value, status = doctor(), 0
+        elif options.command=='media-split':
+            from .media_store import split
+            value=split(options.source,options.store,options.sha256);status=0
+        elif options.command=='media-assemble':
+            from .media_store import assemble
+            value=assemble(options.manifest,options.store,options.output);status=0
         elif options.command=='reproduce':
             from .failure_reproduction import reproduce
             value=reproduce(options.profile,options.scenario,options.sentinel_id)

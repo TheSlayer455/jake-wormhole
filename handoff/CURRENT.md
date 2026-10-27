@@ -1,5 +1,20 @@
 # Current handoff
 
+## Active home ISO extension
+
+Continue [ISO foundation](ISO-FOUNDATION.md) on `codex/WORM-001-iso-foundation`.
+The owner explicitly authorized the separate KVM/libvirt profile and routine
+verified incremental merges. Use the recovered private operator route below.
+The first increment streams genuine Ubuntu media and passed a real empty-disk
+Ubuntu installation, final SSH and Ansible at `31eca5832db3225ca7c10a5c4147c03ec8612e9f`.
+Final runtime source `55bb2fb1ba657149d836a916dfc6be318b43a430` repeated it in 201
+seconds with complete inventory, verified cleanup and passing CI. [PR 29](https://github.com/TheSlayer455/jake-wormhole/pull/29)
+delivers this baseline, not the complete ISO extension.
+RHEL media, installation-time hardening, actual assessments and
+two-OS lab qualification remain outstanding. Preserve active VM ownership and
+reconcile both backend journals before any further allocation. No independent
+review or completed ISO capability is claimed.
+
 ## Final runtime recovery
 
 Tested code: `f8e5f0ef8f3764617516f5716840fcbb751589f6`.

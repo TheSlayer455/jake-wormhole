@@ -1,5 +1,15 @@
 # Architecture
 
+The authorized home ISO profile is a separate, incomplete capability alongside
+the proven container backend. [ISO foundation](../handoff/ISO-FOUNDATION.md)
+records its actual evidence. `media_store.py` uses a version-2 streaming manifest;
+`vm_inputs.py` preserves Ubuntu media boot equipment and binds a separate NoCloud
+seed. `vm_admission.py` shares the canonical infrastructure lock with Docker but
+keeps a distinct backend journal. A released lock never clears unknown VM work.
+`vm_baseline.py` is a bounded Ubuntu installation experiment, not the hardening,
+assessment, lab qualification or publication implementation. No existing
+container receipt/schema is reinterpreted as real ISO evidence.
+
 The [active follow-up](FAILURE-REPRODUCTION.md) centralizes the readiness observation
 contract in `execution_state.py`. Normal fleet dispatch requires complete readiness;
 subset diagnostics are explicit and remain ineligible. Progress is a projection

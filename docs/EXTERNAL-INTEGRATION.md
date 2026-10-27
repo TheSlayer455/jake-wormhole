@@ -1,15 +1,15 @@
 # External integration: start here
 
-Luna and other engineering agents can use Wormhole as a container-based reference for a separate ISO pipeline. The [source repository](https://github.com/TheSlayer455/jake-wormhole) is intentionally public; credentials, Terraform state, runtime inputs and raw logs remain private. Public access supplies neither runtime credentials nor authority to change another environment.
+Luna and other engineering agents can use Wormhole's proven container reference and the separately tracked [home ISO extension](../handoff/ISO-FOUNDATION.md). Start with the [proven solution index](../handoff/solutions/README.md); only entries with actual evidence are listed. The [source repository](https://github.com/TheSlayer455/jake-wormhole) is intentionally public; credentials, Terraform state, runtime inputs and raw logs remain private. Public access supplies neither runtime credentials nor authority to change another environment.
 
-The existing implementation is complete within its reference scope. Start with the modules below, adapt only what fits the receiving pipeline, and measure that pipeline's actual critical path. Container reference results do not establish production ISO eligibility, which remains false in Wormhole.
+Container runtime acceptance is established at the sources in the current checkpoint. The real-ISO extension is incomplete. Start with the modules below, adapt only what fits the receiving pipeline, and measure that pipeline's actual critical path. Container reference results do not establish production ISO eligibility, which remains false in Wormhole. For external mappings use only **rhel kvm host** and **ansible control node**; home Ubuntu-host results do not prove RHEL-host or work-runner compatibility.
 
 ## Capability boundary
 
 | Area | Demonstrated in Wormhole | Not demonstrated by Wormhole |
 | --- | --- | --- |
-| Provisioning | Terraform-managed Docker targets; one candidate-bound Ubuntu/UBI target per reference run; 20 coexisting stock Ubuntu targets with task forks four | Terraform/libvirt VMs; RHEL/KVM installation and boot; customized ISO installation |
-| Validation | Container SSH, Ansible checks, Ubuntu/UBI native software inventories, synthetic assessment processing | Real Evaluate-STIG or Nessus execution; operating-system compliance; production ISO qualification |
+| Provisioning | Terraform-managed Docker targets; candidate-bound Ubuntu/UBI; 20 coexisting stock targets; one real Terraform/libvirt Ubuntu 22.04.5 BIOS installation from remastered media and a declared seed | RHEL ISO installation, hardened ISO acceptance, UEFI/Secure Boot |
+| Validation | Container checks and inventories; installed Ubuntu VM final SSH, actual Ansible ping/become and 610 package/version records | Real assessment execution, full VM functional catalog, post-hardening access, operating-system compliance, production ISO qualification |
 | Delivery | Source-bound reference qualification and exact-tested-byte private filesystem publication | Proprietary GitLab integration; actual GitLab runner execution; customer portal or remote artifact publication |
 
 The [verification report](../handoff/MERGED-VERIFICATION.md) binds the latest recorded 43-check Ubuntu reference run to `c3d440a3` and the earlier twenty-target qualification to `825a594`. These are different operations, not a scaling benchmark. See [fidelity limits](FIDELITY.md) for details. Wormhole is a reference implementation; production adapters and production evidence are separate work.

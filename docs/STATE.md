@@ -1,5 +1,23 @@
 # Current engineering state
 
+## Home ISO extension — in progress
+
+The owner authorized home KVM/libvirt and real RHEL 9 / Ubuntu 22.04 installation
+profiles, superseding the earlier container-only scope restriction. The container
+baseline below remains accepted at its original source. See the concise
+[ISO checkpoint](../handoff/ISO-FOUNDATION.md) for new implementation, actual
+execution and remaining media/assessment/qualification work. No lab or production
+ISO qualification is currently established.
+
+Ubuntu 22.04.5 BIOS VM baseline passed at `31eca5832db3225ca7c10a5c4147c03ec8612e9f`
+and was repeated at `55bb2fb1ba657149d836a916dfc6be318b43a430`:
+fresh disk installation, final dotted identity, trusted SSH, actual Ansible,
+610 package/version records and verified cleanup in 205 / 201 seconds. This is an
+installation baseline with no hardening/assessment claim. The 883-test source
+suite and hosted CI passed at `8cce6674eae525944a62d05cc2d453e475e856eb`.
+Authorized RHEL media remains unavailable. See the checkpoint for exact limits
+and [proven solutions](../handoff/solutions/README.md).
+
 ## Final runtime recovery checkpoint
 
 Container reference runtime acceptance is verified. [PR 28](https://github.com/TheSlayer455/jake-wormhole/pull/28) delivers the repairs and [execution checkpoint](../handoff/RUNTIME-ACCEPTANCE.md).
