@@ -462,6 +462,18 @@ class PipelineSession:
                 known=read_json(self.run.file(build_path)) if self.run.file(build_path).exists() else None
                 resolved=(known is not None and c.bound_common(known,self.run.manifest()) and known.get('unknown_outcome') is False and
                     all(item['outcome'] in {'absent','retained'} for item in lease.record['resources']))
+                # The UBI resolver can finish cleanup before source preparation
+                # fails, before any assembly request/build receipt exists.
+                resolution_path=self.run.file('evidence/rpm-resolution.json')
+                if self.request['platform']=='ubi' and known is None and resolution_path.exists():
+                    from .rpm_resolution import recipe_identity
+                    resolution=read_json(resolution_path);recipe,files=recipe_identity()
+                    resolved=(c.bound_common(resolution,self.run.manifest()) and
+                        resolution.get('operation')=='ubi-offline-resolution' and resolution.get('status') in {'passed','failed'} and
+                        resolution.get('recipe_sha256')==recipe and resolution.get('source_files')==files and
+                        resolution.get('cleanup')=='completed' and resolution.get('unknown_outcome') is False and
+                        resolution.get('secondary_cleanup_failure') is None and
+                        all(item['outcome'] in {'absent','retained'} for item in lease.record['resources']))
                 if empty or resolved:self.context['cleanup_status']='completed';lease.finish(reconciliation_complete=True)
                 else:self.context['cleanup_status']='blocked';self.context['unknown_outcome']=True
         except BaseException as failure:

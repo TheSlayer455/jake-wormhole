@@ -1,13 +1,12 @@
 # Jake Wormhole
 
-Active engineering: [failure reproduction and readiness follow-up](docs/FAILURE-REPRODUCTION.md).
+Verified container reference runtime: [acceptance checkpoint](handoff/RUNTIME-ACCEPTANCE.md) and [delivery PR 28](https://github.com/TheSlayer455/jake-wormhole/pull/28).
 Use `python -m wormhole progress RUN_UUID` for readable atomic readiness snapshots;
 qualification still requires the existing original-evidence replay gates.
 The follow-up also adds `python -m wormhole reproduce --help` for fixed focused
 and fleet fault experiments, explicit initialization/configuration receipts and
 verified Ubuntu/UBI candidate reuse and contained initialization recovery after
-coordinator interruption. New runtime acceptance remains unverified;
-consult the active checkpoint before using historical evidence as current proof.
+coordinator interruption. Actual Ubuntu/UBI, fault, reuse, mixed/twenty-target, recovery and private local publication execution is verified at the recorded sources. Production ISO eligibility remains false.
 
 Container-only reference automation for verified source chunks, candidate-bound images, Terraform-managed targets, strict SSH/Ansible checks, native software inventories and attributable evidence. The source repository is public by [Jake's October 24 decision](docs/decisions/0006-public-source.md); runtime inputs, credentials and raw evidence remain private.
 
@@ -17,9 +16,9 @@ For the Build Jake ISO Pipeline chat, use the [single copy-and-paste handoff pro
 
 All 20 children WORM-002 through WORM-021 are Done at approved revision 2 with 66 passing criteria and solution comments under Jake's explicitly delegated normal Owner workflow. All 21 original delivery PRs are merged. [Merged verification](handoff/MERGED-VERIFICATION.md) records the tested main commit `c3d440a3c7eee9691f30315b49146eb72998d2df`, fresh source/CI checks and Ubuntu reference smoke. Minx remains authoritative for workflow state; this document is not a claim lease. Engineering review and Owner-directed automation are distinct from independent human examination.
 
-Latest actual runtime is the merged-source Ubuntu reference Run `8f14b817-486f-4340-87fd-85fe53a9aa6b`: all 43 required checks passed, the reference gate was eligible, cleanup finished with no pending resources and the unrelated sentinel was unchanged. Production ISO eligibility remains false.
+Original merged-source runtime is the Ubuntu reference Run `8f14b817-486f-4340-87fd-85fe53a9aa6b`: all 43 required checks passed, the reference gate was eligible, cleanup finished with no pending resources and the unrelated sentinel was unchanged. Production ISO eligibility remains false.
 
-Latest actual twenty-target qualification: twenty simultaneous stock Ubuntu targets at `825a594862b816401d4b963329e6242bd8ed8aeb`, Run `290ad14a-e6ec-4822-ae36-258d336ecc38`, 160 readiness pairs, 200 functional rows, 200 inventory rows and twenty full 123-package inventories. All 23 transient resources were removed, admission finished with no pending resources and the unrelated sentinel unchanged. Two point samples/CPU deltas are not guaranteed peaks. See [WORM-020](handoff/WORM-020-checkpoint.md).
+Original twenty-target qualification: twenty simultaneous stock Ubuntu targets at `825a594862b816401d4b963329e6242bd8ed8aeb`, Run `290ad14a-e6ec-4822-ae36-258d336ecc38`, 160 readiness pairs, 200 functional rows, 200 inventory rows and twenty full 123-package inventories. All 23 transient resources were removed, admission finished with no pending resources and the unrelated sentinel unchanged. Two point samples/CPU deltas are not guaranteed peaks. See [WORM-020](handoff/WORM-020-checkpoint.md).
 
 Start with [AGENTS](AGENTS.md), [state](docs/STATE.md), [handoff](handoff/CURRENT.md), [architecture](docs/ARCHITECTURE.md) and [fidelity](docs/FIDELITY.md). The [historical matrix](docs/acceptance-matrix.md) indexes original tested commits/evidence hashes; it does not relabel earlier homelab results as final-source CI parity.
 

@@ -1,5 +1,9 @@
 # Minx work index
 
+Runtime recovery is verified at `f8e5f0e` on `codex/WORM-001-runtime-recovery`; [PR 28](https://github.com/TheSlayer455/jake-wormhole/pull/28) is the delivery record. See [actual runtime acceptance](../handoff/RUNTIME-ACCEPTANCE.md) for Ubuntu/UBI, faults, reuse, mixed/twenty-target, recovery and publication execution. Operator access is recovered, admission is reconciled and no temporary resources remain. Original Done tickets retain their historical authority and attribution; this checkpoint does not mutate Minx completion or claim independent review.
+
+## Historical follow-up checkpoints
+
 Active owner-authorized follow-up: [architecture and failure reproduction](FAILURE-REPRODUCTION.md).
 Original Done contracts below remain historical; this assignment has not been
 marked approved/completed in Minx. Work in bounded review branches, retain exact

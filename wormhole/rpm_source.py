@@ -251,7 +251,9 @@ def _worker(run, operation):
     if operation=='metadata':
         folder=root/'metadata';folder.mkdir(mode=0o700)
         (folder/'repodata').mkdir(mode=0o700)
-        for item in metadata_items(lock):fetch(item,folder/item['path'])
+        for item in metadata_items(lock):
+            destination=folder/item['path']
+            if not reuse_pinned_source(run,item,destination):fetch(item,destination)
         validate_metadata(run,lock)
     elif operation=='packages':
         request=read_json(root/'resolve-request.json')
@@ -259,9 +261,52 @@ def _worker(run, operation):
         with resolution_path.open('rb') as stream:raw=stream.read(POLICY['resolution_bytes']+1)
         result=validate_resolution(run,raw,request,lock)
         folder=root/'packages';folder.mkdir(mode=0o700)
-        for item in result['packages']:fetch(item,folder/Path(item['path']).name)
-    elif operation=='eula':fetch_eula(root/EULA_NAME)
+        for item in result['packages']:
+            destination=folder/Path(item['path']).name
+            if not reuse_pinned_source(run,item,destination):fetch(item,destination)
+    elif operation=='eula':
+        destination=root/EULA_NAME
+        if not reuse_pinned_source(run,{'bytes':EULA_BYTES,'sha256':EULA_SHA256},destination):fetch_eula(destination)
     else:require(False,'rpm_worker_operation')
+
+
+def reuse_pinned_source(run,item,destination):
+    """Reuse only exact approved public bytes from private retained Runs.
+
+    This is a bounded lookup in the existing source store, not reuse of a
+    resolution, installation, signature check or qualification result.
+    """
+    from .images import RUNS_ROOT
+    if run.workspace!=RUNS_ROOT:return False
+    _owned(RUNS_ROOT,directory=True)
+    relative=destination.relative_to(run.path).as_posix()
+    require(relative.startswith(('private/rpm-sources/metadata/repodata/','private/rpm-sources/packages/')) or
+        relative=='private/rpm-sources/'+EULA_NAME,'rpm_cache_path')
+    require(type(item['bytes']) is int and 0<item['bytes']<=POLICY['rpm_file_bytes'] and
+        digest_pin(item['sha256']),'rpm_download_invalid')
+    entries=[]
+    for path in RUNS_ROOT.iterdir():
+        require(len(entries)<4096,'rpm_cache_bound');entries.append(path)
+    for path in sorted(entries,key=lambda path:path.stat().st_mtime,reverse=True):
+        if path.name==run.id:continue
+        try:
+            original=Run(RUNS_ROOT,path.name);source=original.file(relative)
+            _owned(source)
+            if source.stat().st_size!=item['bytes']:continue
+            with source.open('rb') as stream:raw=stream.read(item['bytes']+1)
+            if len(raw)!=item['bytes'] or sha(raw)!=item['sha256']:continue
+        except (RunError,OSError,ValueError):continue
+        require(not destination.exists() and not destination.is_symlink(),'rpm_cache_exists')
+        atomic_bytes(destination,raw,limit=POLICY['rpm_file_bytes'])
+        proof=run.file('private/rpm-source-reuse.json')
+        record=read_json(proof) if proof.exists() else {**common(run.manifest()),
+            'operation':'pinned-ubi-source-reuse-v1','inputs':[],'production_iso_eligible':False}
+        require(common(record)==common(run.manifest()) and len(record['inputs'])<256,'rpm_cache_bound')
+        record['inputs'].append({'relative_path':relative,'origin_run_id':original.id,
+            'sha256':item['sha256'],'bytes':len(raw)})
+        atomic_json(proof,record)
+        return True
+    return False
 
 
 def supervised(run, operation):

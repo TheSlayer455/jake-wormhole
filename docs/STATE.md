@@ -1,5 +1,17 @@
 # Current engineering state
 
+## Final runtime recovery checkpoint
+
+Container reference runtime acceptance is verified. [PR 28](https://github.com/TheSlayer455/jake-wormhole/pull/28) delivers the repairs and [execution checkpoint](../handoff/RUNTIME-ACCEPTANCE.md).
+Tested implementation: `f8e5f0ef8f3764617516f5716840fcbb751589f6`.
+The established service-operator connection was recovered from prior records; owner-context admission succeeds without changing permissions or credentials.
+
+Real Ubuntu acceptance passed 43 checks; fresh and reused UBI passed 46 each. Immutable image reuse, changed-installed-input refusal, all nineteen fixed scenarios, interrupted initialization, isolation and local publication were exercised with original evidence retained. The stock twenty-target run passed 160 readiness, 200 functional and 200 inventory checks. A mixed twenty-target run retained 200 blocked rows and launched no catalog.
+
+867 source tests passed with explicit skips: Windows 585 passed/282 skipped; Linux runtime owner 865 passed/two skipped. [Implementation CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40455121591) passed. Final audit: 140 finished admission archives, zero project containers or networks, zero pending resources, 33 verified retained images and an unchanged unrelated sentinel. Failed attempts and deliberately incomplete publications remain private and preserved. No independent review is claimed. Production ISO eligibility remains false; stock fleet and candidate-single acceptance remain distinct.
+
+## Historical engineering checkpoints
+
 The owner-authorized [failure-reproduction follow-up](FAILURE-REPRODUCTION.md) is
 in progress. It adds strict fleet readiness admission, shared observation
 projections, explicit diagnostic scope, inherited deadline support and candidate

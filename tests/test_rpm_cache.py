@@ -34,6 +34,7 @@ class RpmCache(RpmFixture,unittest.TestCase):
     def lease_for(self,run):
         lease=SimpleNamespace(run_id=run.id,source_revision=run.manifest()['source_revision'],
             _reconciliation_only=False,_active=Mock(),record={'resources':[]})
+        lease.set_phase=Mock()
         lease.register_resource=lambda kind,identifier:lease.record['resources'].append({'kind':kind,'id':identifier,'outcome':'pending'})
         def reconcile(kind,identifier,**options):
             item=next(item for item in lease.record['resources'] if (item['kind'],item['id'])==(kind,identifier));item.update(options)

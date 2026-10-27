@@ -57,6 +57,32 @@ class FailureContracts(unittest.TestCase):
         self.assertEqual(f.EXPECTED['initialization-command-fails'],'initialization_command_failed')
         self.assertEqual(f.EXPECTED['controller-deadline'],'validation_timeout')
 
+    def test_report_keeps_observed_readiness_after_validation_failure_but_invalidates_restart(self):
+        for restart in (False,True):
+            with self.subTest(restart=restart),tempfile.TemporaryDirectory() as folder:
+                run=create_run(Path(folder)/'runs',fixture=False,identity=('a'*40,False))
+                lifecycle=Lifecycle(run,['target-001'],candidate_identity={'kind':'stock-image'},checks=['required-function'])
+                for event in ('created','runtime-started','initialization-started','initialization-complete',
+                        'configuration-started','configuration-complete','reachable','host-verified','authenticated',
+                        'interpreter-verified','privilege-not-required','ansible-verified'):
+                    lifecycle.event('target-001',event,evidence='source-fixture',kind='source-fixture')
+                if restart:
+                    lifecycle.event('target-001','restart-started',evidence='source-fixture',kind='source-fixture')
+                    lifecycle.event('target-001','failure',evidence='source-fixture',kind='source-fixture',category='readiness_incomplete')
+                else:
+                    lifecycle.start_validation()
+                    lifecycle.test_result('target-001','required-function','fail')
+                lifecycle.finalize()
+                record={'run_id':run.id,'source_revision':'a'*40,'scenario':'playbook-fails','status':'failed',
+                    'primary_failure':lifecycle.record['first_failure'],'secondary_failures':[],
+                    'stage_timings':dict.fromkeys(f.STAGES,None),'cleanup':{'status':'completed'},
+                    'remaining_owned_resources':[],'scenario_expectation_met':True}
+                value=reports.report(record,lifecycle.record)
+                self.assertEqual(value['summary']['targets_ansible_ready'],0 if restart else 1)
+                self.assertEqual(value['summary']['tests_failed'],0 if restart else 1)
+                self.assertEqual(value['targets'][0]['terminal_outcome'],'failed')
+                self.assertFalse(value['reference_eligible'])
+
     def test_negative_credit_requires_actual_declared_failure_known_state_and_complete_cleanup(self):
         record={'scenario':'never-ready','status':'failed','primary_failure':{'code':'target_not_started'},
             'unknown_outcome':False,'remaining_owned_resources':[],'cleanup':{'status':'completed'},'sentinel_unchanged':True,
