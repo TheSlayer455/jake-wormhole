@@ -185,6 +185,12 @@ def execute(source, terraform):
             dom = ET.fromstring(xml)
             require(dom.attrib.get('type') == 'kvm' and dom.findtext('description') == 'jake-wormhole libvirt-iso ' + name and
                     dom.find('os/kernel') is None, 'vm_runtime_identity')
+            disks = [x for x in dom.findall('devices/disk') if x.get('device') == 'disk']
+            require(len(disks) == 1 and disks[0].find('driver').get('type') == 'qcow2' and
+                    disks[0].find('source').get('file') == str(pool / (name + '.qcow2')), 'vm_disk_format_mismatch')
+            info = json.loads(subprocess.check_output(['qemu-img', 'info', '--output=json', str(pool / (name + '.qcow2'))], timeout=5))
+            require(info['format'] == 'qcow2' and info['virtual-size'] == 64 * 1024**3 and
+                    not info.get('backing-filename'), 'vm_disk_capacity_mismatch')
             cds = {x.find('source').get('file') for x in dom.findall('devices/disk') if x.get('device') == 'cdrom'}
             require(cds == {str(candidate), str(seed)}, 'attached_media_mismatch')
             require(sha256(candidate) == manifest['candidate_sha256'] and sha256(seed) == manifest['seed_sha256'], 'attached_media_changed')

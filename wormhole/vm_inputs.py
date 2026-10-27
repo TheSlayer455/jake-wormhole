@@ -24,6 +24,9 @@ HEADLESS_XSLT = '''<?xml version="1.0"?>
     <xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
   </xsl:template>
   <xsl:template match="/domain/devices/graphics"/>
+  <xsl:template match="/domain/devices/disk[@device='disk']/driver/@type">
+    <xsl:attribute name="type">qcow2</xsl:attribute>
+  </xsl:template>
 </xsl:stylesheet>
 '''
 

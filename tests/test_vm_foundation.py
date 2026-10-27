@@ -47,6 +47,8 @@ class Inputs(unittest.TestCase):
         self.assertNotIn('kernel', domain)
         self.assertNotIn('firmware', domain)  # explicit BIOS profile
         self.assertIn('/domain/devices/graphics', domain['xml']['xslt'])
+        self.assertIn("disk[@device='disk']/driver/@type", domain['xml']['xslt'])
+        self.assertIn('name="type">qcow2', domain['xml']['xslt'])
         self.assertEqual(domain['boot_device']['dev'], ['hd', 'cdrom'])
         self.assertNotIn('source', resource['libvirt_volume']['disk'])
         self.assertEqual(domain['disk'][0], {'file': '${libvirt_volume.disk.id}'})
