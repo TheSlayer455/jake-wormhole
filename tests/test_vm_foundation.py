@@ -46,6 +46,7 @@ class Inputs(unittest.TestCase):
         self.assertEqual(domain['memory'], 8192)
         self.assertNotIn('kernel', domain)
         self.assertNotIn('firmware', domain)  # explicit BIOS profile
+        self.assertIn('/domain/devices/graphics', domain['xml']['xslt'])
         self.assertEqual(domain['boot_device']['dev'], ['hd', 'cdrom'])
         self.assertNotIn('source', resource['libvirt_volume']['disk'])
         self.assertEqual(resource['libvirt_network']['run']['mode'], 'none')

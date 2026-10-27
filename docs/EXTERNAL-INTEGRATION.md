@@ -1,8 +1,8 @@
 # External integration: start here
 
-Luna and other engineering agents can use Wormhole as a container-based reference for a separate ISO pipeline. The [source repository](https://github.com/TheSlayer455/jake-wormhole) is intentionally public; credentials, Terraform state, runtime inputs and raw logs remain private. Public access supplies neither runtime credentials nor authority to change another environment.
+Luna and other engineering agents can use Wormhole's proven container reference and the separately tracked [home ISO extension](../handoff/ISO-FOUNDATION.md). Start with the [proven solution index](../handoff/solutions/README.md); only entries with actual evidence are listed. The [source repository](https://github.com/TheSlayer455/jake-wormhole) is intentionally public; credentials, Terraform state, runtime inputs and raw logs remain private. Public access supplies neither runtime credentials nor authority to change another environment.
 
-The existing implementation is complete within its reference scope. Start with the modules below, adapt only what fits the receiving pipeline, and measure that pipeline's actual critical path. Container reference results do not establish production ISO eligibility, which remains false in Wormhole.
+Container runtime acceptance is established at the sources in the current checkpoint. The real-ISO extension is incomplete. Start with the modules below, adapt only what fits the receiving pipeline, and measure that pipeline's actual critical path. Container reference results do not establish production ISO eligibility, which remains false in Wormhole. For external mappings use only **rhel kvm host** and **ansible control node**; home Ubuntu-host results do not prove RHEL-host or work-runner compatibility.
 
 ## Capability boundary
 

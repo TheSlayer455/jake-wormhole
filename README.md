@@ -8,7 +8,7 @@ and fleet fault experiments, explicit initialization/configuration receipts and
 verified Ubuntu/UBI candidate reuse and contained initialization recovery after
 coordinator interruption. Actual Ubuntu/UBI, fault, reuse, mixed/twenty-target, recovery and private local publication execution is verified at the recorded sources. Production ISO eligibility remains false.
 
-Container-only reference automation for verified source chunks, candidate-bound images, Terraform-managed targets, strict SSH/Ansible checks, native software inventories and attributable evidence. The source repository is public by [Jake's October 24 decision](docs/decisions/0006-public-source.md); runtime inputs, credentials and raw evidence remain private.
+Container reference automation remains the fast regression layer. An explicitly authorized [home real-ISO extension](handoff/ISO-FOUNDATION.md) is in progress for RHEL 9 and Ubuntu 22.04: separate Terraform/libvirt resources, streamed multi-gigabyte media and real installed-system evidence. This increment does not establish hardened or lab-qualified ISOs. The source repository is public by [Jake's October 24 decision](docs/decisions/0006-public-source.md); runtime inputs, credentials and raw evidence remain private.
 
 **Luna and external engineering agents: [start here](docs/EXTERNAL-INTEGRATION.md).** The short guide maps capabilities to source and tests, with explicit integration limits.
 
@@ -52,4 +52,4 @@ python -m wormhole cleanup RUN_UUID --workspace WORKSPACE
 
 Actual component records cover Ubuntu/UBI, separate optional PowerShell, one/five/twenty-target paths, candidate identity, native inventories, recovery and private local tested-byte publication. Generated inputs and synthetic assessment remain labeled. [WORM-021 evidence](handoff/WORM-021-checkpoint.md) records actual matching manual/GitHub parity and safe diagnostics from genuinely failed jobs. GitLab authorship is not execution. [Repository controls](docs/REPOSITORY.md) separates merges, source CI and runtime execution. The documentation-only follow-up has its own PR/main checks; it does not relabel the qualified `c3d440a3` source.
 
-Production ISO eligibility is always false. No VM/ISO boot/install, scanner/STIG support, proprietary infrastructure repair, remote release or external-model orchestration is claimed.
+Production ISO eligibility is always false. Container evidence cannot qualify an installable ISO. Follow the extension checkpoint for actual VM observations; scanner/STIG acceptance, proprietary infrastructure repair, remote release and external-model orchestration are not implied.

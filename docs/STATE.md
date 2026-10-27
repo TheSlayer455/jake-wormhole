@@ -1,5 +1,14 @@
 # Current engineering state
 
+## Home ISO extension — in progress
+
+The owner authorized home KVM/libvirt and real RHEL 9 / Ubuntu 22.04 installation
+profiles, superseding the earlier container-only scope restriction. The container
+baseline below remains accepted at its original source. See the concise
+[ISO checkpoint](../handoff/ISO-FOUNDATION.md) for new implementation, actual
+execution and remaining media/assessment/qualification work. No lab or production
+ISO qualification is currently established.
+
 ## Final runtime recovery checkpoint
 
 Container reference runtime acceptance is verified. [PR 28](https://github.com/TheSlayer455/jake-wormhole/pull/28) delivers the repairs and [execution checkpoint](../handoff/RUNTIME-ACCEPTANCE.md).

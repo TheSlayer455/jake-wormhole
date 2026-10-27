@@ -1,5 +1,16 @@
 # Current handoff
 
+## Active home ISO extension
+
+Continue [ISO foundation](ISO-FOUNDATION.md) on `codex/WORM-001-iso-foundation`.
+The owner explicitly authorized the separate KVM/libvirt profile and routine
+verified incremental merges. Use the recovered private operator route below.
+The first increment streams genuine Ubuntu media and attempts a real empty-disk
+installation; RHEL media, installation-time hardening, actual assessments and
+two-OS lab qualification remain outstanding. Preserve active VM ownership and
+reconcile both backend journals before any further allocation. No independent
+review or completed ISO capability is claimed.
+
 ## Final runtime recovery
 
 Tested code: `f8e5f0ef8f3764617516f5716840fcbb751589f6`.

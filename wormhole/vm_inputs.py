@@ -17,6 +17,15 @@ UBUNTU = {'release': '22.04.5', 'architecture': 'amd64', 'bytes': 2136926208,
 TERRAFORM = '1.17.0'
 PROVIDER = '0.8.3'
 USER = 'lab.service'
+HEADLESS_XSLT = '''<?xml version="1.0"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output method="xml" omit-xml-declaration="yes"/>
+  <xsl:template match="@*|node()">
+    <xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
+  </xsl:template>
+  <xsl:template match="/domain/devices/graphics"/>
+</xsl:stylesheet>
+'''
 
 
 def sha256(path):
@@ -138,7 +147,7 @@ def terraform_config(name, pool_path, installer, seed, network, mac):
             'required_providers': {'libvirt': {'source': 'dmacvicar/libvirt', 'version': '= ' + PROVIDER}}},
         'provider': {'libvirt': {'uri': 'qemu:///system'}},
         'resource': {
-            'libvirt_pool': {'run': {'name': name, 'type': 'dir', 'path': str(pool_path)}},
+            'libvirt_pool': {'run': {'name': name, 'type': 'dir', 'target': {'path': str(pool_path)}}},
             'libvirt_volume': {'disk': {'name': name + '.qcow2', 'pool': '${libvirt_pool.run.name}',
                 'format': 'qcow2', 'size': 64 * 1024**3}},
             'libvirt_network': {'run': {'name': name, 'mode': 'none', 'addresses': [str(net)],
@@ -146,6 +155,7 @@ def terraform_config(name, pool_path, installer, seed, network, mac):
             'libvirt_domain': {'run': {'name': name, 'description': 'jake-wormhole libvirt-iso ' + name,
                 'type': 'kvm', 'arch': 'x86_64', 'machine': 'pc-i440fx-8.2', 'memory': 8192,
                 'vcpu': 2, 'autostart': False, 'qemu_agent': False, 'running': False,
+                'xml': {'xslt': HEADLESS_XSLT},
                 'cpu': {'mode': 'host-passthrough'}, 'boot_device': {'dev': ['hd', 'cdrom']},
                 'disk': [{'volume_id': '${libvirt_volume.disk.id}'}, {'file': str(installer)}, {'file': str(seed)}],
                 'network_interface': {'network_id': '${libvirt_network.run.id}', 'mac': mac, 'wait_for_lease': False},
