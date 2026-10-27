@@ -64,9 +64,10 @@ def validate_request(run,value):
 
 def prepared_manifest(run,platform):
     bundle=c.validate_bundle(run);manifest=bundle['manifest']
-    if platform=='ubuntu':
-        from .candidate_cache import selected_manifest
-        return selected_manifest(run) or manifest
+    from .candidate_cache import selected_manifest
+    selected=selected_manifest(run,platform)
+    if selected is not None:return selected
+    if platform=='ubuntu':return manifest
     from . import rpm_candidate as rc,rpm_target as rt
     value=deepcopy(manifest);value.update(operation='ubi9-reference-candidate',applicability=deepcopy(rc.APPLICABILITY),
         source_candidate_manifest=manifest,source_candidate_sha256=bundle['candidate_sha256'],content_sha256=rc.content_identity(manifest),
@@ -238,8 +239,10 @@ def assemble_record(run):
                 require(sizes.get(binding['image_id'])==provisioned['runtime']['image']['Size'] and type(sizes.get(binding['image_id'])) is int and sizes[binding['image_id']]>0,'pipeline_cleanup_graph_changed')
                 if request['platform']=='ubi':
                     from . import rpm_target as rt
-                    resolver=read_json(run.file('evidence/rpm-resolution.json'))
-                    expected.update({('container',resolver['container_id']):'absent',('image',rt.BASE_ID):'retained'})
+                    expected[('image',rt.BASE_ID)]='retained'
+                    if 'reuse' not in binding:
+                        resolver=read_json(run.file('evidence/rpm-resolution.json'))
+                        expected[('container',resolver['container_id'])]='absent'
                     rt.verify_base(provisioned['runtime']['base_image'],rt.load_lock())
                     require(sizes.get(rt.BASE_ID)==provisioned['runtime']['base_image']['Size'],'pipeline_cleanup_graph_changed')
                 require(archived==expected,'pipeline_cleanup_graph_changed')
@@ -387,19 +390,20 @@ class PipelineSession:
         from .candidate_validation import CandidateValidationSession
         from .rpm_validation import RPMValidationSession
         from .rpm_assembly import build as build_rpm
+        from . import candidate_cache
         platform=self.request['platform']
-        if platform=='ubuntu':
-            from . import candidate_cache
-            if self.run.file(candidate_cache.SELECTION).exists():
-                self.timings['construction']='verified-image-reuse'
-                binding=self.timed('candidate-integrity',lambda:candidate_cache.reuse(self.run,self.lease))
-            else:
-                self.timings['construction']='fresh-build'
-                binding=self.timed('candidate-construction',lambda:c.build_candidate(self.run,self.lease))
-                candidate_cache.publish(self.run,self.lease,binding)
+        if self.run.file(candidate_cache.SELECTION).exists():
+            self.timings['construction']='verified-image-reuse'
+            if platform=='ubi':candidate_cache.verify_base_request(self.run,self.request['base_run_id'])
+            binding=self.timed('candidate-integrity',lambda:candidate_cache.reuse(self.run,self.lease))
+        elif platform=='ubuntu':
+            self.timings['construction']='fresh-build'
+            binding=self.timed('candidate-construction',lambda:c.build_candidate(self.run,self.lease))
+            candidate_cache.publish(self.run,self.lease,binding)
         else:
             self.timings['construction']='fresh-ubi-build'
             binding=self.timed('candidate-construction',lambda:build_rpm(self.run,self.lease,base_run=Run(images.RUNS_ROOT,self.request['base_run_id'])))
+            candidate_cache.publish(self.run,self.lease,binding)
         # The UBI assembler returns its binding; immutable planned bytes must agree.
         require(candidate_identity(binding['manifest'])==read_json(self.run.file(PLAN))['candidate'],'pipeline_candidate_changed')
         self.session=p.ProvisioningSession(self.run,self.lease,target_binding=binding)
@@ -483,9 +487,10 @@ class PipelineSession:
                     require(result['status']=='passed','pipeline_chunks_failed')
                     self.timed('synthetic-assessment',lambda:a.assess_run_held(self.run,guard,a.fixture('pass'),a.FIXTURE_EXPECTED))
                     self.timed('candidate-inputs',lambda:c.prepare_candidate(self.run))
-                    if self.request['platform']=='ubuntu' and self.reuse_candidates:
-                        from .candidate_cache import select
-                        select(self.run)
+                    if self.reuse_candidates:
+                        from .candidate_cache import select,verify_base_request
+                        selected=select(self.run,self.request['platform'])
+                        if selected is not None and self.request['platform']=='ubi':verify_base_request(self.run,self.request['base_run_id'])
                     manifest=prepared_manifest(self.run,self.request['platform'])
                 except BaseException as failure:self.failure(failure);error=failure
                 atomic_json(self.run.file(PLAN),build_plan(self.run,self.request,manifest))

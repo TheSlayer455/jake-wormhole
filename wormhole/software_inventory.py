@@ -146,7 +146,11 @@ def validate_plan(run,plan):
     rebuilt=make_plan(run,binding,owned['docker_container.target["target-001"]'],owned['docker_network.run'],plan.get('scenario'))
     require(c.canonical(plan)==c.canonical(rebuilt),'svd_plan_changed')
     if plan['scenario']=='missing-package':
-        build=read_json(run.file('evidence/rpm-candidate-build.json'))
+        build_run=run
+        if 'reuse' in binding:
+            from .candidate_cache import origin
+            build_run,_=origin(run,binding['reuse'])
+        build=read_json(build_run.file('evidence/rpm-candidate-build.json'))
         require(not any(row['name']=='openssh-clients' for row in build['installed']['installed_packages']),'svd_missing_fixture_unavailable')
     return binding
 

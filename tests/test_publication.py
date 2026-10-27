@@ -167,6 +167,26 @@ class PublicationFilesystem(unittest.TestCase):
         self.assertEqual((self.destination/'candidate/manifest.json').read_bytes(),c.canonical(self.manifest))
         self.assertNotEqual((self.destination/'candidate/manifest.json').read_bytes(),c.canonical(current['manifest']))
 
+    def test_reused_ubi_publication_retains_the_original_bundle_and_license(self):
+        from wormhole import candidate_cache,rpm_candidate,rpm_source
+        atomic_json(self.run.file(pipeline.REQUEST),{'platform':'ubi'})
+        original=SimpleNamespace(id='synthetic-original-ubi')
+        selection={'platform':'ubi','origin_run_id':original.id}
+        atomic_json(self.run.file('evidence/candidate-selection.json'),selection)
+        self.patch(rpm_candidate,'validate_binding',return_value={'reuse':selection})
+        self.patch(candidate_cache,'origin',return_value=(original,{}))
+        bundles=self.patch(rpm_candidate,'validate_bundle',side_effect=lambda run:self.bundle if run is original else
+            (_ for _ in ()).throw(AssertionError('Unused current UBI preparation must not be published')))
+        license_path=self.run.file('private/synthetic-original-license.pdf');license_bytes=b'SYNTHETIC RETAINED UBI LICENSE\n'
+        atomic_bytes(license_path,license_bytes)
+        licenses=self.patch(rpm_source,'validate_eula',side_effect=lambda run:license_path if run is original else
+            (_ for _ in ()).throw(AssertionError('Original retained UBI license is required')))
+        self.patch(r,'EULA_BYTES',new=len(license_bytes));self.patch(r,'EULA_SHA256',new=p.digest(license_bytes))
+        receipt=p.publish_reference(self.run)
+        self.assertEqual(receipt['status'],'completed');bundles.assert_called_with(original);licenses.assert_called_with(original)
+        self.assertEqual((self.destination/r.EULA_PATH).read_bytes(),license_bytes)
+        self.assertEqual((self.destination/'candidate/manifest.json').read_bytes(),c.canonical(self.manifest))
+
     def test_failed_gate_refuses_before_reserving_a_destination_and_preserves_failure(self):
         self.report['decision']['reference_eligible'] = False
         error = self.failed(lambda: p.publish_reference(self.run), 'publication_ineligible')

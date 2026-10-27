@@ -342,18 +342,17 @@ def _snapshot(run, guard, deadline):
             plan = json.loads(pipeline.replay.raw_file(run, pipeline.PLAN, 262144))
             expected_exports = pipeline.export_files(run, report['record'], plan)
             require(set(expected_exports) == set(records().EVIDENCE_PATHS), 'publication_ineligible')
-            if platform == 'ubuntu':
-                bundle = candidate.validate_bundle(run)
-                if run.file('evidence/candidate-selection.json').exists():
-                    binding=candidate.validate_binding(run)
-                    from .candidate_cache import origin
-                    original,_=origin(run,binding['reuse'])
-                    bundle=candidate.validate_bundle(original)
-            elif platform == 'ubi':
+            bundle_run=run
+            if platform=='ubuntu':module=candidate
+            elif platform=='ubi':
                 from . import rpm_candidate
-                bundle = rpm_candidate.validate_bundle(run)
-            else:
-                require(False, 'publication_ineligible')
+                module=rpm_candidate
+            else:require(False,'publication_ineligible')
+            if run.file('evidence/candidate-selection.json').exists():
+                binding=module.validate_binding(run)
+                from .candidate_cache import origin
+                bundle_run,_=origin(run,binding['reuse'])
+            bundle=module.validate_bundle(bundle_run)
             identity = pipeline.candidate_identity(bundle['manifest'])
             require(all(report['record']['candidate'][key] == value for key, value in identity.items()),
                     'publication_ineligible')
@@ -372,7 +371,7 @@ def _snapshot(run, guard, deadline):
             add('evidence/' + relative, run.file(pipeline.EXPORT + '/' + relative), raw)
         if platform == 'ubi':
             from .rpm_source import validate_eula
-            add(records().EULA_PATH, validate_eula(run), {'sha256': records().EULA_SHA256, 'size_bytes': records().EULA_BYTES})
+            add(records().EULA_PATH, validate_eula(bundle_run), {'sha256': records().EULA_SHA256, 'size_bytes': records().EULA_BYTES})
         table = {name: deepcopy(source.expected) for name, source in sources.items()}
         table['REFERENCE.txt'] = {'sha256': digest(records().REFERENCE_BYTES), 'size_bytes': len(records().REFERENCE_BYTES)}
         checksums = {**common(manifest), 'operation': records().CHECKSUMS_OPERATION, 'platform': platform, 'files': table}

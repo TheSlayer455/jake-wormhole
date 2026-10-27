@@ -85,12 +85,18 @@ def prepare_manifest(run):
         raw=c.bounded_file(bundle['directory']/record['path']);atomic_bytes(directory/record['path'],raw,limit=c.MAX_BUNDLE)
     atomic_bytes(directory/'manifest.json',c.canonical(value),limit=32768)
     atomic_json(run.file('evidence/rpm-candidate-manifest.json'),value)
+    from .candidate_cache import input_record
+    atomic_json(run.file('evidence/rpm-candidate-inputs.json'),input_record(run,value))
     return validate_bundle(run)
 
 
 def validate_bundle(run):
     value=validate_manifest(read_json(run.file('evidence/rpm-candidate-manifest.json')))
     t.require(c.bound_common(value,run.manifest()),'rpm_candidate_source_changed')
+    if run.file('evidence/rpm-candidate-inputs.json').exists():
+        from .candidate_cache import input_record
+        t.require(c.canonical(read_json(run.file('evidence/rpm-candidate-inputs.json')))==c.canonical(input_record(run,value)),
+            'rpm_candidate_inputs_changed')
     original=c.validate_bundle(run)
     t.require(value['source_candidate_sha256']==original['candidate_sha256'],'rpm_candidate_source_changed')
     directory=run.file('private/rpm-candidate')
@@ -123,6 +129,10 @@ def binding_labels(run, manifest, recipe):
 
 def validate_binding(run, value=None, *, artifacts=True):
     saved=read_json(run.file('evidence/rpm-candidate-binding.json'));_bounded_json(saved)
+    if type(saved) is dict and 'reuse' in saved:
+        from .candidate_cache import validate_binding as validate_reuse
+        t.require(value is None or c.canonical(value)==c.canonical(saved),'rpm_candidate_binding_mismatch')
+        return validate_reuse(run,saved)
     fields=set(common(run.manifest()))|{'operation','status','candidate_sha256','content_sha256','source_candidate_sha256','manifest',
         'base_image','image_id','image_labels','recipe_sha256','source_files','test_contract_sha256','runtime_pipeline_complete','production_iso_eligible'}
     t.require(type(saved) is dict and set(saved)==fields and c.bound_common(saved,run.manifest()) and
@@ -147,6 +157,15 @@ def validate_binding(run, value=None, *, artifacts=True):
             validate_bundle(run)['candidate_sha256']==saved['candidate_sha256'],'rpm_candidate_source_changed')
     if value is not None:t.require(c.canonical(value)==c.canonical(saved),'rpm_candidate_binding_mismatch')
     return saved
+
+
+def validate_origin(run):
+    """Read-only content replay across controller revisions, never execution scope."""
+    saved=validate_binding(run,artifacts=False)
+    t.require('reuse' not in saved and recipe_identity()==(saved['recipe_sha256'],saved['source_files']) and
+        validate_bundle(run)['candidate_sha256']==saved['candidate_sha256'],'rpm_candidate_source_changed')
+    from .pipeline_replay import replay_rpm_build
+    return replay_rpm_build(run,saved)
 
 
 IMAGE_ENV=('HOME=/tmp','PATH=/usr/sbin:/usr/bin:/sbin:/bin','LANG=C','container=oci')

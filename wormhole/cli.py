@@ -69,7 +69,7 @@ def parser():
     reference.add_argument("--platform", choices=("ubuntu", "ubi"), default="ubuntu")
     reference.add_argument("--scenario", choices=("healthy", "version-expectation-mismatch"), default="healthy")
     reference.add_argument("--base-run", help="Existing qualified public UBI base-probe UUID; required only for UBI.")
-    reference.add_argument('--fresh-candidate', action='store_true', help='Build fresh Ubuntu candidate bytes instead of selecting a verified cached image.')
+    reference.add_argument('--fresh-candidate', action='store_true', help='Build fresh candidate bytes instead of selecting a verified cached image.')
     for name in ("reference-report", "reference-gate"):
         command = commands.add_parser(name, help="Replay original reference evidence and retain explicit completeness failures.")
         command.add_argument("run_id", help="Exact existing reference Run UUID.")

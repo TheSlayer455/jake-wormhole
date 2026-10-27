@@ -81,8 +81,16 @@ def report_candidate(run,platform):
         binding=c.validate_binding(run);built=read_json(run.file('evidence/candidate-build.json'))
         require(built.get('primary_failure') is None,'pipeline_candidate_failure')
         return binding
-    from . import rpm_candidate as rc,rpm_assembly as assembly,rpm_source as sources,rpm_target as rt,rpm_resolution as resolver
-    binding=rc.validate_binding(run);built=read_json(run.file('evidence/rpm-candidate-build.json'))
+    from . import rpm_candidate as rc
+    binding=rc.validate_binding(run)
+    if 'reuse' in binding:return binding # Origin replay is required by the reuse validator.
+    return replay_rpm_build(run,binding)
+
+
+def replay_rpm_build(run,binding):
+    """Replay original package, resolution, license and assembly proof only."""
+    from . import rpm_assembly as assembly,rpm_source as sources,rpm_target as rt,rpm_resolution as resolver
+    built=read_json(run.file('evidence/rpm-candidate-build.json'))
     request=read_json(run.file('private/rpm-assembly-request.json'))
     require(c.bound_common(request,run.manifest()) and request['operation']=='ubi9-assembly-request-v1' and
         request['manifest']==binding['manifest'] and request['candidate_sha256']==binding['candidate_sha256'] and
