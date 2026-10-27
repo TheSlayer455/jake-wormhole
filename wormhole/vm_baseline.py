@@ -80,7 +80,7 @@ def create_qemu_directory(path, group):
 
 def preflight(source):
     require(os.geteuid() == 0, 'runtime_owner_required')
-    require(all(shutil.which(x) for x in ('virsh', 'qemu-system-x86_64', 'xorriso', 'dnsmasq', 'xsltproc', 'ssh-keygen', 'docker')),
+    require(all(shutil.which(x) for x in ('virsh', 'qemu-system-x86_64', 'xorriso', 'dnsmasq', 'xsltproc', 'script', 'ssh-keygen', 'docker')),
             'missing_vm_tool')
     observation = collect_observations(CANONICAL_INFRASTRUCTURE_ROOT)
     require(observation['memory_available_bytes'] >= 13 * 1024**3, 'vm_memory_headroom')
@@ -193,7 +193,11 @@ def execute(source, terraform):
                     'unexpected_network_forwarding')
             command(['virsh', '-c', 'qemu:///system', 'start', name], 'firmware-boot')
             console_log = (run / 'console.log').open('wb')
-            console = subprocess.Popen(['virsh', '-c', 'qemu:///system', 'console', name, '--force'],
+            # virsh console requires a controlling terminal, even for private
+            # unattended capture. util-linux script provides that PTY; the
+            # generated name contains only validated alphanumeric/hyphen bytes.
+            console = subprocess.Popen(['script', '--quiet', '--return', '--flush', '--command',
+                'virsh -c qemu:///system console ' + name + ' --force', '/dev/null'],
                 stdin=subprocess.PIPE, stdout=console_log, stderr=subprocess.STDOUT, start_new_session=True)
             console_log.close()
             host_key = None
@@ -230,9 +234,11 @@ def execute(source, terraform):
             result.update(outcome='unknown' if unknown else 'failed', error_category=getattr(error, 'code', type(error).__name__))
         finally:
             if console is not None:
-                console.terminate()
+                try:os.killpg(console.pid, signal.SIGTERM)
+                except ProcessLookupError:pass
                 try:console.wait(timeout=5)
-                except subprocess.TimeoutExpired:console.kill();console.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    os.killpg(console.pid, signal.SIGKILL);console.wait(timeout=5)
             try:
                 # Cleanup has its own reserved bounded margin; it cannot change the primary outcome.
                 deadline = max(deadline, time.monotonic() + 120)
