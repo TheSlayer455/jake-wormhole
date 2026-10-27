@@ -98,6 +98,13 @@ touch /var/lib/wormhole/installation-complete
     return '#cloud-config\n' + json.dumps(value, indent=2) + '\n'
 
 
+def verify_reuse(manifest, actual_sha256, current_boot, observed_boot):
+    if (manifest.get('capability') != 'ubuntu-iso-installation-baseline' or
+            manifest.get('source') != UBUNTU or actual_sha256 != manifest.get('candidate_sha256') or
+            set(current_boot) != {'grub.cfg', 'loopback.cfg'} or current_boot != observed_boot):
+        raise RunError('stale_candidate', 'The baseline candidate identity or current boot inputs do not match.')
+
+
 def build_ubuntu(source, destination, seed_dir, identifier, public_key, guest_address, mac, *, reuse=None):
     source, destination, seed_dir = map(Path, (source, destination, seed_dir))
     if source.stat().st_size != UBUNTU['bytes'] or sha256(source) != UBUNTU['sha256']:
@@ -130,18 +137,15 @@ def build_ubuntu(source, destination, seed_dir, identifier, public_key, guest_ad
                  *changed, '-map', str(index), '/md5sum.txt'])
     else:
         previous_iso, previous_manifest = reuse
-        if (previous_manifest.get('capability') != 'ubuntu-iso-installation-baseline' or
-                previous_manifest.get('source') != UBUNTU or
-                sha256(previous_iso) != previous_manifest.get('candidate_sha256')):
-            raise RunError('stale_candidate', 'The original baseline candidate identity is invalid.')
         # Version-1 baseline ISOs customize boot files only; installation content
         # is a separately bound seed. Verify actual current boot inputs as well
         # as bytes, so a valid old hash cannot hide a changed boot recipe.
+        current_boot, observed_boot = {}, {}
         for name in ('grub.cfg', 'loopback.cfg'):
             actual = work / ('reused-' + name)
             command(['xorriso', '-osirrox', 'on', '-indev', str(previous_iso), '-extract', '/boot/grub/' + name, str(actual)])
-            if actual.read_bytes() != (work / name).read_bytes():
-                raise RunError('stale_candidate', 'The candidate does not contain the current boot configuration.')
+            current_boot[name], observed_boot[name] = (work / name).read_bytes(), actual.read_bytes()
+        verify_reuse(previous_manifest, sha256(previous_iso), current_boot, observed_boot)
         shutil.copyfile(previous_iso, destination)
         if sha256(destination) != previous_manifest['candidate_sha256']:
             raise RunError('candidate_copy_mismatch', 'Reused candidate bytes changed during copy.')

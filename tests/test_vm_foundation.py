@@ -13,6 +13,20 @@ from test_admission import observed
 
 
 class Inputs(unittest.TestCase):
+    def test_valid_old_hash_does_not_hide_changed_boot_inputs(self):
+        manifest = {'capability': 'ubuntu-iso-installation-baseline', 'source': dict(i.UBUNTU), 'candidate_sha256': 'a' * 64}
+        boot = {'grub.cfg': b'current boot', 'loopback.cfg': b'current loopback'}
+        i.verify_reuse(manifest, 'a' * 64, boot, dict(boot))
+        with self.assertRaises(RunError) as failure:
+            i.verify_reuse(manifest, 'a' * 64, boot, {**boot, 'grub.cfg': b'stale boot'})
+        self.assertEqual(failure.exception.code, 'stale_candidate')
+        for wrong in ({**manifest, 'capability': 'container-reference'},
+                      {**manifest, 'source': {**i.UBUNTU, 'release': '24.04'}}):
+            with self.assertRaises(RunError):
+                i.verify_reuse(wrong, 'a' * 64, boot, boot)
+        with self.assertRaises(RunError):
+            i.verify_reuse(manifest, 'b' * 64, boot, boot)
+
     def test_boot_entries_preserve_iso_kernel_and_add_unattended_serial(self):
         original = 'set timeout=30\n linux /casper/vmlinuz  ---\n initrd /casper/initrd\n'
         result = i.boot_config(original)
