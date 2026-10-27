@@ -18,6 +18,8 @@ from . import pipeline_replay as replay, software_inventory as svd
 from .admission import AdmissionLease
 from .recovery import cleanup_session,cancellation_requested,valid_failure,validate_cleanup
 from .runs import Run,RunError,SOURCE_ROOT,_owned,atomic_bytes,atomic_json,common,now,read_json,source_identity
+from .initialization import InitializationSession, report_initialization
+from .lifecycle import Lifecycle, initialization_events, readiness_events, report_lifecycle
 
 REQUEST='evidence/pipeline-request.json'
 PLAN='evidence/pipeline-plan.json'
@@ -58,7 +60,9 @@ def validate_request(run,value):
 
 def prepared_manifest(run,platform):
     bundle=c.validate_bundle(run);manifest=bundle['manifest']
-    if platform=='ubuntu':return manifest
+    if platform=='ubuntu':
+        from .candidate_cache import selected_manifest
+        return selected_manifest(run) or manifest
     from . import rpm_candidate as rc,rpm_target as rt
     value=deepcopy(manifest);value.update(operation='ubi9-reference-candidate',applicability=deepcopy(rc.APPLICABILITY),
         source_candidate_manifest=manifest,source_candidate_sha256=bundle['candidate_sha256'],content_sha256=rc.content_identity(manifest),
@@ -112,7 +116,9 @@ def _artifact(run,identifier,path,kind='component',maximum=4*1024*1024):
 def assemble_record(run):
     """Rebuild all rows from originals. No cached counts/status authorize a pass."""
     replay.source(run);request=validate_request(run,read_json(run.file(REQUEST)));plan=read_json(run.file(PLAN));validate_plan(run,plan,request)
-    context=read_json(run.file(CONTEXT));require(set(context)==set(common(run.manifest()))|{'operation','request_sha256','primary_failure','secondary_failures','unknown_outcome','cleanup_status','pending_resources','updated_at'} and
+    context=read_json(run.file(CONTEXT));context_fields=set(common(run.manifest()))|{'operation','request_sha256','primary_failure','secondary_failures','unknown_outcome','cleanup_status','pending_resources','updated_at'}
+    require(set(context) in (context_fields,context_fields|{'initialization_policy'}) and
+        ('initialization_policy' not in context or context['initialization_policy']=='observed-v1') and
         c.bound_common(context,run.manifest()) and context['operation']=='reference-pipeline-controller-v1' and
         context['request_sha256']==request['request_sha256'] and valid_failure(context['primary_failure']) and
         type(context['unknown_outcome']) is bool and type(context['pending_resources']) is int and 0<=context['pending_resources']<=128 and
@@ -168,11 +174,25 @@ def assemble_record(run):
     else:set_rows('provisioning',status='blocked',reason='not_executed')
     if provisioned is not None:attempt('readiness','evidence/readiness.json',lambda:replay.report_readiness(run,archive,provisioned))
     else:set_rows('readiness',status='blocked',reason='not_executed')
+    if context.get('initialization_policy')=='observed-v1' and provisioned is not None:
+        try:
+            report_initialization(run,require_passed=True)
+            artifacts.append(_artifact(run,'initialization-record','evidence/initialization.json'))
+        except Exception as error:
+            errors.append(safe_code(error));set_rows('readiness',status='error',reason='initialization_evidence_incomplete')
     from .candidate_validation import report_candidate_validation
     from .rpm_validation import report_rpm_validation
     functional_path='evidence/candidate-validation.json' if request['platform']=='ubuntu' else 'evidence/rpm-validation.json'
     functional=attempt('functional',functional_path,lambda:(report_candidate_validation(run) if request['platform']=='ubuntu' else report_rpm_validation(run)))
     if functional is not None:set_rows('functional',{row['check_id']:row for row in functional['result']['checks']},evidence=['functional-record'])
+    if context.get('initialization_policy')=='observed-v1' and functional is not None:
+        try:
+            lifecycle=report_lifecycle(run,expected_targets=['target-001'],
+                expected_checks=[item['check_id'] for item in plan['expected_rows'] if item['component']=='functional'],require_passed=True)
+            require(lifecycle['candidate_identity']['image_id']==binding['image_id'],'lifecycle_candidate_changed')
+            artifacts.append(_artifact(run,'lifecycle-record','evidence/lifecycle.json'))
+        except Exception as error:
+            errors.append(safe_code(error));set_rows('functional',status='error',reason='lifecycle_evidence_incomplete')
     inventory=attempt('svd',svd.RECORD,lambda:svd.report_software_inventory(run))
     if inventory is not None:
         values={item['check_id']:deepcopy(item) for item in inventory['record']['checks']}
@@ -204,10 +224,11 @@ def assemble_record(run):
             if binding is not None and provisioned is not None:
                 build=read_json(run.file('evidence/candidate-build.json' if request['platform']=='ubuntu' else 'evidence/rpm-candidate-build.json'))
                 ready_context=read_json(run.file('private/readiness-controller.json'))
-                expected={('container',build['builder_id']):'absent',('image',binding['image_id']):'retained',
+                expected={('image',binding['image_id']):'retained',
                     ('container',read_json(run.file('private/terraform/controller.json'))['id']):'absent',
                     ('container',targets[0]['resource_id']):'absent',('network',provisioned['runtime']['network']['Id']):'absent',
                     ('container',ready_context['helper_id']):'absent'}
+                if build['builder_id'] is not None:expected[('container',build['builder_id'])]='absent'
                 sizes={item['id']:item['size_bytes'] for item in archive['resources'] if item['kind']=='image'}
                 require(sizes.get(binding['image_id'])==provisioned['runtime']['image']['Size'] and type(sizes.get(binding['image_id'])) is int and sizes[binding['image_id']]>0,'pipeline_cleanup_graph_changed')
                 if request['platform']=='ubi':
@@ -294,13 +315,39 @@ def _write_exports(run,files):
 
 
 class PipelineSession:
-    def __init__(self,run,request):
+    def __init__(self,run,request,*,reuse_candidates=True):
+        require(type(reuse_candidates) is bool,'pipeline_selection_invalid')
+        self.reuse_candidates=reuse_candidates
         self.run=run;self.request=validate_request(run,request)
         require(run.workspace==images.RUNS_ROOT and sys.platform.startswith('linux'),'pipeline_host_scope')
         replay.source(run);require(not any(run.file(path).exists() for path in (REQUEST,PLAN,RECORD,CONTEXT)),'pipeline_attempt_reused')
         self.context={**common(run.manifest()),'operation':'reference-pipeline-controller-v1','request_sha256':request['request_sha256'],
-            'primary_failure':None,'secondary_failures':[],'unknown_outcome':False,'cleanup_status':'not-started','pending_resources':0,'updated_at':now()}
+            'primary_failure':None,'secondary_failures':[],'unknown_outcome':False,'cleanup_status':'not-started','pending_resources':0,'updated_at':now(),
+            'initialization_policy':'observed-v1'}
         self.session=self.readiness=self.lease=None
+        self.lifecycle=None;self.execution_deadline=time.monotonic()+600
+        self.timings={**common(run.manifest()),'operation':'reference-stage-timings-v1','stages':[],
+            'construction':'not-started','production_iso_eligible':False}
+
+    def timed(self,name,action):
+        began=time.monotonic()
+        timing={'stage':name,'started_at':now(),'finished_at':None,'elapsed_seconds':None,'outcome':'running'}
+        self.timings['stages'].append(timing)
+        def save():atomic_json(self.run.file('evidence/pipeline-timings.json'),self.timings)
+        save()
+        try:
+            value=action();timing['outcome']='passed';return value
+        except BaseException:
+            timing['outcome']='failed';raise
+        finally:
+            timing.update(finished_at=now(),elapsed_seconds=time.monotonic()-began)
+            original=sys.exc_info()[1]
+            try:save()
+            except OSError:
+                if original is None:raise
+                self.context['secondary_failures'].append({'code':'pipeline_timing_write_failed','recorded_at':now()})
+                try:self.save()
+                except OSError:pass
 
     def save(self):
         self.context['updated_at']=now();atomic_json(self.run.file(CONTEXT),self.context)
@@ -335,23 +382,56 @@ class PipelineSession:
         from .rpm_validation import RPMValidationSession
         from .rpm_assembly import build as build_rpm
         platform=self.request['platform']
-        binding=c.build_candidate(self.run,self.lease) if platform=='ubuntu' else build_rpm(self.run,self.lease,base_run=Run(images.RUNS_ROOT,self.request['base_run_id']))
+        if platform=='ubuntu':
+            from . import candidate_cache
+            if self.run.file(candidate_cache.SELECTION).exists():
+                self.timings['construction']='verified-image-reuse'
+                binding=self.timed('candidate-integrity',lambda:candidate_cache.reuse(self.run,self.lease))
+            else:
+                self.timings['construction']='fresh-build'
+                binding=self.timed('candidate-construction',lambda:c.build_candidate(self.run,self.lease))
+                candidate_cache.publish(self.run,self.lease,binding)
+        else:
+            self.timings['construction']='fresh-ubi-build'
+            binding=self.timed('candidate-construction',lambda:build_rpm(self.run,self.lease,base_run=Run(images.RUNS_ROOT,self.request['base_run_id'])))
         # The UBI assembler returns its binding; immutable planned bytes must agree.
         require(candidate_identity(binding['manifest'])==read_json(self.run.file(PLAN))['candidate'],'pipeline_candidate_changed')
         self.session=p.ProvisioningSession(self.run,self.lease,target_binding=binding)
-        self.session.create_stopped();self._snapshot('stopped');self.session.start_and_inventory()
-        self.readiness=r.ReadinessSession(self.session,validation=True);self.readiness.start_helper()
+        self.timed('provisioning',self.session.create_stopped);self._snapshot('stopped')
+        self.timed('runtime-start',self.session.start_and_inventory)
+        checks=[item['check_id'] for item in read_json(self.run.file(PLAN))['expected_rows'] if item['component']=='functional']
+        self.lifecycle=Lifecycle(self.run,['target-001'],candidate_identity={'image_id':binding['image_id'],
+            'candidate_sha256':binding['candidate_sha256']},checks=checks,budget_seconds=300,absolute_deadline=self.execution_deadline)
+        self.lifecycle.event('target-001','created',evidence='evidence/provisioning.json')
+        self.lifecycle.event('target-001','runtime-started',evidence='evidence/provisioning.json')
+        initialization=InitializationSession(self.session,absolute_deadline=self.lifecycle.deadline-20)
+        self.timed('initialization',lambda:initialization.wait_result('target-001'))
+        initialization_events(self.lifecycle,'target-001',initialization.record['targets']['target-001']['observation'],'evidence/initialization.json')
+        initialization.require_complete('target-001')
+        self.readiness=r.ReadinessSession(self.session,validation=True,initialization=initialization);self.readiness.start_helper()
+        self.readiness.deadline=min(self.readiness.deadline,self.lifecycle.deadline-20)
         def cancelled(_):require(not cancellation_requested(self.run),'cancelled')
-        self.readiness.wait_ready(on_poll=cancelled);self._snapshot('live')
+        self.timed('ssh-ansible-readiness',lambda:self.readiness.wait_ready(on_poll=cancelled));self._snapshot('live')
+        readiness_events(self.lifecycle,'target-001',self.readiness.receipt)
         # The original 180/300s lifetimes are unchanged. Reserve full component
         # budgets plus safe cleanup time; a slow readiness attempt refuses here.
         self._budget(140)
         validator=CandidateValidationSession(self.readiness,binding,scenario=self.request['scenario']) if platform=='ubuntu' else RPMValidationSession(self.readiness,binding)
-        validator.validate();self._budget(80)
-        svd.SoftwareInventorySession(self.readiness,binding).collect()
+        self.lifecycle.start_validation()
+        result=self.timed('functional-validation',validator.validate)
+        for item in result['checks']:self.lifecycle.test_result('target-001',item['check_id'],item['status'],persist=False)
+        self.lifecycle.finalize();self._budget(80)
+        self.timed('installed-inventory',svd.SoftwareInventorySession(self.readiness,binding).collect)
 
     def _cleanup(self,error):
         lease=self.lease
+        if self.lifecycle is not None and error is not None and self.lifecycle.record['terminal_outcome']!='passed':
+            try:
+                self.lifecycle.event('target-001','failure',evidence='lifecycle/controller-failure',category=safe_code(error))
+                if self.session.receipt['unknown_outcome']:
+                    self.lifecycle.event('target-001','remote-unknown',evidence='lifecycle/lost-observation')
+                self.lifecycle.finalize()
+            except Exception as failure:self.failure(failure)
         try:
             if self.session is not None:
                 self.context['unknown_outcome']=self.session.receipt['unknown_outcome'] or (self.readiness is not None and self.readiness.receipt['unknown_outcome'])
@@ -393,10 +473,14 @@ class PipelineSession:
             with self.run.locked() as guard,images.docker_scope(self.run):
                 atomic_json(self.run.file(REQUEST),self.request);self.save();manifest=None
                 try:
-                    result=chunks.execute_fixture_held(self.run,guard,transport='local',scenario='healthy')
+                    result=self.timed('source',lambda:chunks.execute_fixture_held(self.run,guard,transport='local',scenario='healthy'))
                     require(result['status']=='passed','pipeline_chunks_failed')
-                    a.assess_run_held(self.run,guard,a.fixture('pass'),a.FIXTURE_EXPECTED)
-                    c.prepare_candidate(self.run);manifest=prepared_manifest(self.run,self.request['platform'])
+                    self.timed('synthetic-assessment',lambda:a.assess_run_held(self.run,guard,a.fixture('pass'),a.FIXTURE_EXPECTED))
+                    self.timed('candidate-inputs',lambda:c.prepare_candidate(self.run))
+                    if self.request['platform']=='ubuntu' and self.reuse_candidates:
+                        from .candidate_cache import select
+                        select(self.run)
+                    manifest=prepared_manifest(self.run,self.request['platform'])
                 except BaseException as failure:self.failure(failure);error=failure
                 atomic_json(self.run.file(PLAN),build_plan(self.run,self.request,manifest))
                 if error is None:
@@ -405,7 +489,7 @@ class PipelineSession:
                             self.lease=lease
                             try:self._runtime()
                             except BaseException as failure:self.failure(failure);error=failure
-                            finally:self._cleanup(error)
+                            finally:self.timed('cleanup',lambda:self._cleanup(error))
                     except BaseException as failure:self.failure(failure);error=failure
                 return self._finalize()
         except BaseException as failure:

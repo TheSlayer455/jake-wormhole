@@ -144,6 +144,22 @@ class CoordinatorBoundaries(unittest.TestCase):
         with patch.object(images,'inspect',side_effect=inspect),self.assertRaises(w.PipelineError) as error:session._budget(140)
         self.assertEqual(error.exception.code,'pipeline_lifetime_budget')
 
+    def test_stage_timing_failure_retains_the_original_operation_error(self):
+        from wormhole.runs import create_run
+        temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup)
+        session=w.PipelineSession.__new__(w.PipelineSession)
+        session.run=create_run(Path(temporary.name)/'runs',fixture=False,identity=(SHA,False))
+        session.timings={'stages':[]};session.context={'primary_failure':None,'secondary_failures':[]}
+        original=w.PipelineError('controlled_primary_failure','Controlled operation failure')
+        actual=w.atomic_json
+        def persist(path,value):
+            if path.name=='pipeline-timings.json' and value['stages'][0]['finished_at'] is not None:raise OSError('controlled disk error')
+            actual(path,value)
+        with patch.object(w,'atomic_json',side_effect=persist),self.assertRaises(w.PipelineError) as error:
+            session.timed('functional-validation',lambda:(_ for _ in ()).throw(original))
+        self.assertIs(error.exception,original)
+        self.assertEqual(session.context['secondary_failures'][0]['code'],'pipeline_timing_write_failed')
+
     @unittest.skipUnless(sys.platform.startswith('linux'),'Real mode source/lock coordinator fixture, no Docker calls')
     def test_capacity_refusal_retains_complete_failed_grid_and_never_calls_old_unsupported_pipeline(self):
         from wormhole.runs import create_run

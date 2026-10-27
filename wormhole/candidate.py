@@ -205,6 +205,10 @@ def validate_binding(run, value=None, *, artifacts=True):
     try: _bounded_json(saved)
     except (ValueError, TypeError, RecursionError):
         raise CandidateError('candidate_binding_invalid', 'Candidate binding exceeds the fixed data contract.') from None
+    if type(saved) is dict and 'reuse' in saved:
+        from .candidate_cache import validate_binding as validate_reuse
+        require(value is None or canonical(value)==canonical(saved),'candidate_binding_invalid')
+        return validate_reuse(run,saved)
     fields = set(common(run.manifest())) | {'operation', 'status', 'candidate_sha256', 'manifest', 'base_image',
         'image_id', 'image_labels', 'installer_sha256', 'test_contract_sha256', 'runtime_pipeline_complete', 'production_iso_eligible'}
     require(type(saved) is dict and set(saved) == fields and bound_common(saved, run.manifest()) and

@@ -344,6 +344,11 @@ def _snapshot(run, guard, deadline):
             require(set(expected_exports) == set(records().EVIDENCE_PATHS), 'publication_ineligible')
             if platform == 'ubuntu':
                 bundle = candidate.validate_bundle(run)
+                if run.file('evidence/candidate-selection.json').exists():
+                    binding=candidate.validate_binding(run)
+                    from .candidate_cache import origin
+                    original,_=origin(run,binding['reuse'])
+                    bundle=candidate.validate_bundle(original)
             elif platform == 'ubi':
                 from . import rpm_candidate
                 bundle = rpm_candidate.validate_bundle(run)
