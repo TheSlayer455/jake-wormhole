@@ -49,6 +49,7 @@ class Inputs(unittest.TestCase):
         self.assertIn('/domain/devices/graphics', domain['xml']['xslt'])
         self.assertEqual(domain['boot_device']['dev'], ['hd', 'cdrom'])
         self.assertNotIn('source', resource['libvirt_volume']['disk'])
+        self.assertEqual(domain['disk'][0], {'file': '${libvirt_volume.disk.id}'})
         self.assertIn('<owner>1001</owner><group>1002</group>', resource['libvirt_volume']['disk']['xml']['xslt'])
         self.assertIn('<mode>0600</mode>', resource['libvirt_volume']['disk']['xml']['xslt'])
         self.assertEqual(resource['libvirt_network']['run']['mode'], 'none')

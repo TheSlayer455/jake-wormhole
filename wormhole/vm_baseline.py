@@ -58,7 +58,7 @@ common='-o StrictHostKeyChecking=yes -o UserKnownHostsFile='+str(known)+' -o Ide
 base=['/opt/wormhole/venv/bin/ansible','all','-i',c['address']+',','-u','lab.service','--private-key',str(key),
       '-e','ansible_python_interpreter=/usr/bin/python3','--ssh-common-args',common]
 for label,args in [('ansible-readiness',['-m','ping']),('functional',['-b','-m','command','-a','/usr/bin/id -u']),
-                   ('inventory',['-m','command','-a','dpkg-query -W -f=${Package}=${Version}\n'])]:
+                   ('inventory',['-m','command','-a',"dpkg-query -W -f='${Package}=${Version}\\n'"])]:
  remaining=deadline-time.monotonic()
  if remaining<=0:sys.exit(1)
  r=subprocess.run(base+args,env=env,capture_output=True,text=True,timeout=min(90,remaining))

@@ -164,6 +164,8 @@ def terraform_config(name, pool_path, installer, seed, network, mac, qemu_uid, q
                 'vcpu': 2, 'autostart': False, 'qemu_agent': False, 'running': False,
                 'xml': {'xslt': HEADLESS_XSLT},
                 'cpu': {'mode': 'host-passthrough'}, 'boot_device': {'dev': ['hd', 'cdrom']},
-                'disk': [{'volume_id': '${libvirt_volume.disk.id}'}, {'file': str(installer)}, {'file': str(seed)}],
+                # Retain the Terraform dependency and expose the exact file path
+                # to virt-aa-helper without a host policy override.
+                'disk': [{'file': '${libvirt_volume.disk.id}'}, {'file': str(installer)}, {'file': str(seed)}],
                 'network_interface': {'network_id': '${libvirt_network.run.id}', 'mac': mac, 'wait_for_lease': False},
                 'console': {'type': 'pty', 'target_type': 'serial', 'target_port': '0'}}}}}
