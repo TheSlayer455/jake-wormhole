@@ -10,8 +10,10 @@ def report(record,lifecycle):
         targets.append({'target_id':target['target_id'],'candidate_identity':lifecycle['candidate_identity'],
             'phase':target['current_phase'],'terminal_outcome':target['terminal_outcome'],
             'initialization_complete':conditions['initialization'],'configuration_complete':conditions['configuration'],
+            # Stage observations survive a later validation failure. Restart
+            # invalidation already clears the applicable readiness conditions.
             'authentication_verified':conditions['final_identity'],'ansible_ready':all(conditions.values()) and
-                not target['restart_pending'] and target['terminal_outcome'] not in {'failed','unknown','cancelled'},
+                not target['restart_pending'],
             'tests_expected':len(target['tests']),'tests_passed':counts['pass'],
             'tests_failed':sum(counts[key] for key in ('fail','error','unreachable')),
             'tests_blocked':counts['blocked'],'tests_missing':counts['missing'],
