@@ -69,6 +69,15 @@ print(json.dumps({'final_authentication':True,'ansible_ready':True,'catalog_star
 '''
 
 
+def create_qemu_directory(path, group):
+    """Only a newly created project directory gains QEMU group traversal."""
+    path.mkdir(mode=0o700)
+    os.chown(path, 0, group)
+    # The private operator umask intentionally strips group bits from mkdir.
+    # Set the required traversal bit explicitly on this new directory only.
+    path.chmod(0o710)
+
+
 def preflight(source):
     require(os.geteuid() == 0, 'runtime_owner_required')
     observation = collect_observations(CANONICAL_INFRASTRUCTURE_ROOT)
@@ -137,11 +146,11 @@ def execute(source, terraform):
                 require(name not in virsh(query, '--all', '--name').split(), 'vm_resource_conflict')
             group = grp.getgrnam('libvirt-qemu').gr_gid
             if not SHARED.exists():
-                SHARED.mkdir(mode=0o710);os.chown(SHARED, 0, group)
+                create_qemu_directory(SHARED, group)
             require(not SHARED.is_symlink() and SHARED.stat().st_uid == 0 and SHARED.stat().st_gid == group and
                     SHARED.stat().st_mode & 0o777 == 0o710, 'vm_shared_storage_ownership')
             share = SHARED / identifier
-            share.mkdir(mode=0o710);os.chown(share, 0, group)
+            create_qemu_directory(share, group)
             pool = share / 'disk'
             candidate, seed = share / 'candidate.iso', share / 'seed.iso'
             command(['ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-C', 'wormhole-lab', '-f', run / 'ssh-key'], 'key-generation')

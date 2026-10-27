@@ -100,6 +100,19 @@ class SharedAdmission(unittest.TestCase):
                 self.fail('Unreconciled container admitted a VM')
         self.assertEqual(failure.exception.code, 'unreconciled_container_run')
 
+    @unittest.skipUnless(hasattr(os, 'geteuid') and os.geteuid() == 0, 'Root-owned QEMU path fixture')
+    def test_new_qemu_directory_traversal_survives_private_umask(self):
+        from wormhole.vm_baseline import create_qemu_directory
+        path = Path(self.temp.name) / 'qemu-share'
+        previous = os.umask(0o077)
+        try:
+            create_qemu_directory(path, os.getgid())
+        finally:
+            os.umask(previous)
+        self.assertEqual(path.stat().st_mode & 0o777, 0o710)
+        with self.assertRaises(FileExistsError):
+            create_qemu_directory(path, os.getgid())
+
 
 class VMJournal(unittest.TestCase):
     def test_closed_backend_and_production_boundary(self):
