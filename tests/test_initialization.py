@@ -109,7 +109,7 @@ class InitializationTests(unittest.TestCase):
         with self.assertRaises(RunError):self.execute(self.observation('observer-lost'),status='timeout')
         self.ps.verify_owned=Mock();self.ps.verify_limits=Mock()
         before={'State':{'Running':True,'StartedAt':'2026-01-01T00:00:00Z'}}
-        after={'State':{'Running':False,'Pid':0,'Status':'exited'}}
+        after={'State':{'Running':False,'Pid':0,'Status':'exited','StartedAt':'2026-01-01T00:00:00Z'}}
         with patch.object(init.images,'inspect',side_effect=[before,after]),patch.object(init.images,'docker') as stop:
             self.session.cancel_and_confirm('target-001')
         stop.assert_called_once_with(('stop','--time','2','b'*64),timeout=5)

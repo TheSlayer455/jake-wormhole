@@ -94,6 +94,7 @@ class InitializationSession:
     def observe(self, target_id, scenario='healthy'):
         require(scenario in runtime.SCENARIOS)
         ps = self.provisioning; ps.held()
+        require(not getattr(ps,'destroy_only',False),'initialization_recovery_observation_only')
         ps.check_inputs()
         require(not ps.receipt['unknown_outcome'] and not self.record['unknown_outcome'], 'initialization_outcome_unknown')
         target_id = ps.target_plan.resolve(target_id)
@@ -109,8 +110,13 @@ class InitializationSession:
         attempt = {'target_id':target_id,'scenario':scenario,'resource_id':resource,
             'started_at':before['State']['StartedAt'],'capture':None,'sha256':None,
             'duration_seconds':None,'process_status':'unknown','returncode':None}
+        before_path='private/initialization-provider-before-'+str(index).zfill(3)+'.json'
+        atomic_json(self.run.file(before_path),deepcopy(ps.receipt))
+        attempt.update(provider_before=before_path,
+            provider_before_sha256=hashlib.sha256(self.run.file(before_path).read_bytes()).hexdigest())
         self.record['attempts'].append(attempt)
-        self.record['unknown_outcome'] = True; ps.receipt['unknown_outcome'] = True; ps.save(); self.save()
+        self.record['unknown_outcome'] = True;self.save()
+        ps.receipt['unknown_outcome'] = True; ps.save()
         result = _run_process(('docker', '--config', images.docker_configuration(), '--host', images.SOCKET,
             'exec', '--user', '0:0', resource, '/usr/bin/python3', '-I', '-S', '-c', self.source.decode(),
             scenario, 'true' if ps.variables.get('mutable_home', False) else 'false', str(index)),
@@ -131,6 +137,17 @@ class InitializationSession:
         self.record['targets'][target_id] = {'resource_id': resource, 'attempt': index, 'observation': value}
         self.record['unknown_outcome'] = False; ps.receipt['unknown_outcome'] = False; ps.save()
         self.save(); return deepcopy(value)
+
+    @classmethod
+    def resume(cls,run,lease):
+        """Issue only a read/stop adapter after original provider proof replays."""
+        from .initialization_recovery import InitializationProof
+        from .provisioning import ProvisioningSession
+        proof=InitializationProof(run,lease)
+        session=cls.__new__(cls);session.provisioning=ProvisioningSession._load_retained(run,lease,initialization=proof)
+        session.run=run;session.source=SOURCE.read_bytes();session.record=deepcopy(proof.record)
+        session.deadline=session.run_deadline=time.monotonic()+8
+        return session
 
     def reconcile(self, target_id, *, absolute_deadline=None):
         """A verified durable result resolves observation loss; elapsed time does not."""
@@ -175,13 +192,16 @@ class InitializationSession:
         attempt=attempts[-1];identifier=attempt['resource_id']
         require(identifier==ps.target_resources[target_id],'initialization_scope')
         before=images.inspect('container',identifier,timeout=5)
-        ps.verify_target(before,target_id=target_id,inspection_timeout=5)
+        if before['State']['Running'] is True:ps.verify_target(before,target_id=target_id,inspection_timeout=5)
+        else:
+            ps.verify_owned(before,'target',identifier,target_id=target_id);ps.verify_limits(before,'target',stopped=True)
         require(before['State']['StartedAt']==attempt['started_at'],'initialization_restarted')
-        images.docker(('stop','--time','2',identifier),timeout=5)
+        if before['State']['Running'] is True:images.docker(('stop','--time','2',identifier),timeout=5)
         after=images.inspect('container',identifier,timeout=5)
         ps.verify_owned(after,'target',identifier,target_id=target_id)
         ps.verify_limits(after,'target',stopped=True)
-        require(after['State']['Running'] is False and after['State']['Pid']==0 and after['State']['Status']=='exited',
+        require(after['State']['Running'] is False and after['State']['Pid']==0 and after['State']['Status']=='exited' and
+            after['State']['StartedAt']==attempt['started_at'],
             'initialization_stop_unconfirmed')
         attempt['stop_proof']={'resource_id':identifier,'started_at':attempt['started_at'],
             'status':'exited','pid':0,'confirmed_at':now()}

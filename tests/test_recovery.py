@@ -180,6 +180,43 @@ class Cleanup(unittest.TestCase):
         self.assertTrue(value['unknown_outcome'])
         self.assertEqual(len(value['resources']), 3)
 
+    def test_interrupted_initialization_reconciles_before_the_existing_exact_cleanup_path(self):
+        from wormhole.initialization import InitializationSession
+        with self.f.patches():self.session.provision()
+        self.lease._reconciliation_only=True;self.session.destroy_only=True;self.lease.finish=Mock()
+        self.session.receipt['unknown_outcome']=True;self.session.save()
+        atomic_json(self.run.file('evidence/initialization.json'),{**common(self.run.manifest()),'unknown_outcome':True})
+        def resolve(_):
+            self.session.receipt['unknown_outcome']=False;self.session.save()
+            return {'status':'failed','category':'initialization_command_failed'}
+        resumed=SimpleNamespace(provisioning=self.session,record={'attempts':[{'target_id':'target-001'}]},
+            reconcile=Mock(side_effect=resolve),cancel_and_confirm=Mock())
+        with self.f.patches(),patch.object(r,'source_identity',return_value=(fixture.SHA,False)),\
+            patch.object(r.AdmissionLease,'resume',return_value=nullcontext(self.lease)),\
+            patch.object(images,'docker_scope',return_value=nullcontext()),\
+            patch.object(InitializationSession,'resume',return_value=resumed) as resume,\
+            patch.object(p.ProvisioningSession,'resume_destroy',return_value=self.session):value=r.recover_run(self.run)
+        resume.assert_called_once_with(self.run,self.lease);resumed.cancel_and_confirm.assert_not_called()
+        self.assertEqual(value['status'],'completed');self.assertEqual(value['primary_failure']['code'],'initialization_command_failed')
+        self.assertFalse(value['unknown_outcome']);self.lease.finish.assert_called_once()
+
+    def test_missing_initialization_terminal_requires_confirmed_stop_before_cleanup(self):
+        from wormhole.initialization import InitializationSession
+        with self.f.patches():self.session.provision()
+        self.lease._reconciliation_only=True;self.session.destroy_only=True;self.lease.finish=Mock()
+        self.session.receipt['unknown_outcome']=True;self.session.save()
+        atomic_json(self.run.file('evidence/initialization.json'),{**common(self.run.manifest()),'unknown_outcome':True})
+        def stop(_):self.session.receipt['unknown_outcome']=False;self.session.save()
+        resumed=SimpleNamespace(provisioning=self.session,record={'attempts':[{'target_id':'target-001'}]},
+            reconcile=Mock(side_effect=RunError('initialization_terminal_unavailable','Controlled missing marker')),
+            cancel_and_confirm=Mock(side_effect=stop))
+        with self.f.patches(),patch.object(r,'source_identity',return_value=(fixture.SHA,False)),\
+            patch.object(r.AdmissionLease,'resume',return_value=nullcontext(self.lease)),\
+            patch.object(images,'docker_scope',return_value=nullcontext()),patch.object(InitializationSession,'resume',return_value=resumed),\
+            patch.object(p.ProvisioningSession,'resume_destroy',return_value=self.session):value=r.recover_run(self.run)
+        resumed.cancel_and_confirm.assert_called_once_with('target-001')
+        self.assertEqual(value['status'],'completed');self.assertEqual(value['primary_failure']['code'],'coordinator_interrupted')
+
     def test_interrupted_after_tf_destroy_preserves_ids_and_retries_only_empty_saved_destroy(self):
         with self.f.patches():
             self.session.provision()
