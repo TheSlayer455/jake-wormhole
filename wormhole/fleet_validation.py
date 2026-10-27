@@ -185,7 +185,15 @@ def report_batch_validation(run):
     for item in result['checks']:
         lines.extend([item['target_id'] + ' / ' + item['check_id'] + ': ' + item['status'],
             '  expected: ' + item['expected'], '  observed: ' + item['observed'], '  evidence: ' + ', '.join(item['evidence'])])
-    progress = execution_state.project(plan, read_json(run.file('evidence/readiness.json')), result)
+    initialization=lifecycle=None
+    if run.file('evidence/initialization.json').exists():
+        from .initialization import report_initialization
+        initialization=report_initialization(run)
+    if run.file('evidence/lifecycle.json').exists():
+        from .lifecycle import report_lifecycle
+        lifecycle=report_lifecycle(run,expected_targets=plan['target_plan']['target_ids'])
+    progress = execution_state.project(plan, read_json(run.file('evidence/readiness.json')), result,
+        initialization=initialization,lifecycle=lifecycle)
     return {'result': deepcopy(result), 'text': '\n'.join(lines) + '\n',
         'progress': progress, 'progress_text': execution_state.render_text(progress)}
 

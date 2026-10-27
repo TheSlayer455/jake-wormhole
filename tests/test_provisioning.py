@@ -119,6 +119,22 @@ def plan(variables, operation='create'):
 
 
 class PlanPolicy(unittest.TestCase):
+    def test_mutable_home_is_an_exact_bounded_target_tmpfs_and_never_a_host_mount(self):
+        self.assertEqual(p.target_tmpfs({}),p.target_tmpfs({'mutable_home':False}))
+        tmpfs=p.target_tmpfs({'mutable_home':True})
+        self.assertEqual(set(tmpfs),{'/run','/tmp','/home/wormhole'})
+        self.assertEqual(tmpfs['/home/wormhole'],'rw,nosuid,nodev,noexec,size=4m,mode=0750,uid=10001,gid=10001')
+        for unsafe in (1,'true',None,{},[]):
+            with self.assertRaises(p.ProvisioningError):p.target_tmpfs({'mutable_home':unsafe})
+        values=inputs();values['mutable_home']=True
+        value=plan(values)
+        with self.assertRaises(p.ProvisioningError):p.validate_plan(value,values)
+        for entry in value['planned_values']['root_module']['resources']:
+            if entry['address']=='docker_container.target':entry['values']['tmpfs']=tmpfs
+        for entry in value['resource_changes']:
+            if entry['address']=='docker_container.target':entry['change']['after']['tmpfs']=tmpfs
+        p.validate_plan(value,values)
+
     def test_fixed_create_refresh_destroy_graphs_and_no_executable_or_key_inputs(self):
         values = inputs()
         p.validate_plan(plan(values), values)

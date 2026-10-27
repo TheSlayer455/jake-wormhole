@@ -141,9 +141,11 @@ class TargetView:
 
 class BatchReadinessSession(r.ReadinessSession):
     """Run lock/lease/Docker scope remain caller-owned; readiness retries allocate nothing."""
-    def __init__(self, provisioning, *, scenarios=None, validation=True, fleet_inventory=False):
+    def __init__(self, provisioning, *, scenarios=None, validation=True, fleet_inventory=False, initialization=None):
         self.run, self.lease, self.parent_provisioning = provisioning.run, provisioning.lease, provisioning
         self.target_plan = TargetPlan.from_lease(self.lease)
+        self.initialization = initialization
+        r.require(initialization is None or initialization.provisioning is provisioning, 'initialization_scope')
         revision, dirty = source_identity(); manifest = self.run.manifest()
         r.require(self.target_plan.profile in {'smoke', 'five-targets', 'twenty-targets'} and self.target_plan == provisioning.target_plan and
             not self.lease._reconciliation_only and self.lease.plan['synthetic'] is False and validation is True and
@@ -292,6 +294,11 @@ class BatchReadinessSession(r.ReadinessSession):
         if self.selected_target: return super().pin_trust()
         with self.selected(self.target_plan.resolve(target_id)):
             return super().pin_trust()
+
+    def invalidate(self, target_id=None, *, expected_restart=False):
+        if self.selected_target: return super().invalidate(expected_restart=expected_restart)
+        with self.selected(self.target_plan.resolve(target_id)):
+            return super().invalidate(expected_restart=expected_restart)
 
     def observe_hostkey(self, target_id=None):
         with self.selected(self.target_plan.resolve(target_id)):

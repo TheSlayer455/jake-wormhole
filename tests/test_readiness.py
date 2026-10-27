@@ -154,6 +154,28 @@ class ReadinessPolicy(unittest.TestCase):
         self.assertFalse(result['runtime_pipeline_complete']); self.assertFalse(result['production_iso_eligible'])
         self.assertNotIn('synthetic transport result', json.dumps(result['probes']))
 
+    def test_pending_or_failed_final_configuration_blocks_every_transport_probe(self):
+        self.session.start_helper()
+        initialized=SimpleNamespace(require_complete=Mock(return_value=False))
+        self.session.initialization=initialized
+        with patch.object(self.session,'probe') as probe:
+            self.assertFalse(self.session._poll())
+            self.assertEqual(self.session.last_pending,'configuration_pending')
+            initialized.require_complete.side_effect=r.ReadinessError('final_account_missing','Controlled account failure')
+            with self.assertRaises(r.ReadinessError) as error:self.session._poll()
+        probe.assert_not_called();self.assertEqual(error.exception.code,'final_account_missing')
+
+    def test_expected_restart_retains_epoch_without_extending_deadline_and_never_discards_trust(self):
+        self.session.start_helper();self.session.endpoint()
+        deadline=self.session.deadline
+        self.session.invalidate(expected_restart=True)
+        self.assertEqual(self.session.deadline,deadline)
+        self.assertIsNone(self.session.last_started_at)
+        self.assertEqual(len(read_json(self.run.file('evidence/readiness-history.json'))['epochs']['target-001']),1)
+        self.session.pinned_key=HOST_KEY
+        with self.assertRaises(r.ReadinessError) as error:self.session.invalidate(expected_restart=True)
+        self.assertEqual(error.exception.code,'restart_trust_pin_retained');self.assertEqual(self.session.pinned_key,HOST_KEY)
+
     def test_delayed_and_never_start_have_measured_transitions_and_bounded_failure(self):
         self.started = False; self.session.start_helper()
         polls = []

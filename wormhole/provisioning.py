@@ -76,6 +76,16 @@ def target_specs(target_plan=None):
         (identifier, target_plan.address_for(identifier)) for identifier in target_plan.target_ids]
 
 
+def target_tmpfs(variables):
+    value = variables.get('mutable_home', False)
+    require(type(value) is bool, 'unsafe_plan', 'The initialization home policy must be a literal boolean.')
+    result = {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0',
+              '/tmp': 'rw,nosuid,nodev,noexec,size=16m,mode=1777'}
+    if value:
+        result['/home/wormhole'] = 'rw,nosuid,nodev,noexec,size=4m,mode=0750,uid=10001,gid=10001'
+    return result
+
+
 def resources(value, target_plan=None):
     allowed = layout_addresses(target_plan)
     require(type(value) is dict, 'unsafe_state', 'State must be a structured Terraform result.')
@@ -242,8 +252,7 @@ def validate_plan(value, variables, *, operation='create', owned=None, target_pl
                 type(caps[0]['add']) is list and len(caps[0]['add']) == len(runtime_policy.capabilities) and
                 all(type(x) is str for x in caps[0]['add']) and set(caps[0]['add']) == set(runtime_policy.capabilities) and caps[0]['drop'] == ['ALL'],
                 'unsafe_plan', 'Only the qualified SSH target capabilities are permitted.')
-        require(target.get('tmpfs') == {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0',
-                '/tmp': 'rw,nosuid,nodev,noexec,size=16m,mode=1777'} and
+        require(target.get('tmpfs') == target_tmpfs(variables) and
                 set(target.get('env') or []) == {'WORMHOLE_RUN_ID=' + variables['run_id'], 'WORMHOLE_RUNTIME_TTL_SECONDS=300'},
                 'unsafe_plan', 'Only fixed tmpfs and bounded target environment are permitted.')
         volumes = target.get('volumes')
@@ -355,8 +364,9 @@ def target_binding_policy(binding, *, version=None):
 
 class ProvisioningSession:
     """Caller owns run.locked(), docker_scope(run) and the canonical held lease."""
-    def __init__(self, run, lease, *, toolchain=None, scenario='healthy', target_binding=None):
+    def __init__(self, run, lease, *, toolchain=None, scenario='healthy', target_binding=None, mutable_home=False):
         require(type(scenario) is str and scenario in SCENARIOS, 'invalid_scenario', 'Only fixed reviewed scenarios are supported.')
+        require(type(mutable_home) is bool, 'invalid_scenario', 'Only the fixed bounded initialization home profile is supported.')
         manifest = run.manifest()
         revision, dirty = source_identity()
         require(os.name == 'posix' and manifest['mode'] == 'container-reference' and
@@ -394,7 +404,8 @@ class ProvisioningSession:
         self.receipt['target_runtime_policy'] = self.target_runtime_policy.record()
         self.variables = {'run_id': run.id, 'source_revision': revision, 'image': self.target_image_id,
             'public_input': str(images.safe_bind(run.file('private/target-input'))), 'target_ids': list(self.target_plan.target_ids),
-            'target_limits': deepcopy(lease.plan['limits']['target']['terraform']), 'target_capabilities':list(self.target_runtime_policy.capabilities)}
+            'target_limits': deepcopy(lease.plan['limits']['target']['terraform']), 'target_capabilities':list(self.target_runtime_policy.capabilities),
+            'mutable_home': mutable_home}
         self.variables['target_limits'].pop('start'); self.variables['target_limits'].pop('must_run')
         self.inputs = {}
 
@@ -699,8 +710,7 @@ class ProvisioningSession:
                 'unsafe_target', 'Only the exact public authorized-key input may be mounted into a target.')
         require(not host.get('Binds') or host['Binds'] == [self.variables['public_input'] + ':/run/input:ro'],
                 'unsafe_target', 'An unapproved legacy bind is forbidden.')
-        require(host.get('Tmpfs') == {'/run': 'rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0',
-                '/tmp': 'rw,nosuid,nodev,noexec,size=16m,mode=1777'}, 'unsafe_target', 'Actual target tmpfs bounds differ.')
+        require(host.get('Tmpfs') == target_tmpfs(self.variables), 'unsafe_target', 'Actual target tmpfs bounds differ.')
         expected_network = 'wormhole-' + self.run.id + '-network'
         endpoints = actual.get('NetworkSettings', {}).get('Networks', {})
         require(type(endpoints) is dict and set(endpoints) == {expected_network} and

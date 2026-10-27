@@ -60,7 +60,7 @@ def observer_state(*, terminal_outcome=None, remote_alive=None, progress_age=Non
     return 'running-without-progress' if progress_age >= stall_seconds else 'running-making-progress'
 
 
-def project(plan, readiness, validation=None):
+def project(plan, readiness, validation=None, *, initialization=None, lifecycle=None):
     """Project one attributable atomic snapshot. This is not a qualification gate.
 
     Callers that publish acceptance must first replay the component originals.
@@ -75,6 +75,10 @@ def project(plan, readiness, validation=None):
     observed = children(readiness)
     require(len(observed) == len(ids) and
         [item.get('target_id', 'target-001') for item in observed] == ids)
+    for extra in (initialization,lifecycle):
+        if extra is not None:
+            require(extra.get('run_id')==plan.get('run_id') and extra.get('source_revision')==plan.get('source_revision') and
+                extra.get('expected_targets')==ids)
     checks = plan['checks']
     expected = [(item['target_id'], item['check_id']) for item in checks]
     require(len(expected) == len(set(expected)) and all(target in ids for target, _ in expected))
@@ -135,7 +139,7 @@ def project(plan, readiness, validation=None):
             first = {'code': failures[0].get('reason_code') or (observed_category if
                 type(observed_category) is str and re.fullmatch('[a-z][a-z0-9_]{0,79}', observed_category)
                 else 'functional_' + failures[0]['status'])}
-        targets.append({'target_id': identifier,
+        target_record={'target_id': identifier,
             'resource_identity': plan.get('target_resource_ids', {}).get(identifier, plan.get('target_resource_id')),
             'candidate_identity': plan.get('candidate_binding'), 'image_identity': plan.get('target_image'),
             'current_phase': phase, 'terminal_outcome': terminal,
@@ -150,10 +154,26 @@ def project(plan, readiness, validation=None):
             'tests_missing': counts['missing'], 'test_completion': 'complete' if complete else 'incomplete',
             'transition_elapsed_seconds': stage_seconds,
             'evidence_references': sorted({reference for item in result_rows if item['target_id'] == identifier
-                for reference in item.get('evidence', [])})})
+                for reference in item.get('evidence', [])})}
+        if initialization is not None:
+            item=initialization['targets'].get(identifier,{}).get('observation')
+            if item is not None:
+                target_record['initialization_outcome']='complete' if 'initialization-complete' in item['events'] else 'failed' if item['status']=='failed' else 'pending'
+                target_record['configuration_outcome']='complete' if item['checks']['configuration_complete'] else 'failed' if item['status']=='failed' else 'pending'
+                target_record['ansible_ready'] &= item['checks']['configuration_complete']
+            else:target_record['ansible_ready']=False
+        if lifecycle is not None:
+            current=lifecycle['targets'][identifier]
+            target_record.update(current_phase=current['current_phase'],terminal_outcome=current['terminal_outcome'],
+                last_progress_at=current['last_progress_at'],first_failure=current['first_failure'] or first,
+                authentication_verified=current['conditions']['final_identity'],
+                ansible_ready=all(current['conditions'].values()) and not current['restart_pending'] and
+                    current['terminal_outcome'] not in {'failed','unknown','cancelled'})
+        targets.append(target_record)
     summary = {'targets_expected': len(ids),
-        'targets_created': sum(bool(item.get('transitions')) for item in observed),
-        'targets_initialized': None,
+        'targets_created': len({item['target_id'] for item in lifecycle['events'] if item['event']=='created'}) if lifecycle is not None else sum(bool(item.get('transitions')) for item in observed),
+        'targets_initialized': None if initialization is None or set(initialization['targets'])!=set(ids) else
+            sum(item['initialization_outcome']=='complete' for item in targets),
         'targets_authenticated': sum(item['authentication_verified'] for item in targets),
         'targets_ansible_ready': sum(item['ansible_ready'] for item in targets),
         'targets_fully_tested': sum(item['test_completion'] == 'complete' for item in targets)}
@@ -193,7 +213,14 @@ def report_progress(run):
     else:
         plan = {**common(run.manifest()), 'target_plan': {'target_ids': [
             item.get('target_id', 'target-001') for item in children(receipt)]}, 'checks': []}
-    return project(plan, receipt, result)
+    initialization=lifecycle=None
+    if run.file('evidence/initialization.json').exists():
+        from .initialization import report_initialization
+        initialization=report_initialization(run)
+    if run.file('evidence/lifecycle.json').exists():
+        from .lifecycle import report_lifecycle
+        lifecycle=report_lifecycle(run,expected_targets=plan.get('target_plan',{}).get('target_ids',['target-001']))
+    return project(plan, receipt, result,initialization=initialization,lifecycle=lifecycle)
 
 
 def render_text(record):

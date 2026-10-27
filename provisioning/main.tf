@@ -16,6 +16,10 @@ variable "public_input" { type = string }
 variable "target_limits" { type = any }
 variable "target_ids" { type = list(string) }
 variable "target_capabilities" { type = list(string) }
+variable "mutable_home" {
+  type = bool
+  default = false
+}
 locals {
   prefix = "wormhole-${var.run_id}"
   common = {
@@ -67,10 +71,12 @@ resource "docker_container" "target" {
     drop = ["ALL"]
     add  = var.target_capabilities
   }
-  tmpfs = {
+  tmpfs = merge({
     "/run" = "rw,nosuid,nodev,noexec,size=16m,mode=0755,uid=0,gid=0"
     "/tmp" = "rw,nosuid,nodev,noexec,size=16m,mode=1777"
-  }
+  }, var.mutable_home ? {
+    "/home/wormhole" = "rw,nosuid,nodev,noexec,size=4m,mode=0750,uid=10001,gid=10001"
+  } : {})
   volumes {
     host_path      = var.public_input
     container_path = "/run/input"
