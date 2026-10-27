@@ -89,6 +89,20 @@ class SharedAdmission(unittest.TestCase):
         with self.assertRaises(OSError):
             v.require_vm_reconciled(self.root)
 
+    def test_resume_can_only_reconcile_the_original_run(self):
+        identifier = str(uuid4())
+        with v.VMLease(self.root, identifier, 'b' * 40) as lease:
+            lease.intent('pool', 'owned-pool')
+        with self.assertRaises(RunError):
+            with v.VMLease.resume(self.root, str(uuid4()), 'b' * 40):
+                self.fail('Wrong run resumed')
+        with v.VMLease.resume(self.root, identifier, 'b' * 40) as lease:
+            with self.assertRaises(RunError):
+                lease.intent('domain', 'new-allocation')
+            lease.reconciled('pool', 'owned-pool')
+            lease.finish()
+        v.require_vm_reconciled(self.root)
+
     def test_vm_rejects_container_unreconciled_and_same_live_lock(self):
         with a.AdmissionLease(self.root, str(uuid4()), 'a' * 40,
                               collector=lambda _: observed(), allow_synthetic=True):

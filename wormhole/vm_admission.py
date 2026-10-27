@@ -61,6 +61,13 @@ class VMLease:
         self.record = None
         self.pid = os.getpid()
         self.lock = None
+        self.reconciliation_only = False
+
+    @classmethod
+    def resume(cls, root, identifier, revision):
+        lease = cls(root, identifier, revision)
+        lease.reconciliation_only = True
+        return lease
 
     def __enter__(self):
         self.root = workspace_path(self.root)
@@ -74,6 +81,12 @@ class VMLease:
             previous = docker._journal(read_json(self.root / 'admission.json'))
             require(previous['state'] == 'finished' and read_json(self.root / 'history' /
                     (previous['run_id'] + '.json')) == previous, 'unreconciled_container_run')
+            if self.reconciliation_only:
+                self.record = validate_record(read_json(self.root / 'vm-admission.json'))
+                require(self.record['run_id'] == self.id and self.record['source_revision'] == self.revision and
+                        self.record['state'] == 'active', 'vm_resume_mismatch')
+                require(not (self.root / 'vm-history' / (self.id + '.json')).exists(), 'vm_completion_pending')
+                return self
             require_vm_reconciled(self.root)
             history = self.root / 'vm-history'
             workspace_path(history, create=True)
@@ -104,6 +117,7 @@ class VMLease:
 
     def intent(self, kind, identity):
         self._check()
+        require(not self.reconciliation_only, 'vm_reconciliation_only')
         self.record['resources'].append({'kind': kind, 'identity': identity, 'outcome': 'pending'})
         self._save()
 

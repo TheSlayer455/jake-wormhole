@@ -80,6 +80,8 @@ def create_qemu_directory(path, group):
 
 def preflight(source):
     require(os.geteuid() == 0, 'runtime_owner_required')
+    require(all(shutil.which(x) for x in ('virsh', 'qemu-system-x86_64', 'xorriso', 'dnsmasq', 'ssh-keygen', 'docker')),
+            'missing_vm_tool')
     observation = collect_observations(CANONICAL_INFRASTRUCTURE_ROOT)
     require(observation['memory_available_bytes'] >= 13 * 1024**3, 'vm_memory_headroom')
     require(observation['runtime_disk_free_bytes'] >= 80 * 1024**3 + 3 * Path(source).stat().st_size, 'vm_disk_headroom')
