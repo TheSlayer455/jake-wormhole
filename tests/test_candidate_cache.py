@@ -3,6 +3,7 @@ from copy import deepcopy
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 import unittest
+import sys
 
 from wormhole import candidate as c, candidate_cache as cache, chunks, images
 from wormhole.runs import atomic_json, common, create_run, read_json
@@ -36,7 +37,7 @@ class Cache(CandidateFixture,unittest.TestCase):
 
     def lease_for(self,run):
         lease=SimpleNamespace(run_id=run.id,source_revision=SHA,_reconciliation_only=False,
-            _active=Mock(),record={'resources':[]})
+            _active=Mock(),set_phase=Mock(),record={'resources':[]})
         lease.register_resource=lambda kind,identifier:lease.record['resources'].append({'kind':kind,'id':identifier,'outcome':'pending'})
         def reconcile(kind,identifier,**options):
             item=next(item for item in lease.record['resources'] if (item['kind'],item['id'])==(kind,identifier))
@@ -72,6 +73,22 @@ class Cache(CandidateFixture,unittest.TestCase):
         built=read_json(self.current.file('evidence/candidate-build.json'))
         self.assertEqual(built['status'],'failed');self.assertFalse(built['unknown_outcome'])
         self.assertFalse(self.current.file('evidence/candidate-binding.json').exists())
+
+    @unittest.skipUnless(sys.platform.startswith('linux'),'Canonical flock admission requires Linux.')
+    def test_reuse_registers_retained_image_through_real_admission_phase_guards(self):
+        from wormhole.admission import AdmissionLease
+        from test_admission import observed
+        cache.select(self.current)
+        with AdmissionLease(self.root/'enforced-infrastructure',self.current.id,SHA,
+                collector=lambda _:observed(),allow_synthetic=True) as lease:
+            with patch.object(images,'inspect',return_value=self.image()),patch.object(images,'docker') as mutate:
+                binding=cache.reuse(self.current,lease)
+            mutate.assert_not_called()
+            self.assertEqual(lease.record['phase'],'materializing')
+            self.assertEqual(lease.record['resources'],[{'kind':'image','id':DERIVED,
+                'outcome':'retained','size_bytes':12345}])
+            self.assertEqual(binding['image_id'],DERIVED)
+            lease.finish(reconciliation_complete=True)
 
     def test_changed_content_misses_cache_and_controller_revision_does_not_change_key(self):
         before=cache.key(self.current)

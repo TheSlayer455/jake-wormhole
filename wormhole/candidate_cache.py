@@ -163,6 +163,10 @@ def reuse(run,lease):
         module.verify_image(actual,old)
         c.require(type(actual.get('Size')) is int and actual['Size']>0,'candidate_image_mismatch')
         # Read-only verification precedes adopting this exact immutable image.
+        # Image registration uses the existing materialization journal contract;
+        # these phase reservations create no builder and perform no image commit.
+        lease.set_phase('assembling')
+        lease.set_phase('materializing')
         lease.register_resource('image',old['image_id'])
         lease.reconcile_resource('image',old['image_id'],outcome='retained',size_bytes=actual['Size'])
         if platform=='ubi':
