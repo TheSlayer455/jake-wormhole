@@ -16,10 +16,20 @@ and [draft PR 27](https://github.com/TheSlayer455/jake-wormhole/pull/27).
 manual/hosted mode-all semantic files matched exactly. Manual negative modes
 returned 1. Source and fixture evidence is separate from new container acceptance,
 which was not executed. Obtain the existing authorized runtime operator route,
-then implement/exercise the target initialization and hardening fault adapters
-before advancing the remaining rebuild phases. The full rebuild and independent
+then exercise the now-implemented initialization/hardening fault adapters,
+immutable Ubuntu reuse and updated complete-reference/stock-twenty paths.
+The latest source verification is in the active checkpoint. The full rebuild and independent
 review remain outstanding. Current retained source-test evidence is described
 in the active checkpoint; no new containers remain from this follow-up.
+
+Latest tested implementation: `6a8f7bf46b45f07332d0ca4bb1570aab74149839`,
+840 tests on both platforms (Windows 564 pass/276 skip; Linux nonroot 830 pass/10
+skip), and successful hosted PR workflow. The version-2 stock-twenty record keeps
+all 200 functional rows blocked when initialization prevents execution. Read the
+current checkpoint before using `reproduce`, Ubuntu cache reuse or the updated
+reference/scale contracts: their real Docker acceptance and performance remain
+unverified. UBI still uses its established full build path. Existing unknown
+allocation state cannot be cleared by the contained-init reconciliation helper.
 
 External engineering agents, including Luna, should start with [EXTERNAL-INTEGRATION](../docs/EXTERNAL-INTEGRATION.md). It is the short public-source entry point; this handoff retains development history. Public source and private runtime data are distinguished in [decision 0006](../docs/decisions/0006-public-source.md).
 

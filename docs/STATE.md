@@ -12,9 +12,24 @@ Windows (273 skips) and Linux nonroot (10 skips), plus hosted CI. Manual control
 parity observed 0/1/1; all three mode-all semantic files matched hosted output byte
 for byte. [Draft PR 27](https://github.com/TheSlayer455/jake-wormhole/pull/27)
 contains the increment. Runtime acceptance, additional fault adapters and actual
-image reuse remain outstanding; no independent review or full rebuild completion
+image reuse were outstanding at that checkpoint; no independent review or full rebuild completion
 is claimed. See the checkpoint for commands, timings and the retained failed
 test-fixture predecessor.
+
+The current implementation adds observed initialization/configuration, an explicit
+lifecycle with separate terminal outcomes, nineteen fixed fault scenarios,
+bounded contained-exec reconciliation, per-target reports and verified immutable
+Ubuntu image reuse. New complete-reference and stock-twenty paths require
+initialization before SSH/Ansible. Reference publication preserves original
+tested bytes on reuse. Current source verification and runtime limitations are
+tracked in the same checkpoint. Actual Docker execution, benchmarks, independent
+review and cross-Run UBI reuse remain outstanding.
+
+Current tested implementation `6a8f7bf46b45f07332d0ca4bb1570aab74149839` passed
+840 tests: Windows 564 passed/276 skips; Linux nonroot 830 passed/10 skips.
+Its hosted PR workflow passed. Manual/hosted semantic parity matched at the
+separately recorded predecessor `a6d5109`. No new Docker acceptance or runtime
+performance result is established by those source checks.
 
 Post-merge verification, October 24, 2026. All 21 original delivery PRs are merged. The qualified main source is `c3d440a3c7eee9691f30315b49146eb72998d2df`, tree `f5a69b447b224840c66229c00f0fd2e102812449`. See [merged verification](../handoff/MERGED-VERIFICATION.md). Original ticket evidence and tested revisions remain unchanged.
 

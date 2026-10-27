@@ -6,6 +6,21 @@ subset diagnostics are explicit and remain ineligible. Progress is a projection
 of existing records, with a separate terminal outcome and unknown initialization
 where no independent observation exists. It is not a second execution framework.
 
+`lifecycle.py` journals independently observed initialization, configuration,
+availability, final authentication, Ansible and test outcomes. `initialization.py`
+runs a fixed program only inside verified owned targets. Normal reference and
+stock-twenty execution require these observations before readiness/catalog use.
+The fault operator composes the existing Terraform, helper, admission and cleanup
+adapters; target-local durable results reconcile a lost initialization observer.
+An unknown allocation is still blocked by the original recovery rules.
+
+`candidate_cache.py` is a private content-addressed index under canonical
+admission, not a service. Ubuntu reuse retains the original manifest/image and
+records a new Run binding, verifies installed dependencies and immutable image
+identity, then reruns acceptance. Publication copies the original tested bundle.
+UBI retains its established full assembly path. Source, controller/test revision,
+build origin, tested bytes and qualification are distinct identities.
+
 Jake Wormhole is a standard-library Python CLI/library with bounded Linux container adapters. There is no resident scheduler, dashboard, Kubernetes deployment, database, broker or model provider. [Current state](STATE.md) and [original acceptance](acceptance-matrix.md) distinguish implementation from execution.
 
 | Boundary | Implemented responsibility |

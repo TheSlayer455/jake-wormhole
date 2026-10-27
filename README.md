@@ -3,6 +3,10 @@
 Active engineering: [failure reproduction and readiness follow-up](docs/FAILURE-REPRODUCTION.md).
 Use `python -m wormhole progress RUN_UUID` for readable atomic readiness snapshots;
 qualification still requires the existing original-evidence replay gates.
+The follow-up also adds `python -m wormhole reproduce --help` for fixed focused
+and fleet fault experiments, explicit initialization/configuration receipts and
+verified Ubuntu candidate reuse. New runtime acceptance remains unverified;
+consult the active checkpoint before using historical evidence as current proof.
 
 Container-only reference automation for verified source chunks, candidate-bound images, Terraform-managed targets, strict SSH/Ansible checks, native software inventories and attributable evidence. The source repository is public by [Jake's October 24 decision](docs/decisions/0006-public-source.md); runtime inputs, credentials and raw evidence remain private.
 

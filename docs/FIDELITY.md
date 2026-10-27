@@ -17,6 +17,15 @@ This is an actual container reference project using generated source and explici
 | Twenty simultaneous stock targets | Actual 160/200/200 grids and twenty 123-package inventories; no twenty-target candidate pipeline |
 | 22-container resource interval | Two points/CPU deltas, not guaranteed peaks, hard disk quotas or full historical logs |
 | Hosted source fixture CI and controlled parity | Seventeen-case manual/GitHub comparison is source-bound and synthetic; not homelab execution or GitLab runner execution |
+| New lifecycle, initialization, fault and cache source fixtures | Deterministic/mocked verification; fresh Docker execution, actual cross-Run reuse, updated twenty-target acceptance and publication remain unverified |
+
+The new account-expectation fault queries a deliberately absent identity; it does
+not remove a real image account. Home/key/hardening faults operate on disposable
+target tmpfs. The installation-source outcome is explicitly simulated. The stale
+input and cleanup-error injections are controlled simulations. Expected negative
+success credits the experiment, while its underlying execution stays failed.
+Ubuntu cache selection preserves original build and image identities and reruns
+acceptance; it does not reuse qualification. UBI cross-Run reuse is not implemented.
 
 UBI-only AUDIT_WRITE permits owned target authentication records in the shared kernel audit log. No audit read/control, extra KILL, PAM change, weakened authentication or host audit-setting change is established. Ubuntu keeps its original capability policy.
 
