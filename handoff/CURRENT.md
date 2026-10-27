@@ -2,36 +2,16 @@
 
 ## Final runtime recovery
 
-PR [27](https://github.com/TheSlayer455/jake-wormhole/pull/27) is merged at
-`01b1e806dc18fc581ea78f89747460fc0c6dfc0f`, with passing post-merge CI. The
-older draft references below retain their historical attribution. Current
-recovery branch: `codex/WORM-001-runtime-recovery`; application code is unchanged.
+Tested code: `f8e5f0ef8f3764617516f5716840fcbb751589f6`.
+Delivery: [PR 28](https://github.com/TheSlayer455/jake-wormhole/pull/28), branch `codex/WORM-001-runtime-recovery`. Follow the PR for the merge revision and main CI; later documentation/merge commits do not relabel earlier runtime observations. The [acceptance checkpoint](RUNTIME-ACCEPTANCE.md) records commands, source scope, repairs, timings and limitations. Container reference acceptance is complete.
 
-On the approved Linux host, that exact clean merged source passed local doctor
-(exit 0), but canonical admission status returned exit 2,
-`observation_unavailable`. Filesystem discovery confirms the available SSH
-identity cannot access the root-owned private store, sudo needs authentication,
-the existing service-account login rejects the available key, and no Wormhole
-operator helper is installed. Another application's operator service is not a
-Wormhole access route. No credentials, permissions or host services were changed.
+The previously successful WSL service-operator identity and its authorized owner escalation were recovered from prior session records. Admission and private ownership checks now succeed. Connection metadata and raw evidence remain in private engineering storage; no key, account, permission or host-service change was needed. Use that existing route, not the default client identity from the earlier failed attempts. Reconcile canonical admission before any new operation.
 
-The operator must make an existing authenticated connection as the canonical
-store owner available to this task. Preserve private ownership; storage checks
-require the executing UID to match, so merely granting read permission is not a
-solution. Reconcile original-source retained Runs and admission before allocating.
-Then begin with `reference-run --platform ubuntu --fresh-candidate` through the
-existing CLI, followed by its report/gate and verified cleanup. Continue the
-existing fault, Ubuntu/UBI reuse, mixed/twenty-target, interruption and publication
-entry points only after their prerequisites are proven.
+Real results: Ubuntu 43/43; fresh/reused UBI 46/46; all nineteen controlled scenarios; twenty simultaneous stock targets with 160/200/200 readiness, functional and inventory checks; mixed twenty with 200 blocked functional rows and no catalog dispatch. Interrupted initialization/normal recovery, isolation, incomplete publication and successful exact-byte local publication were verified. Windows: 585 passed/282 skipped; Linux owner: 865 passed/two skipped, 867 total each. Implementation CI passed. Source-fixture durations are not runtime timings.
 
-Read-only project-label queries found zero containers, zero networks and 29
-retained images. This is not proof of reconciled journals or valid cache entries.
-No new resources were allocated and no runtime acceptance or performance result
-was produced. Evidence remains private outside Git. Full source tests were not
-repeated for this documentation-only checkpoint. Runtime-dependent changes must
-remain unmerged until actually verified; production ISO eligibility stays false.
+Final audit: zero project containers/networks and pending resources, 33 retained images verified present, canonical lock available and unrelated sentinel unchanged. Preserve failed Runs, source checkouts, images and deliberately incomplete publication evidence. No independent reviewer was contacted. Stock twenty is separate from candidate-single qualification; assessments remain synthetic and production ISO eligibility remains false.
 
-## Active follow-up
+## Historical follow-up
 
 Continue the [failure-reproduction rebuild](../docs/FAILURE-REPRODUCTION.md) from
 tested implementation `492aa1051d3c298bd8ac71d602803f035d3f6501` on

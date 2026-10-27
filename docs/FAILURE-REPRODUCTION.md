@@ -1,9 +1,6 @@
 # Failure reproduction follow-up
 
-The owner's architecture and failure-reproduction brief authorizes this follow-up.
-The original WORM-001 through WORM-021 completion records remain historical and
-unchanged. This work is an increment toward the rebuild, not a completed rebuild
-or a new production qualification claim.
+The owner's architecture and failure-reproduction brief authorized this follow-up. Container reference runtime acceptance is now verified at the sources in the [runtime checkpoint](../handoff/RUNTIME-ACCEPTANCE.md), delivered through [PR 28](https://github.com/TheSlayer455/jake-wormhole/pull/28). The original WORM-001 through WORM-021 completion records remain unchanged. The sections below preserve earlier gaps, failed attempts, implemented claims and then-current access blockers; they are historical checkpoints. Production ISO eligibility remains false.
 
 ## Baseline and gaps
 

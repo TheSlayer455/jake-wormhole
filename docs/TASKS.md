@@ -1,14 +1,8 @@
 # Minx work index
 
-Final runtime recovery continues from merged main `01b1e80` on dedicated branch
-`codex/WORM-001-runtime-recovery`. See the [current access checkpoint](STATE.md#final-runtime-recovery-checkpoint).
-The actual admission-status probe returned 2 (`observation_unavailable`), before
-allocation. An authenticated connection as the existing canonical store owner is
-required; changing permissions alone would not satisfy storage ownership checks.
-After access: reconcile retained state, then one real healthy Ubuntu reference
-run, controlled faults, Ubuntu/UBI freshness and reuse, mixed/twenty-target runs,
-recovery and tested-byte publication. Measure runtime only after these execute.
-No original Done ticket or historical acceptance evidence is reclassified.
+Runtime recovery is verified at `f8e5f0e` on `codex/WORM-001-runtime-recovery`; [PR 28](https://github.com/TheSlayer455/jake-wormhole/pull/28) is the delivery record. See [actual runtime acceptance](../handoff/RUNTIME-ACCEPTANCE.md) for Ubuntu/UBI, faults, reuse, mixed/twenty-target, recovery and publication execution. Operator access is recovered, admission is reconciled and no temporary resources remain. Original Done tickets retain their historical authority and attribution; this checkpoint does not mutate Minx completion or claim independent review.
+
+## Historical follow-up checkpoints
 
 Active owner-authorized follow-up: [architecture and failure reproduction](FAILURE-REPRODUCTION.md).
 Original Done contracts below remain historical; this assignment has not been
