@@ -27,6 +27,7 @@ def report(record,lifecycle):
         summary['tests_'+name]=sum(item['tests_'+name] for item in targets)
     return {'operation':'failure-reproduction-report-v1','run_id':record['run_id'],
         'source_revision':record['source_revision'],'scenario':record['scenario'],'status':record['status'],
+        'simulation':record.get('simulation',False),'identity_diagnostic':record.get('identity_diagnostic'),
         'primary_failure':record['primary_failure'],'secondary_failures':record['secondary_failures'],
         'summary':summary,'targets':targets,'stage_timings':record['stage_timings'],
         'cleanup':record['cleanup'],'remote_state':lifecycle['remote_state'],
@@ -49,6 +50,7 @@ def write(run,record,lifecycle):
     value=report(record,lifecycle)
     atomic_json(run.file('evidence/failure-report.json'),value)
     lines=['Container failure reproduction: '+value['status'],
+        'Controlled simulation: '+str(value['simulation'])+'; identity diagnostic: '+str(value['identity_diagnostic']),
         'Expected negative observation: '+str(value['scenario_expectation_met']),
         'Reference eligibility: false. Production ISO eligibility: false.',
         'Summary: '+str(value['summary']),'Primary failure: '+str(value['primary_failure']),

@@ -44,6 +44,12 @@ def expectation_met(record,profile):
     if record['scenario']=='never-ready' and profile=='twenty-targets':codes.add('deadline_exhausted')
     observed=(record['status']=='passed' and expected is None and record['primary_failure'] is None) or (
         record['status']=='failed' and expected is not None and (record['primary_failure'] or {}).get('code') in codes)
+    if record['scenario'] in set(EXPECTED)-{'playbook-fails','required-evidence-missing','cleanup-error'}:
+        observed=observed and record.get('full_catalog_started') is False
+    if record['scenario']=='account-missing':
+        diagnostic=record.get('identity_diagnostic') or {}
+        observed=observed and diagnostic.get('status')=='fail' and diagnostic.get('category')=='ssh_user_rejected' and \
+            type(diagnostic.get('returncode')) is int and diagnostic['returncode']!=0
     return (observed and record['unknown_outcome'] is False and not record['remaining_owned_resources'] and
         record['cleanup'] is not None and record['cleanup']['status']=='completed' and record.get('sentinel_unchanged') is True)
 
@@ -59,7 +65,9 @@ def reproduce(profile,scenario,sentinel_id):
         'target_plan':plan.record(),'status':'running','primary_failure':None,'secondary_failures':[],
         'unknown_outcome':False,'scenario_expectation_met':False,'full_catalog_started':False,
         'stage_timings':dict.fromkeys(STAGES,None),'cleanup':None,'remaining_owned_resources':[],
-        'reference_eligible':False,'production_iso_eligible':False,'simulation':scenario in {'candidate-stale','cleanup-error'},
+        'reference_eligible':False,'production_iso_eligible':False,
+        'simulation':scenario in {'candidate-stale','cleanup-error','account-missing'},
+        'identity_diagnostic':None,
         'candidate_binding':'qualified stock image; candidate-bound fleet not established'}
     journal=None;ps=ready=initialization=validation=None;failure=None
     def save():
@@ -119,7 +127,7 @@ def reproduce(profile,scenario,sentinel_id):
                     for target in initial:journal.event(target,'runtime-started',evidence='evidence/provisioning.json',persist=False)
                     journal.save()
                     initialization=InitializationSession(ps,absolute_deadline=journal.deadline-20)
-                    configured={selected:'wrong-key'} if scenario=='wrong-key' else {selected:'configured-interpreter-unavailable'} if scenario=='interpreter-unavailable' else {}
+                    configured={selected:'wrong-key'} if scenario=='wrong-key' else {selected:'wrong-user'} if scenario=='account-missing' else {selected:'configured-interpreter-unavailable'} if scenario=='interpreter-unavailable' else {}
                     ready=BatchReadinessSession(ps,scenarios=configured,initialization=initialization)
                     ready.deadline=min(ready.deadline,journal.deadline-20)
                     ready.start_helper()
@@ -144,9 +152,24 @@ def reproduce(profile,scenario,sentinel_id):
                                 'initialization-command-fails','account-missing','home-inaccessible','authorized-key-missing'} else 'healthy'
                             observation=initialization.wait_result(target,chosen)
                             initialization_events(journal,target,observation,'evidence/initialization.json')
+                            if observation['status']=='failed':
+                                retain(RunError(observation['category'],'The observed initialization failure blocks dependent readiness.'))
                         return {'status':'failed' if any(item['observation']['status']!='passed'
                             for item in initialization.record['targets'].values()) else 'passed'}
                     stage('initialization',initialize)
+                    if scenario=='account-missing':
+                        # Explicit negative diagnostic of the same absent identity.
+                        # It cannot satisfy initialization or advance readiness.
+                        with ready.selected(selected):
+                            address=ready.endpoint();require(address is not None and ready.pin_trust(),'identity_diagnostic_unavailable')
+                            until=min(ready.deadline,time.monotonic()+10)
+                            while True:
+                                diagnostic=ready.probe('ssh',address)
+                                if diagnostic['category'] not in {'ssh_transport_pending','tcp_pending','probe_timeout'} or time.monotonic()>=until:break
+                                time.sleep(.1)
+                            record['identity_diagnostic']={key:diagnostic[key] for key in ('status','category','returncode')}
+                            require(diagnostic['status']=='fail' and diagnostic['category']=='ssh_user_rejected','identity_fault_not_observed')
+                        save()
                     deferred={'started':False,'deadline_shortened':False}
                     def poll(elapsed):
                         if scenario=='ready-late' and elapsed>=2 and not deferred['started']:

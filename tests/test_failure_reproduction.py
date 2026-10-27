@@ -47,6 +47,9 @@ class FailureContracts(unittest.TestCase):
             text=run.file('evidence/failure-report.txt').read_text()
             self.assertIn('initialization_command_failed',text)
             self.assertFalse(value['reference_eligible']);self.assertFalse(value['production_iso_eligible'])
+            record['simulation']=True;record['identity_diagnostic']={'status':'fail','category':'ssh_user_rejected','returncode':255}
+            reported=reports.report(record,lifecycle.record)
+            self.assertTrue(reported['simulation']);self.assertEqual(reported['identity_diagnostic']['returncode'],255)
 
     def test_fixed_scenarios_cover_real_faults_and_labeled_simulations(self):
         self.assertEqual(len(f.SCENARIOS),19)
@@ -56,15 +59,26 @@ class FailureContracts(unittest.TestCase):
 
     def test_negative_credit_requires_actual_declared_failure_known_state_and_complete_cleanup(self):
         record={'scenario':'never-ready','status':'failed','primary_failure':{'code':'target_not_started'},
-            'unknown_outcome':False,'remaining_owned_resources':[],'cleanup':{'status':'completed'},'sentinel_unchanged':True}
+            'unknown_outcome':False,'remaining_owned_resources':[],'cleanup':{'status':'completed'},'sentinel_unchanged':True,
+            'full_catalog_started':False}
         self.assertTrue(f.expectation_met(record,'twenty-targets'))
         record['primary_failure']['code']='deadline_exhausted'
         self.assertTrue(f.expectation_met(record,'twenty-targets'))
         self.assertFalse(f.expectation_met(record,'smoke'))
         for field,value in (('unknown_outcome',True),('remaining_owned_resources',[{'outcome':'pending'}]),
-            ('status','passed'),('cleanup',{'status':'blocked'}),('sentinel_unchanged',False)):
+            ('status','passed'),('cleanup',{'status':'blocked'}),('sentinel_unchanged',False),('full_catalog_started',True)):
             changed={**record,field:value}
             self.assertFalse(f.expectation_met(changed,'twenty-targets'))
+
+    def test_absent_identity_experiment_requires_its_actual_rejected_ssh_diagnostic(self):
+        record={'scenario':'account-missing','status':'failed','primary_failure':{'code':'final_account_missing'},
+            'unknown_outcome':False,'remaining_owned_resources':[],'cleanup':{'status':'completed'},'sentinel_unchanged':True,
+            'full_catalog_started':False,'identity_diagnostic':None}
+        self.assertFalse(f.expectation_met(record,'smoke'))
+        record['identity_diagnostic']={'status':'fail','category':'ssh_user_rejected','returncode':255}
+        self.assertTrue(f.expectation_met(record,'smoke'))
+        record['identity_diagnostic']={'status':'fail','category':'ssh_transport_pending','returncode':255}
+        self.assertFalse(f.expectation_met(record,'smoke'))
 
 
 if __name__=='__main__':unittest.main()

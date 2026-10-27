@@ -28,7 +28,7 @@ EVENTS = {
     'privilege-not-required': ('authentication-ready', 'privilege'),
     'ansible-verified': ('ansible-ready', 'ansible'),
 }
-KINDS = ('container-observation', 'simulated-installation', 'source-fixture')
+KINDS = ('container-observation', 'simulated-installation', 'simulated-identity', 'source-fixture')
 
 
 def require(value, code='lifecycle_invalid'):
@@ -191,7 +191,8 @@ class Lifecycle:
 
 
 def initialization_events(journal, target, observation, reference):
-    kind = 'simulated-installation' if observation['simulated_installation'] else 'container-observation'
+    kind = ('simulated-installation' if observation['simulated_installation'] else
+        'simulated-identity' if observation['scenario']=='account-missing' else 'container-observation')
     for event in observation['events']:
         journal.event(target, 'hardening-started' if event == 'hardening-applied' else event,
             evidence=reference, kind=kind, persist=False)
