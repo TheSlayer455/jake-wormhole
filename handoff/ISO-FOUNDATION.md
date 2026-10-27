@@ -6,6 +6,19 @@ implementation `f8e5f0ef8f3764617516f5716840fcbb751589f6`. Preserve its evidence
 
 ## Verified Ubuntu installation baseline
 
+Delivery: [PR 29](https://github.com/TheSlayer455/jake-wormhole/pull/29).
+Final runtime confirmation at `55bb2fb1ba657149d836a916dfc6be318b43a430` repeated
+the complete baseline with a new empty disk and seed, preserving the original
+ISO hash. It passed in **201.471 seconds**: input reuse 7.394 s; installation
+through final key emission 141.024 s; controller SSH/Ansible/inventory 40.875 s;
+Terraform apply 1.467 s and teardown 1.517 s. All 610 package/version rows were
+present, cleanup verified absent resources, both journals finished and the
+unrelated sentinel remained unchanged. Ten VM foundation and 23 existing admission
+tests passed at this source, including separate active-VM status reporting.
+[Push CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40603833876)
+and [PR CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40603942285)
+passed. Later documentation/merge revisions do not relabel these observations.
+
 At `31eca5832db3225ca7c10a5c4147c03ec8612e9f`, a fresh 8 GiB/two-vCPU/
 64 GiB KVM guest installed Ubuntu 22.04.5 amd64 from the remastered ISO's BIOS
 boot path. It booted its installed disk, authenticated through strict SSH host
@@ -23,7 +36,7 @@ authenticated successfully but failed on Ansible CLI argument parsing. The
 controller fix was exercised with the real pinned helper parser before retrying.
 Neither attempt changed installer identities to hide a controller defect.
 
-The complete successful experiment took **205.201 seconds**: ISO reuse and new
+The first complete successful experiment took **205.201 seconds**: ISO reuse and new
 seed preparation 8.103 s; Terraform init/validate/plan/apply 3.012 s;
 installation through final host-key emission 144.022 s; controller SSH/Ansible/
 inventory 40.812 s; controller cleanup 0.064 s and Terraform cleanup 1.417 s.
