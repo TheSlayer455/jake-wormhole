@@ -260,6 +260,7 @@ class Store:
             if not run.is_dir(): continue
             try:
                 _, result, manifest = self.proof(run.name,references,current=current)
+                if result.get('lab_iso_qualified') is True:pinned.add(manifest['candidate_sha256'])
                 candidate = self.shared/run.name/'candidate.iso'
                 if candidate.exists():
                     self.checked(candidate,references)
@@ -501,7 +502,8 @@ class Store:
                  'filesystem_available_delta_bytes':after['filesystem']['available_bytes']-before['filesystem']['available_bytes'],
                  'unique_candidate_allocated_bytes':plan['unique_candidate_allocated_bytes'],
                  'candidate_budget_allocated_bytes':plan['candidate_budget_allocated_bytes'],
-                 'cache_budget_exceeded':plan['cache_budget_exceeded']}
+                 'cache_budget_exceeded':plan['cache_budget_exceeded'],
+                 'retention_budget_exceeded':after['over_artifact_budget'] or plan['cache_budget_exceeded']}
         atomic_json(operation,receipt)
         atomic_json(self.infrastructure/'storage-hashes.json',{
             p:v for p,v in self.hashes.items() if Path(p).name=='candidate.iso' and Path(p).exists()})

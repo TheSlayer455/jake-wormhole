@@ -234,3 +234,10 @@ class Cleanup(unittest.TestCase):
         self.assertTrue(plan['cache_budget_exceeded'])
         self.assertGreater(plan['candidate_budget_allocated_bytes'],0)
         self.assertFalse(plan['actions']);self.assertTrue(candidate.exists())
+
+    def test_runtime_qualified_result_pins_candidate_and_protected_budget_is_reported(self):
+        run,candidate,package=self.fixture()
+        value=read_json(run/'result.json');value['lab_iso_qualified']=True;atomic_json(run/'result.json',value)
+        with patch.object(self.store,'invalidated',return_value=['ubuntu/guest/finalize.sh']),patch.object(s,'ARTIFACT_BUDGET',0):
+            receipt=self.clean()
+        self.assertTrue(candidate.exists());self.assertTrue(receipt['retention_budget_exceeded'])

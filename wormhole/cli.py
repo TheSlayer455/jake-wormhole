@@ -102,7 +102,7 @@ def main(arguments=None):
         elif options.command == 'storage':
             from .storage import operate
             value = operate(options.operation)
-            status = 1 if value.get('cache_budget_exceeded') else 0
+            status = 1 if value.get('cache_budget_exceeded') or value.get('retention_budget_exceeded') or value.get('over_artifact_budget') else 0
         elif options.command=='media-split':
             from .media_store import split
             value=split(options.source,options.store,options.sha256);status=0

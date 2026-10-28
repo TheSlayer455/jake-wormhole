@@ -491,6 +491,8 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 try:
                     from .storage import lifecycle
                     result['storage_cleanup'] = lifecycle(lease, identifier)
+                    if result['storage_cleanup']['retention_budget_exceeded']:
+                        result['storage_cleanup_error']='storage_retention_budget'
                 except Exception as error:
                     # A secondary storage error never replaces the workload result.
                     result['storage_cleanup_error'] = getattr(error,'code',type(error).__name__)

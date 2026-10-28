@@ -91,6 +91,8 @@ def build(store,base):
             try:
                 from .storage import lifecycle
                 receipt['storage_cleanup']=lifecycle(lease)
+                if receipt['storage_cleanup']['retention_budget_exceeded']:
+                    receipt['storage_cleanup_error']='storage_retention_budget'
             except Exception as error:
                 receipt['storage_cleanup_error']=getattr(error,'code',type(error).__name__)
             atomic_json(run/'result.json',receipt)
