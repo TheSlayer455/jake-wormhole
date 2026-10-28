@@ -17,6 +17,32 @@ GUEST='192.0.2.10'
 MEMORY=128*1024**2
 
 
+def installer_probe(network):
+    """Fail a broken VM route before disk formatting or a full OS extraction."""
+    return '''import json,pathlib,subprocess,socket,ssl
+network='''+repr(network)+'''
+path=pathlib.Path('/etc/netplan/90-wormhole-probe.yaml')
+path.write_text(json.dumps({'network':network}));path.chmod(0o600)
+subprocess.run(['netplan','apply'],check=True,timeout=20)
+seed=pathlib.Path('/run/wormhole-network-seed');seed.mkdir(mode=0o700)
+subprocess.run(['mount','-o','ro','/dev/disk/by-label/CIDATA',str(seed)],check=True,timeout=5)
+try:
+ context=ssl.create_default_context(cafile=str(seed/'wormhole-identity/sandbox-ca.crt'))
+ with socket.create_connection(('192.0.2.1',6514),timeout=5) as sock:
+  with context.wrap_socket(sock,server_hostname='wormhole-sandbox') as tls:tls.sendall(b'installer-network-preflight\\n')
+ with socket.create_connection(('192.0.2.1',6000),timeout=5):pass
+ with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as sock:
+  sock.settimeout(5);sock.sendto(bytes([0x23])+bytes(47),('192.0.2.1',12345));data,_=sock.recvfrom(512)
+  if len(data)!=48:raise RuntimeError('invalid lab time response')
+ blocked=False
+ try:socket.create_connection(('192.0.2.1',22),timeout=3).close()
+ except OSError:blocked=True
+ if not blocked:raise RuntimeError('management plane reachable before guest hardening')
+ pathlib.Path('/dev/ttyS0').write_text('WORMHOLE_INSTALL_NETWORK_READY\\n')
+finally:subprocess.run(['umount',str(seed)],check=True,timeout=5)
+'''
+
+
 def network_filter(name):
     root=ET.Element('filter',name=name,chain='root')
     def rule(direction,protocol,**fields):

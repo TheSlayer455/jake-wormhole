@@ -45,7 +45,8 @@ def storage():
 def configure(value):
     install=value['autoinstall']
     install['storage']=storage()
-    install['early-commands']=[['python3','-c',EARLY]]
+    from .ubuntu_sandbox import installer_probe
+    install['early-commands']=[['python3','-c',installer_probe(install['network'])],['python3','-c',EARLY]]
     # Runs in the installer, with the just-installed target mounted; no secret argv.
     install['late-commands'].insert(0,['bash','/cdrom/wormhole/encryption-late.sh'])
     return value

@@ -12,7 +12,7 @@ from wormhole.runs import RunError
 
 class Encryption(unittest.TestCase):
     def test_installer_contract_uses_file_not_embedded_secret(self):
-        value=configure({'autoinstall':{'late-commands':[]}})
+        value=configure({'autoinstall':{'late-commands':[],'network':{'version':2}}})
         crypt=next(x for x in storage()['config'] if x['type']=='dm_crypt')
         self.assertEqual(crypt['keyfile'],'/run/wormhole-unlock')
         self.assertNotIn('key',crypt)
