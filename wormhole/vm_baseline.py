@@ -328,6 +328,12 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 result['cleanup'] = 'unreconciled'
                 result['cleanup_error'] = getattr(error, 'code', type(error).__name__)
             result['finished_at'] = now();save()
+            if ubuntu_mode:
+                try:
+                    from .ubuntu_runtime import report
+                    report(run, result)
+                except Exception as error:
+                    result['report_error'] = getattr(error, 'code', type(error).__name__);save()
     return result
 
 

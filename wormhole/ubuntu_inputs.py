@@ -5,11 +5,21 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
-import base64
+import hashlib
 
 from .runs import SOURCE_ROOT, atomic_json, read_json, workspace_path
 from .vm_inputs import build_ubuntu, cloud_config, sha256
 from .ubuntu_assessment import POLICY, inventory, require
+
+
+def input_identity(store, mode):
+    # Execution/reporting changes deliberately do not alter installed bytes.
+    paths = ['wormhole/vm_inputs.py', 'wormhole/ubuntu_inputs.py', 'ubuntu/guest/finalize.sh',
+             'ubuntu/guest/audit.sh', 'ubuntu/guest/observe.py', 'profiles/ubuntu-lab-policy-v1.json']
+    files = {name: sha256(SOURCE_ROOT / name) for name in paths}
+    files['offline-dependencies'] = sha256(Path(store) / 'bundle/manifest.json')
+    value = {'mode': mode, 'files': files}
+    return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest(), value
 
 
 def prepare(store):
@@ -109,19 +119,26 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
     require(mode == 'stock-audit', 'hardening_not_yet_implemented')
     store, destination, seed_dir = Path(store), Path(destination), Path(seed_dir)
     prepare(store)
-    manifest = build_ubuntu(source, destination, seed_dir, identifier, 'ssh-ed25519 ' + 'A' * 68, address, mac)
+    fingerprint, inputs = input_identity(store, mode)
+    if reuse is not None:
+        require(reuse[1].get('installed_input_fingerprint') == fingerprint and reuse[1].get('mode') == mode,
+                'stale_candidate')
+    manifest = build_ubuntu(source, destination, seed_dir, identifier, 'ssh-ed25519 ' + 'A' * 68, address, mac,
+                           reuse=reuse, reuse_capability='ubuntu-assessment-candidate-iso')
     payload = seed_dir / 'payload';shutil.copytree(store / 'bundle', payload)
     shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/finalize.sh', payload / 'finalize.sh')
     shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/audit.sh', payload / 'audit.sh')
+    shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/observe.py', payload / 'observe.py')
     shutil.copyfile(POLICY, payload / 'policy.json')
     contract = {'mode': mode, 'policy_sha256': sha256(POLICY), 'dependency_manifest_sha256': sha256(store / 'bundle/manifest.json')}
     (payload / 'install-contract.json').write_text(json.dumps(contract, sort_keys=True))
     (payload / 'wormhole-finalize.service').write_text('[Unit]\nDescription=Wormhole installed-guest finalization\nAfter=local-fs.target cloud-config.service\nBefore=ssh.service ssh.socket\n[Service]\nType=oneshot\nRuntimeDirectory=sshd\nRuntimeDirectoryMode=0755\nExecStart=/bin/bash /usr/local/lib/wormhole/finalize.sh\nTimeoutStartSec=1000\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target\n')
-    final_iso = destination.with_name('final-candidate.iso')
-    with (seed_dir / 'payload-build.log').open('wb') as log:
-        subprocess.run(['xorriso', '-indev', str(destination), '-outdev', str(final_iso), '-boot_image', 'any', 'replay',
-                        '-map', str(payload), '/wormhole'], stdout=log, stderr=log, check=True, timeout=300)
-    os.replace(final_iso, destination)
+    if reuse is None:
+        final_iso = destination.with_name('final-candidate.iso')
+        with (seed_dir / 'payload-build.log').open('wb') as log:
+            subprocess.run(['xorriso', '-indev', str(destination), '-outdev', str(final_iso), '-boot_image', 'any', 'replay',
+                            '-map', str(payload), '/wormhole'], stdout=log, stderr=log, check=True, timeout=300)
+        os.replace(final_iso, destination)
     (seed_dir / 'user-data').write_text(seed_config(identifier, public_key, address, mac, password_hash))
     identity = seed_dir / 'wormhole-identity';identity.mkdir(mode=0o700)
     for name, raw in {'public-key': public_key + '\n', 'password': 'lab.service:' + password_hash + '\n', 'run-id': identifier + '\n'}.items():
@@ -139,6 +156,7 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
     manifest.update(capability='ubuntu-assessment-candidate-iso', candidate_sha256=sha256(destination), seed_sha256=sha256(seed),
         installation_input_sha256=sha256(seed_dir / 'user-data'), mode=mode, policy_sha256=sha256(POLICY),
         dependency_manifest_sha256=sha256(store / 'bundle/manifest.json'), scanner_package='libopenscap8=1.2.17-0.1ubuntu7.22.04.3',
+        installed_input_fingerprint=fingerprint, installed_inputs=inputs,
         nonsecret_seed_template_sha256=sha256(SOURCE_ROOT / 'wormhole/ubuntu_inputs.py'))
     atomic_json(seed_dir / 'build-manifest.json', manifest)
     return manifest
