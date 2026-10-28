@@ -40,7 +40,7 @@ Publication is required to refuse the currently pending policy. Its eligible
 positive path remains unverified; no qualified ISO or completed Ubuntu milestone
 is claimed.
 
-## Active home ISO extension
+## Accepted ISO foundation (historical two-OS scope)
 
 Continue [ISO foundation](ISO-FOUNDATION.md) from current `main`; the
 `codex/WORM-001-iso-foundation` branch is its merged delivery history.

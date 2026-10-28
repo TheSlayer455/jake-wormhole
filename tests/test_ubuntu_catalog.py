@@ -55,3 +55,11 @@ class Catalog(unittest.TestCase):
             self.assertIn('&lt;img',page)
             self.assertNotIn('https://',page)
             self.assertNotIn('<script',page)
+
+    def test_reopened_findings_need_three_compatible_observations(self):
+        with tempfile.TemporaryDirectory() as value:
+            root=Path(value)
+            first=self.run_record(root,'first',status='fail')
+            middle=self.run_record(root,'middle',status='pass')
+            last=self.run_record(root,'last',status='fail')
+            self.assertEqual(compare(middle,last,earlier=first)['findings_trends']['reopened'],['fixture-rule'])

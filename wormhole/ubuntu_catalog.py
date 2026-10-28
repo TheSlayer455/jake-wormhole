@@ -19,7 +19,7 @@ def load(run):
     return result, report, findings, svd
 
 
-def compare(previous, current):
+def compare(previous, current, *, earlier=None):
     a, ar, af, av = load(previous);b, br, bf, bv = load(current)
     compatible = bool(af and bf and af['content_sha256'] == bf['content_sha256'] and af['profile_id'] == bf['profile_id'])
     left = {x['rule_id']:x['native_status'] for x in af.get('rules',[])}
@@ -36,6 +36,13 @@ def compare(previous, current):
             if status in bad and old in bad:trends['persistent'].append(key)
             if status in {'missing','notchecked','unknown','error'}:trends['unevaluated'].append(key)
             if status=='notselected':trends['excluded'].append(key)
+        if earlier is not None:
+            _,_,ef,_=load(earlier)
+            require(ef.get('content_sha256')==af['content_sha256'] and ef.get('profile_id')==af['profile_id'],
+                    'trend_history_content_mismatch')
+            first={x['rule_id']:x['native_status'] for x in ef['rules']}
+            trends['reopened']=[key for key,status in right.items() if status in bad and left.get(key) in good and first.get(key) in bad]
+            trends['reopened_note']='Three attributable compatible-content observations compared.'
     def packages(svd):return {(x['name'],x['architecture']):x['version'] for x in svd.get('packages',[])}
     pa,pb=packages(av),packages(bv)
     package_delta = {

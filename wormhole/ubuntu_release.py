@@ -63,12 +63,15 @@ def publish(current,previous,*,candidate,dependency_store,destination,name):
         evidence=output/label;evidence.mkdir(mode=0o700)
         for source in ['qualification.json','qualification.txt','junit.xml','installed-svd.json','installed-svd.txt']:
             shutil.copyfile(Path(run)/source,evidence/source)
+        shutil.copyfile(Path(run)/'inputs/build-manifest.json',evidence/'installation-manifest.json')
+        shutil.copytree(Path(run)/'build-svd',evidence/'build-svd')
         assessment=evidence/'assessments';assessment.mkdir(mode=0o700)
         # This destination is private local storage, never a public export.
         # Console captures, seed, credentials and Terraform state stay separate.
         for source in ['findings.json','xccdf.xml','arf.xml','report.html','scanner-version.txt','scanner-receipt.json']:
             shutil.copyfile(Path(run)/'assessment'/source,assessment/source)
     (output/'SHA256SUMS').write_text(result['build']['candidate_sha256']+'  '+iso.name+'\n')
+    shutil.copyfile(POLICY,output/'policy.json')
     manifest={'schema_version':'1.0','capability':'lab-qualified-ubuntu-iso','candidate_sha256':sha256(iso),
               'lab_iso_qualified':True,'production_iso_eligible':False,
               'policy_sha256':sha256(POLICY),'installations':[delta['previous_run'],delta['current_run']],

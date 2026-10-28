@@ -158,6 +158,7 @@ def main():
     progress=sub.add_parser('progress');progress.add_argument('run_id')
     listing=sub.add_parser('catalog')
     comparison=sub.add_parser('compare');comparison.add_argument('previous');comparison.add_argument('current')
+    comparison.add_argument('--earlier',help='Optional third compatible-content observation for reopened findings.')
     reporting=sub.add_parser('report');reporting.add_argument('run_id')
     publication=sub.add_parser('publish');publication.add_argument('run_id');publication.add_argument('--previous',required=True)
     publication.add_argument('--store',required=True);publication.add_argument('--destination',required=True);publication.add_argument('--name',required=True)
@@ -181,7 +182,8 @@ def main():
         print(json.dumps(catalog(vm_baseline.ROOT/'vm-runs'),indent=2));return 0
     if options.command=='compare':
         from .ubuntu_catalog import compare
-        value=compare(vm_baseline.ROOT/'vm-runs'/run_id(options.previous),vm_baseline.ROOT/'vm-runs'/run_id(options.current))
+        value=compare(vm_baseline.ROOT/'vm-runs'/run_id(options.previous),vm_baseline.ROOT/'vm-runs'/run_id(options.current),
+                      earlier=vm_baseline.ROOT/'vm-runs'/run_id(options.earlier) if options.earlier else None)
         print(json.dumps(value,indent=2));return 0
     if options.command=='report':
         run=vm_baseline.ROOT/'vm-runs'/run_id(options.run_id)
