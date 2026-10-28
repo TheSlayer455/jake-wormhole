@@ -21,7 +21,8 @@ def load(run):
 
 def compare(previous, current, *, earlier=None):
     a, ar, af, av = load(previous);b, br, bf, bv = load(current)
-    compatible = bool(af and bf and af['content_sha256'] == bf['content_sha256'] and af['profile_id'] == bf['profile_id'])
+    compatible = bool(af and bf and af['content_sha256'] == bf['content_sha256'] and af['profile_id'] == bf['profile_id']
+                      and ar['policy_sha256']==br['policy_sha256'])
     left = {x['rule_id']:x['native_status'] for x in af.get('rules',[])}
     right = {x['rule_id']:x['native_status'] for x in bf.get('rules',[])}
     bad = {'fail','error','unknown','notchecked','missing','fixed'}
@@ -54,13 +55,24 @@ def compare(previous, current, *, earlier=None):
     required_equal = (ar['functional_results'] and
         {r['id']:r['status'] for r in ar['functional_results']} == {r['id']:r['status'] for r in br['functional_results']})
     same_iso = ar['candidate_sha256'] == br['candidate_sha256']
-    repeatable = (a['run_id'] != b['run_id'] and same_iso and compatible and left==right and required_equal
+    same_contract=a['build'].get('installed_input_fingerprint')==b['build'].get('installed_input_fingerprint')
+    repeatable = (a['run_id'] != b['run_id'] and same_iso and same_contract and compatible and left==right and required_equal
                   and bool(pa) and pa==pb and av.get('kernel')==bv.get('kernel') and
                   av.get('inventory_complete') is True and bv.get('inventory_complete') is True and av.get('snaps')==bv.get('snaps') and
                   a.get('installed') is True and b.get('installed') is True and
                   a['cleanup']==b['cleanup']=='verified-absent-inputs-retained')
+    old_inputs=a['build'].get('installed_inputs',{}).get('files',{})
+    new_inputs=b['build'].get('installed_inputs',{}).get('files',{})
+    input_changes=[{'input':key,'before':old_inputs.get(key),'after':new_inputs.get(key)}
+                   for key in sorted(old_inputs.keys()|new_inputs.keys()) if old_inputs.get(key)!=new_inputs.get(key)]
+    def snaps(svd):return {x['name']+':'+x['revision']:x for x in svd.get('snaps',[])}
+    sa,sb=snaps(av),snaps(bv)
     return {'schema_version':'1.0','previous_run':a['run_id'],'current_run':b['run_id'],
         'same_tested_iso':same_iso,'assessment_comparable':compatible,'package_delta':package_delta,
+        'snap_delta':{'added':[sb[k] for k in sorted(sb.keys()-sa.keys())],
+                      'removed':[sa[k] for k in sorted(sa.keys()-sb.keys())],
+                      'changed':[{'before':sa[k],'after':sb[k]} for k in sorted(sa.keys()&sb.keys()) if sa[k]!=sb[k]]},
+        'installed_input_changes':input_changes,'same_installation_contract':same_contract,
         'policy_changed':ar['policy_sha256']!=br['policy_sha256'],
         'installed_inputs_changed':a['build'].get('installed_input_fingerprint')!=b['build'].get('installed_input_fingerprint'),
         'functional_changes':[{'id':r['id'],'before':next((x['status'] for x in ar['functional_results'] if x['id']==r['id']), 'missing'),'after':r['status']}
