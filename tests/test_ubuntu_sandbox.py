@@ -11,6 +11,11 @@ import hashlib
 import shutil
 import subprocess
 import zlib
+import ast
+import socket
+import socketserver
+import ssl
+import threading
 from unittest.mock import patch
 from types import SimpleNamespace
 
@@ -56,6 +61,28 @@ class Sandbox(unittest.TestCase):
                     capture_output=True,text=True,timeout=10)
                 self.assertEqual(verified.returncode,0)
                 self.assertIn('Response verify OK',verified.stderr)
+            # Exercise the real receiver handler and fsync over TLS before an
+            # expensive guest run. Import definitions without starting services.
+            receiver=Path(__file__).resolve().parents[1]/'ubuntu/support/receiver.py'
+            tree=ast.parse(receiver.read_text())
+            selected=[n for n in tree.body if isinstance(n,(ast.FunctionDef,ast.ClassDef)) and n.name in {'retain','TCP','TLS','Lines'}]
+            ctx=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER);ctx.load_cert_chain(private/'server.crt',private/'server.key')
+            ns={'socketserver':socketserver,'threading':threading,'ctx':ctx,'c':{'bind':'127.0.0.1','guest':'127.0.0.1'},
+                'json':json,'time':__import__('time'),'os':os,'lock':threading.Lock(),
+                'Path':lambda value:private if value=='/evidence' else Path(value)}
+            exec(compile(ast.Module(body=selected,type_ignores=[]),str(receiver),'exec'),ns)
+            server=ns['TLS'](('127.0.0.1',0),ns['Lines']);server.kind='syslog'
+            thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+            try:
+                client=ssl.create_default_context(cafile=str(private/'ca.crt'))
+                with socket.create_connection(server.server_address,timeout=3) as raw:
+                    with client.wrap_socket(raw,server_hostname='wormhole-sandbox') as stream:
+                        message={'kind':'complete','run_id':'fixture-run','archive_id':'fixture-transfer','files':[]}
+                        stream.sendall(('WORMHOLE_AUDIT_ARCHIVE '+json.dumps(message)+'\n').encode())
+                        ns_ack=stream.recv(1024)
+                        self.assertEqual(json.loads(ns_ack),{'run_id':'fixture-run','archive_saved':'fixture-transfer'})
+                        self.assertIn('fixture-transfer',(private/'syslog.jsonl').read_text())
+            finally:server.shutdown();server.server_close();thread.join(timeout=3)
     def test_libvirt_canonical_xml_is_equivalent_but_changed_policy_is_not(self):
         original=network_filter('wormhole-test')
         actual=original.replace('0x0800','ipv4')
