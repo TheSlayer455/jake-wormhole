@@ -8,13 +8,18 @@ manual/external-control evidence remain pending; no engineer waiver is allowed.
 See [current continuation](../handoff/CURRENT.md). Historical Done contracts below
 are not reopened or reused as claim authority.
 The Ubuntu baseline was delivered through [PR 29](https://github.com/TheSlayer455/jake-wormhole/pull/29).
-The hardened increment is [PR 31](https://github.com/TheSlayer455/jake-wormhole/pull/31):
-two real fresh installs, 14/14 functional checks each, full native rule accounting,
+The hardened increment is [PR 31](https://github.com/TheSlayer455/jake-wormhole/pull/31),
+merged as `63d3aa1`: three real fresh installs (including merged source),
+14/14 functional checks each, full native rule accounting,
 verified reuse, recovery and refused pending publication. Eighteen findings,
 five manual checks, entitlement/coverage and qualified release remain open.
 No original Minx ticket is reopened or marked complete by this checkpoint.
-Implementation merge `44f33f8` passed a fresh post-merge Ubuntu VM run and main
-CI. Continue from current main; the merged feature branch is historical.
+Implementation merge `63d3aa1` passed a fresh post-merge Ubuntu VM run, the
+901-test Linux/Windows suites with explicit skips, and main CI. Continue from
+current main; merged feature branches are historical. Next independent work is
+installation-time encryption and its private unlock contract. Entitlement,
+external-service evidence, accountable manual dispositions and positive qualified
+publication remain outstanding; these requirements were not waived.
 
 Runtime recovery is verified at `f8e5f0e` on `codex/WORM-001-runtime-recovery`; [PR 28](https://github.com/TheSlayer455/jake-wormhole/pull/28) is the delivery record. See [actual runtime acceptance](../handoff/RUNTIME-ACCEPTANCE.md) for Ubuntu/UBI, faults, reuse, mixed/twenty-target, recovery and publication execution. Operator access is recovered, admission is reconciled and no temporary resources remain. Original Done tickets retain their historical authority and attribution; this checkpoint does not mutate Minx completion or claim independent review.
 

@@ -3,8 +3,8 @@
 ## Active Ubuntu-only hardening milestone
 
 The owner paused RHEL implementation/media work until Ubuntu is fully complete
-and explicitly authorizes RHEL afterward. Continue on
-`codex/WORM-001-ubuntu-hardening`, based on main `1a29ffc`. The existing VM
+and explicitly authorizes RHEL afterward. Continue from current main;
+`codex/WORM-001-ubuntu-hardening` is the merged PR 31 history. The existing VM
 baseline below remains historical installation evidence, not hardened acceptance.
 The versioned policy is `profiles/ubuntu-lab-policy-v1.json`: zero unresolved
 applicable automated failures/errors, accountable manual evidence, two fresh
@@ -34,18 +34,38 @@ and credentials differed. Elapsed: 558/544 seconds, build/reuse 15.0/9.5 seconds
 (one sample each). AIDE initialization is the measured critical path at about
 222 seconds. A remediation operation's zero exit is never substituted for audit.
 
-[PR 31](https://github.com/TheSlayer455/jake-wormhole/pull/31) carries this verified
-increment; consult its merge and CI records for delivery revisions. See the
+[PR 31](https://github.com/TheSlayer455/jake-wormhole/pull/31) merged as
+`63d3aa1fb90cdc478f7e50d76384d944130bfbff`.
+[Main CI passed](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40626679451).
+A third fresh installation from that exact merged implementation reused the
+same candidate and again passed 14/14 functional checks, with identical native
+assessment counts, installed contract, kernel and package/Snap inventories.
+It completed in 566.099 seconds; installation-to-host-key took 522.233 seconds,
+SSH/Ansible/inventory 12.956 seconds and Terraform cleanup 1.826 seconds.
+Its verified reuse stage took 16.949 seconds; these single samples do not prove
+a speed improvement. Native-capture-derived negatives refused a wrong target,
+missing result and unapproved exclusion without changing the original capture.
+These transformations are not additional guest fault experiments. No owned
+domains, pools, networks or controllers remain; both admission journals are
+reconciled. Private evidence/media remain retained. The unrelated Docker sentinel
+was unchanged and K3s remained active. See the
 [source-pinned hardening handoff](solutions/ubuntu-install-hardening.md).
-The 899-test integration suite passed on Linux (897 pass/two skips at `3f880b4`)
-and Windows (605 pass/294 skips at `408f341`); later focused Ubuntu negatives
-include unsupported-tailoring refusal. No independent review is claimed.
+The final 901-test suite at `63d3aa1` passed on Linux (899 pass/two skips,
+170 seconds) and Windows (607 pass/294 skips, 191 seconds). Earlier test counts
+retain their original attribution in Git history. Self-review only; no
+independent review is claimed. Documentation-only delivery does not relabel
+runtime observations as tests of a later implementation.
 
 Remaining: approved guest USG/FIPS procedure and modules, encryption/unlock
 integration, smart-card/directory/CA inputs, authorized banner/NTP/remote-audit
 requirements, five accountable manual dispositions and V2R8 distribution mapping.
-The second run collected manual facts without approving them. Qualification and
-positive qualified publication remain unverified. RHEL stays paused.
+The second and merged-source runs collected manual facts without approving
+them. Qualification and positive qualified publication remain unverified;
+manual-disposition integration and complete release evidence still need work.
+Next independent implementation task: design and exercise installation-time
+encryption with a declared private unlock contract, retaining observational
+acceptance and fresh-install proof. Do not invent entitlement, smart-card,
+directory, CA, time-server or remote-audit inputs. RHEL stays paused.
 
 Use the established operator route, clean pinned source and private stores:
 `python -m wormhole.ubuntu_runtime --help`. `prepare`, `run --mode stock-audit`
