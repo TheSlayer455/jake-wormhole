@@ -126,8 +126,15 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
     for name, raw in {'public-key': public_key + '\n', 'password': 'lab.service:' + password_hash + '\n', 'run-id': identifier + '\n'}.items():
         (identity / name).write_text(raw)
     seed = destination.with_name('seed.iso');seed.unlink()
-    subprocess.run(['xorriso', '-as', 'mkisofs', '-V', 'CIDATA', '-J', '-r', '-o', str(seed),
-                    str(seed_dir / 'user-data'), str(seed_dir / 'meta-data'), str(identity)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=30)
+    subprocess.run(['xorriso', '-as', 'mkisofs', '-V', 'CIDATA', '-J', '-r', '-graft-points', '-o', str(seed),
+                    'user-data=' + str(seed_dir / 'user-data'), 'meta-data=' + str(seed_dir / 'meta-data'),
+                    'wormhole-identity=' + str(identity)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=30)
+    # Prove the seed's real filesystem layout before allocating an installation.
+    seed_check = seed_dir / 'seed-layout-check'
+    subprocess.run(['xorriso', '-osirrox', 'on', '-indev', str(seed), '-extract', '/wormhole-identity', str(seed_check)],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=15)
+    require({p.name for p in seed_check.iterdir()} == {'public-key', 'password', 'run-id'} and
+            all(sha256(p) == sha256(identity / p.name) for p in seed_check.iterdir()), 'identity_seed_layout_invalid')
     manifest.update(capability='ubuntu-assessment-candidate-iso', candidate_sha256=sha256(destination), seed_sha256=sha256(seed),
         installation_input_sha256=sha256(seed_dir / 'user-data'), mode=mode, policy_sha256=sha256(POLICY),
         dependency_manifest_sha256=sha256(store / 'bundle/manifest.json'), scanner_package='libopenscap8=1.2.17-0.1ubuntu7.22.04.3',
