@@ -237,9 +237,10 @@ def main():
         print(json.dumps(recover(options.run_id,options.terraform),indent=2));return 0
     if options.command=='publish':
         from .ubuntu_release import publish
+        from .storage import Store
         identifier=run_id(options.run_id)
         value=publish(vm_baseline.ROOT/'vm-runs'/identifier,vm_baseline.ROOT/'vm-runs'/run_id(options.previous),
-            candidate=vm_baseline.SHARED/identifier/'candidate.iso',dependency_store=options.store,
+            candidate=Store().resolve(identifier),dependency_store=options.store,
             destination=options.destination,name=options.name)
         print(json.dumps(value,indent=2));return 0
     if options.command=='catalog':

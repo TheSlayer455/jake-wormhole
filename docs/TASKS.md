@@ -1,5 +1,11 @@
 # Minx work index
 
+Storage increment: `codex/WORM-001-storage-lifecycle`, [PR 36](https://github.com/TheSlayer455/jake-wormhole/pull/36).
+Shared-lock lifecycle cleanup, bounded candidate retention, preview/status and
+projected disk admission are implemented and exercised; see [measured state](STATE.md).
+Preserve unmanifested legacy fragments and qualification evidence. This delivery
+does not change historical Minx review state or complete Ubuntu qualification.
+
 Active sandbox increment: `codex/WORM-001-ubuntu-sandbox`. The owner authorized
 project-owned time/log receivers, private CA/test identities, protected local
 secret delivery and encrypted installation. These are implementation tasks;

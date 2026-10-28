@@ -57,6 +57,16 @@ def eligible(current, previous, *, candidate, dependency_store):
 
 
 def publish(current,previous,*,candidate,dependency_store,destination,name):
+    # Preserve existing input/duplicate/policy failures before taking the lock.
+    require(re.fullmatch(r'Jake-Ubuntu-22[.]04-LAB-QUALIFIED-[a-z0-9-]{1,60}',name) is not None,'release_name_invalid')
+    require(not (workspace_path(destination)/name).exists(),'duplicate_publication')
+    require(not json.loads(POLICY.read_text())['unresolved_requirements'], 'lab_policy_dependencies_pending')
+    from .storage import Store
+    with Store().locked():
+        return _publish(current,previous,candidate=candidate,dependency_store=dependency_store,destination=destination,name=name)
+
+
+def _publish(current,previous,*,candidate,dependency_store,destination,name):
     require(re.fullmatch(r'Jake-Ubuntu-22[.]04-LAB-QUALIFIED-[a-z0-9-]{1,60}',name) is not None,'release_name_invalid')
     root=workspace_path(destination)
     output=root/name

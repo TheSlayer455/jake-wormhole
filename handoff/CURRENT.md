@@ -1,5 +1,26 @@
 # Current handoff
 
+## Automatic storage lifecycle
+
+[PR 36](https://github.com/TheSlayer455/jake-wormhole/pull/36) tracks delivery;
+its merge record identifies the delivered main revision. Guest execution tested
+`254161b9ed822be350ec691689c8846c95dbfc7a`; final guards/21 focused Linux tests and
+[CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40787533279) tested
+`d5a9e7c757a1fb805a8e530c22606710f4d6f3ae`. Installed input hashes are unchanged.
+The fresh encrypted Ubuntu run passed 34/34 checks in 650 seconds, then reclaimed
+2.1 GiB automatically. Native results remain 208 pass/three fail/14 not applicable/
+five not checked/409 not selected; the CLI correctly remains nonzero because
+qualification is pending. RHEL stays paused.
+
+Use the existing private operator procedure and [storage commands](../docs/STORAGE.md).
+Private receipts preserve failures, interrupted intents and measured blocks.
+The footprint is 70.5 GiB; warm cleanup found zero further actions. No owned
+temporary resources or pending admission remain. All checked original evidence
+and retained release hashes match. Small legacy fragments remain protected.
+The excluded live media image's inode, size and blocks match; its timestamp
+changed during observation. Review was self-review, not independent. Protected
+retention exceeding 100 GiB/32 GiB budgets must block allocation, not erase evidence.
+
 ## Ubuntu sandbox: verified engineering, qualification pending
 
 Implementation delivery: [PR 34](https://github.com/TheSlayer455/jake-wormhole/pull/34)
