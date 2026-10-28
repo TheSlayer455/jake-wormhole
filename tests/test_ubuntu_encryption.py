@@ -7,12 +7,25 @@ import tempfile
 import unittest
 import shutil
 import subprocess
+from unittest.mock import patch
 
 from wormhole.ubuntu_encryption import ConsoleUnlock,configure,storage,read_region
 from wormhole.runs import RunError
 
 
 class Encryption(unittest.TestCase):
+    def test_controller_reader_changes_reuse_but_installer_changes_invalidate(self):
+        from wormhole.ubuntu_inputs import input_identity
+        from wormhole import ubuntu_encryption
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);(root/'bundle').mkdir();(root/'bundle/manifest.json').write_text('{}')
+            first,_=input_identity(root,'hardened',sandbox=True)
+            with patch.object(ubuntu_encryption,'read_region',side_effect=RuntimeError('controller-only fixture')):
+                second,_=input_identity(root,'hardened',sandbox=True)
+            self.assertEqual(first,second)
+            with patch.object(ubuntu_encryption,'EARLY',ubuntu_encryption.EARLY+'\n# changed installed input\n'):
+                third,_=input_identity(root,'hardened',sandbox=True)
+            self.assertNotEqual(first,third)
     @unittest.skipUnless(shutil.which('qemu-img'),'actual qemu-img required for this small real-tool regression')
     def test_actual_qcow2_skip_reads_the_requested_nonzero_region(self):
         with tempfile.TemporaryDirectory() as directory:

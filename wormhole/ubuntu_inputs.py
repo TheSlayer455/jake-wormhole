@@ -19,10 +19,18 @@ def input_identity(store, mode, *, sandbox=False):
     if mode == 'hardened':
         paths += ['wormhole/ubuntu_hardening.py', 'ubuntu/remediation-plan-v1.json', 'ubuntu/guest/remediate.py']
     if sandbox:
-        paths += ['wormhole/ubuntu_encryption.py', 'ubuntu/guest/encryption-late.sh',
-                  'ubuntu/guest/sandbox.sh','ubuntu/guest/entitlement.py','ubuntu/support/receiver.py','wormhole/ubuntu_sandbox.py']
+        paths += ['ubuntu/guest/encryption-late.sh','ubuntu/guest/sandbox.sh',
+                  'ubuntu/guest/entitlement.py','ubuntu/support/receiver.py']
     files = {name: sha256(SOURCE_ROOT / name) for name in paths}
     files['offline-dependencies'] = sha256(Path(store) / 'bundle/manifest.json')
+    if sandbox:
+        from .ubuntu_encryption import configure
+        from .ubuntu_sandbox import network_filter,certificates,BIND,GUEST
+        import inspect
+        recipe={'installer':configure({'autoinstall':{'network':{'version':2},'late-commands':[]}}),
+                'network_filter':network_filter('wormhole-contract'),
+                'certificate_issuance':inspect.getsource(certificates),'bind':BIND,'guest':GUEST}
+        files['sandbox-installation-and-service-contract']=hashlib.sha256(json.dumps(recipe,sort_keys=True).encode()).hexdigest()
     value = {'mode': mode, 'files': files}
     if sandbox:value['sandbox']=True
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest(), value
