@@ -61,6 +61,7 @@ class VMLease:
         self.record = None
         self.pid = os.getpid()
         self.lock = None
+        self.descriptor = None
         self.reconciliation_only = False
 
     @classmethod
@@ -72,7 +73,7 @@ class VMLease:
     def __enter__(self):
         self.root = workspace_path(self.root)
         self.lock = file_lock(self.root / 'infrastructure.lock')
-        self.lock.__enter__()
+        self.descriptor = self.lock.__enter__()
         info = (self.root / 'infrastructure.lock').stat()
         self.lock_identity = info.st_dev, info.st_ino
         try:
@@ -100,6 +101,7 @@ class VMLease:
         except BaseException:
             self.lock.__exit__(None, None, None)
             self.lock = None
+            self.descriptor = None
             raise
 
     def _check(self):
@@ -142,4 +144,5 @@ class VMLease:
         if self.lock is not None:
             self.lock.__exit__(*args)
             self.lock = None
+            self.descriptor = None
         return False

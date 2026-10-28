@@ -63,7 +63,7 @@ class Cleanup(unittest.TestCase):
         return run,candidate,package
 
     def clean(self,references=()):
-        with patch.object(self.store,'observe',return_value=references):return self.store.clean_held()
+        with self.store.locked(),patch.object(self.store,'observe',return_value=references):return self.store.clean_held()
 
     def test_failed_and_successful_evidence_and_releases_survive_duplicate_cleanup(self):
         first, candidate, package=self.fixture(outcome='assessment-complete')
@@ -160,8 +160,9 @@ class Cleanup(unittest.TestCase):
         with patch.object(self.store,'invalidated',return_value=['ubuntu/guest/finalize.sh']):
             receipt=self.clean()
         self.assertFalse(candidate.exists());self.assertTrue((run/'inputs/build-manifest.json').exists())
-        self.assertTrue(any('obsolete-installed-inputs'==read_json(p).get('reason')
-                            for p in (self.store.infrastructure/'storage-operations').glob('*.json')))
+        self.assertTrue(any(a.get('reason')=='obsolete-installed-inputs'
+                            for p in (self.store.infrastructure/'storage-operations').glob('*-batch-*.json')
+                            for a in read_json(p)['actions']))
         with self.assertRaises(RunError) as error:self.store.resolve(run.name)
         self.assertEqual(error.exception.code,'stale_candidate')
 
@@ -187,7 +188,7 @@ class Cleanup(unittest.TestCase):
         with self.assertRaises(RunError):self.store.checked(package,[str(package.parent)])
         plan=self.store.preview([])
         package.write_bytes(b'changed after preview')
-        with patch.object(self.store,'observe',return_value=[]),patch.object(self.store,'preview',return_value=plan):
+        with self.store.locked(),patch.object(self.store,'observe',return_value=[]),patch.object(self.store,'preview',return_value=plan):
             with self.assertRaises(RunError) as error:self.store.clean_held()
         self.assertEqual(error.exception.code,'storage_file_changed');self.assertTrue(package.exists())
 
@@ -203,3 +204,14 @@ class Cleanup(unittest.TestCase):
         self.store.preview([])
         self.assertEqual(paths,{p:s.signature(p) for p in paths})
         self.assertFalse((self.store.infrastructure/'storage-operations').exists())
+
+    def test_unheld_or_changed_admission_lock_cannot_delete(self):
+        run,candidate,package=self.fixture()
+        with self.assertRaises(RunError) as error:self.store.clean_held()
+        self.assertEqual(error.exception.code,'storage_lock_required')
+        with self.store.locked():
+            lock=self.store.infrastructure/'infrastructure.lock'
+            lock.rename(lock.with_suffix('.old'));lock.touch(mode=0o600)
+            with self.assertRaises(RunError) as error:self.store.clean_held()
+            self.assertEqual(error.exception.code,'storage_lock_changed')
+        self.assertTrue(package.exists())

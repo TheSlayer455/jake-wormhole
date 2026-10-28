@@ -83,7 +83,7 @@ def file_lock(path):
         require((actual.st_dev,actual.st_ino)==(expected.st_dev,expected.st_ino),'media_lock_changed')
         try:fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
         except BlockingIOError:raise RunError('media_store_busy','Another media operation owns this store or destination.') from None
-        yield
+        yield fd
     finally:os.close(fd)
 
 

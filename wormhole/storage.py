@@ -66,6 +66,7 @@ class Store:
         self.runs = self.root / 'vm-runs'
         cache=self.infrastructure/'storage-hashes.json'
         self.hashes=read_json(cache) if cache.exists() else {}
+        self.descriptor=None
 
     def digest(self, path):
         """Reuse only owner-private hash receipts with identical inode metadata.
@@ -83,12 +84,27 @@ class Store:
 
     @contextmanager
     def locked(self):
-        require(os.geteuid() == 0, 'runtime_owner_required')
         workspace_path(self.infrastructure)
         require(read_json(self.infrastructure / 'owner.json') == {
             'application': 'jake-wormhole', 'schema_version': '1.0', 'kind': 'shared-infrastructure-root'})
-        with file_lock(self.infrastructure / 'infrastructure.lock'):
-            yield
+        with file_lock(self.infrastructure / 'infrastructure.lock') as descriptor:
+            self.descriptor=descriptor
+            try:yield
+            finally:self.descriptor=None
+
+    def check_lock(self, lease):
+        if lease is not None:
+            from .vm_admission import VMLease
+            from .admission import AdmissionLease
+            require(isinstance(lease,(VMLease,AdmissionLease)) and lease.root==self.infrastructure,
+                    'storage_lock_required')
+            require(getattr(lease,'pid',getattr(lease,'_lease_pid',None))==os.getpid(),'storage_lock_required')
+            descriptor=lease.descriptor
+        else:descriptor=self.descriptor
+        require(descriptor is not None,'storage_lock_required')
+        held=os.fstat(descriptor);actual=(self.infrastructure/'infrastructure.lock').lstat()
+        require(stat.S_ISREG(actual.st_mode) and (held.st_dev,held.st_ino)==(actual.st_dev,actual.st_ino),
+                'storage_lock_changed')
 
     def status(self):
         totals = {key: 0 for key in ('candidates', 'temporary_builds', 'vm_disks',
@@ -176,6 +192,8 @@ class Store:
                 executable = Path(os.fsdecode(argv[0])).name if argv else ''
                 if executable in {'terraform','xorriso','oscap','qemu-img','qemu-system-x86_64'}:
                     relevant = any(str(root).encode() in b' '.join(argv) for root in (self.root,self.shared))
+                    cwd=os.readlink(directory/'cwd')
+                    relevant=relevant or any(cwd.startswith(str(root)+'/') for root in (self.root,self.shared))
                     require(not relevant, 'storage_active_tool')
                 for fd in (directory/'fd').iterdir():
                     try: target = os.readlink(fd)
@@ -344,7 +362,9 @@ class Store:
     def invalidated(self, manifest):
         """Evict by input mismatch, never by timestamps or a guessed filename."""
         from .runs import SOURCE_ROOT, source_identity
-        _, dirty=source_identity()
+        if not manifest.get('installed_inputs',{}).get('files'):return []
+        try:_, dirty=source_identity()
+        except RunError:return []
         if dirty:return []
         changed=[]
         for name, expected in manifest.get('installed_inputs',{}).get('files',{}).items():
@@ -443,6 +463,7 @@ class Store:
 
     def clean_held(self, *, lease=None, current=None):
         """Caller already holds the SAME admission lock; never a nested flock."""
+        self.check_lock(lease)
         references=self.observe(lease=lease)
         plan=self.preview(references,current=current)
         before=self.status()
@@ -453,36 +474,23 @@ class Store:
         operation=operations/(str(uuid4())+'.json')
         receipt={'schema_version':'1.0','state':'prepared','at':now(),'actions':plan['actions'],
                  'before':before,'blocked':plan['blocked']}
-        # Large fleets can exceed small run-record limits: split into per-file receipts.
+        # Bounded batches retain durable intent without thousands of fsyncs.
         atomic_json(operation,{**receipt,'actions':len(plan['actions'])})
         reclaimed=0
-        for index, action in enumerate(plan['actions']):
-            path=Path(action['path'])
-            require(self.checked(path,references)==action['signature'],'storage_file_changed')
-            if action['reason']=='identical-candidate':
-                canonical=self.shared/action['canonical_run']/'candidate.iso'
-                self.checked(canonical,references)
-                require(canonical!=path and self.digest(canonical)==action['sha256'])
-                atomic_json(self.runs/action['run_id']/'storage-candidate.json',{
-                    'schema_version':'1.0','sha256':action['sha256'],'canonical_run':action['canonical_run'],
-                    'original_run':action['run_id'],'at':now()})
-            if action['reason']=='verified-detached-seed':
-                atomic_json(self.runs/action['run_id']/'storage-seed.json',{
-                    'schema_version':'1.0','sha256':action['sha256'],'at':now(),
-                    'disposition':'detached after archived teardown and live-reference verification; logical unlink only'})
-            if action['reason']=='obsolete-installed-inputs':
-                atomic_json(self.runs/action['run_id']/'storage-candidate.json',{
-                    'schema_version':'1.0','sha256':action['sha256'],'disposition':'evicted-stale-installed-inputs',
-                    'invalidated_inputs':action['invalidated_inputs'],'at':now()})
-            entry=operations/(operation.stem+'-'+str(index)+'.json')
-            atomic_json(entry,{'state':'prepared',**action})
-            path.unlink()
-            # Synchronize directory metadata before declaring deletion complete.
-            fd=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY)
-            try:os.fsync(fd)
-            finally:os.close(fd)
-            reclaimed+=action['signature'][3]
-            atomic_json(entry,{'state':'unlinked',**action})
+        for start in range(0,len(plan['actions']),128):
+            batch=plan['actions'][start:start+128]
+            entry=operations/(operation.stem+'-batch-'+str(start)+'.json')
+            atomic_json(entry,{'state':'prepared','actions':batch})
+            parents=set()
+            for action in batch:
+                self.check_lock(lease)
+                parents.add(self.unlink(action,references))
+                reclaimed+=action['signature'][3]
+            for parent in parents:
+                fd=os.open(parent,os.O_RDONLY|os.O_DIRECTORY)
+                try:os.fsync(fd)
+                finally:os.close(fd)
+            atomic_json(entry,{'state':'unlinked','actions':batch})
         after=self.status()
         receipt={**receipt,'state':'complete','actions':len(plan['actions']), 'after':after,
                  'unlinked_allocated_bytes':reclaimed,
@@ -494,8 +502,30 @@ class Store:
             p:v for p,v in self.hashes.items() if Path(p).name=='candidate.iso' and Path(p).exists()})
         return receipt
 
+    def unlink(self, action, references):
+        path=Path(action['path'])
+        require(self.checked(path,references)==action['signature'],'storage_file_changed')
+        if action['reason']=='identical-candidate':
+            canonical=self.shared/action['canonical_run']/'candidate.iso'
+            self.checked(canonical,references)
+            require(canonical!=path and self.digest(canonical)==action['sha256'])
+            atomic_json(self.runs/action['run_id']/'storage-candidate.json',{
+                'schema_version':'1.0','sha256':action['sha256'],'canonical_run':action['canonical_run'],
+                'original_run':action['run_id'],'at':now()})
+        if action['reason']=='verified-detached-seed':
+            atomic_json(self.runs/action['run_id']/'storage-seed.json',{
+                'schema_version':'1.0','sha256':action['sha256'],'at':now(),
+                'disposition':'detached after archived teardown and live-reference verification; logical unlink only'})
+        if action['reason']=='obsolete-installed-inputs':
+            atomic_json(self.runs/action['run_id']/'storage-candidate.json',{
+                'schema_version':'1.0','sha256':action['sha256'],'disposition':'evicted-stale-installed-inputs',
+                'invalidated_inputs':action['invalidated_inputs'],'at':now()})
+        path.unlink()
+        return path.parent
+
 
 def operate(command):
+    require(os.geteuid()==0,'runtime_owner_required')
     store=Store()
     with store.locked():
         if command=='status': return store.status()
