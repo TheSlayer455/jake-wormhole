@@ -14,6 +14,14 @@ def command(*args):
         return subprocess.CompletedProcess(args, 127, '', 'required tool absent')
 
 
+def file_sha256(path):
+    digest=hashlib.sha256()
+    with path.open('rb') as stream:
+        for block in iter(lambda:stream.read(1024*1024),b''):
+            digest.update(block)
+    return digest.hexdigest()
+
+
 def observe():
     release = dict(line.split('=', 1) for line in Path('/etc/os-release').read_text().splitlines() if '=' in line)
     if release.get('ID', '').strip('"') != 'ubuntu' or release.get('VERSION_ID', '').strip('"') != '22.04':
@@ -39,7 +47,7 @@ def observe():
     }
     policy = json.loads(Path('/usr/local/lib/wormhole/policy.json').read_text())
     content = Path('/usr/local/lib/wormhole/ssg-ubuntu2204-ds.xml')
-    checks['assessment-content-identity'] = hashlib.file_digest(content.open('rb'), 'sha256').hexdigest() == policy['content']['datastream_sha256']
+    checks['assessment-content-identity'] = file_sha256(content) == policy['content']['datastream_sha256']
     inventory = command('dpkg-query', '-W', '-f=${db:Status-Abbrev}\t${Package}\t${Version}\t${Architecture}\n')
     if inventory.returncode:
         raise RuntimeError('native inventory failed')

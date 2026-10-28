@@ -41,7 +41,14 @@ if r.returncode==0:
 print(json.dumps({'stage':'password-required-sudo','returncode':0}),flush=True)
 r=ssh('sudo -S -p "" /usr/bin/python3 /usr/local/lib/wormhole/observe.py',secret=True)
 print(json.dumps({'stage':'installed-observations','returncode':r.returncode,'output':r.stdout,'diagnostic':r.stderr}),flush=True)
-if r.returncode:sys.exit(1)
+observation_exit=r.returncode
+observed=json.loads(r.stdout) if r.returncode==0 else {'packages':[]}
+if any(p['name']=='snapd' for p in observed['packages']):
+ try:
+  r=ssh('LC_ALL=C snap list --all',seconds=30)
+  print(json.dumps({'stage':'snap-inventory','returncode':r.returncode,'output':r.stdout,'diagnostic':r.stderr}),flush=True)
+ except subprocess.TimeoutExpired:
+  print(json.dumps({'stage':'snap-inventory','returncode':124,'output':'','diagnostic':'bounded Snap inventory timed out'}),flush=True)
 started=time.monotonic()
 r=ssh('sudo -S -p "" /bin/bash /usr/local/lib/wormhole/audit.sh',secret=True,seconds=650)
 print(json.dumps({'stage':'real-assessment','elapsed_seconds':round(time.monotonic()-started,3),'returncode':r.returncode,'diagnostic':r.stderr}),flush=True)
@@ -52,7 +59,8 @@ import base64,hashlib
 print(json.dumps({'stage':'assessment-artifacts','returncode':0,'sha256':hashlib.sha256(r.stdout).hexdigest(),
                   'archive_base64':base64.b64encode(r.stdout).decode()}),flush=True)
 print(json.dumps({'final_authentication':True,'ansible_ready':True,'catalog_started':True,
- 'outcome':'baseline-passed','lab_iso_qualified':False,'production_iso_eligible':False}),flush=True)
+ 'functional_observations_passed':observation_exit==0,'outcome':'assessment-evidence-collected',
+ 'lab_iso_qualified':False,'production_iso_eligible':False}),flush=True)
 '''
 
 
@@ -74,6 +82,7 @@ def collect(run, result):
     observations = next((json.loads(r['output']) for r in records if r.get('stage') == 'installed-observations' and r.get('returncode') == 0), None)
     if observations is not None:
         require(observations.get('run_id') == result['run_id'], 'installed_observation_identity')
+        supplement_inventory(observations,records)
         atomic_json(run / 'installed-observations.json', observations)
     require(archive is not None, 'assessment_artifact_missing')
     out = run / 'assessment';out.mkdir(mode=0o700)
@@ -90,8 +99,10 @@ def collect(run, result):
             require(total <= 192 * 1024**2, 'assessment_archive_size')
             raw = tar.extractfile(member).read()
             (out / name).write_bytes(raw);names.add(name)
-    require({'xccdf.xml','arf.xml','report.html','scanner-receipt.json'} <= names, 'assessment_native_files_missing')
+    require('scanner-receipt.json' in names,'assessment_receipt_missing')
     receipt = json.loads((out / 'scanner-receipt.json').read_text())
+    require({'xccdf.xml','arf.xml','report.html'} <= names,
+            'scanner_execution_failed' if receipt['scanner_exit'] not in {0,2} else 'assessment_native_files_missing')
     policy = json.loads(POLICY.read_text())
     require(receipt['run_id'] == result['run_id'] and receipt['content_sha256'] == policy['content']['datastream_sha256']
             and receipt['target'] == 'vm-' + result['run_id'][:8]
@@ -103,6 +114,21 @@ def collect(run, result):
     result.update(assessment={k:v for k,v in findings.items() if k != 'rules'},
                   capability='ubuntu-real-assessment-run', mode=result['build']['mode'])
     return findings
+
+
+def supplement_inventory(observations,records):
+    observations['snaps']=[]
+    snap=next((r for r in records if r.get('stage')=='snap-inventory'),None)
+    required=any(p['name']=='snapd' for p in observations['packages'])
+    observations['inventory_complete']=(None if required and snap is None else
+        bool(observations['packages']) and (not required or snap['returncode']==0))
+    if snap is not None and snap['returncode']==0 and snap['output'].strip():
+        lines=snap['output'].splitlines()
+        require(lines[0].split()[:3]==['Name','Version','Rev'],'snap_inventory_format')
+        for line in lines[1:]:
+            fields=line.split(maxsplit=5)
+            require(len(fields)==6,'snap_inventory_format')
+            observations['snaps'].append(dict(zip(['name','version','revision','tracking','publisher','notes'],fields)))
 
 
 def report(run, result):
@@ -121,6 +147,7 @@ def report(run, result):
     if observations is None:
         observations=next((json.loads(r['output']) for r in records if r.get('stage')=='installed-observations' and r.get('returncode')==0),None)
         if observations is not None:require(observations['run_id']==result['run_id'],'installed_observation_identity')
+    if observations is not None:supplement_inventory(observations,records)
     return generate(run, result, findings=findings, observations=observations, controller_records=records)
 
 

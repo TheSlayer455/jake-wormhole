@@ -21,7 +21,7 @@ class Catalog(unittest.TestCase):
             'functional_results':[{'id':'fixture-check','status':'pass'}]})
         (path/'assessment/findings.json').write_text(json.dumps({'content_sha256':content,'profile_id':'fixture',
             'rules':[{'rule_id':'fixture-rule','native_status':status}]}))
-        (path/'installed-svd.json').write_text(json.dumps({'kernel':'fixture',
+        (path/'installed-svd.json').write_text(json.dumps({'kernel':'fixture','inventory_complete':True,'snaps':[],
             'packages':[{'name':'fixture','version':'1','architecture':'amd64'}]}))
         return path
 

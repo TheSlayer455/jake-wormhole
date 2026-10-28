@@ -49,6 +49,7 @@ def compare(previous, current):
     same_iso = ar['candidate_sha256'] == br['candidate_sha256']
     repeatable = (a['run_id'] != b['run_id'] and same_iso and compatible and left==right and required_equal
                   and bool(pa) and pa==pb and av.get('kernel')==bv.get('kernel') and
+                  av.get('inventory_complete') is True and bv.get('inventory_complete') is True and av.get('snaps')==bv.get('snaps') and
                   a.get('installed') is True and b.get('installed') is True and
                   a['cleanup']==b['cleanup']=='verified-absent-inputs-retained')
     return {'schema_version':'1.0','previous_run':a['run_id'],'current_run':b['run_id'],

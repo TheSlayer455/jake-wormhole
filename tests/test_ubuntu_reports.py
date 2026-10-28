@@ -10,6 +10,17 @@ from wormhole.ubuntu_assessment import POLICY
 
 
 class Reports(unittest.TestCase):
+    def test_guest_hashing_does_not_require_python_311_file_digest(self):
+        import importlib.util
+        import hashlib
+        from wormhole.runs import SOURCE_ROOT
+        spec=importlib.util.spec_from_file_location('guest_observe',SOURCE_ROOT/'ubuntu/guest/observe.py')
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as value:
+            file=Path(value)/'fixture';file.write_bytes(b'0123456789'*200000)
+            with patch.object(module.hashlib,'file_digest',None):
+                self.assertEqual(module.file_sha256(file),hashlib.sha256(file.read_bytes()).hexdigest())
+
     def test_pending_policy_refuses_publication_before_creating_release(self):
         from wormhole.ubuntu_release import publish
         from wormhole.runs import RunError

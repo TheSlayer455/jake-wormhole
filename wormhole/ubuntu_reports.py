@@ -26,7 +26,7 @@ def generate(run, result, *, findings=None, observations=None, controller_record
     derived = {
         'trusted-final-ssh': stages['final-authentication'].get('returncode')==0 if 'final-authentication' in stages else result.get('final_authentication'),
         'ansible-ping': stages['ansible-readiness'].get('returncode')==0 if 'ansible-readiness' in stages else result.get('ansible_ready'),
-        'native-package-inventory': bool((observations or {}).get('packages')) if observations else None,
+        'native-package-inventory': observations.get('inventory_complete') if observations else None,
         'password-required-sudo': stages.get('password-required-sudo', {}).get('returncode') == 0 if 'password-required-sudo' in stages else None,
         'scanner-native-results': findings.get('scanner_execution_completed') and findings.get('coverage_complete') if findings else None,
     }
@@ -85,7 +85,8 @@ def generate(run, result, *, findings=None, observations=None, controller_record
     if observations:
         svd = {'schema_version':'1.0','kind':'observed-installed-software','run_id':result['run_id'],
                'candidate_sha256':report['candidate_sha256'], 'kernel':observations['kernel'],
-               'packages':observations['packages']}
+               'packages':observations['packages'],'snaps':observations.get('snaps',[]),
+               'inventory_complete':observations.get('inventory_complete',False)}
         (run / 'installed-svd.json').write_text(json.dumps(svd, indent=2))
         (run / 'installed-svd.txt').write_text('\n'.join(
             p['name'] + ' ' + p['version'] + ' ' + p['architecture'] for p in observations['packages']) + '\n')

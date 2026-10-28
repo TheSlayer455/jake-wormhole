@@ -302,7 +302,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             command(['docker', 'start', '-ai', helper], 'ssh-ansible-inventory', timeout=max(1, deadline-time.monotonic()-180), data=payload)
             rows = [json.loads(line) for line in (run / 'ssh-ansible-inventory.log').read_text().splitlines() if line.startswith('{')]
             terminal = rows[-1] if rows else {}
-            require(terminal.get('outcome') == 'baseline-passed' and terminal.get('final_authentication') is True and
+            require(terminal.get('outcome') == ('assessment-evidence-collected' if ubuntu_mode else 'baseline-passed') and terminal.get('final_authentication') is True and
                     terminal.get('ansible_ready') is True and {x.get('stage') for x in rows if x.get('returncode') == 0} >=
                     {'final-authentication', 'ansible-readiness', 'functional', 'inventory'}, 'controller_results_incomplete')
             result.update(outcome='baseline-passed', installed=True, final_authentication=True, ansible_ready=True)

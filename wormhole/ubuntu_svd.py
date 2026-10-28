@@ -17,20 +17,23 @@ def build_svd(run, candidate, manifest):
     run,candidate=Path(run),Path(candidate)
     require(sha256(candidate)==manifest['candidate_sha256'],'build_svd_candidate_mismatch')
     output=run/'build-svd'
-    if output.exists():
+    if (output/'svd.json').exists():
         return json.loads((output/'svd.json').read_text())
-    output.mkdir(mode=0o700)
+    output.mkdir(mode=0o700,exist_ok=True)
     layers=[]
     for name in LAYERS:
         file=output/name
-        subprocess.run(['xorriso','-osirrox','on','-indev',str(candidate),'-extract','/casper/'+name,str(file)],
-                       check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=15)
+        if not file.exists():
+            subprocess.run(['xorriso','-osirrox','on','-indev',str(candidate),'-extract','/casper/'+name,str(file)],
+                           check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=15)
         require(file.stat().st_size<=1024**2,'build_svd_manifest_size')
         packages=[]
         for line in file.read_text().splitlines():
             values=line.split()
-            require(len(values)==2,'build_svd_manifest_format')
-            packages.append({'name':values[0],'version':values[1],'architecture':None})
+            require(len(values)==2 or (len(values)==3 and values[0].startswith('snap:')),'build_svd_manifest_format')
+            packages.append({'name':values[0],'version':values[1] if len(values)==2 else None,'architecture':None,
+                             'kind':'snap' if len(values)==3 else 'deb',
+                             'channel':values[1] if len(values)==3 else None,'revision':values[2] if len(values)==3 else None})
         layers.append({'media_path':'/casper/'+name,'sha256':sha256(file),'packages':packages,
                        'architecture_note':'Not recorded by this native media manifest; do not infer per-package architecture.'})
     bundle=json.loads((run/'inputs/payload/manifest.json').read_text())
