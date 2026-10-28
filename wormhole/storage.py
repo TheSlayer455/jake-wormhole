@@ -235,7 +235,7 @@ class Store:
         return run, value, manifest
 
     def preview(self, references, *, current=None):
-        groups, actions, blocked = {}, [], []
+        groups, actions, blocked, pinned = {}, [], [], set()
         for run in sorted(self.runs.iterdir()):
             if not run.is_dir(): continue
             try:
@@ -257,6 +257,10 @@ class Store:
                     if partial: continue
                 except (RunError,OSError,KeyError,ValueError): pass
                 blocked.append({'run_id':run.name,'reason':getattr(error,'code',type(error).__name__)})
+                try:
+                    digest=read_json(run/'result.json').get('build',{}).get('candidate_sha256')
+                    if digest:pinned.add(digest)
+                except (RunError,OSError):pass
                 continue
             payload=run/'inputs/payload'
             if (payload/'manifest.json').exists():
@@ -283,6 +287,7 @@ class Store:
                 except (RunError,OSError,KeyError,ValueError) as error:
                     # Fail the whole run's proposed staging cleanup on any mismatch.
                     actions=[a for a in actions if a['run_id']!=run.name]
+                    pinned.add(manifest['candidate_sha256'])
                     blocked.append({'run_id':run.name,'reason':getattr(error,'code',type(error).__name__)})
                     continue
             seed=self.shared/run.name/'seed.iso'
@@ -312,10 +317,19 @@ class Store:
                                 require(all(p.name in allowed for p in directory.iterdir()))
                                 for path in directory.iterdir():actions.append({'path':str(path),
                                     'signature':self.checked(path,references),'reason':'expired-private-seed-staging','run_id':run.name})
-                except RunError as error: blocked.append({'run_id':run.name,'reason':error.code})
+                except RunError as error:
+                    pinned.add(manifest['candidate_sha256'])
+                    blocked.append({'run_id':run.name,'reason':error.code})
         unique=0
         for digest, members in groups.items():
             canonical=members[0][2]
+            invalidated=[self.invalidated(manifest) for _,manifest,_ in members]
+            if digest not in pinned and all(invalidated) and not any(m.get('lab_iso_qualified') for _,m,_ in members):
+                for (run, manifest, candidate), changed in zip(members,invalidated):
+                    actions.append({'path':str(candidate),'signature':signature(candidate),
+                        'reason':'obsolete-installed-inputs','run_id':run.name,'sha256':digest,
+                        'invalidated_inputs':changed})
+                continue
             unique+=signature(canonical)[3]
             for run, manifest, candidate in members[1:]:
                 actions.append({'path':str(candidate),'signature':signature(candidate),'reason':'identical-candidate',
@@ -324,7 +338,23 @@ class Store:
         return {'actions':actions,'blocked':blocked,'unique_candidate_allocated_bytes':unique,
                 'estimated_reclaim_allocated_bytes':sum(a['signature'][3] for a in actions),
                 'cache_budget_exceeded':unique>CANDIDATE_BUDGET,
-                'cache_policy':'32 GiB unique verified ISO bytes; no unique candidate or evidence eviction; refuse new builds if protected retention exceeds budget'}
+                'cache_policy':'32 GiB verified reusable ISO cache; deduplicate identical bytes and evict source-proven stale installed inputs; pin unresolved and qualified runs; preserve evidence; refuse builds if protected retention exceeds budget'}
+
+    def invalidated(self, manifest):
+        """Evict by input mismatch, never by timestamps or a guessed filename."""
+        from .runs import SOURCE_ROOT, source_identity
+        _, dirty=source_identity()
+        if dirty:return []
+        changed=[]
+        for name, expected in manifest.get('installed_inputs',{}).get('files',{}).items():
+            path=Path(name)
+            if path.is_absolute() or '..' in path.parts: return []
+            # Virtual inputs (offline snapshot and sandbox contract) are not
+            # filesystem paths. Their mismatch alone does not authorize eviction.
+            if len(path.parts)<2:continue
+            source=SOURCE_ROOT/path
+            if source.is_file() and sha256(source)!=expected:changed.append(name)
+        return changed
 
     def scanner_staging(self, actions, blocked, references):
         from .admission import _journal
@@ -401,6 +431,7 @@ class Store:
             if receipt.exists():
                 record=read_json(receipt)
                 require(record['sha256']==digest)
+                require(record.get('disposition')!='evicted-stale-installed-inputs','stale_candidate')
                 identifier=run_id(record['canonical_run'])
             else:
                 record=read_json(run/'candidate-retention-disposition.json')
@@ -437,6 +468,10 @@ class Store:
                 atomic_json(self.runs/action['run_id']/'storage-seed.json',{
                     'schema_version':'1.0','sha256':action['sha256'],'at':now(),
                     'disposition':'detached after archived teardown and live-reference verification; logical unlink only'})
+            if action['reason']=='obsolete-installed-inputs':
+                atomic_json(self.runs/action['run_id']/'storage-candidate.json',{
+                    'schema_version':'1.0','sha256':action['sha256'],'disposition':'evicted-stale-installed-inputs',
+                    'invalidated_inputs':action['invalidated_inputs'],'at':now()})
             entry=operations/(operation.stem+'-'+str(index)+'.json')
             atomic_json(entry,{'state':'prepared',**action})
             path.unlink()

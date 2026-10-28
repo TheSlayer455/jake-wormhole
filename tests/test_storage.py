@@ -23,8 +23,7 @@ class Capacity(unittest.TestCase):
             with self.assertRaises(RunError):s.admission('.',0,managed_bytes=s.ARTIFACT_BUDGET+1)
 
 
-@unittest.skipUnless(sys.platform.startswith('linux') and getattr(os,'geteuid',lambda:1)()==0,
-                     'Linux runtime-owner filesystem tests')
+@unittest.skipUnless(sys.platform.startswith('linux'), 'Linux allocated-block filesystem tests')
 class Cleanup(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory()
@@ -33,7 +32,7 @@ class Cleanup(unittest.TestCase):
         self.root=self.base/'project/runtime';self.root.mkdir(parents=True,mode=0o700)
         self.shared=self.base/'project-vm';self.shared.mkdir(mode=0o700)
         self.store=s.Store(self.root,self.shared);self.store.live={}
-        self.store.qemu_uid=lambda:0
+        self.store.qemu_uid=os.geteuid
         self.store.infrastructure.mkdir(mode=0o700)
         atomic_json(self.store.infrastructure/'owner.json',{
             'application':'jake-wormhole','schema_version':'1.0','kind':'shared-infrastructure-root'})
@@ -155,3 +154,52 @@ class Cleanup(unittest.TestCase):
             with self.assertRaises(RunError) as error:self.store.observe()
             self.assertEqual(error.exception.code,'storage_active_run');command.assert_not_called()
         self.assertTrue(package.exists())
+
+    def test_source_proven_stale_eviction_keeps_manifest_and_refuses_reuse(self):
+        run,candidate,package=self.fixture()
+        with patch.object(self.store,'invalidated',return_value=['ubuntu/guest/finalize.sh']):
+            receipt=self.clean()
+        self.assertFalse(candidate.exists());self.assertTrue((run/'inputs/build-manifest.json').exists())
+        self.assertTrue(any('obsolete-installed-inputs'==read_json(p).get('reason')
+                            for p in (self.store.infrastructure/'storage-operations').glob('*.json')))
+        with self.assertRaises(RunError) as error:self.store.resolve(run.name)
+        self.assertEqual(error.exception.code,'stale_candidate')
+
+    def test_qualified_candidate_is_pinned_even_if_source_changes(self):
+        run,candidate,package=self.fixture()
+        manifest=read_json(run/'inputs/build-manifest.json');manifest['lab_iso_qualified']=True
+        atomic_json(run/'inputs/build-manifest.json',manifest)
+        result=read_json(run/'result.json');result['build']=manifest;atomic_json(run/'result.json',result)
+        with patch.object(self.store,'invalidated',return_value=['ubuntu/guest/finalize.sh']):self.clean()
+        self.assertTrue(candidate.exists())
+
+    def test_partial_build_requires_preallocation_intent_and_finished_input_only_journal(self):
+        run,candidate,package=self.fixture()
+        result=read_json(run/'result.json');result.pop('build');atomic_json(run/'result.json',result)
+        (run/'inputs/build-manifest.json').unlink()
+        self.clean();self.assertTrue(candidate.exists())
+        atomic_json(run/'storage-build-intent.json',{'schema_version':'1.0','run_id':run.name,
+            'source_revision':result['source_revision'],'candidate':str(candidate),'seed':str(candidate.with_name('seed.iso'))})
+        self.clean();self.assertFalse(candidate.exists());self.assertTrue((run/'diagnostic.json').exists())
+
+    def test_changed_inode_or_mount_reference_cannot_be_unlinked(self):
+        run,candidate,package=self.fixture()
+        with self.assertRaises(RunError):self.store.checked(package,[str(package.parent)])
+        plan=self.store.preview([])
+        package.write_bytes(b'changed after preview')
+        with patch.object(self.store,'observe',return_value=[]),patch.object(self.store,'preview',return_value=plan):
+            with self.assertRaises(RunError) as error:self.store.clean_held()
+        self.assertEqual(error.exception.code,'storage_file_changed');self.assertTrue(package.exists())
+
+    def test_private_digest_receipt_invalidates_after_content_change(self):
+        run,candidate,package=self.fixture()
+        first=self.store.digest(candidate)
+        candidate.write_bytes(b'changed bytes')
+        self.assertNotEqual(self.store.digest(candidate),first)
+
+    def test_preview_does_not_write_receipts_or_mutate_artifacts(self):
+        run,candidate,package=self.fixture()
+        paths={p:signature for p in self.root.rglob('*') if p.is_file() for signature in [s.signature(p)]}
+        self.store.preview([])
+        self.assertEqual(paths,{p:s.signature(p) for p in paths})
+        self.assertFalse((self.store.infrastructure/'storage-operations').exists())
