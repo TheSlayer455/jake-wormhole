@@ -84,6 +84,9 @@ class Sandbox(unittest.TestCase):
                 self.assertEqual(refused['attach_returncode'],1)
                 self.assertTrue(refused['ephemeral_config_removed'])
                 self.assertNotIn(token,json.dumps(refused)+json.dumps(calls))
+                detached=module.execute({'operation':'detach'},runner)
+                self.assertEqual(detached['returncode'],1)
+                self.assertFalse(detached['vendor_cleanup_verified'])
             self.assertEqual(list(Path(directory).iterdir()),[])
     def test_only_declared_new_connections_precede_default_deny(self):
         root=ET.fromstring(network_filter('wormhole-test'))

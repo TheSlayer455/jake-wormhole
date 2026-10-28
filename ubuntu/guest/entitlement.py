@@ -44,4 +44,4 @@ if __name__=='__main__':
     value=json.loads(sys.stdin.buffer.read(8193))
     result=execute(value)
     print(json.dumps(result))
-    if result.get('attach_returncode',0)!=0:sys.exit(1)
+    if result.get('attach_returncode',result.get('returncode',0))!=0:sys.exit(1)
