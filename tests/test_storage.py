@@ -215,3 +215,22 @@ class Cleanup(unittest.TestCase):
             with self.assertRaises(RunError) as error:self.store.clean_held()
             self.assertEqual(error.exception.code,'storage_lock_changed')
         self.assertTrue(package.exists())
+
+    def test_legacy_recovery_proof_preserves_unknown_outcome_and_reconciles_duplicate(self):
+        first,candidate,_=self.fixture()
+        second,duplicate,_=self.fixture(outcome='unknown')
+        value=read_json(second/'result.json');value.pop('finished_at')
+        value['recovery']={'state':'stopped-and-cleaned','original_outcome':'running'}
+        atomic_json(second/'result.json',value)
+        original=(second/'result.json').read_bytes()
+        self.clean()
+        self.assertEqual((second/'result.json').read_bytes(),original)
+        self.assertEqual(sum(p.exists() for p in (candidate,duplicate)),1)
+
+    def test_unverified_candidate_blocks_cache_budget_without_being_deleted(self):
+        run,candidate,package=self.fixture(outcome='running')
+        with patch.object(s,'CANDIDATE_BUDGET',0):
+            plan=self.store.preview([])
+        self.assertTrue(plan['cache_budget_exceeded'])
+        self.assertGreater(plan['candidate_budget_allocated_bytes'],0)
+        self.assertFalse(plan['actions']);self.assertTrue(candidate.exists())

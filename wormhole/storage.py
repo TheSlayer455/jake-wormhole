@@ -235,7 +235,8 @@ class Store:
         journal = validate_record(read_json(self.infrastructure/'vm-history'/(identifier+'.json')))
         require(journal['state']=='finished' and value['run_id']==identifier and
                 journal['source_revision']==value['source_revision'])
-        require(value['outcome']!='running' and value.get('finished_at'), 'storage_unfinished_evidence')
+        require(value['outcome']!='running' and (value.get('finished_at') or
+                value.get('recovery',{}).get('state')=='stopped-and-cleaned'), 'storage_unfinished_evidence')
         for key in ('supervisor','active_command'):
             process=value.get(key)
             if process and not (identifier==current and process['pid']==os.getpid()):
@@ -255,7 +256,7 @@ class Store:
 
     def preview(self, references, *, current=None):
         groups, actions, blocked, pinned = {}, [], [], set()
-        for run in sorted(self.runs.iterdir()):
+        for run in sorted(self.runs.iterdir() if self.runs.exists() else []):
             if not run.is_dir(): continue
             try:
                 _, result, manifest = self.proof(run.name,references,current=current)
@@ -354,9 +355,12 @@ class Store:
                 actions.append({'path':str(candidate),'signature':signature(candidate),'reason':'identical-candidate',
                     'run_id':run.name,'canonical_run':canonical.parent.name,'sha256':digest})
         self.scanner_staging(actions,blocked,references)
+        reserved=self.status()['allocated_bytes']['candidates']-sum(a['signature'][3] for a in actions
+                    if Path(a['path']).name=='candidate.iso')
         return {'actions':actions,'blocked':blocked,'unique_candidate_allocated_bytes':unique,
+                'candidate_budget_allocated_bytes':reserved,
                 'estimated_reclaim_allocated_bytes':sum(a['signature'][3] for a in actions),
-                'cache_budget_exceeded':unique>CANDIDATE_BUDGET,
+                'cache_budget_exceeded':reserved>CANDIDATE_BUDGET,
                 'cache_policy':'32 GiB verified reusable ISO cache; deduplicate identical bytes and evict source-proven stale installed inputs; pin unresolved and qualified runs; preserve evidence; refuse builds if protected retention exceeds budget'}
 
     def invalidated(self, manifest):
@@ -496,6 +500,7 @@ class Store:
                  'unlinked_allocated_bytes':reclaimed,
                  'filesystem_available_delta_bytes':after['filesystem']['available_bytes']-before['filesystem']['available_bytes'],
                  'unique_candidate_allocated_bytes':plan['unique_candidate_allocated_bytes'],
+                 'candidate_budget_allocated_bytes':plan['candidate_budget_allocated_bytes'],
                  'cache_budget_exceeded':plan['cache_budget_exceeded']}
         atomic_json(operation,receipt)
         atomic_json(self.infrastructure/'storage-hashes.json',{
@@ -525,6 +530,8 @@ class Store:
 
 
 def operate(command):
+    import sys
+    require(sys.platform.startswith('linux'),'linux_required')
     require(os.geteuid()==0,'runtime_owner_required')
     store=Store()
     with store.locked():
