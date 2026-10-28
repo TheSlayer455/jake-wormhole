@@ -276,6 +276,11 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                     result.update(phase=phase,last_progress_at=now());save()
                 require('WORMHOLE_INSTALLATION_FAILED' not in text, 'installation_failed')
                 require('WORMHOLE_FINALIZATION_FAILED' not in text, 'finalization_failed')
+                if 'WORMHOLE_REQUIRED_REBOOT' in text:
+                    after_reboot=text.rsplit('WORMHOLE_REQUIRED_REBOOT',1)[1]
+                    require('Enter username:' not in after_reboot and 'Enter password:' not in after_reboot,
+                            'bootloader_unattended_boot_blocked')
+                    require(time.monotonic()-phase_start < 180,'required_reboot_progress_deadline')
                 host_type = 'ssh-rsa' if ubuntu_mode else 'ssh-ed25519'
                 found = re.search(r'WORMHOLE_FINAL_HOST_KEY_BEGIN\s+(' + host_type + r' [A-Za-z0-9+/=]+)[^\n]*\s+WORMHOLE_FINAL_HOST_KEY_END', text)
                 if found:

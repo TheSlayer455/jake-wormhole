@@ -32,7 +32,10 @@ new='CLASS="--unrestricted --class gnu-linux --class gnu --class os"'
 if new not in original:
     if original.count(old)!=1:raise RuntimeError('unsupported installed GRUB generator')
     generator.write_text(original.replace(old,new,1))
-Path('/etc/default/grub.d/99-wormhole-access.cfg').write_text('GRUB_DISABLE_RECOVERY=true\nGRUB_DISABLE_SUBMENU=y\n')
+Path('/etc/default/grub.d/99-wormhole-access.cfg').write_text(
+    'GRUB_DISABLE_RECOVERY=true\nGRUB_DISABLE_SUBMENU=y\n'
+    'GRUB_TERMINAL_INPUT=serial\nGRUB_TERMINAL_OUTPUT=serial\n'
+    'GRUB_SERIAL_COMMAND="serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"\n')
 subprocess.run(['update-grub'],check=True,timeout=30)
 # pam_motd can create/rotate logs before the later common-session umask runs.
 # Set the declared 077 mask before session modules on both login paths. This

@@ -115,6 +115,10 @@ mv /etc/ssh/ssh_host_rsa_key.new /etc/ssh/ssh_host_rsa_key
 mv /etc/ssh/ssh_host_rsa_key.new.pub /etc/ssh/ssh_host_rsa_key.pub
 install -m 0644 /usr/local/lib/wormhole/wormhole-finalize.service /etc/systemd/system/wormhole-finalize.service
 systemctl enable wormhole-finalize.service
+for unit in ssh.service ssh.socket; do
+  install -d -m 0755 /etc/systemd/system/$unit.d
+  printf '%s\\n' '[Unit]' 'Requires=wormhole-finalize.service' 'After=wormhole-finalize.service' 'ConditionPathExists=/var/lib/wormhole/installation-complete' > /etc/systemd/system/$unit.d/40-wormhole-finalization.conf
+done
 cat /tmp/wormhole-identity/run-id > /var/lib/wormhole/run-id
 printf '%s\\n' 'users: []' 'ssh_deletekeys: false' 'preserve_hostname: true' > /etc/cloud/cloud.cfg.d/99-wormhole.cfg
 printf 'vm-%s\\n' "$(cut -c1-8 /var/lib/wormhole/run-id)" > /etc/hostname

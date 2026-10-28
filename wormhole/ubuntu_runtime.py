@@ -3,6 +3,7 @@ import argparse
 import base64
 import io
 import json
+import os
 from pathlib import Path
 import tarfile
 
@@ -154,6 +155,7 @@ def report(run, result):
 
 
 def main():
+    os.umask(0o077)
     p=argparse.ArgumentParser(description=__doc__)
     sub=p.add_subparsers(dest='command',required=True)
     prep=sub.add_parser('prepare');prep.add_argument('--store',required=True)

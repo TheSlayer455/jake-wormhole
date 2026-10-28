@@ -36,4 +36,4 @@ test "$(stat -c %a /home/lab.service/.ssh/authorized_keys)" = 600
 touch /var/lib/wormhole/firstboot-complete
 printf '%s\n' WORMHOLE_REQUIRED_REBOOT > /dev/ttyS0
 systemctl --no-block reboot
-sleep infinity
+exit 0
