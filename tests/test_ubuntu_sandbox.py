@@ -20,6 +20,13 @@ from wormhole.runs import RunError
 
 
 class Sandbox(unittest.TestCase):
+    def test_durable_archive_ack_is_bound_to_the_transfer_and_run(self):
+        source=Path(__file__).resolve().parents[1]/'ubuntu/guest/audit-offload.py'
+        spec=importlib.util.spec_from_file_location('audit_fixture',source)
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        module.confirm_ack(b'{"run_id":"fixture-run","archive_saved":"fixture-transfer"}\n','fixture-run','fixture-transfer')
+        for raw in (b'{}',b'{"run_id":"other","archive_saved":"fixture-transfer"}',b''):
+            with self.assertRaises((RuntimeError,ValueError)):module.confirm_ack(raw,'fixture-run','fixture-transfer')
     def test_audit_archive_readback_rejects_missing_chunks_and_changed_bytes(self):
         content=b'SYNTHETIC audit event\n'*100
         rows=[{'kind':'chunk','file':'audit.log','index':0,'data':base64.b64encode(zlib.compress(content)).decode()},

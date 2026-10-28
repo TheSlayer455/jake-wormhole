@@ -58,6 +58,12 @@ class Lines(socketserver.StreamRequestHandler):
             if not value:return
             if len(value)>65536:return
             retain(self.server.kind,self.client_address[0],value)
+            if value.startswith(b'WORMHOLE_AUDIT_ARCHIVE '):
+                record=json.loads(value.split(b' ',1)[1])
+                if record.get('kind')=='complete':
+                    # retain() has flushed and fsynced every preceding record
+                    # on this connection. The controller still verifies bytes.
+                    self.connection.sendall((json.dumps({'run_id':record['run_id'],'archive_saved':record['archive_id']})+'\n').encode())
 
 
 class TLS(TCP):

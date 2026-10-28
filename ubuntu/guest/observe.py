@@ -47,6 +47,7 @@ def observe():
         'audit-service': command('systemctl', 'is-active', '--quiet', 'auditd').returncode == 0,
         'guest-network-policy': command('ufw', 'status').stdout.startswith('Status: active'),
     }
+    audit_offload=None
     policy = json.loads(Path('/usr/local/lib/wormhole/policy.json').read_text())
     content = Path('/usr/local/lib/wormhole/ssg-ubuntu2204-ds.xml')
     checks['assessment-content-identity'] = file_sha256(content) == policy['content']['datastream_sha256']
@@ -95,6 +96,9 @@ def observe():
             checks['lab-ocsp-status'] &= response.returncode==0 and 'Response verify OK' in response.stderr and ': '+status in response.stdout
         # Deliberate validation snapshot/event, not remediation or package setup.
         checks['weekly-audit-offload']=command('/etc/cron.weekly/audit-offload').returncode==0
+        if checks['weekly-audit-offload']:
+            audit_offload=json.loads((root/'audit-offload-receipt.json').read_text())
+            checks['weekly-audit-offload'] &= audit_offload.get('receiver_acknowledged') is True and audit_offload.get('run_id')==(root/'run-id').read_text().strip()
     inventory = command('dpkg-query', '-W', '-f=${db:Status-Abbrev}\t${Package}\t${Version}\t${Architecture}\n')
     if inventory.returncode:
         raise RuntimeError('native inventory failed')
@@ -106,7 +110,7 @@ def observe():
     binary=Path('/opt/wormhole-openscap/bin/oscap') if Path('/usr/local/lib/wormhole/toolchain.json').exists() else Path('/usr/bin/oscap')
     payloads=[{'name':'openscap-scanner','version':command('oscap','--version').stdout.splitlines()[0],
                'binary_sha256':file_sha256(binary)}]
-    return {'checks': checks, 'packages': packages, 'payloads':payloads,'inventory_kind': 'installed-dpkg',
+    return {'checks': checks, 'packages': packages, 'payloads':payloads,'inventory_kind': 'installed-dpkg','audit_offload':audit_offload,
             'kernel': command('uname', '-r').stdout.strip(), 'run_id': (root / 'run-id').read_text().strip()}
 
 

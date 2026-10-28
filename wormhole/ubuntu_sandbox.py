@@ -197,12 +197,18 @@ def evidence(run,identifier):
     require(all(result.values()),'support_guest_evidence_missing')
     # Read back the received archive, not just a sender's success exit.
     import base64,hashlib,zlib
+    observation=json.loads((Path(run)/'installed-observations.json').read_text())
+    receipt=observation.get('audit_offload') or {}
+    require(receipt.get('run_id')==identifier and receipt.get('receiver_acknowledged') is True
+            and isinstance(receipt.get('archive_id'),str),'audit_archive_receipt_missing')
     records=[]
     for line in (Path(run)/'support-evidence/syslog.jsonl').read_text().splitlines():
         row=json.loads(line)
         if row['peer']==GUEST and row['body'].startswith('WORMHOLE_AUDIT_ARCHIVE '):
             item=json.loads(row['body'].split(' ',1)[1])
-            if item.get('run_id')==identifier:records.append(item)
+            if item.get('run_id')==identifier and item.get('archive_id')==receipt['archive_id']:records.append(item)
+    manifests=[r for r in records if r.get('kind')=='complete']
+    require(len(manifests)==1 and manifests[0]['files']==receipt['files'],'audit_archive_receipt_mismatch')
     verify_audit_archive(records)
     result['audit_snapshot_readback_verified']=True
     atomic_json(Path(run)/'support-verification.json',result)
