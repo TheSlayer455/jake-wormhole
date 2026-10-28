@@ -121,6 +121,7 @@ def collect(run, result):
     names = set()
     allowed = {'xccdf.xml','arf.xml','report.html','scanner-version.txt','started-at.txt',
                'legacy-encryption.xml','legacy-encryption.log','legacy-encryption-exit.txt',
+               'upstream-xccdf.xml','upstream-scanner.log','upstream-exit.txt',
                'scanner-exit.txt','scanner-receipt.json','scanner.log','finalization.log','remediation-results.json'}
     with tarfile.open(fileobj=io.BytesIO(archive), mode='r:gz') as tar:
         total = 0
@@ -140,8 +141,17 @@ def collect(run, result):
     require(receipt['run_id'] == result['run_id'] and receipt['content_sha256'] == policy['content']['datastream_sha256']
             and receipt['target'] == 'vm-' + result['run_id'][:8]
             and receipt['boot_id'] != receipt['firstboot_id'] and receipt['remediation_during_assessment'] is False, 'assessment_receipt_identity')
+    tailoring=run/'inputs/payload/lab-tailoring.xml'
+    require(receipt.get('tailoring_sha256')==(sha256(tailoring) if tailoring.exists() else None),'assessment_tailoring_identity')
     findings = read_results(run / 'inputs/payload/ssg-ubuntu2204-ds.xml', out / 'xccdf.xml',
                             expected_target=receipt['target'], scanner_exit=receipt['scanner_exit'])
+    if tailoring.exists():
+        upstream_policy=json.loads(json.dumps(policy));upstream_policy['tailoring']['parameters']={}
+        upstream=read_results(run/'inputs/payload/ssg-ubuntu2204-ds.xml',out/'upstream-xccdf.xml',
+            expected_target=receipt['target'],scanner_exit=int((out/'upstream-exit.txt').read_text()),policy=upstream_policy)
+        require(upstream['coverage_complete'] and upstream['scanner_execution_completed'],'upstream_assessment_incomplete')
+        findings['unmodified_upstream_native_counts']=upstream['native_counts']
+        findings['declared_lab_value_result_changes']=[r['rule_id'] for r,u in zip(findings['rules'],upstream['rules']) if r['native_status']!=u['native_status']]
     # Findings are larger than the old 256 KiB small-run-record limit.
     (out / 'findings.json').write_text(json.dumps(findings, indent=2))
     result.update(assessment={k:v for k,v in findings.items() if k != 'rules'},

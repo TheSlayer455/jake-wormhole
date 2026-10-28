@@ -102,6 +102,19 @@ class Assessment(unittest.TestCase):
         with self.assertRaises(RunError) as refused:self.read()
         self.assertEqual(refused.exception.code,'unsupported_assessment_tailoring')
 
+    def test_lab_value_tailoring_preserves_parent_and_cannot_weaken_other_controls(self):
+        from wormhole.ubuntu_tailoring import document,VALUES,PROFILE
+        self.policy['tailoring']={'excluded_rules':[],'parameters':dict(VALUES),'owner_approved_exceptions':[]}
+        tree=ET.fromstring(document(self.policy));profile=tree.find(a.X+'Profile')
+        self.assertEqual(profile.get('extends'),'profile')
+        self.assertEqual(profile.get('id'),PROFILE)
+        self.assertEqual(list(profile.iter(a.X+'select')),[])
+        self.assertEqual(len(profile.findall(a.X+'set-value')),2)
+        self.policy['tailoring']['parameters']['remote_login_banner_text']='.*'
+        with self.assertRaises(RunError):document(self.policy)
+        self.policy['tailoring']['parameters']={'is_fips_mode_enabled':'false'}
+        with self.assertRaises(RunError):document(self.policy)
+
     def test_manual_revision_mapping_does_not_claim_scanner_equivalence(self):
         from wormhole.ubuntu_coverage import reconcile
         def manual(path,release,checks):

@@ -30,6 +30,12 @@ systemctl restart rsyslog
 if systemctl list-unit-files exim4.service --no-legend | grep -q '^exim4.service'; then
   systemctl disable --now exim4.service
 fi
+if command -v postconf >/dev/null; then
+  # Keep local cron/audit mail delivery, with no guest network SMTP ingress.
+  postconf -e 'inet_interfaces = loopback-only'
+  postfix stop
+  postfix start
+fi
 openssl rehash /etc/pam_pkcs11/cacerts /etc/pam_pkcs11/crls
 test -f /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so
 cat > /etc/pam_pkcs11/pam_pkcs11.conf <<'EOF'

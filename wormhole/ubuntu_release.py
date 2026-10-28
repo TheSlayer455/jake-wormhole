@@ -15,8 +15,8 @@ from .vm_inputs import sha256
 def eligible(current, previous, *, candidate, dependency_store):
     policy=json.loads(POLICY.read_text())
     require(not policy['unresolved_requirements'], 'lab_policy_dependencies_pending')
-    require(policy['tailoring']=={'excluded_rules':[], 'parameters':{}, 'owner_approved_exceptions':[]},
-            'unreviewed_policy_tailoring')
+    from .ubuntu_tailoring import validate
+    validate(policy)
     for path in (Path(current),Path(previous)):
         result, report, _, _ = load(path)
         build=result['build']

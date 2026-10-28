@@ -15,7 +15,7 @@
     "equivalence_to_usg_established": false
   },
   "package_snapshot": "https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/",
-  "tailoring": {"excluded_rules": [], "parameters": {}, "owner_approved_exceptions": []},
+  "tailoring": {"excluded_rules": [], "parameters": {"var_audispd_remote_server": "192.0.2.1", "remote_login_banner_text": "^Wormhole private home lab\\. Authorized lab use only\\. Activity is monitored\\.$"}, "owner_approved_exceptions": []},
   "requirements": {
     "all_selected_automated_rules_pass": true,
     "scanner_errors_allowed": 0,

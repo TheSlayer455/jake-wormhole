@@ -29,9 +29,8 @@ def xml(path):
 
 def inventory(content, policy=None):
     policy = policy or json.loads(POLICY.read_text())
-    if 'tailoring' in policy:
-        require(policy['tailoring']=={'excluded_rules':[],'parameters':{},'owner_approved_exceptions':[]},
-                'unsupported_assessment_tailoring')
+    from .ubuntu_tailoring import validate
+    validate(policy)
     require(digest(content) == policy['content']['datastream_sha256'], 'assessment_content_mismatch')
     root = xml(content)
     profile = root.find('./' + X + 'Profile')
@@ -69,7 +68,8 @@ def read_results(content, native_result, *, expected_target, scanner_exit, polic
     require(len(results) == 1, 'assessment_testresult_count')
     result = results[0]
     profile = result.find(X + 'profile')
-    require(profile is not None and profile.get('idref') == policy['content']['profile_id'], 'assessment_profile_mismatch')
+    from .ubuntu_tailoring import profile as expected_profile
+    require(profile is not None and profile.get('idref') == expected_profile(policy), 'assessment_profile_mismatch')
     require(expected_target in [x.text for x in result.findall(X + 'target')], 'assessment_target_mismatch')
     observed = {}
     for row in result.findall(X + 'rule-result'):
@@ -89,7 +89,8 @@ def read_results(content, native_result, *, expected_target, scanner_exit, polic
     automated_clean = all(x['native_status'] in {'pass', 'notapplicable'} for x in selected if x not in manual)
     return {'schema_version': '1.0', 'capability': 'real-ubuntu-scap-assessment',
         'content_sha256': digest(content), 'native_result_sha256': digest(native_result),
-        'profile_id': policy['content']['profile_id'], 'target': expected_target,
+        'profile_id': expected_profile(policy), 'upstream_profile_id':policy['content']['profile_id'], 'target': expected_target,
+        'declared_lab_parameters':policy.get('tailoring',{}).get('parameters',{}),
         'scanner_exit': scanner_exit, 'scanner_execution_completed': scanner_exit in {0, 2},
         'coverage_complete': complete, 'upstream_rule_count': len(rows), 'selected_rule_count': len(selected),
         'native_counts': dict(Counter(x['native_status'] for x in rows)),

@@ -15,7 +15,7 @@ from .ubuntu_assessment import POLICY, inventory, require
 def input_identity(store, mode, *, sandbox=False):
     # Execution/reporting changes deliberately do not alter installed bytes.
     paths = ['wormhole/vm_inputs.py', 'wormhole/ubuntu_inputs.py', 'ubuntu/guest/finalize.sh',
-             'ubuntu/guest/audit.sh', 'ubuntu/guest/observe.py', 'profiles/ubuntu-lab-policy-v1.json']
+             'ubuntu/guest/audit.sh', 'ubuntu/guest/observe.py', 'profiles/ubuntu-lab-policy-v1.json','wormhole/ubuntu_tailoring.py']
     if mode == 'hardened':
         paths += ['wormhole/ubuntu_hardening.py', 'ubuntu/remediation-plan-v1.json', 'ubuntu/guest/remediate.py']
     if sandbox:
@@ -192,6 +192,9 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
     shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/audit.sh', payload / 'audit.sh')
     shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/observe.py', payload / 'observe.py')
     shutil.copyfile(POLICY, payload / 'policy.json')
+    from .ubuntu_tailoring import document
+    tailoring=document(json.loads(POLICY.read_text()))
+    if tailoring is not None:(payload/'lab-tailoring.xml').write_bytes(tailoring)
     if sandbox:
         for filename in ('encryption-late.sh','sandbox.sh'):
             shutil.copyfile(SOURCE_ROOT/'ubuntu/guest'/filename,payload/filename)
