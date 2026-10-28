@@ -20,7 +20,7 @@ def input_identity(store, mode, *, sandbox=False):
         paths += ['wormhole/ubuntu_hardening.py', 'ubuntu/remediation-plan-v1.json', 'ubuntu/guest/remediate.py']
     if sandbox:
         paths += ['ubuntu/guest/encryption-late.sh','ubuntu/guest/sandbox.sh',
-                  'ubuntu/guest/entitlement.py','ubuntu/guest/audit-offload.py','ubuntu/support/receiver.py']
+                  'ubuntu/guest/entitlement.py','ubuntu/guest/audit-offload.py','ubuntu/guest/secret-audit.py','ubuntu/support/receiver.py']
     files = {name: sha256(SOURCE_ROOT / name) for name in paths}
     files['offline-dependencies'] = sha256(Path(store) / 'bundle/manifest.json')
     if sandbox:
@@ -195,7 +195,7 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
     if sandbox:
         for filename in ('encryption-late.sh','sandbox.sh'):
             shutil.copyfile(SOURCE_ROOT/'ubuntu/guest'/filename,payload/filename)
-        for filename in ('entitlement.py','audit-offload.py'):
+        for filename in ('entitlement.py','audit-offload.py','secret-audit.py'):
             shutil.copyfile(SOURCE_ROOT/'ubuntu/guest'/filename,payload/filename)
     if mode == 'hardened':
         from .ubuntu_hardening import generate

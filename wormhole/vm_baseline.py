@@ -389,6 +389,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             payload_data = {'address': ADDRESS, 'host_key': host_key, 'private_key': (run / 'ssh-key').read_text(),
                             'seconds': max(1, min(900 if ubuntu_mode else 300, int(deadline-time.monotonic()-180)))}
             if ubuntu_mode:payload_data['become_password'] = password
+            if sandbox:payload_data['inspection_secrets']=[(run/'unlock-secret').read_text().strip(),password,(run/'boot-password').read_text().strip()]
             payload = json.dumps(payload_data).encode()
             command(['docker', 'start', '-ai', helper], 'ssh-ansible-inventory', timeout=max(1, deadline-time.monotonic()-180), data=payload)
             rows = [json.loads(line) for line in (run / 'ssh-ansible-inventory.log').read_text().splitlines() if line.startswith('{')]

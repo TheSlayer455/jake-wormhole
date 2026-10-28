@@ -48,6 +48,16 @@ r=ssh('sudo -S -p "" /usr/bin/python3 /usr/local/lib/wormhole/observe.py',secret
 print(json.dumps({'stage':'installed-observations','returncode':r.returncode,'output':r.stdout,'diagnostic':r.stderr}),flush=True)
 observation_exit=r.returncode
 observed=json.loads(r.stdout) if r.returncode==0 else {'packages':[]}
+if 'inspection_secrets' in c:
+ private_input=password.read_text()+json.dumps(c.pop('inspection_secrets'))
+ r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'sudo -S -p "" /usr/bin/python3 /usr/local/lib/wormhole/secret-audit.py'],
+                  input=private_input,capture_output=True,text=True,timeout=min(45,deadline-time.monotonic()))
+ valid=r.returncode==0
+ if valid:
+  inspection=json.loads(r.stdout);valid=inspection.get('plaintext_retained') is False and inspection.get('secret_values_returned') is False
+ else:inspection={'inspection_failed':True}
+ print(json.dumps({'stage':'secret-retention-inspection','returncode':0 if valid else 1,'inspection':inspection}),flush=True)
+ del private_input
 if 'encrypted-root' in observed.get('checks',{}):
  import secrets
  probe={'operation':'probe','token':secrets.token_urlsafe(32)}

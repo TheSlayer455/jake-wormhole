@@ -34,6 +34,7 @@ def generate(run, result, *, findings=None, observations=None, controller_record
     else:manual={'objective_results':{},'disposition':'not-collected'}
     derived = {
         'audit-offload-readback':result.get('support_verification',{}).get('audit_snapshot_readback_verified'),
+        'no-retained-install-secrets':stages.get('secret-retention-inspection',{}).get('returncode')==0 if 'secret-retention-inspection' in stages else None,
         'remote-syslog-received':result.get('support_verification',{}).get('syslog_guest_event_received'),
         'remote-audit-received':result.get('support_verification',{}).get('audit_guest_event_received'),
         'encrypted-cold-start':result.get('cold_start_verified'),
