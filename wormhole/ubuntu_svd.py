@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import subprocess
+import re
 
 from .vm_inputs import sha256
 from .ubuntu_assessment import require
@@ -11,6 +12,28 @@ LAYERS = ('filesystem.manifest','ubuntu-server-minimal.manifest',
           'ubuntu-server-minimal.ubuntu-server.installer.manifest',
           'ubuntu-server-minimal.ubuntu-server.installer.generic.manifest',
           'ubuntu-server-minimal.ubuntu-server.installer.generic-hwe.manifest')
+
+
+def parse_manifest(text):
+    lines=text.splitlines()
+    delta=bool(lines and lines[0].startswith('--- '))
+    if delta:
+        require(len(lines)>1 and lines[1].startswith('+++ '),'build_svd_delta_header')
+        lines=lines[2:]
+    packages=[]
+    for line in lines:
+        if delta and re.fullmatch(r'@@ .* @@.*',line):continue
+        operation='available'
+        if delta:
+            require(bool(line) and line[0] in '+- ','build_svd_delta_format')
+            operation={'+':'added-to-layer','-':'removed-from-layer',' ':'context'}[line[0]]
+            line=line[1:]
+        values=line.split()
+        require(len(values)==2 or (len(values)==3 and values[0].startswith('snap:')),'build_svd_manifest_format')
+        packages.append({'name':values[0],'version':values[1] if len(values)==2 else None,'architecture':None,
+                         'kind':'snap' if len(values)==3 else 'deb','operation':operation,
+                         'channel':values[1] if len(values)==3 else None,'revision':values[2] if len(values)==3 else None})
+    return {'format':'native-package-delta' if delta else 'native-package-snapshot','packages':packages}
 
 
 def build_svd(run, candidate, manifest):
@@ -27,14 +50,7 @@ def build_svd(run, candidate, manifest):
             subprocess.run(['xorriso','-osirrox','on','-indev',str(candidate),'-extract','/casper/'+name,str(file)],
                            check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=15)
         require(file.stat().st_size<=1024**2,'build_svd_manifest_size')
-        packages=[]
-        for line in file.read_text().splitlines():
-            values=line.split()
-            require(len(values)==2 or (len(values)==3 and values[0].startswith('snap:')),'build_svd_manifest_format')
-            packages.append({'name':values[0],'version':values[1] if len(values)==2 else None,'architecture':None,
-                             'kind':'snap' if len(values)==3 else 'deb',
-                             'channel':values[1] if len(values)==3 else None,'revision':values[2] if len(values)==3 else None})
-        layers.append({'media_path':'/casper/'+name,'sha256':sha256(file),'packages':packages,
+        layers.append({'media_path':'/casper/'+name,'sha256':sha256(file),**parse_manifest(file.read_text()),
                        'architecture_note':'Not recorded by this native media manifest; do not infer per-package architecture.'})
     bundle=json.loads((run/'inputs/payload/manifest.json').read_text())
     value={'schema_version':'1.0','kind':'available-iso-build-input-software','candidate_sha256':manifest['candidate_sha256'],

@@ -11,6 +11,16 @@ from wormhole.ubuntu_assessment import POLICY
 
 
 class Reports(unittest.TestCase):
+    def test_native_iso_snapshots_and_layer_deltas_are_distinct(self):
+        from wormhole.ubuntu_svd import parse_manifest
+        snapshot=parse_manifest('package\t1.2\nsnap:example\tstable\t123\n')
+        self.assertEqual(snapshot['format'],'native-package-snapshot')
+        self.assertIsNone(snapshot['packages'][1]['version'])
+        self.assertEqual(snapshot['packages'][1]['revision'],'123')
+        delta=parse_manifest('--- prior\n+++ next\n-package\t1.2\n+package\t1.3\n')
+        self.assertEqual(delta['format'],'native-package-delta')
+        self.assertEqual([x['operation'] for x in delta['packages']],['removed-from-layer','added-to-layer'])
+
     @unittest.skipUnless(os.name=='posix','Installed guest observation imports Linux account metadata')
     def test_guest_hashing_does_not_require_python_311_file_digest(self):
         import importlib.util
