@@ -70,7 +70,7 @@ def load(path):
             require(key not in result,'media_duplicate_key');result[key]=value
         return result
     try:return validate(json.loads(raw,object_pairs_hook=unique))
-    except (ValueError,UnicodeError):raise RunError('media_manifest_invalid','Expected a bounded media manifest.') from None
+    except (ValueError,UnicodeError,RecursionError):raise RunError('media_manifest_invalid','Expected a bounded media manifest.') from None
 
 
 @contextmanager
