@@ -71,6 +71,10 @@ Read [installation inputs](../../wormhole/ubuntu_inputs.py),
 [controller/collection](../../wormhole/ubuntu_runtime.py).
 Focused source tests are the four test_ubuntu_*.py files; fixtures are labeled
 separately from real execution.
+The [sanitized reproduction manifest](ubuntu-observer-reproduction.json) was
+generated from the actual earlier observer failure and reviewed before export.
+It includes only public source identity, generic inputs and reproduction/recovery
+instructions; credentials, private run identifiers and raw captures are excluded.
 
 ~~~text
 python -m unittest discover -s tests -p "test_ubuntu_*.py" -v

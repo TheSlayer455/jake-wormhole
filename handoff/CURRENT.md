@@ -51,7 +51,8 @@ Use the established operator route, clean pinned source and private stores:
 `python -m wormhole.ubuntu_runtime --help`. `prepare`, `run --mode stock-audit`
 or `run --mode hardened`, `run --reuse-run UUID`, `progress UUID`, `report UUID`,
 `compare PREVIOUS CURRENT`, `catalog`, `recover UUID --terraform TOOL`, and
-`publish` share the existing lifecycle/ownership boundary. Never execute files
+`reproduce-package UUID --output PRIVATE_DIRECTORY` plus `publish` share the
+existing lifecycle/ownership boundary. Never execute files
 under `ubuntu/guest/` on the host. Reuse needs unchanged installed-input identity;
 each run creates a fresh disk, credentials and native assessment. Report-only
 changes are excluded from that input fingerprint. Recovery requires the original
