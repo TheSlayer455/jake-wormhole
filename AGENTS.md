@@ -6,7 +6,8 @@ Current owner milestone: complete Ubuntu 22.04 hardening, real assessment,
 repeatability and exact-byte local release independently. RHEL implementation and
 media work are paused until Ubuntu is complete and the owner explicitly starts
 RHEL. Preserve its existing code/tests. Canonical USG/FIPS require authorized
-entitlement; never retrieve tokens from private state or invent enrollment.
+entitlement; never discover tokens in unrelated private state or invent access.
+Only an explicit owner-populated protected provider slot may supply enrollment.
 An alternative pinned OpenSCAP audit must retain its content identity and all
 upstream rule outcomes. Missing required FIPS, manual evidence or owner exception
 decisions keep lab qualification pending; engineers cannot approve their own

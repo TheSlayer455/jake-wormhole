@@ -1,5 +1,14 @@
 # Minx work index
 
+Active sandbox increment: `codex/WORM-001-ubuntu-sandbox`. The owner authorized
+project-owned time/log receivers, private CA/test identities, protected local
+secret delivery and encrypted installation. These are implementation tasks;
+RHEL remains paused and vendor entitlements/certification cannot be fabricated.
+The earlier partial results below retain their original source attribution.
+Current execution is closing the encrypted reboot/cold-start, service reception,
+objective manual evidence and scanner-compatibility paths before repeatability
+and delivery. Do not start a second runtime while the shared lease is active.
+
 Current owner-authorized milestone: complete Ubuntu 22.04 installation-time
 hardening, actual assessment, repeatability and exact-byte local release while
 preserving the container baseline. RHEL implementation/media work is paused until

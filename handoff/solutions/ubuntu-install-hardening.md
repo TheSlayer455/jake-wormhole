@@ -3,6 +3,61 @@
 Tested installation implementation:
 [be1aac0cc0a027874337cd7587ee42e294a54d38](https://github.com/TheSlayer455/jake-wormhole/tree/be1aac0cc0a027874337cd7587ee42e294a54d38).
 This is a home Ubuntu-host KVM experiment, not work-environment acceptance.
+
+The sandbox extension on `codex/WORM-001-ubuntu-sandbox` is under active runtime
+verification; the merged evidence below remains historical. It introduces
+encrypted installation, a private serial unlock lifecycle and run-owned support
+services. Do not interpret implementation or fixture success as qualification.
+
+## Sandbox closure work
+
+| Requirement | Cause / correction | Verification and current limit |
+|---|---|---|
+| Disk encryption | Explicit Curtin LUKS root, PBKDF2 slot, clear BIOS/boot surfaces, swap disabled; unique console-delivered key outside ISO/seed/state | First real encrypted installation completed; expanded cold/offline/refusal path under verification |
+| Remote syslog/audit | Separate capped receivers; TLS syslog with private CA; vendor-supported ASCII audisp-remote transport on isolated NIC | Receiver health and wrong TLS identity refusal executed; final guest event reception under verification. ASCII audit has no managed acknowledgments/Kerberos guarantee |
+| Time | Guest chrony against a stratum-10 lab host-clock reference | Real NTP response executed; guest synchronization under verification. No external trusted-time claim |
+| Network isolation | Per-VM mandatory libvirt filter: SSH and declared receiver/time ports only; no default guest route/NAT | Filter creation/attachment/cleanup executed; final guest management-plane probe under verification |
+| Banner | Accurate private-lab warning, not a claim to be a government system | Guest configuration implemented; upstream government-text semantics remain visible |
+| Smart-card/directory packages | Stage pinned Ubuntu packages while preserving the final automation identity | Package installation is not physical-token, enterprise identity or multifactor proof |
+| Pro/USG/FIPS | Explicit owner-file provider and stdin-only ephemeral guest attach configuration | Empty real provider and synthetic delivery regressions verified; no entitlement supplied and no vendor enrollment/USG/FIPS execution claimed |
+| Manual controls | Collect account lifetime, sudo membership, listeners and measured audit-storage facts | Objective evidence cannot establish DoD PKI or approve an exception; native `notchecked` remains unchanged |
+| Assessment coverage | Full rule mapping retains upstream profile boundaries; newer pinned scanner diagnoses old partition-probe behavior | No added exclusions or benchmark edits; Canonical V2R8 equivalence remains unverified |
+| Publication | Exact-byte copy plus closed-file consumer readback | Negative/integrity fixtures only until an actually eligible run exists; no qualified release |
+
+Current supported operations use the existing protected operator and private
+paths. Never run `ubuntu/guest/` programs on the host. The sandbox requires one
+8 GiB guest plus a 128 MiB/0.5 CPU service container and the existing pinned
+controller, all under the same admission lock. Receiver listeners bind only the
+owned guest bridge; private CA keys stay in operator storage and container tmpfs.
+Native support evidence remains private. Receivers are removed after dependent
+assessment/collection; interruption recovery verifies the same run journal.
+
+~~~text
+python -m wormhole.ubuntu_runtime run --mode hardened --sandbox --store PRIVATE_STAGED_INPUTS --source VERIFIED_STOCK_ISO --terraform PINNED_TERRAFORM
+python -m wormhole.ubuntu_runtime progress RUN_UUID
+python -m wormhole.ubuntu_runtime recover RUN_UUID --terraform PINNED_TERRAFORM
+python -m wormhole.ubuntu_runtime verify-release PRIVATE_RELEASE_DIRECTORY
+~~~
+
+For a legitimate existing Ubuntu Pro entitlement, the smallest owner action is
+to create its one-line input file privately under the established operator with
+mode 0600, then populate an owner-only 0700 provider directory. Do not send the
+token in chat, Git, process arguments or portable evidence:
+
+~~~text
+python -m wormhole.ubuntu_secrets put --store PRIVATE_PROVIDER --kind ubuntu-pro --source-file OWNER_CREATED_PRIVATE_FILE
+python -m wormhole.ubuntu_secrets status --store PRIVATE_PROVIDER
+~~~
+
+The guest delivery program supports a nonvendor probe and explicit private attach
+configuration; real attach additionally requires supported client options and
+deliberately authorized vendor connectivity/package staging. The current NIC
+filter does not permit internet egress. Freeze resulting vendor packages/content
+before qualification and exercise documented detach before disposable teardown.
+Do not assume that populating a provider establishes USG, FIPS or a certified
+operational environment. Those vendor-dependent paths remain unexecuted.
+
+## Previously delivered evidence
 Delivered through [PR 31](https://github.com/TheSlayer455/jake-wormhole/pull/31).
 The merged implementation
 [63d3aa1fb90cdc478f7e50d76384d944130bfbff](https://github.com/TheSlayer455/jake-wormhole/tree/63d3aa1fb90cdc478f7e50d76384d944130bfbff)
