@@ -1,5 +1,15 @@
 # Current engineering state
 
+[PR 34](https://github.com/TheSlayer455/jake-wormhole/pull/34) merged as
+`564cfc5f02cdaf348b15fe788a62987b7d156b2a` with
+[passing main CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40716620271).
+A fresh run from that exact merge reproduced all 34 functional passes, matching
+inventories/native results and verified cleanup in 622 seconds. Three independent
+same-ISO installations now have matching substantive outcomes and distinct host
+keys/credentials. Final audit found zero transient resources or pending journal
+entries, available admission lock, 34 retained images present, unchanged unrelated
+sentinel and active K3s. Qualification remains pending; no ISO release was promoted.
+
 Ubuntu sandbox implementation is verified at `deda43f7100fb8aec42285fc941e2eecffcdb795`
 and repeated through `8e510ce023aeb2196f3d637c69b7e50ee81a9520`: two fresh installations
 of identical encrypted ISO bytes, 34/34 functional checks each, matching complete
