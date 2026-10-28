@@ -1,28 +1,61 @@
 # Ubuntu installation hardening and post-reboot assessment
 
-Tested installation implementation:
-[be1aac0cc0a027874337cd7587ee42e294a54d38](https://github.com/TheSlayer455/jake-wormhole/tree/be1aac0cc0a027874337cd7587ee42e294a54d38).
-This is a home Ubuntu-host KVM experiment, not work-environment acceptance.
+Sandbox implementation tested:
+[deda43f7100fb8aec42285fc941e2eecffcdb795](https://github.com/TheSlayer455/jake-wormhole/tree/deda43f7100fb8aec42285fc941e2eecffcdb795).
+Two independent fresh encrypted installations passed all 34 functional checks, trusted final
+SSH/Ansible, required reboot, powered-off inspection, cold start and exact-owned
+cleanup. The second used identical ISO bytes with different guest credentials,
+host keys and boot identities, at `8e510ce023aeb2196f3d637c69b7e50ee81a9520`.
+All native outcomes, 636 package versions, three Snap entries, kernel and scanner
+payload identity matched. Runs took 616/617 seconds; build/reuse took 17.6/12.7
+seconds. Installation-to-final-host-key took 462/468 seconds, offline inspection
+and cold start 63.6/63.8 seconds, and SSH/Ansible/inventory/assessment 56.2 seconds
+each. AIDE initialized once at the stable end of hardening, about 122 seconds;
+these samples do not establish a causal speedup over older runs.
+This home Ubuntu-host BIOS experiment does not establish work compatibility.
 
-The sandbox extension on `codex/WORM-001-ubuntu-sandbox` is under active runtime
-verification; the merged evidence below remains historical. It introduces
-encrypted installation, a private serial unlock lifecycle and run-owned support
-services. Do not interpret implementation or fixture success as qualification.
+Actual OpenSCAP 1.4.6 accounts for all 639 rules: **208 pass, three fail,
+14 not applicable, five not checked and 409 upstream not selected**. The unchanged
+upstream profile is also assessed: 206 pass/five fail, with the other totals
+unchanged. The two differences are explicit lab audit-address and truthful banner
+values, not rule exclusions. Qualification remains pending; no qualified ISO has
+been published. RHEL stays paused and production eligibility is false.
 
 ## Sandbox closure work
 
-| Requirement | Cause / correction | Verification and current limit |
-|---|---|---|
-| Disk encryption | Explicit Curtin LUKS root, PBKDF2 slot, clear BIOS/boot surfaces, swap disabled; unique console-delivered key outside ISO/seed/state | First real encrypted installation completed; expanded cold/offline/refusal path under verification |
-| Remote syslog/audit | Separate capped receivers; TLS syslog with private CA; vendor-supported ASCII audisp-remote transport on isolated NIC | Receiver health and wrong TLS identity refusal executed; final guest event reception under verification. ASCII audit has no managed acknowledgments/Kerberos guarantee |
-| Time | Guest chrony against a stratum-10 lab host-clock reference | Real NTP response executed; guest synchronization under verification. No external trusted-time claim |
-| Network isolation | Per-VM mandatory libvirt filter: SSH and declared receiver/time ports only; no default guest route/NAT | Filter creation/attachment/cleanup executed; final guest management-plane probe under verification |
-| Banner | Accurate private-lab warning, not a claim to be a government system | Guest configuration implemented; upstream government-text semantics remain visible |
-| Smart-card/directory packages | Stage pinned Ubuntu packages while preserving the final automation identity | Package installation is not physical-token, enterprise identity or multifactor proof |
-| Pro/USG/FIPS | Explicit owner-file provider and stdin-only ephemeral guest attach configuration | Empty real provider and synthetic delivery regressions verified; no entitlement supplied and no vendor enrollment/USG/FIPS execution claimed |
-| Manual controls | Collect account lifetime, sudo membership, listeners and measured audit-storage facts | Objective evidence cannot establish DoD PKI or approve an exception; native `notchecked` remains unchanged |
-| Assessment coverage | Full rule mapping retains upstream profile boundaries; newer pinned scanner diagnoses old partition-probe behavior | No added exclusions or benchmark edits; Canonical V2R8 equivalence remains unverified |
-| Publication | Exact-byte copy plus closed-file consumer readback | Negative/integrity fixtures only until an actually eligible run exists; no qualified release |
+| Requirement | Earlier evidence | Cause | Correction | Dependency | Verification | Outcome |
+|---|---|---|---|---|---|---|
+| Encryption | Unencrypted baseline | Missing install contract | LUKS root, PBKDF2, no swap; clear BIOS/boot declared | Private console material | Fresh boot/reboot/cold start; correct/wrong/missing key and offline header tests | Passed |
+| Log/audit retention | Partial received archive | Sender success lacked durable receipt | Fsync acknowledgment and unique transfer identity | TLS syslog/archive and native ASCII audit receiver | Guest events plus decompressed archive hashes | Passed; ASCII audit itself has no managed acknowledgment/Kerberos claim |
+| Time | Missing lab source | Undeclared source/settings | Chrony and required step policy | Stratum-10 host-clock reference | Actual selected synchronized source | Passed lab integration; no external trusted-time claim |
+| Isolation | IPv4 initially blocked | Ethernet and IP hooks differ | Separate L2/IP filter, fixed private routes | Per-VM libvirt filter | Management connection refused before guest outgoing deny; service routes succeed | Passed; no NAT/default route/public listener |
+| PKI | No scoped trust/revocation input | Missing lab dependency | Private CA, CRL, delegated OCSP signer | Bounded OCSP receiver | Valid/revoked/untrusted certificate and signed online status checks | Passed lab behavior; no physical token or government CA |
+| Guest listeners | Undeclared SMTP ingress | Default Postfix interfaces | Preserve local mail on loopback only | Installed mail package | Final listener inventory | Passed |
+| Manual controls | Five native `notchecked` | Objective facts and external assurance differ | Observe expiry, sudo membership, listeners and audit capacity | Disposable workload assumptions | Four conditions met; government PKI unsupported | Native statuses preserved; one unresolved |
+| USG/FIPS | No entitlement | External vendor input absent | Protected explicit provider and ephemeral guest configuration | Legitimate owner-supplied subscription | Real nonvendor lifecycle probe; failure regressions | Enrollment, USG, FIPS modules/runtime unexecuted |
+| Benchmark coverage | 409 unselected rules | Upstream profile boundary | Keep all outcomes; map official V2R7/V2R8 manuals | Pinned public content | All 188 V2R8 controls referenced; seven changed check/fix records | Identifier mapping complete; USG/scanner equivalence unproven |
+| Publication | Pending required controls | Eligibility not established | Strict original gate and consumer readback | Complete eligible run pair | Actual pending-run refusal; positive integrity fixtures only | No qualified release |
+
+Real service-loss injection failed the installer promptly and blocked all 34
+dependent checks without dispatch. Real supervisor interruption first proved live
+recovery refusal, then exact-owned recovery retained unknown outcome and 34
+blocked checks. Stale installed inputs were refused before provisioning.
+Capture-derived missing-rule/wrong-target tests and actual pending/incomplete
+publication refusals passed. These are distinct evidence categories, not extra
+successful installations. A fresh container regression remained eligible; the
+historical twenty-target fleet was not rerun during this VM work.
+
+The remaining native failures are FIPS mode, smart-card PAM authentication and
+`verify_use_mappers`. The last rule's regex omits the vendor configuration's
+required semicolon. Preserve the valid configuration and native finding rather
+than adding invalid syntax to obtain a pass. Physical-token authentication and
+government-PKI evidence are absent. No exception has been approved.
+See the upstream [configuration grammar and examples](https://opensc.github.io/pam_pkcs11/doc/mappers_api.html).
+
+The scanner is an independently built, pinned upstream 1.4.6 artifact, not a
+Canonical FIPS/USG build. A same-guest focused 1.2.17 audit still failed the
+partition rule while 1.4.6 passed it alongside real encrypted-disk proof.
+Do not compare different scanner builds as a measured security improvement.
 
 Current supported operations use the existing protected operator and private
 paths. Never run `ubuntu/guest/` programs on the host. The sandbox requires one
@@ -31,13 +64,38 @@ controller, all under the same admission lock. Receiver listeners bind only the
 owned guest bridge; private CA keys stay in operator storage and container tmpfs.
 Native support evidence remains private. Receivers are removed after dependent
 assessment/collection; interruption recovery verifies the same run journal.
+TLS syslog/archive uses port 6514, native ASCII audit 6000, signed OCSP 8080,
+and the lab clock UDP 12345, only on the owned bridge. The mandatory guest NIC
+filter permits those destinations and controller SSH, and denies other traffic.
+The CA is scoped to these services and PKCS#11 inputs, not a global enterprise CA.
+
+The disk threat model excludes compromise of the trusted operator host. The
+unlock material stays in owner-only operator storage outside the ISO, seed,
+Terraform state and QEMU-readable disk directory. A real installed-system scan
+and a separate 2.36 GB ISO/seed/state/diagnostic inspection found no plaintext or
+reversible copies outside declared credential originals. Those private originals,
+seeds and failure diagnostics are intentionally retained for forensic/recovery
+disposition, with no automatic deletion promised. Certificates expire after two
+days; guest/controller copies and temporary disks are removed through ownership
+checks. This is not hardware-rooted key protection or secure-erasure proof.
 
 ~~~text
 python -m wormhole.ubuntu_runtime run --mode hardened --sandbox --store PRIVATE_STAGED_INPUTS --source VERIFIED_STOCK_ISO --terraform PINNED_TERRAFORM
 python -m wormhole.ubuntu_runtime progress RUN_UUID
 python -m wormhole.ubuntu_runtime recover RUN_UUID --terraform PINNED_TERRAFORM
 python -m wormhole.ubuntu_runtime verify-release PRIVATE_RELEASE_DIRECTORY
+python -m wormhole.ubuntu_runtime coverage RUN_UUID --baseline-manual PINNED_V2R7_XML --target-manual PINNED_V2R8_XML
 ~~~
+
+The [sanitized audit-transfer reproduction](ubuntu-audit-transfer-reproduction.json)
+records an actual failed VM attempt. Its race was observed, not a claim that the
+whole installation always reproduces it. The focused real-TLS regression in
+[test_ubuntu_sandbox.py at the tested source](https://github.com/TheSlayer455/jake-wormhole/blob/deda43f7100fb8aec42285fc941e2eecffcdb795/tests/test_ubuntu_sandbox.py)
+exercises the corrected durable handshake. Adapt that pattern to the actual
+transport on **ansible control node**; it does not make audispd ASCII reliable or
+establish the cause of a work-environment failure. Keep **rhel kvm host** resource
+ownership and the existing controller intact. Reconcile before retrying; rollback
+uses a previous attributable candidate and a fresh installation.
 
 For a legitimate existing Ubuntu Pro entitlement, the smallest owner action is
 to create its one-line input file privately under the established operator with
@@ -66,7 +124,7 @@ functional passes, identical 191/18/16/5/409 native outcomes and full inventorie
 verified cleanup and green main CI. This is repeatable partial acceptance;
 eighteen findings and five manual checks still prevent qualification.
 
-## Prerequisites and scope
+## Historical prerequisites and scope
 
 Ubuntu 22.04.5 amd64 stock ISO, BIOS, an empty 64 GiB disk, 8 GiB RAM and two
 virtual CPUs; one VM at a time. Offline dependencies come from the pinned Ubuntu

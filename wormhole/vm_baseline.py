@@ -122,7 +122,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
     run = workspace_path(ROOT / 'vm-runs' / identifier, create=True)
     result = {'schema_version': '1.0', 'capability': 'real-iso-installation-baseline', 'run_id': identifier,
         'source_revision': revision, 'outcome': 'running', 'started_at': now(), 'stages': [],
-        'phase': 'preflight', 'last_progress_at': now(),
+        'phase': 'preflight', 'last_progress_at': now(), 'network_isolated':bool(ubuntu_mode),
         'supervisor': process_identity(os.getpid()),
         'lab_iso_qualified': False, 'production_iso_eligible': False, 'cleanup': 'pending'}
     atomic_json(run / 'result.json', result)
@@ -241,7 +241,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             tfdir = run / 'terraform';tfdir.mkdir(mode=0o700)
             shutil.copyfile(SOURCE_ROOT / 'provisioning/libvirt/.terraform.lock.hcl', tfdir / '.terraform.lock.hcl')
             configuration=terraform_config(name, pool, candidate, seed, NETWORK, mac, qemu.pw_uid, group)
-            if sandbox:
+            if ubuntu_mode:
                 from .ubuntu_sandbox import network_filter,attach_filter
                 filter_name=name+'-isolation'
                 filter_file=run/'network-filter.xml';filter_file.write_text(network_filter(filter_name))
@@ -283,6 +283,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 support=name+'-services'
                 support,support_process=start(run,name,identifier,HELPER,lease,command)
                 result['support_health']=health(run)
+            if filter_name is not None:
                 require(dom.find('devices/interface/filterref').get('filter')==filter_name,'sandbox_filter_not_attached')
             command(['virsh', '-c', 'qemu:///system', 'start', name], 'firmware-boot')
             console_log = (run / 'console.log').open('wb')

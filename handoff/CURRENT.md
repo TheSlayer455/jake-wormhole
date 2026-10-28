@@ -1,6 +1,52 @@
 # Current handoff
 
-## Active Ubuntu-only hardening milestone
+## Ubuntu sandbox: verified engineering, qualification pending
+
+Tested implementation: `deda43f7100fb8aec42285fc941e2eecffcdb795`. A second independent
+fresh installation at `8e510ce023aeb2196f3d637c69b7e50ee81a9520` reused the same ISO;
+only the sanitized reproduction adapter changed between these sources. Both
+passed 34/34 checks, real trusted final-user SSH/Ansible, normal reboot/cold-start
+unlock, powered-off encryption/refusal inspection, logging/time/CA/CRL/OCSP
+integration and cleanup. Packages (636), Snaps (three), kernel, scanner payload
+and native findings matched; identities and credentials differed. Total times:
+616/617 seconds. Private records retain failures and original source identities.
+
+Actual negatives at `8e510ce`: stopping required support services caused installer
+failure with 34 blocked checks and no catalog; live recovery was refused, then a
+stopped supervisor recovered as unknown with 34 blocked checks and exact cleanup;
+stale installed inputs were refused before Terraform allocation. Real captured
+missing-rule/wrong-target negatives and pending/incomplete publication refusal
+also passed. A fresh single-target container regression remained reference-eligible
+with no pending resources. The twenty-target historical result was not rerun.
+
+The disk gate correctly refused an attempt when retained duplicate media used
+its reserved headroom. Under the shared lock, six verified byte-identical copies
+were reclaimed (12.1 GiB), with matching retained copies and new disposition
+records. Original results, logs, state, seeds and unique media were preserved.
+
+The source suite at `deda43f` ran 918 tests: Linux 916 pass/two skips; Windows
+618 pass/300 skips. Hosted CI passed. Later reproduction/report-only changes use
+focused tests and CI; they do not relabel the tested runtime source. Delivery and
+merge identity are recorded by [PR 34](https://github.com/TheSlayer455/jake-wormhole/pull/34).
+Do not infer independent review; execution and self-review are the actual review.
+
+The remaining native results are 208 pass/three fail/14 not applicable/five not
+checked/409 upstream not selected. The unmodified upstream audit is retained
+separately (206 pass/five fail); no rules are excluded. Four objective manual
+checks are satisfied, government-PKI evidence is not. All 188 official V2R8 manual
+control identifiers map to the current content, with seven changed check/fix
+records; that is not proof of USG execution or scanner equivalence.
+
+Read [the current solution](solutions/ubuntu-install-hardening.md) for the closure
+table, exact supported commands, private entitlement input procedure and Luna
+adaptation. No valid Pro input has been supplied. FIPS/USG, physical-token and
+government trust assurance, the preserved mapper-check syntax mismatch and
+qualified publication remain pending. Do not weaken policy or call the sandbox
+production-qualified. RHEL stays paused; the accepted container history is preserved.
+
+## Previous Ubuntu hardening checkpoint (historical)
+
+### Previous Ubuntu-only hardening milestone
 
 The owner paused RHEL implementation/media work until Ubuntu is fully complete
 and explicitly authorizes RHEL afterward. Continue from current main;

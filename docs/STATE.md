@@ -1,5 +1,25 @@
 # Current engineering state
 
+Ubuntu sandbox implementation is verified at `deda43f7100fb8aec42285fc941e2eecffcdb795`
+and repeated through `8e510ce023aeb2196f3d637c69b7e50ee81a9520`: two fresh installations
+of identical encrypted ISO bytes, 34/34 functional checks each, matching complete
+inventories and native assessment outcomes, and verified cleanup. Runs took
+616/617 seconds. Source verification at `deda43f`: 918 tests, Linux 916 pass/two
+skips and Windows 618 pass/300 skips; hosted CI passed. See
+[PR 34](https://github.com/TheSlayer455/jake-wormhole/pull/34) for delivery/merge records
+and the [current solution](../handoff/solutions/ubuntu-install-hardening.md) for
+actual service, encryption, failure and evidence boundaries. Self-review only.
+
+OpenSCAP 1.4.6/CaC V2R7: 208 pass, three fail, 14 not applicable, five native
+manual outcomes and 409 upstream unselected. An additional unmodified upstream
+audit retains 206 pass/five fail; only declared lab endpoint/banner values differ.
+Four objective manual conditions are met. Entitlement/FIPS, physical-token and
+government-PKI assurance, a vendor-syntax/benchmark mismatch and unverified USG
+content equivalence prevent qualification. Actual pending publication is refused;
+there is no qualified Ubuntu ISO. RHEL remains paused; production eligibility is false.
+
+## Previous Ubuntu hardening delivery (historical)
+
 Ubuntu-only hardening is the active milestone. RHEL development and media work
 are paused by the owner, while existing RHEL/UBI code and regression evidence
 remain preserved. USG enrollment/FIPS requirements are pending, not waived.

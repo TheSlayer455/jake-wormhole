@@ -31,7 +31,9 @@ def recover(identifier, terraform):
     expected={('domain',name),('network',name),('pool',name),('disk',str(pool/(name+'.qcow2'))),
               ('installer_iso',str(candidate)),('seed_iso',str(seed)),('controller_container',name+'-controller')}
     sandbox=result.get('build',{}).get('sandbox') is True
-    if sandbox:expected|={('support_container',name+'-services'),('network_filter',name+'-isolation')}
+    isolated=sandbox or result.get('network_isolated') is True
+    if sandbox:expected.add(('support_container',name+'-services'))
+    if isolated:expected.add(('network_filter',name+'-isolation'))
     def virsh(*args):
         return subprocess.check_output(['virsh','-c','qemu:///system',*args],timeout=10,text=True)
     with VMLease.resume(CANONICAL_INFRASTRUCTURE_ROOT,identifier,result['source_revision']) as lease:
@@ -50,7 +52,7 @@ def recover(identifier, terraform):
             tfdir=run/'terraform'
             expected_config=terraform_config(name,pool,candidate,seed,vm.NETWORK,
                         '52:54:00:'+':'.join(identifier.replace('-','')[n:n+2] for n in (0,2,4)),qemu.pw_uid,qemu.pw_gid)
-            if sandbox:
+            if isolated:
                 from .ubuntu_sandbox import attach_filter
                 expected_config=attach_filter(expected_config,name+'-isolation')
             require(sha256(tfdir/'main.tf.json')==result.get('terraform_configuration_sha256')
@@ -80,7 +82,7 @@ def recover(identifier, terraform):
         for query in ('list','net-list','pool-list'):
             require(name not in virsh(query,'--all','--name').split(),'recovery_cleanup_incomplete')
         require(not (pool/(name+'.qcow2')).exists(),'recovery_disk_remains')
-        if sandbox:
+        if isolated:
             from .ubuntu_sandbox import remove_filter
             remove_filter(run,name+'-isolation')
         for item in list(lease.record['resources']):

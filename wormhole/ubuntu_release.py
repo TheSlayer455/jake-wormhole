@@ -69,11 +69,13 @@ def publish(current,previous,*,candidate,dependency_store,destination,name):
     require(sha256(iso)==result['build']['candidate_sha256'],'publication_copy_changed')
     for label,run in [('installation-1',previous),('installation-2',current)]:
         evidence=output/label;evidence.mkdir(mode=0o700)
-        for source in ['qualification.json','qualification.txt','junit.xml','installed-svd.json','installed-svd.txt',
+        for source in ['result.json','qualification.json','qualification.txt','junit.xml','assessment-coverage.json','installed-svd.json','installed-svd.txt',
                        'manual-evidence.json','encryption-evidence.json','timing.json']:
             shutil.copyfile(Path(run)/source,evidence/source)
         if result['build'].get('sandbox'):
-            for source in ('support-health.json','support-verification.json'):shutil.copyfile(Path(run)/source,evidence/source)
+            for source in ('support-health.json','support-verification.json','support-limits.json'):shutil.copyfile(Path(run)/source,evidence/source)
+        for source in ('benchmark-reconciliation.json','artifact-secret-inspection.json'):
+            if (Path(run)/source).is_file():shutil.copyfile(Path(run)/source,evidence/source)
         shutil.copyfile(Path(run)/'inputs/build-manifest.json',evidence/'installation-manifest.json')
         shutil.copytree(Path(run)/'build-svd',evidence/'build-svd')
         assessment=evidence/'assessments';assessment.mkdir(mode=0o700)
@@ -81,6 +83,9 @@ def publish(current,previous,*,candidate,dependency_store,destination,name):
         # Console captures, seed, credentials and Terraform state stay separate.
         for source in ['findings.json','xccdf.xml','arf.xml','report.html','scanner-version.txt','scanner-receipt.json']:
             shutil.copyfile(Path(run)/'assessment'/source,assessment/source)
+        for source in ('upstream-xccdf.xml','upstream-exit.txt','upstream-scanner.log',
+                       'legacy-encryption.xml','legacy-encryption-exit.txt','legacy-encryption.log'):
+            if (Path(run)/'assessment'/source).is_file():shutil.copyfile(Path(run)/'assessment'/source,assessment/source)
     (output/'SHA256SUMS').write_text(result['build']['candidate_sha256']+'  '+iso.name+'\n')
     shutil.copyfile(POLICY,output/'policy.json')
     atomic_json(output/'comparison.json',delta)
