@@ -22,6 +22,8 @@ HELPER_CODE = HELPER_CODE.replace("common='-o StrictHostKeyChecking", "common='-
 HELPER_CODE = HELPER_CODE.replace("opts=['-o','BatchMode=yes',", "opts=['-o','HostKeyAlgorithms=rsa-sha2-512,rsa-sha2-256','-o','PubkeyAcceptedAlgorithms=rsa-sha2-512,rsa-sha2-256','-o','BatchMode=yes',")
 HELPER_CODE = HELPER_CODE.replace("opts=['-o'", "opts=['-o','ControlMaster=auto','-o','ControlPersist=30','-o','ControlPath='+str(p/'control'),'-o'", 1)
 HELPER_CODE = HELPER_CODE.replace("common='-o HostKeyAlgorithms", "common='-o ControlMaster=auto -o ControlPersist=30 -o ControlPath='+str(p/'control')+' -o HostKeyAlgorithms")
+HELPER_CODE = HELPER_CODE.replace(" r=subprocess.run(base+args", " stage_started=time.monotonic()\n r=subprocess.run(base+args")
+HELPER_CODE = HELPER_CODE.replace("{'stage':label,'returncode'", "{'stage':label,'elapsed_seconds':round(time.monotonic()-stage_started,3),'returncode'")
 # Strip the baseline terminal line, not any underlying required operation.
 HELPER_CODE = HELPER_CODE[:HELPER_CODE.rfind("print(json.dumps({'final_authentication':True")]
 HELPER_CODE += r'''
@@ -39,8 +41,9 @@ print(json.dumps({'stage':'password-required-sudo','returncode':0}),flush=True)
 r=ssh('sudo -S -p "" /usr/bin/python3 /usr/local/lib/wormhole/observe.py',secret=True)
 print(json.dumps({'stage':'installed-observations','returncode':r.returncode,'output':r.stdout,'diagnostic':r.stderr}),flush=True)
 if r.returncode:sys.exit(1)
+started=time.monotonic()
 r=ssh('sudo -S -p "" /bin/bash /usr/local/lib/wormhole/audit.sh',secret=True,seconds=650)
-print(json.dumps({'stage':'real-assessment','returncode':r.returncode,'diagnostic':r.stderr}),flush=True)
+print(json.dumps({'stage':'real-assessment','elapsed_seconds':round(time.monotonic()-started,3),'returncode':r.returncode,'diagnostic':r.stderr}),flush=True)
 if r.returncode:sys.exit(1)
 r=ssh('sudo -S -p "" tar -C /var/lib/wormhole/assessment -czf - .',secret=True,seconds=60,binary=True)
 if r.returncode or len(r.stdout)>24*1024**2:sys.exit(1)
@@ -116,10 +119,19 @@ def main():
     listing=sub.add_parser('catalog')
     comparison=sub.add_parser('compare');comparison.add_argument('previous');comparison.add_argument('current')
     reporting=sub.add_parser('report');reporting.add_argument('run_id')
+    publication=sub.add_parser('publish');publication.add_argument('run_id');publication.add_argument('--previous',required=True)
+    publication.add_argument('--store',required=True);publication.add_argument('--destination',required=True);publication.add_argument('--name',required=True)
     run=sub.add_parser('run');run.add_argument('--source',required=True);run.add_argument('--terraform',required=True)
     run.add_argument('--store',required=True);run.add_argument('--mode',choices=['stock-audit','hardened'],default='stock-audit')
     run.add_argument('--reuse-run',help='Verified immutable ISO from this reconciled run; new disk, identity and assessment are mandatory.')
     options=p.parse_args()
+    if options.command=='publish':
+        from .ubuntu_release import publish
+        identifier=run_id(options.run_id)
+        value=publish(vm_baseline.ROOT/'vm-runs'/identifier,vm_baseline.ROOT/'vm-runs'/run_id(options.previous),
+            candidate=vm_baseline.SHARED/identifier/'candidate.iso',dependency_store=options.store,
+            destination=options.destination,name=options.name)
+        print(json.dumps(value,indent=2));return 0
     if options.command=='catalog':
         from .ubuntu_catalog import catalog
         print(json.dumps(catalog(vm_baseline.ROOT/'vm-runs'),indent=2));return 0

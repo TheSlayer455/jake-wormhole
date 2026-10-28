@@ -234,20 +234,30 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             console_log.close()
             host_key = None
             installation_start = time.monotonic()
+            observed_phases = []
             while time.monotonic() < deadline - 180:
                 path = run / 'console.log'
                 require(path.stat().st_size <= 16 * 1024**2, 'installer_diagnostic_limit')
                 text = path.read_text(errors='replace')
                 phase = ('required-reboot' if 'WORMHOLE_REQUIRED_REBOOT' in text else
+                         'hardening-complete' if 'WORMHOLE_HARDENING_COMPLETE' in text else
+                         'hardening' if 'WORMHOLE_HARDENING_STARTED' in text else
                          'installed-finalization' if 'WORMHOLE_FINALIZATION_STARTED' in text else
                          'installing' if 'subiquity/Install/install' in text else 'firmware-and-installer-boot')
                 if result['phase'] != phase:
+                    if observed_phases:
+                        observed_phases[-1]['elapsed_seconds'] = round(time.monotonic() - phase_start, 3)
+                    phase_start = time.monotonic()
+                    observed_phases.append({'phase':phase, 'observed_at':now()})
+                    result['installation_observations'] = observed_phases
                     result.update(phase=phase,last_progress_at=now());save()
                 require('WORMHOLE_INSTALLATION_FAILED' not in text, 'installation_failed')
                 require('WORMHOLE_FINALIZATION_FAILED' not in text, 'finalization_failed')
                 host_type = 'ssh-rsa' if ubuntu_mode else 'ssh-ed25519'
                 found = re.search(r'WORMHOLE_FINAL_HOST_KEY_BEGIN\s+(' + host_type + r' [A-Za-z0-9+/=]+)[^\n]*\s+WORMHOLE_FINAL_HOST_KEY_END', text)
                 if found:
+                    if observed_phases:
+                        observed_phases[-1]['elapsed_seconds'] = round(time.monotonic()-phase_start,3)
                     host_key = found[1];break
                 require(console.poll() is None, 'installer_console_lost')
                 time.sleep(3)

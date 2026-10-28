@@ -10,6 +10,22 @@ from wormhole.ubuntu_assessment import POLICY
 
 
 class Reports(unittest.TestCase):
+    def test_pending_policy_refuses_publication_before_creating_release(self):
+        from wormhole.ubuntu_release import publish
+        from wormhole.runs import RunError
+        with tempfile.TemporaryDirectory() as value:
+            root=Path(value)
+            with self.assertRaises(RunError) as failure:
+                publish(root/'run-a',root/'run-b',candidate=root/'not-created.iso',dependency_store=root,
+                        destination=root,name='Jake-Ubuntu-22.04-LAB-QUALIFIED-fixture')
+            self.assertEqual(failure.exception.code,'lab_policy_dependencies_pending')
+            self.assertEqual(list(root.iterdir()),[])
+            (root/'Jake-Ubuntu-22.04-LAB-QUALIFIED-fixture').mkdir()
+            with self.assertRaises(RunError) as duplicate:
+                publish(root/'run-a',root/'run-b',candidate=root/'not-created.iso',dependency_store=root,
+                        destination=root,name='Jake-Ubuntu-22.04-LAB-QUALIFIED-fixture')
+            self.assertEqual(duplicate.exception.code,'duplicate_publication')
+
     def test_absent_results_are_blocked_and_junit_retains_each_expected_check(self):
         import xml.etree.ElementTree as ET
         with tempfile.TemporaryDirectory() as value:

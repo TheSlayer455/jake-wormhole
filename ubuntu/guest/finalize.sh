@@ -25,7 +25,9 @@ printf '%s\n' WORMHOLE_FINALIZATION_STARTED > /dev/ttyS0
 test -x /usr/bin/oscap
 oscap --version > /var/lib/wormhole/scanner-version.txt
 if test -s /usr/local/lib/wormhole/remediate.py; then
+  printf '%s\n' WORMHOLE_HARDENING_STARTED > /dev/ttyS0
   timeout --signal=TERM --kill-after=10 900 /usr/bin/python3 /usr/local/lib/wormhole/remediate.py
+  printf '%s\n' WORMHOLE_HARDENING_COMPLETE > /dev/ttyS0
 fi
 /usr/sbin/sshd -t
 visudo -cf /etc/sudoers.d/wormhole-lab
