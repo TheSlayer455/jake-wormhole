@@ -95,4 +95,12 @@ def recover(identifier, terraform):
             result.update(outcome='unknown',error_category='supervisor_interrupted_without_terminal_result')
         result['cleanup']='verified-absent-inputs-retained'
         atomic_json(run/'result.json',result)
+        try:
+            from .ubuntu_runtime import report
+            from .storage import lifecycle
+            report(run,result)
+            result['storage_cleanup']=lifecycle(lease,identifier)
+        except Exception as error:
+            result['storage_cleanup_error']=getattr(error,'code',type(error).__name__)
+        atomic_json(run/'result.json',result)
     return result

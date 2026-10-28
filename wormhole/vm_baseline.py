@@ -169,6 +169,15 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
     with VMLease(CANONICAL_INFRASTRUCTURE_ROOT, identifier, revision) as lease:
         try:
             preflight_start=time.monotonic();preflight_at=now()
+            from .storage import Store, lifecycle, admission as storage_admission
+            result['storage_preflight_cleanup'] = lifecycle(lease)
+            usage = Store().status()
+            # Source bytes already reside on disk; reserve extraction + two ISO
+            # outputs, the full guest disk, and a GiB for evidence/support data.
+            atomic_json(run/'storage-admission.json', storage_admission(ROOT,
+                65*1024**3 + 3*Path(source).stat().st_size,
+                managed_bytes=usage['total_allocated_bytes'],
+                candidate_bytes=result['storage_preflight_cleanup']['unique_candidate_allocated_bytes']))
             atomic_json(run / 'preflight.json', preflight(source))
             if sandbox:
                 from .ubuntu_sandbox import MEMORY
@@ -206,7 +215,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 original_manifest = read_json(origin / 'inputs/build-manifest.json')
                 require(original_result.get('build') == original_manifest and original_result.get('cleanup') ==
                         'verified-absent-inputs-retained', 'candidate_origin_unreconciled')
-                reuse = (SHARED / reuse_run / 'candidate.iso', original_manifest)
+                reuse = (Store().resolve(reuse_run), original_manifest)
                 result['candidate_origin_run'] = reuse_run
             if ubuntu_mode:
                 import secrets
@@ -471,6 +480,14 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                     report(run, result)
                 except Exception as error:
                     result['report_error'] = getattr(error, 'code', type(error).__name__);save()
+            if result['cleanup']=='verified-absent-inputs-retained' and not result.get('report_error'):
+                try:
+                    from .storage import lifecycle
+                    result['storage_cleanup'] = lifecycle(lease, identifier)
+                except Exception as error:
+                    # A secondary storage error never replaces the workload result.
+                    result['storage_cleanup_error'] = getattr(error,'code',type(error).__name__)
+                save()
     return result
 
 

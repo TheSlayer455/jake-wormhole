@@ -412,6 +412,9 @@ class AdmissionLease:
             self.plan = build_plan(self.profile, observations)
             _require(self.plan["synthetic"] is self.allow_synthetic, "synthetic_observation", "Synthetic leases require synthetic observations and cannot authorize real allocation.")
             _require(self.plan["admitted"], "capacity_refused", "The reviewed profile exceeds measured capacity or configured headroom; no resources were allocated.")
+            if not self.allow_synthetic:
+                from .storage import admission as storage_admission
+                storage_admission(self.root, self.plan['requirements']['disk_bytes'])
             timestamp = now()
             self.record = {"schema_version": "1.0", "application": PROJECT, "run_id": self.run_id,
                 "source_revision": self.source_revision, "boot_id": observations["boot_id"], "owner_pid": os.getpid(),

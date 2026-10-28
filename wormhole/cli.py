@@ -27,6 +27,8 @@ def parser():
     root.add_argument("--version", action="version", version=__version__)
     commands = root.add_subparsers(dest="command", required=True)
     commands.add_parser("doctor", help="Read local source/tool presence without provisioning or network calls.")
+    storage = commands.add_parser('storage', help='Allocated storage status, read-only preview, or manifest-verified transient cleanup.')
+    storage.add_argument('operation', choices=('status','preview','clean'))
     media_split=commands.add_parser('media-split',help='Stream an operator-supplied ISO into a private local artifact store; no qualification.')
     media_split.add_argument('source');media_split.add_argument('--store',required=True);media_split.add_argument('--sha256',required=True)
     media_assemble=commands.add_parser('media-assemble',help='Verify/reconstruct ordered ISO chunks, resuming only verified partial bytes.')
@@ -97,6 +99,10 @@ def main(arguments=None):
     try:
         if options.command == "doctor":
             value, status = doctor(), 0
+        elif options.command == 'storage':
+            from .storage import operate
+            value = operate(options.operation)
+            status = 1 if value.get('cache_budget_exceeded') else 0
         elif options.command=='media-split':
             from .media_store import split
             value=split(options.source,options.store,options.sha256);status=0

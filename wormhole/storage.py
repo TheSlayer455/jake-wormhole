@@ -1,0 +1,358 @@
+"""Private, manifest-bound transient cleanup under the shared infrastructure lock.
+
+No resource destruction, age-based eviction, Docker pruning or release deletion.
+Unknown paths remain protected. Physical accounting uses allocated filesystem blocks.
+"""
+from contextlib import contextmanager
+import json
+import os
+from pathlib import Path
+import re
+import stat
+import subprocess
+import xml.etree.ElementTree as ET
+
+from .admission import CANONICAL_INFRASTRUCTURE_ROOT
+from .media_store import file_lock
+from .runs import RunError, atomic_json, now, read_json, run_id, workspace_path
+from .vm_inputs import sha256
+
+GIB = 1024**3
+ARTIFACT_BUDGET = 100 * GIB
+CANDIDATE_BUDGET = 32 * GIB
+ROOT = CANONICAL_INFRASTRUCTURE_ROOT.parent
+SHARED = ROOT.parent.parent / 'jake-wormhole-vm'
+
+
+def require(condition, code='storage_proof_incomplete'):
+    if not condition:
+        raise RunError(code, 'Storage proof is incomplete; preserve the affected artifacts.')
+
+
+def signature(path):
+    info = path.lstat()
+    return [info.st_dev, info.st_ino, info.st_size, info.st_blocks * 512,
+            info.st_mtime_ns, info.st_ctime_ns, info.st_uid, info.st_gid, info.st_nlink, info.st_mode]
+
+
+def filesystem(path):
+    value = os.statvfs(path)
+    used = (value.f_blocks - value.f_bfree) * value.f_frsize
+    available = value.f_bavail * value.f_frsize
+    return {'used_bytes': used, 'available_bytes': available,
+            'usage_percent': round(100 * used / (used + available), 3)}
+
+
+def admission(path, required_bytes, *, managed_bytes=0, candidate_bytes=0):
+    """Project peak: sources already present + extraction/remaster + disk + evidence."""
+    require(type(required_bytes) is int and required_bytes >= 0)
+    value = filesystem(path)
+    value.update(required_bytes=required_bytes, warning=value['usage_percent'] >= 80,
+                 projected_usage_percent=round(100 * (value['used_bytes'] + required_bytes) /
+                     (value['used_bytes'] + value['available_bytes']), 3))
+    require(required_bytes <= value['available_bytes'] and
+            (value['used_bytes'] + required_bytes) * 10 <=
+            (value['used_bytes'] + value['available_bytes']) * 9, 'storage_projected_critical')
+    require(managed_bytes <= ARTIFACT_BUDGET and candidate_bytes <= CANDIDATE_BUDGET,
+            'storage_retention_budget')
+    return value
+
+
+class Store:
+    def __init__(self, root=ROOT, shared=SHARED):
+        self.root, self.shared = Path(root), Path(shared)
+        self.infrastructure = self.root / 'infrastructure'
+        self.runs = self.root / 'vm-runs'
+
+    @contextmanager
+    def locked(self):
+        require(os.geteuid() == 0, 'runtime_owner_required')
+        workspace_path(self.infrastructure)
+        require(read_json(self.infrastructure / 'owner.json') == {
+            'application': 'jake-wormhole', 'schema_version': '1.0', 'kind': 'shared-infrastructure-root'})
+        with file_lock(self.infrastructure / 'infrastructure.lock'):
+            yield
+
+    def status(self):
+        totals = {key: 0 for key in ('candidates', 'temporary_builds', 'vm_disks',
+                  'retained_evidence', 'qualified_releases', 'protected_other')}
+        seen = set()
+        # Fixed project roots only. Do not follow links or cross filesystem mounts.
+        for base in (self.root.parent, self.shared):
+            if not base.exists():
+                continue
+            device = base.stat().st_dev
+            for directory, folders, files in os.walk(base, followlinks=False):
+                folders[:] = [n for n in folders if not (Path(directory)/n).is_symlink()
+                              and (Path(directory)/n).stat().st_dev == device]
+                for name in [*files, '.']:
+                    path = Path(directory) if name == '.' else Path(directory)/name
+                    info = path.lstat()
+                    if stat.S_ISLNK(info.st_mode) or (info.st_dev, info.st_ino) in seen:
+                        continue
+                    seen.add((info.st_dev, info.st_ino))
+                    parts = path.relative_to(base).parts
+                    if any(n in {'releases','ubuntu-releases','iso-lab-releases'} for n in parts):
+                        category = 'qualified_releases'
+                    elif base == self.shared:
+                        category = 'candidates' if path.name == 'candidate.iso' else 'vm_disks' if 'disk' in parts else 'temporary_builds'
+                    elif 'vm-runs' in parts and any(n in {'repository','boot','wormhole-identity','seed-layout-check'} for n in parts):
+                        category = 'temporary_builds'
+                    elif any(n in {'vm-runs','runs','scanner-builds','iso-preflight'} for n in parts):
+                        category = 'retained_evidence'
+                    else:
+                        category = 'protected_other'
+                    totals[category] += info.st_blocks * 512
+        return {'schema_version':'1.0', 'allocated_bytes':totals,
+                'total_allocated_bytes':sum(totals.values()), 'filesystem':filesystem(self.root),
+                'artifact_budget_bytes':ARTIFACT_BUDGET, 'candidate_budget_bytes':CANDIDATE_BUDGET,
+                'over_artifact_budget':sum(totals.values()) > ARTIFACT_BUDGET,
+                'accounting':'unique (device,inode) allocated blocks; Docker shared layers excluded'}
+
+    def observe(self, *, lease=None):
+        """Read all domain/pool/mount references, not only running project names."""
+        from .vm_admission import validate_record
+        from .admission import _journal
+        for filename, history, validate in [('admission.json','history',_journal),
+                                          ('vm-admission.json','vm-history',validate_record)]:
+            path = self.infrastructure / filename
+            if not path.exists() and filename == 'vm-admission.json':
+                continue
+            record = validate(read_json(path))
+            if record['state'] != 'finished':
+                # Only the actual in-process VM lease may clean BEFORE allocation.
+                require(lease is not None and lease.pid == os.getpid() and lease.lock is not None and
+                        record == lease.record and not record['resources'], 'storage_active_run')
+                lease._check()
+            else:
+                require(read_json(self.infrastructure/history/(record['run_id']+'.json')) == record)
+        def call(args):
+            return subprocess.check_output(args, stderr=subprocess.DEVNULL, timeout=15).decode()
+        references = []
+        self.live = {}
+        for kind, query in [('domain','list'),('network','net-list'),('pool','pool-list')]:
+            self.live[kind]=set(call(['virsh','-c','qemu:///system',query,'--all','--name']).split())
+        self.live['network_filter']={line.split()[-1] for line in
+            call(['virsh','-c','qemu:///system','nwfilter-list']).splitlines() if line.split()}
+        self.live['controller_container']=self.live['support_container']=set(
+            call(['docker','ps','-a','--format','{{.Names}}']).split())
+        for domain in self.live['domain']:
+            xml = ET.fromstring(call(['virsh','-c','qemu:///system','dumpxml',domain]))
+            for source in xml.findall('.//disk//source'):
+                references.extend(source.get(k) for k in ('file','dev') if source.get(k))
+        for pool in self.live['pool']:
+            xml = ET.fromstring(call(['virsh','-c','qemu:///system','pool-dumpxml',pool]))
+            target = xml.findtext('target/path')
+            if target: references.append(target)
+        for identifier in call(['docker','ps','-aq']).split():
+            mounts = json.loads(call(['docker','inspect','--format','{{json .Mounts}}',identifier]))
+            references.extend(m['Source'] for m in mounts if m.get('Source'))
+        for line in Path('/proc/self/mountinfo').read_text().splitlines():
+            references.append(re.sub(r'\\([0-7]{3})',lambda m:chr(int(m[1],8)),line.split()[4]))
+        # Tools operating outside their coordinator also prevent cleanup.
+        for directory in Path('/proc').iterdir():
+            if not directory.name.isdigit() or int(directory.name) == os.getpid(): continue
+            try:
+                argv = (directory/'cmdline').read_bytes().split(b'\0')
+                executable = Path(os.fsdecode(argv[0])).name if argv else ''
+                if executable in {'terraform','xorriso','oscap','qemu-img','qemu-system-x86_64'}:
+                    relevant = any(str(root).encode() in b' '.join(argv) for root in (self.root,self.shared))
+                    require(not relevant, 'storage_active_tool')
+                for fd in (directory/'fd').iterdir():
+                    try: target = os.readlink(fd)
+                    except FileNotFoundError: continue
+                    if any(target.startswith(str(root)+'/') for root in (self.shared,self.runs)):
+                        references.append(target.removesuffix(' (deleted)'))
+            except (FileNotFoundError, ProcessLookupError): continue
+        return references
+
+    def checked(self, path, references):
+        """Reject symlink ancestors, hardlinks, mounts, unexpected owners and open inputs."""
+        path = Path(path)
+        require(path.is_relative_to(self.root) or path.is_relative_to(self.shared), 'storage_outside_scope')
+        base = self.root if path.is_relative_to(self.root) else self.shared
+        for parent in [*reversed(path.parents),path]:
+            if parent == base or parent.is_relative_to(base):
+                info = parent.lstat()
+                require(not stat.S_ISLNK(info.st_mode), 'storage_unsafe_link')
+                require(info.st_uid in {0, self.qemu_uid()}, 'storage_owner_mismatch')
+                require(not info.st_mode & 0o022, 'storage_unsafe_permissions')
+        info = path.lstat()
+        require(stat.S_ISREG(info.st_mode) and info.st_nlink == 1, 'storage_unsafe_file')
+        for value in references:
+            ref = Path(value)
+            require(not (path == ref or ref.is_relative_to(path)), 'storage_referenced')
+            # Mounts/pools protect subtrees, but ordinary ancestor mounts such as / do not.
+            require(not (ref.is_relative_to(base) and path.is_relative_to(ref)), 'storage_referenced')
+        return signature(path)
+
+    @staticmethod
+    def qemu_uid():
+        import pwd
+        return pwd.getpwnam('libvirt-qemu').pw_uid
+
+    def proof(self, identifier, references, *, current=None):
+        from .vm_admission import validate_record
+        run = self.runs / run_id(identifier)
+        value = read_json(run/'result.json')
+        journal = validate_record(read_json(self.infrastructure/'vm-history'/(identifier+'.json')))
+        require(journal['state']=='finished' and value['run_id']==identifier and
+                journal['source_revision']==value['source_revision'])
+        require(value['outcome']!='running' and value.get('finished_at'), 'storage_unfinished_evidence')
+        for key in ('supervisor','active_command'):
+            process=value.get(key)
+            if process and not (identifier==current and process['pid']==os.getpid()):
+                from .vm_baseline import process_identity
+                require(process_identity(process['pid'])!=process, 'storage_active_supervisor')
+        for item in journal['resources']:
+            if item['kind']=='disk': require(not Path(item['identity']).exists(), 'storage_disk_unreconciled')
+            elif item['kind'] not in {'installer_iso','seed_iso'}:
+                require(item['identity'] not in self.live.get(item['kind'],set()), 'storage_resource_present')
+        manifest = read_json(run/'inputs/build-manifest.json')
+        require(value.get('build')==manifest, 'storage_manifest_mismatch')
+        require(re.fullmatch('[a-f0-9]{64}',manifest['candidate_sha256']) is not None)
+        # The journal binds this exact ISO, not a guessed directory name.
+        candidate = self.shared/identifier/'candidate.iso'
+        require(any(x['kind']=='installer_iso' and x['identity']==str(candidate) for x in journal['resources']))
+        return run, value, manifest
+
+    def preview(self, references, *, current=None):
+        groups, actions, blocked = {}, [], []
+        for run in sorted(self.runs.iterdir()):
+            if not run.is_dir(): continue
+            try:
+                _, result, manifest = self.proof(run.name,references,current=current)
+                candidate = self.shared/run.name/'candidate.iso'
+                if candidate.exists():
+                    self.checked(candidate,references)
+                    require(sha256(candidate)==manifest['candidate_sha256'], 'storage_candidate_changed')
+                    groups.setdefault(manifest['candidate_sha256'],[]).append((run,manifest,candidate))
+                else:
+                    # A missing unaccounted candidate cannot authorize staging removal.
+                    self.resolve(run.name)
+            except (RunError,OSError,KeyError,ValueError) as error:
+                blocked.append({'run_id':run.name,'reason':getattr(error,'code',type(error).__name__)})
+                continue
+            payload=run/'inputs/payload'
+            if (payload/'manifest.json').exists():
+                try:
+                    require(sha256(payload/'manifest.json')==manifest['dependency_manifest_sha256'])
+                    files=read_json(payload/'manifest.json')['files']
+                    for entry in files:
+                        relative=Path(entry['path'])
+                        require(not relative.is_absolute() and '..' not in relative.parts)
+                        if not (relative.parts[0]=='repository' or str(relative)=='openscap-lab.tar.gz'): continue
+                        path=payload/relative
+                        if path.exists():
+                            info=self.checked(path,references)
+                            require(path.stat().st_size==entry['bytes'] and sha256(path)==entry['sha256'], 'storage_staging_changed')
+                            actions.append({'path':str(path),'signature':info,'reason':'verified-installation-staging','run_id':run.name})
+                    # Extracted boot files are diagnostic inputs, not the report,
+                    # native assessment, SVD or installation contract. Record their
+                    # identities before unlinking the fixed builder outputs.
+                    for name in ('grub.cfg','loopback.cfg','md5sum.txt','reused-grub.cfg','reused-loopback.cfg'):
+                        path=run/'inputs/boot'/name
+                        if path.exists():
+                            actions.append({'path':str(path),'signature':self.checked(path,references),
+                                'sha256':sha256(path),'reason':'verified-boot-extraction','run_id':run.name})
+                except (RunError,OSError,KeyError,ValueError) as error:
+                    # Fail the whole run's proposed staging cleanup on any mismatch.
+                    actions=[a for a in actions if a['run_id']!=run.name]
+                    blocked.append({'run_id':run.name,'reason':getattr(error,'code',type(error).__name__)})
+            seed=self.shared/run.name/'seed.iso'
+            if seed.exists():
+                try:
+                    info=self.checked(seed,references)
+                    require(sha256(seed)==manifest['seed_sha256'],'storage_seed_changed')
+                    actions.append({'path':str(seed),'signature':info,'reason':'verified-detached-seed','run_id':run.name})
+                except RunError as error: blocked.append({'run_id':run.name,'reason':error.code})
+        unique=0
+        for digest, members in groups.items():
+            canonical=members[0][2]
+            unique+=signature(canonical)[3]
+            for run, manifest, candidate in members[1:]:
+                actions.append({'path':str(candidate),'signature':signature(candidate),'reason':'identical-candidate',
+                    'run_id':run.name,'canonical_run':canonical.parent.name,'sha256':digest})
+        return {'actions':actions,'blocked':blocked,'unique_candidate_allocated_bytes':unique,
+                'estimated_reclaim_allocated_bytes':sum(a['signature'][3] for a in actions),
+                'cache_budget_exceeded':unique>CANDIDATE_BUDGET,
+                'cache_policy':'32 GiB unique verified ISO bytes; no unique candidate or evidence eviction; refuse new builds if protected retention exceeds budget'}
+
+    def resolve(self, identifier):
+        """Follow bounded durable aliases; every reuse verifies the actual retained bytes."""
+        original=read_json(self.runs/run_id(identifier)/'inputs/build-manifest.json')
+        digest=original['candidate_sha256'];visited=set()
+        while identifier not in visited and len(visited)<64:
+            visited.add(identifier)
+            candidate=self.shared/run_id(identifier)/'candidate.iso'
+            if candidate.exists():
+                self.checked(candidate,[])
+                require(sha256(candidate)==digest,'storage_candidate_changed')
+                return candidate
+            run=self.runs/identifier
+            receipt=run/'storage-candidate.json'
+            if receipt.exists():
+                record=read_json(receipt)
+                require(record['sha256']==digest)
+                identifier=run_id(record['canonical_run'])
+            else:
+                record=read_json(run/'candidate-retention-disposition.json')
+                require(record['state']=='duplicate-removed-equivalent-bytes-retained' and record['candidate_sha256']==digest)
+                identifier=run_id(record['identical_copy_retained_in_run'])
+        raise RunError('storage_candidate_alias_invalid','Candidate retention alias is cyclic or incomplete.')
+
+    def clean_held(self, *, lease=None, current=None):
+        """Caller already holds the SAME admission lock; never a nested flock."""
+        references=self.observe(lease=lease)
+        plan=self.preview(references,current=current)
+        before=self.status()
+        # Durable intent before unlink; interruption preserves source proofs and aliases.
+        operations=self.infrastructure/'storage-operations'
+        workspace_path(operations,create=True)
+        from uuid import uuid4
+        operation=operations/(str(uuid4())+'.json')
+        receipt={'schema_version':'1.0','state':'prepared','at':now(),'actions':plan['actions'],
+                 'before':before,'blocked':plan['blocked']}
+        # Large fleets can exceed small run-record limits: split into per-file receipts.
+        atomic_json(operation,{**receipt,'actions':len(plan['actions'])})
+        reclaimed=0
+        for index, action in enumerate(plan['actions']):
+            path=Path(action['path'])
+            require(self.checked(path,references)==action['signature'],'storage_file_changed')
+            if action['reason']=='identical-candidate':
+                canonical=self.shared/action['canonical_run']/'candidate.iso'
+                self.checked(canonical,references)
+                require(canonical!=path and sha256(canonical)==action['sha256'])
+                atomic_json(self.runs/action['run_id']/'storage-candidate.json',{
+                    'schema_version':'1.0','sha256':action['sha256'],'canonical_run':action['canonical_run'],
+                    'original_run':action['run_id'],'at':now()})
+            entry=operations/(operation.stem+'-'+str(index)+'.json')
+            atomic_json(entry,{'state':'prepared',**action})
+            path.unlink()
+            # Synchronize directory metadata before declaring deletion complete.
+            fd=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY)
+            try:os.fsync(fd)
+            finally:os.close(fd)
+            reclaimed+=action['signature'][3]
+            atomic_json(entry,{'state':'unlinked',**action})
+        after=self.status()
+        receipt={**receipt,'state':'complete','actions':len(plan['actions']), 'after':after,
+                 'unlinked_allocated_bytes':reclaimed,
+                 'filesystem_available_delta_bytes':after['filesystem']['available_bytes']-before['filesystem']['available_bytes'],
+                 'unique_candidate_allocated_bytes':plan['unique_candidate_allocated_bytes'],
+                 'cache_budget_exceeded':plan['cache_budget_exceeded']}
+        atomic_json(operation,receipt)
+        return receipt
+
+
+def operate(command):
+    store=Store()
+    with store.locked():
+        if command=='status': return store.status()
+        if command=='preview': return store.preview(store.observe())
+        return store.clean_held()
+
+
+def lifecycle(lease, identifier=None):
+    store=Store()
+    return store.clean_held(lease=lease,current=identifier)
