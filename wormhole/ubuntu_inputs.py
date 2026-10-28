@@ -89,12 +89,13 @@ systemctl enable wormhole-finalize.service
 cat /tmp/wormhole-identity/run-id > /var/lib/wormhole/run-id
 rm -rf /tmp/wormhole-identity /tmp/wormhole-payload
 """
-    identity = {'public-key': public_key + '\n', 'password': 'lab.service:' + password_hash + '\n', 'run-id': identifier + '\n'}
-    late = [['mkdir', '-p', '/target/tmp/wormhole-payload', '/target/tmp/wormhole-identity'],
-            ['cp', '-a', '/cdrom/wormhole/.', '/target/tmp/wormhole-payload/']]
-    for name, data in identity.items():
-        encoded = base64.b64encode(data.encode()).decode()
-        late.append(['sh', '-c', 'printf %s ' + encoded + ' | base64 -d > /target/tmp/wormhole-identity/' + name])
+    # Keep even encoded password hashes out of installer command arguments/logs.
+    # Identity files live only in the private, run-specific NoCloud seed.
+    late = [['mkdir', '-p', '/target/tmp/wormhole-payload', '/run/wormhole-seed'],
+            ['cp', '-a', '/cdrom/wormhole/.', '/target/tmp/wormhole-payload/'],
+            ['mount', '-o', 'ro', '/dev/disk/by-label/CIDATA', '/run/wormhole-seed'],
+            ['cp', '-a', '/run/wormhole-seed/wormhole-identity', '/target/tmp/wormhole-identity'],
+            ['umount', '/run/wormhole-seed']]
     late.append(['curtin', 'in-target', '--target=/target', '--', 'sh', '-c', install])
     value['autoinstall']['late-commands'] = late
     value['autoinstall']['user-data']['hostname'] = 'vm-' + identifier[:8]
@@ -119,9 +120,12 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
                         '-map', str(payload), '/wormhole'], stdout=log, stderr=log, check=True, timeout=300)
     os.replace(final_iso, destination)
     (seed_dir / 'user-data').write_text(seed_config(identifier, public_key, address, mac, password_hash))
+    identity = seed_dir / 'wormhole-identity';identity.mkdir(mode=0o700)
+    for name, raw in {'public-key': public_key + '\n', 'password': 'lab.service:' + password_hash + '\n', 'run-id': identifier + '\n'}.items():
+        (identity / name).write_text(raw)
     seed = destination.with_name('seed.iso');seed.unlink()
     subprocess.run(['xorriso', '-as', 'mkisofs', '-V', 'CIDATA', '-J', '-r', '-o', str(seed),
-                    str(seed_dir / 'user-data'), str(seed_dir / 'meta-data')], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=30)
+                    str(seed_dir / 'user-data'), str(seed_dir / 'meta-data'), str(identity)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=30)
     manifest.update(capability='ubuntu-assessment-candidate-iso', candidate_sha256=sha256(destination), seed_sha256=sha256(seed),
         installation_input_sha256=sha256(seed_dir / 'user-data'), mode=mode, policy_sha256=sha256(POLICY),
         dependency_manifest_sha256=sha256(store / 'bundle/manifest.json'), scanner_package='libopenscap8=1.2.17-0.1ubuntu7.22.04.3',
