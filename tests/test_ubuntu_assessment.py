@@ -66,3 +66,25 @@ class Assessment(unittest.TestCase):
         self.assertFalse(self.read(1)['lab_iso_qualified'])
         self.content.write_text('changed')
         with self.assertRaises(RunError):self.read()
+
+    def test_upstream_group_deselection_is_not_a_missing_rule(self):
+        tree=ET.parse(self.content);root=tree.getroot()
+        profile=next(root.iter(a.X+'Profile'))
+        ET.SubElement(profile,a.X+'select',idref='group-unused',selected='false')
+        group=ET.SubElement(root,a.X+'Group',id='group-unused')
+        rule=ET.SubElement(group,a.X+'Rule',id='rule-c',selected='true',severity='low')
+        ET.SubElement(rule,a.X+'title').text='Unused group rule'
+        tree.write(self.content)
+        self.policy['content']['datastream_sha256']=a.digest(self.content)
+        plan=a.inventory(self.content,self.policy)
+        self.assertFalse(plan['rule-c']['selected'])
+        self.assertEqual(len(plan),3)
+
+    def test_secret_identity_is_not_in_installer_command_arguments(self):
+        from wormhole.ubuntu_inputs import seed_config
+        from uuid import uuid4
+        value=seed_config(str(uuid4()),'ssh-rsa '+'A'*500,'192.0.2.10/24','52:54:00:11:22:33','$6$private$hash')
+        self.assertNotIn('$6$private$hash',value)
+        self.assertIn('CIDATA',value)
+        self.assertIn('lab.service ALL=(ALL) ALL',value)
+        self.assertNotIn('NOPASSWD',value)
