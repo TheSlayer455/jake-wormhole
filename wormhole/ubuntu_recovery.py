@@ -94,6 +94,7 @@ def recover(identifier, terraform):
         if result['outcome']=='running':
             result.update(outcome='unknown',error_category='supervisor_interrupted_without_terminal_result')
         result['cleanup']='verified-absent-inputs-retained'
+        result.setdefault('finished_at',now())
         atomic_json(run/'result.json',result)
         try:
             from .ubuntu_runtime import report

@@ -40,7 +40,8 @@ def filesystem(path):
     used = (value.f_blocks - value.f_bfree) * value.f_frsize
     available = value.f_bavail * value.f_frsize
     return {'used_bytes': used, 'available_bytes': available,
-            'usage_percent': round(100 * used / (used + available), 3)}
+            'usage_percent': round(100 * used / (used + available), 3),
+            'warning':used*5 >= (used+available)*4}
 
 
 def admission(path, required_bytes, *, managed_bytes=0, candidate_bytes=0):
@@ -393,8 +394,8 @@ class Store:
     def partial(self, run, references, *, current=None):
         from .vm_admission import validate_record
         from .vm_baseline import process_identity
-        require(not (run/'inputs/build-manifest.json').exists())
         value=read_json(run/'result.json')
+        require(not value.get('build'))
         intent=read_json(run/'storage-build-intent.json')
         journal=validate_record(read_json(self.infrastructure/'vm-history'/(run_id(run.name)+'.json')))
         candidate=self.shared/run.name/'candidate.iso'
@@ -402,7 +403,8 @@ class Store:
                          'candidate':str(candidate),'seed':str(candidate.with_name('seed.iso'))})
         require(journal['state']=='finished' and journal['source_revision']==value['source_revision'] and
                 all(r['kind'] in {'installer_iso','seed_iso'} for r in journal['resources']))
-        require(value['outcome']=='failed' and value.get('finished_at'))
+        require((value['outcome']=='failed' or value['outcome']=='unknown' and
+                 value.get('recovery',{}).get('state')=='stopped-and-cleaned') and value.get('finished_at'))
         for field in ('supervisor','active_command'):
             process=value.get(field)
             require(not process or (run.name==current and process['pid']==os.getpid()) or

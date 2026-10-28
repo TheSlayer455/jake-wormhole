@@ -172,12 +172,17 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             from .storage import Store, lifecycle, admission as storage_admission
             result['storage_preflight_cleanup'] = lifecycle(lease)
             usage = Store().status()
+            incoming=0
+            if reuse_run is None:
+                incoming=Path(source).stat().st_size+16*1024**2
+                if dependency_store is not None:
+                    incoming+=sum(f['bytes'] for f in read_json(Path(dependency_store)/'bundle/manifest.json')['files'])
             # Source bytes already reside on disk; reserve extraction + two ISO
             # outputs, the full guest disk, and a GiB for evidence/support data.
             atomic_json(run/'storage-admission.json', storage_admission(ROOT,
                 65*1024**3 + 3*Path(source).stat().st_size,
                 managed_bytes=usage['total_allocated_bytes'],
-                candidate_bytes=result['storage_preflight_cleanup']['unique_candidate_allocated_bytes']))
+                candidate_bytes=result['storage_preflight_cleanup']['unique_candidate_allocated_bytes']+incoming))
             atomic_json(run / 'preflight.json', preflight(source))
             if sandbox:
                 from .ubuntu_sandbox import MEMORY

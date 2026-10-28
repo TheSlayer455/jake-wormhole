@@ -1,5 +1,10 @@
 # Jake Wormhole engineering instructions
 
+The owner authorizes automatic manifest-bound transient cleanup and storage
+budget enforcement under the existing shared admission lock. Preserve reusable
+current ISO bytes, qualification evidence, releases and unresolved recovery state;
+never touch unrelated storage. See [storage lifecycle](docs/STORAGE.md).
+
 Build this public Linux image reference project. Preserve the verified container backend as the fast regression layer. The owner explicitly authorized a separate home KVM/libvirt and real-ISO profile for RHEL 9 and Ubuntu 22.04 on October 27, 2026; this supersedes the former container-only prohibition, not its historical evidence. Runtime state, licensed media, credentials and raw evidence remain private. Original ticket records are historical, not new claim leases.
 
 Current owner milestone: complete Ubuntu 22.04 hardening, real assessment,
