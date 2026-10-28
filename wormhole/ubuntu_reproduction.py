@@ -18,8 +18,12 @@ def sanitized(result):
            'bootloader_unattended_boot_blocked':'Installed boot requested unexpected authentication.',
            'required_reboot_progress_deadline':'Required reboot did not complete within its bounded observation stage.',
            'ssh-ansible-inventory_failed':'A controller operation failed; inspect the pinned observer and acceptance implementation.',
+           'audit_archive_incomplete':'The sender completed but required durable receiver records were incomplete.',
+           'audit_archive_receipt_mismatch':'The retained archive did not match the declared validation transfer.',
+           'offline_encryption_absent':'Powered-off disk inspection did not establish the required encrypted header.',
+           'support_guest_evidence_missing':'Required guest-origin receiver evidence was not retained.',
            'supervisor_interrupted_without_terminal_result':'Supervisor observation ended without a verified terminal result.'}
-    code=result.get('error_category')
+    code=result.get('error_category');sandbox=result.get('build',{}).get('sandbox') is True
     return {'schema_version':'1.0','capability':'sanitized-ubuntu-reproduction',
         'repository':REPOSITORY,'source_revision':revision,'source_url':REPOSITORY+'/tree/'+revision,
         'boundary':code if code in known else 'unclassified-or-assessment-pending',
@@ -27,7 +31,8 @@ def sanitized(result):
         'evidence_category':'real-vm-execution' if any(s.get('stage')=='terraform-apply' and s.get('returncode')==0 for s in result.get('stages',[])) else 'controller-preflight',
         'safe_inputs':{'os':'Ubuntu 22.04.5 amd64','firmware':'BIOS','memory_mib':8192,'vcpus':2,
                        'empty_disk_gib':64,'benchmark':'CaC 0.1.82 Ubuntu STIG V2R7'},
-        'command_template':'python -m wormhole.ubuntu_runtime run --mode hardened --store PRIVATE_STAGED_INPUTS --source VERIFIED_STOCK_ISO --terraform PINNED_TERRAFORM',
+        'command_template':'python -m wormhole.ubuntu_runtime run --mode hardened'+(' --sandbox' if sandbox else '')+' --store PRIVATE_STAGED_INPUTS --source VERIFIED_STOCK_ISO --terraform PINNED_TERRAFORM',
+        'sandbox':sandbox,
         'recovery':'Reconcile the exact run and preserve private evidence; recover only after the original supervisor and operation have stopped.',
         'raw_evidence_exported':False,'lab_iso_qualified':False,'production_iso_eligible':False}
 

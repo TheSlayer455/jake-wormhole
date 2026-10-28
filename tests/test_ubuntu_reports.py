@@ -21,6 +21,9 @@ class Reports(unittest.TestCase):
             self.assertNotIn(secret,raw)
         self.assertEqual(value['evidence_category'],'real-vm-execution')
         self.assertFalse(value['lab_iso_qualified'])
+        sandbox=sanitized({'source_revision':'b'*40,'error_category':'audit_archive_incomplete','build':{'sandbox':True}})
+        self.assertIn('--sandbox',sandbox['command_template'])
+        self.assertEqual(sandbox['boundary'],'audit_archive_incomplete')
 
     def test_native_iso_snapshots_and_layer_deltas_are_distinct(self):
         from wormhole.ubuntu_svd import parse_manifest
