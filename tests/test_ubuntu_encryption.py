@@ -26,6 +26,7 @@ class Encryption(unittest.TestCase):
             self.assertFalse(unlock.observe('kernel still booting',stream))
             with self.assertRaises(RunError):unlock.observe('WORMHOLE_INSTALL_UNLOCK_REQUEST',stream)
             key.write_text('A'*64);key.chmod(0o600)
+            self.assertFalse(unlock.observe("log: os.write(fd,b'WORMHOLE_INSTALL_UNLOCK_REQUEST')",stream))
             self.assertTrue(unlock.observe('WORMHOLE_INSTALL_UNLOCK_REQUEST',stream))
             self.assertFalse(unlock.observe('WORMHOLE_INSTALL_UNLOCK_REQUEST',stream))
             self.assertTrue(unlock.observe('Please unlock disk wormhole-root:',stream))

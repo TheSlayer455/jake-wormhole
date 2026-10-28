@@ -9,7 +9,7 @@ from pathlib import Path
 from .runs import RunError
 
 
-EARLY = r'''import os,termios
+EARLY = r'''import os,termios,select,time
 fd=os.open('/dev/ttyS0',os.O_RDWR|os.O_NOCTTY)
 before=termios.tcgetattr(fd)
 quiet=termios.tcgetattr(fd);quiet[3]&=~termios.ECHO
@@ -17,7 +17,13 @@ termios.tcsetattr(fd,termios.TCSANOW,quiet)
 try:
  os.write(fd,b'\nWORMHOLE_INSTALL_UNLOCK_REQUEST\n')
  value=b''
- while not value.endswith(b'\n') and len(value)<=128:value+=os.read(fd,1)
+ deadline=time.monotonic()+180
+ while not value.endswith(b'\n') and len(value)<=128:
+  remaining=deadline-time.monotonic()
+  if remaining<=0 or not select.select([fd],[],[],remaining)[0]:raise RuntimeError('console unlock deadline')
+  part=os.read(fd,1)
+  if not part:raise RuntimeError('console input closed')
+  value+=part
  value=value.rstrip(b'\r\n')
  if len(value)<48 or len(value)>128 or not all(c in b'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in value):raise RuntimeError('invalid console material')
  out=os.open('/run/wormhole-unlock',os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600)
@@ -64,7 +70,7 @@ class ConsoleUnlock:
         self.wrong_sent=False
 
     def observe(self,text,stream):
-        installer='WORMHOLE_INSTALL_UNLOCK_REQUEST' in text and not self.installer_sent
+        installer=re.search(r'(?:^|\n)WORMHOLE_INSTALL_UNLOCK_REQUEST\r?(?:\n|$)',text) is not None and not self.installer_sent
         prompts=len(re.findall(r'Please unlock disk [^\r\n:]+:',text))
         if not installer and prompts<=self.boot_prompts:return False
         if not self.secret_file.is_file():raise RunError('unlock_material_missing','Supply the run-owned private console unlock material.')
@@ -89,6 +95,7 @@ class ConsoleUnlock:
         return True
 
     def check_capture(self,path):
+        if not self.secret_file.is_file():raise RunError('unlock_material_missing','Required private console material is absent.')
         if self.secret_file.read_bytes() in Path(path).read_bytes():
             raise RunError('unlock_secret_capture','Secret entered a restricted diagnostic; withhold export and investigate.')
 
