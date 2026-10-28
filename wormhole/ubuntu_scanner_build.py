@@ -88,6 +88,12 @@ def build(store,base):
                 call(['rm','-f',container]);lease.set_phase('reconciling');lease.reconcile_resource('container',container,outcome='absent')
             lease.finish(reconciliation_complete=True)
             atomic_json(run/'result.json',receipt)
+            try:
+                from .storage import lifecycle
+                receipt['storage_cleanup']=lifecycle(lease)
+            except Exception as error:
+                receipt['storage_cleanup_error']=getattr(error,'code',type(error).__name__)
+            atomic_json(run/'result.json',receipt)
     return {'build_directory':str(run),'state':receipt['state'],'elapsed_seconds':receipt.get('elapsed_seconds')}
 
 

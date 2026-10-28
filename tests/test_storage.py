@@ -35,6 +35,8 @@ class Cleanup(unittest.TestCase):
         self.store=s.Store(self.root,self.shared);self.store.live={}
         self.store.qemu_uid=lambda:0
         self.store.infrastructure.mkdir(mode=0o700)
+        atomic_json(self.store.infrastructure/'owner.json',{
+            'application':'jake-wormhole','schema_version':'1.0','kind':'shared-infrastructure-root'})
         (self.store.infrastructure/'vm-history').mkdir(mode=0o700)
         self.store.runs.mkdir(mode=0o700)
 

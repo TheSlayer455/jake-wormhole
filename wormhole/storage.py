@@ -144,7 +144,9 @@ class Store:
             xml = ET.fromstring(call(['virsh','-c','qemu:///system','pool-dumpxml',pool]))
             target = xml.findtext('target/path')
             if target: references.append(target)
-        for identifier in call(['docker','ps','-aq']).split():
+        containers = call(['docker','ps','-aq']).split()
+        self.live['container']=set(containers)
+        for identifier in containers:
             mounts = json.loads(call(['docker','inspect','--format','{{json .Mounts}}',identifier]))
             references.extend(m['Source'] for m in mounts if m.get('Source'))
         for line in Path('/proc/self/mountinfo').read_text().splitlines():
@@ -231,6 +233,13 @@ class Store:
                     # A missing unaccounted candidate cannot authorize staging removal.
                     self.resolve(run.name)
             except (RunError,OSError,KeyError,ValueError) as error:
+                # Only new builds have an intent written BEFORE construction.
+                # Legacy unknown partial files stay protected for manual recovery.
+                try:
+                    partial=self.partial(run,references,current=current)
+                    actions.extend(partial)
+                    if partial: continue
+                except (RunError,OSError,KeyError,ValueError): pass
                 blocked.append({'run_id':run.name,'reason':getattr(error,'code',type(error).__name__)})
                 continue
             payload=run/'inputs/payload'
@@ -265,6 +274,23 @@ class Store:
                     info=self.checked(seed,references)
                     require(sha256(seed)==manifest['seed_sha256'],'storage_seed_changed')
                     actions.append({'path':str(seed),'signature':info,'reason':'verified-detached-seed','run_id':run.name})
+                    if result['outcome']!='unknown':
+                        # Logical unlink is not a physical-erasure claim on SSD/CoW.
+                        # No guest disk remains; these ephemeral credentials no
+                        # longer provide a recovery path. Keep nonsecret contracts.
+                        for name in ('ssh-key','ssh-key.pub','sudo-password','boot-password','unlock-secret'):
+                            path=run/name
+                            if path.exists():actions.append({'path':str(path),'signature':self.checked(path,references),
+                                'reason':'expired-private-credential','run_id':run.name})
+                        for folder in ('wormhole-identity','seed-layout-check'):
+                            directory=run/'inputs'/folder
+                            if directory.exists():
+                                require(not directory.is_symlink(),'storage_unsafe_link')
+                                allowed={'public-key','password','run-id','boot-password-hash',
+                                         'sandbox-ca.crt','sandbox-ca.crl','sandbox-active.crt','sandbox-revoked.crt'}
+                                require(all(p.name in allowed for p in directory.iterdir()))
+                                for path in directory.iterdir():actions.append({'path':str(path),
+                                    'signature':self.checked(path,references),'reason':'expired-private-seed-staging','run_id':run.name})
                 except RunError as error: blocked.append({'run_id':run.name,'reason':error.code})
         unique=0
         for digest, members in groups.items():
@@ -273,10 +299,70 @@ class Store:
             for run, manifest, candidate in members[1:]:
                 actions.append({'path':str(candidate),'signature':signature(candidate),'reason':'identical-candidate',
                     'run_id':run.name,'canonical_run':canonical.parent.name,'sha256':digest})
+        self.scanner_staging(actions,blocked,references)
         return {'actions':actions,'blocked':blocked,'unique_candidate_allocated_bytes':unique,
                 'estimated_reclaim_allocated_bytes':sum(a['signature'][3] for a in actions),
                 'cache_budget_exceeded':unique>CANDIDATE_BUDGET,
                 'cache_policy':'32 GiB unique verified ISO bytes; no unique candidate or evidence eviction; refuse new builds if protected retention exceeds budget'}
+
+    def scanner_staging(self, actions, blocked, references):
+        from .admission import _journal
+        directory=self.root/'scanner-builds'
+        if not directory.exists():return
+        for run in sorted(directory.iterdir()):
+            try:
+                identifier=run_id(run.name)
+                receipt=read_json(run/'result.json')
+                journal=_journal(read_json(self.infrastructure/'history'/(identifier+'.json')))
+                require(journal['state']=='finished' and journal['source_revision']==receipt['source_revision']
+                        and receipt['state'] in {'complete','failed'} and (run/'build.log').is_file())
+                require(all(r['kind']!='container' or r['id'] not in self.live.get('container',set()) for r in journal['resources']))
+                if receipt['state']=='complete':
+                    artifact=run/'work/openscap-lab.tar.gz'
+                    self.checked(artifact,references)
+                    require(sha256(artifact)==receipt['artifact_sha256'])
+                proposed=[]
+                for name in ('source','build','stage'):
+                    tree=run/'work'/name
+                    if not tree.exists():continue
+                    require(not tree.is_symlink(),'storage_unsafe_link')
+                    for folder, dirs, files in os.walk(tree,followlinks=False):
+                        require(not any((Path(folder)/n).is_symlink() for n in dirs),'storage_unsafe_link')
+                        for filename in files:
+                            path=Path(folder)/filename
+                            # CMake installs legitimate library symlinks. Preserve
+                            # them rather than following them into any backing data.
+                            if path.is_symlink():continue
+                            proposed.append({'path':str(path),'signature':self.checked(path,references),
+                                             'reason':'reconciled-scanner-build-staging','run_id':identifier})
+                actions.extend(proposed)
+            except (RunError,OSError,KeyError,ValueError) as error:
+                blocked.append({'run_id':run.name,'reason':getattr(error,'code',type(error).__name__)})
+
+    def partial(self, run, references, *, current=None):
+        from .vm_admission import validate_record
+        from .vm_baseline import process_identity
+        require(not (run/'inputs/build-manifest.json').exists())
+        value=read_json(run/'result.json')
+        intent=read_json(run/'storage-build-intent.json')
+        journal=validate_record(read_json(self.infrastructure/'vm-history'/(run_id(run.name)+'.json')))
+        candidate=self.shared/run.name/'candidate.iso'
+        require(intent=={'schema_version':'1.0','run_id':run.name,'source_revision':value['source_revision'],
+                         'candidate':str(candidate),'seed':str(candidate.with_name('seed.iso'))})
+        require(journal['state']=='finished' and journal['source_revision']==value['source_revision'] and
+                all(r['kind'] in {'installer_iso','seed_iso'} for r in journal['resources']))
+        require(value['outcome']=='failed' and value.get('finished_at'))
+        for field in ('supervisor','active_command'):
+            process=value.get(field)
+            require(not process or (run.name==current and process['pid']==os.getpid()) or
+                    process_identity(process['pid'])!=process,'storage_active_supervisor')
+        require(any(x['kind']=='installer_iso' and x['identity']==str(candidate) for x in journal['resources']))
+        actions=[]
+        for name in ('candidate.iso','final-candidate.iso','seed.iso'):
+            path=candidate.with_name(name)
+            if path.exists():actions.append({'path':str(path),'signature':self.checked(path,references),
+                'sha256':sha256(path),'reason':'reconciled-incomplete-build','run_id':run.name})
+        return actions
 
     def resolve(self, identifier):
         """Follow bounded durable aliases; every reuse verifies the actual retained bytes."""

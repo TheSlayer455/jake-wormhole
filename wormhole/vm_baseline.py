@@ -206,6 +206,8 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             mac = '52:54:00:' + ':'.join(identifier.replace('-', '')[n:n+2] for n in (0, 2, 4))
             for kind, identity in [('installer_iso', str(candidate)), ('seed_iso', str(seed))]:
                 lease.intent(kind, identity)
+            atomic_json(run/'storage-build-intent.json',{'schema_version':'1.0','run_id':identifier,
+                'source_revision':revision,'candidate':str(candidate),'seed':str(seed)})
             started = time.monotonic()
             build_at = now()
             reuse = None
