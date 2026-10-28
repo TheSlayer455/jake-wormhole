@@ -26,7 +26,7 @@ def compare(previous, current, *, earlier=None):
     left = {x['rule_id']:x['native_status'] for x in af.get('rules',[])}
     right = {x['rule_id']:x['native_status'] for x in bf.get('rules',[])}
     bad = {'fail','error','unknown','notchecked','missing','fixed'}
-    good = {'pass','notapplicable'}
+    good = {'pass'}
     trends = {'new':[], 'resolved':[], 'persistent':[], 'unevaluated':[], 'excluded':[],
               'reopened':None, 'reopened_note':'Requires a third attributable historical observation.'}
     if compatible:
@@ -37,6 +37,8 @@ def compare(previous, current, *, earlier=None):
             if status in bad and old in bad:trends['persistent'].append(key)
             if status in {'missing','notchecked','unknown','error'}:trends['unevaluated'].append(key)
             if status=='notselected':trends['excluded'].append(key)
+        trends['applicability_changes']=[{'rule_id':key,'before':left.get(key,'missing'),'after':status}
+            for key,status in right.items() if (left.get(key)=='notapplicable')!=(status=='notapplicable')]
         if earlier is not None:
             _,_,ef,_=load(earlier)
             require(ef.get('content_sha256')==af['content_sha256'] and ef.get('profile_id')==af['profile_id'],

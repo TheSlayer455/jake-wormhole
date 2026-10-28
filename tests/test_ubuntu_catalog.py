@@ -46,6 +46,10 @@ class Catalog(unittest.TestCase):
             self.assertEqual(delta['findings_trends']['persistent'],['fixture-rule'])
             self.assertFalse(delta['lab_iso_qualified'])
             self.assertIsNone(delta['findings_trends']['reopened'])
+            unavailable=self.run_record(root,'not-applicable',status='notapplicable')
+            changed=compare(a,unavailable)['findings_trends']
+            self.assertEqual(changed['resolved'],[])
+            self.assertEqual(len(changed['applicability_changes']),1)
 
     def test_catalog_escapes_content_and_has_no_external_assets(self):
         with tempfile.TemporaryDirectory() as value:

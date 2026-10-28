@@ -175,10 +175,15 @@ def main():
     publication=sub.add_parser('publish');publication.add_argument('run_id');publication.add_argument('--previous',required=True)
     publication.add_argument('--store',required=True);publication.add_argument('--destination',required=True);publication.add_argument('--name',required=True)
     recovery=sub.add_parser('recover');recovery.add_argument('run_id');recovery.add_argument('--terraform',required=True)
+    reproduction=sub.add_parser('reproduce-package');reproduction.add_argument('run_id');reproduction.add_argument('--output',required=True)
     run=sub.add_parser('run');run.add_argument('--source',required=True);run.add_argument('--terraform',required=True)
     run.add_argument('--store',required=True);run.add_argument('--mode',choices=['stock-audit','hardened'],default='stock-audit')
     run.add_argument('--reuse-run',help='Verified immutable ISO from this reconciled run; new disk, identity and assessment are mandatory.')
     options=p.parse_args()
+    if options.command=='reproduce-package':
+        from .ubuntu_reproduction import package
+        value=package(vm_baseline.ROOT/'vm-runs'/run_id(options.run_id),options.output)
+        print(json.dumps(value,indent=2));return 0
     if options.command=='recover':
         from .ubuntu_recovery import recover
         print(json.dumps(recover(options.run_id,options.terraform),indent=2));return 0
