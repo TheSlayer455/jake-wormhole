@@ -11,6 +11,7 @@ from . import vm_baseline
 from .runs import atomic_json, read_json, run_id
 from .ubuntu_assessment import POLICY, read_results, require
 from .vm_inputs import sha256
+from .ubuntu_manual import CODE as MANUAL_CODE
 
 # Reuse proven SSH/readiness dispatch; change credentials and append a real audit.
 HELPER_CODE = vm_baseline.HELPER_CODE.replace(
@@ -30,6 +31,7 @@ HELPER_CODE = HELPER_CODE.replace('ready=False','ready=False\nauthentication_fai
 HELPER_CODE = HELPER_CODE.replace("  if r.returncode==0 and", "  if 'Permission denied' in r.stderr:\n   authentication_failures+=1\n   if authentication_failures>=3:\n    print(json.dumps({'stage':'final-authentication','returncode':r.returncode,'error_category':'final-identity-authentication-rejected','outcome':'readiness-failed','catalog_started':False}),flush=True);sys.exit(1)\n  if r.returncode==0 and",1)
 # Strip the baseline terminal line, not any underlying required operation.
 HELPER_CODE = HELPER_CODE[:HELPER_CODE.rfind("print(json.dumps({'final_authentication':True")]
+HELPER_CODE += '\nmanual_code='+repr(MANUAL_CODE)+'\n'
 HELPER_CODE += r'''
 def ssh(command,*,secret=False,seconds=60,binary=False):
  remaining=deadline-time.monotonic()
@@ -53,6 +55,9 @@ if any(p['name']=='snapd' for p in observed['packages']):
  except subprocess.TimeoutExpired:
   print(json.dumps({'stage':'snap-inventory','returncode':124,'output':'','diagnostic':'bounded Snap inventory timed out'}),flush=True)
 started=time.monotonic()
+import shlex
+r=ssh('sudo -S -p "" /usr/bin/python3 -c '+shlex.quote(manual_code),secret=True,seconds=50)
+print(json.dumps({'stage':'manual-observations','returncode':r.returncode,'output':r.stdout,'diagnostic':r.stderr}),flush=True)
 r=ssh('sudo -S -p "" /bin/bash /usr/local/lib/wormhole/audit.sh',secret=True,seconds=650)
 print(json.dumps({'stage':'real-assessment','elapsed_seconds':round(time.monotonic()-started,3),'returncode':r.returncode,'diagnostic':r.stderr}),flush=True)
 if r.returncode:sys.exit(1)
@@ -82,6 +87,8 @@ def collect(run, result):
                     require(hashlib.sha256(archive).hexdigest() == item['sha256'], 'assessment_archive_identity')
                 else:records.append(item)
     atomic_json(run / 'controller-records.json', records)
+    manual=next((json.loads(r['output']) for r in records if r.get('stage')=='manual-observations' and r.get('returncode')==0),None)
+    if manual is not None:atomic_json(run/'manual-evidence.json',manual)
     observations = next((json.loads(r['output']) for r in records if r.get('stage') == 'installed-observations' and r.get('returncode') == 0), None)
     if observations is not None:
         require(observations.get('run_id') == result['run_id'], 'installed_observation_identity')
