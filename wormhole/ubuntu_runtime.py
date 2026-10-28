@@ -25,6 +25,8 @@ HELPER_CODE = HELPER_CODE.replace("common='-o HostKeyAlgorithms", "common='-o Co
 HELPER_CODE = HELPER_CODE.replace(" r=subprocess.run(base+args", " stage_started=time.monotonic()\n r=subprocess.run(base+args")
 HELPER_CODE = HELPER_CODE.replace("{'stage':label,'returncode'", "{'stage':label,'elapsed_seconds':round(time.monotonic()-stage_started,3),'returncode'")
 HELPER_CODE = HELPER_CODE.replace("c=json.load(sys.stdin)","c=json.load(sys.stdin)\nimport platform\nprovenance=subprocess.run(['/opt/wormhole/venv/bin/ansible','--version'],capture_output=True,text=True,timeout=10)\nprint(json.dumps({'stage':'helper-provenance','python':platform.python_version(),'ansible':provenance.stdout,'returncode':provenance.returncode}),flush=True)")
+HELPER_CODE = HELPER_CODE.replace('ready=False','ready=False\nauthentication_failures=0',1)
+HELPER_CODE = HELPER_CODE.replace("  if r.returncode==0 and", "  if 'Permission denied' in r.stderr:\n   authentication_failures+=1\n   if authentication_failures>=3:\n    print(json.dumps({'stage':'final-authentication','returncode':r.returncode,'error_category':'final-identity-authentication-rejected','outcome':'readiness-failed','catalog_started':False}),flush=True);sys.exit(1)\n  if r.returncode==0 and",1)
 # Strip the baseline terminal line, not any underlying required operation.
 HELPER_CODE = HELPER_CODE[:HELPER_CODE.rfind("print(json.dumps({'final_authentication':True")]
 HELPER_CODE += r'''
