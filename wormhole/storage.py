@@ -63,6 +63,22 @@ class Store:
         self.root, self.shared = Path(root), Path(shared)
         self.infrastructure = self.root / 'infrastructure'
         self.runs = self.root / 'vm-runs'
+        cache=self.infrastructure/'storage-hashes.json'
+        self.hashes=read_json(cache) if cache.exists() else {}
+
+    def digest(self, path):
+        """Reuse only owner-private hash receipts with identical inode metadata.
+
+        Changes to bytes, links, ownership, mode or timestamps invalidate the
+        receipt. Normal candidate reuse still runs the builder's integrity check.
+        """
+        key=str(path);info=signature(path)
+        cached=self.hashes.get(key)
+        if cached and cached['signature']==info:return cached['sha256']
+        value=sha256(path)
+        require(signature(path)==info,'storage_file_changed_during_hash')
+        self.hashes[key]={'signature':info,'sha256':value}
+        return value
 
     @contextmanager
     def locked(self):
@@ -227,7 +243,7 @@ class Store:
                 candidate = self.shared/run.name/'candidate.iso'
                 if candidate.exists():
                     self.checked(candidate,references)
-                    require(sha256(candidate)==manifest['candidate_sha256'], 'storage_candidate_changed')
+                    require(self.digest(candidate)==manifest['candidate_sha256'], 'storage_candidate_changed')
                     groups.setdefault(manifest['candidate_sha256'],[]).append((run,manifest,candidate))
                 else:
                     # A missing unaccounted candidate cannot authorize staging removal.
@@ -254,7 +270,7 @@ class Store:
                         path=payload/relative
                         if path.exists():
                             info=self.checked(path,references)
-                            require(path.stat().st_size==entry['bytes'] and sha256(path)==entry['sha256'], 'storage_staging_changed')
+                            require(path.stat().st_size==entry['bytes'] and self.digest(path)==entry['sha256'], 'storage_staging_changed')
                             actions.append({'path':str(path),'signature':info,'reason':'verified-installation-staging','run_id':run.name})
                     # Extracted boot files are diagnostic inputs, not the report,
                     # native assessment, SVD or installation contract. Record their
@@ -268,12 +284,17 @@ class Store:
                     # Fail the whole run's proposed staging cleanup on any mismatch.
                     actions=[a for a in actions if a['run_id']!=run.name]
                     blocked.append({'run_id':run.name,'reason':getattr(error,'code',type(error).__name__)})
+                    continue
             seed=self.shared/run.name/'seed.iso'
-            if seed.exists():
+            seed_receipt=run/'storage-seed.json'
+            if seed.exists() or seed_receipt.exists():
                 try:
-                    info=self.checked(seed,references)
-                    require(sha256(seed)==manifest['seed_sha256'],'storage_seed_changed')
-                    actions.append({'path':str(seed),'signature':info,'reason':'verified-detached-seed','run_id':run.name})
+                    if seed.exists():
+                        info=self.checked(seed,references)
+                        require(sha256(seed)==manifest['seed_sha256'],'storage_seed_changed')
+                        actions.append({'path':str(seed),'signature':info,'reason':'verified-detached-seed',
+                                        'sha256':manifest['seed_sha256'],'run_id':run.name})
+                    else:require(read_json(seed_receipt)['sha256']==manifest['seed_sha256'])
                     if result['outcome']!='unknown':
                         # Logical unlink is not a physical-erasure claim on SSD/CoW.
                         # No guest disk remains; these ephemeral credentials no
@@ -373,7 +394,7 @@ class Store:
             candidate=self.shared/run_id(identifier)/'candidate.iso'
             if candidate.exists():
                 self.checked(candidate,[])
-                require(sha256(candidate)==digest,'storage_candidate_changed')
+                require(self.digest(candidate)==digest,'storage_candidate_changed')
                 return candidate
             run=self.runs/identifier
             receipt=run/'storage-candidate.json'
@@ -408,10 +429,14 @@ class Store:
             if action['reason']=='identical-candidate':
                 canonical=self.shared/action['canonical_run']/'candidate.iso'
                 self.checked(canonical,references)
-                require(canonical!=path and sha256(canonical)==action['sha256'])
+                require(canonical!=path and self.digest(canonical)==action['sha256'])
                 atomic_json(self.runs/action['run_id']/'storage-candidate.json',{
                     'schema_version':'1.0','sha256':action['sha256'],'canonical_run':action['canonical_run'],
                     'original_run':action['run_id'],'at':now()})
+            if action['reason']=='verified-detached-seed':
+                atomic_json(self.runs/action['run_id']/'storage-seed.json',{
+                    'schema_version':'1.0','sha256':action['sha256'],'at':now(),
+                    'disposition':'detached after archived teardown and live-reference verification; logical unlink only'})
             entry=operations/(operation.stem+'-'+str(index)+'.json')
             atomic_json(entry,{'state':'prepared',**action})
             path.unlink()
@@ -428,6 +453,8 @@ class Store:
                  'unique_candidate_allocated_bytes':plan['unique_candidate_allocated_bytes'],
                  'cache_budget_exceeded':plan['cache_budget_exceeded']}
         atomic_json(operation,receipt)
+        atomic_json(self.infrastructure/'storage-hashes.json',{
+            p:v for p,v in self.hashes.items() if Path(p).name=='candidate.iso' and Path(p).exists()})
         return receipt
 
 
