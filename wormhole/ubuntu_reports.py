@@ -33,6 +33,7 @@ def generate(run, result, *, findings=None, observations=None, controller_record
         atomic_json(run/'manual-evidence.json',manual)
     else:manual={'objective_results':{},'disposition':'not-collected'}
     derived = {
+        'audit-offload-readback':result.get('support_verification',{}).get('audit_snapshot_readback_verified'),
         'remote-syslog-received':result.get('support_verification',{}).get('syslog_guest_event_received'),
         'remote-audit-received':result.get('support_verification',{}).get('audit_guest_event_received'),
         'encrypted-cold-start':result.get('cold_start_verified'),

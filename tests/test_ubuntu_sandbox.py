@@ -6,15 +6,38 @@ import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 import importlib.util
+import base64
+import hashlib
+import shutil
+import subprocess
+import zlib
 from unittest.mock import patch
 from types import SimpleNamespace
 
-from wormhole.ubuntu_sandbox import network_filter,BIND,GUEST,canonical_rules
+from wormhole.ubuntu_sandbox import network_filter,BIND,GUEST,canonical_rules,verify_audit_archive,certificates
 from wormhole.ubuntu_secrets import status,put,read
 from wormhole.runs import RunError
 
 
 class Sandbox(unittest.TestCase):
+    def test_audit_archive_readback_rejects_missing_chunks_and_changed_bytes(self):
+        content=b'SYNTHETIC audit event\n'*100
+        rows=[{'kind':'chunk','file':'audit.log','index':0,'data':base64.b64encode(zlib.compress(content)).decode()},
+              {'kind':'complete','files':[{'file':'audit.log','bytes':len(content),'sha256':hashlib.sha256(content).hexdigest(),'chunks':1}]}]
+        self.assertTrue(verify_audit_archive(rows))
+        with self.assertRaises(RunError):verify_audit_archive(rows[1:])
+        rows[1]['files'][0]['sha256']='0'*64
+        with self.assertRaises(RunError):verify_audit_archive(rows)
+
+    @unittest.skipUnless(shutil.which('openssl'),'real OpenSSL executable required')
+    def test_disposable_ca_actually_accepts_valid_and_refuses_revoked_certificate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            private=certificates(directory)
+            args=['openssl','verify','-CAfile',str(private/'ca.crt'),'-CRLfile',str(private/'ca.crl'),'-crl_check']
+            self.assertEqual(subprocess.run(args+[str(private/'active.crt')],capture_output=True,timeout=10).returncode,0)
+            revoked=subprocess.run(args+[str(private/'revoked.crt')],capture_output=True,text=True,timeout=10)
+            self.assertNotEqual(revoked.returncode,0)
+            self.assertIn('certificate revoked',revoked.stderr)
     def test_libvirt_canonical_xml_is_equivalent_but_changed_policy_is_not(self):
         original=network_filter('wormhole-test')
         actual=original.replace('0x0800','ipv4')

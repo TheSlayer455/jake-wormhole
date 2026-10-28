@@ -81,6 +81,21 @@ def certificates(run):
     ext=private/'server.ext';ext.write_text('subjectAltName=DNS:wormhole-sandbox,IP:'+BIND+'\nextendedKeyUsage=serverAuth\nbasicConstraints=critical,CA:FALSE\n')
     command('x509','-req','-in',str(private/'server.csr'),'-CA',str(private/'ca.crt'),'-CAkey',str(private/'ca.key'),
             '-CAcreateserial','-days','2','-sha256','-extfile',str(ext),'-out',str(private/'server.crt'))
+    # Real disposable client certificates and revocation data, not government
+    # credentials or a claim that a physical authentication token was tested.
+    (private/'issued').mkdir(mode=0o700)
+    (private/'index').write_text('');(private/'serial').write_text('1000\n');(private/'crlnumber').write_text('1000\n')
+    config=private/'ca.conf'
+    config.write_text('[ca]\ndefault_ca=lab\n[lab]\ndatabase='+str(private/'index')+'\nnew_certs_dir='+str(private/'issued')+
+        '\nserial='+str(private/'serial')+'\ncrlnumber='+str(private/'crlnumber')+'\ncertificate='+str(private/'ca.crt')+
+        '\nprivate_key='+str(private/'ca.key')+'\ndefault_md=sha256\ndefault_days=2\ndefault_crl_days=2\npolicy=identity\nx509_extensions=client\n'
+        '[identity]\ncommonName=supplied\n[client]\nbasicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=clientAuth\n')
+    for name in ('active','revoked'):
+        command('req','-new','-newkey','rsa:3072','-nodes','-subj','/CN=lab-'+name,
+                '-keyout',str(private/(name+'.key')),'-out',str(private/(name+'.csr')))
+        command('ca','-batch','-notext','-config',str(config),'-in',str(private/(name+'.csr')),'-out',str(private/(name+'.crt')))
+    command('ca','-config',str(config),'-revoke',str(private/'revoked.crt'))
+    command('ca','-config',str(config),'-gencrl','-out',str(private/'ca.crl'))
     return private
 
 
@@ -172,7 +187,34 @@ def evidence(run,identifier):
         result[kind+'_guest_event_received']=bool(matches)
     atomic_json(Path(run)/'support-verification.json',result)
     require(all(result.values()),'support_guest_evidence_missing')
+    # Read back the received archive, not just a sender's success exit.
+    import base64,hashlib,zlib
+    records=[]
+    for line in (Path(run)/'support-evidence/syslog.jsonl').read_text().splitlines():
+        row=json.loads(line)
+        if row['peer']==GUEST and row['body'].startswith('WORMHOLE_AUDIT_ARCHIVE '):
+            item=json.loads(row['body'].split(' ',1)[1])
+            if item.get('run_id')==identifier:records.append(item)
+    verify_audit_archive(records)
+    result['audit_snapshot_readback_verified']=True
+    atomic_json(Path(run)/'support-verification.json',result)
     return result
+
+
+def verify_audit_archive(records):
+    import base64,hashlib,zlib
+    complete=[r for r in records if r.get('kind')=='complete']
+    require(len(complete)==1 and complete[0]['files'],'audit_archive_incomplete')
+    total=0
+    for item in complete[0]['files']:
+        chunks=[r for r in records if r.get('kind')=='chunk' and r.get('file')==item['file']]
+        require([r['index'] for r in chunks]==list(range(item['chunks'])),'audit_archive_incomplete')
+        compressed=b''.join(base64.b64decode(r['data'],validate=True) for r in chunks)
+        decoder=zlib.decompressobj();data=decoder.decompress(compressed,8*1024**2+1)
+        total+=len(data)
+        require(decoder.eof and not decoder.unused_data and not decoder.unconsumed_tail and total<=8*1024**2
+                and len(data)==item['bytes'] and hashlib.sha256(data).hexdigest()==item['sha256'],'audit_archive_corrupted')
+    return True
 
 
 def remove_filter(run,name):

@@ -20,7 +20,7 @@ def input_identity(store, mode, *, sandbox=False):
         paths += ['wormhole/ubuntu_hardening.py', 'ubuntu/remediation-plan-v1.json', 'ubuntu/guest/remediate.py']
     if sandbox:
         paths += ['ubuntu/guest/encryption-late.sh','ubuntu/guest/sandbox.sh',
-                  'ubuntu/guest/entitlement.py','ubuntu/support/receiver.py']
+                  'ubuntu/guest/entitlement.py','ubuntu/guest/audit-offload.py','ubuntu/support/receiver.py']
     files = {name: sha256(SOURCE_ROOT / name) for name in paths}
     files['offline-dependencies'] = sha256(Path(store) / 'bundle/manifest.json')
     if sandbox:
@@ -128,6 +128,11 @@ if python3 -c 'import json,sys;sys.exit(not json.load(open("/usr/local/lib/wormh
 fi
 if test -f /tmp/wormhole-identity/sandbox-ca.crt; then
   install -m 0644 /tmp/wormhole-identity/sandbox-ca.crt /etc/wormhole-lab-ca.crt
+  install -d -m 0755 /etc/pam_pkcs11/cacerts /etc/pam_pkcs11/crls /usr/local/share/wormhole-pki
+  install -m 0644 /tmp/wormhole-identity/sandbox-ca.crt /etc/pam_pkcs11/cacerts/lab-ca.pem
+  install -m 0644 /tmp/wormhole-identity/sandbox-ca.crl /etc/pam_pkcs11/crls/lab-ca.crl
+  install -m 0644 /tmp/wormhole-identity/sandbox-active.crt /usr/local/share/wormhole-pki/active.pem
+  install -m 0644 /tmp/wormhole-identity/sandbox-revoked.crt /usr/local/share/wormhole-pki/revoked.pem
 fi
 if test -s /tmp/wormhole-identity/boot-password-hash; then
   printf '%s\\n' '#!/bin/sh' 'exec tail -n +3 "$0"' 'set superusers="boot"' 'export superusers' > /etc/grub.d/40_custom
@@ -190,7 +195,8 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
     if sandbox:
         for filename in ('encryption-late.sh','sandbox.sh'):
             shutil.copyfile(SOURCE_ROOT/'ubuntu/guest'/filename,payload/filename)
-        shutil.copyfile(SOURCE_ROOT/'ubuntu/guest/entitlement.py',payload/'entitlement.py')
+        for filename in ('entitlement.py','audit-offload.py'):
+            shutil.copyfile(SOURCE_ROOT/'ubuntu/guest'/filename,payload/filename)
     if mode == 'hardened':
         from .ubuntu_hardening import generate
         generate(store, payload)
@@ -211,7 +217,9 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
     for name, raw in {'public-key': public_key + '\n', 'password': 'lab.service:' + password_hash + '\n', 'run-id': identifier + '\n'}.items():
         (identity / name).write_text(raw)
     if boot_hash is not None:(identity/'boot-password-hash').write_text(boot_hash+'\n')
-    if sandbox:shutil.copyfile(seed_dir.parent/'support-private/ca.crt',identity/'sandbox-ca.crt')
+    if sandbox:
+        for source,target in [('ca.crt','ca.crt'),('ca.crl','ca.crl'),('active.crt','active.crt'),('revoked.crt','revoked.crt')]:
+            shutil.copyfile(seed_dir.parent/'support-private'/source,identity/('sandbox-'+target))
     seed = destination.with_name('seed.iso');seed.unlink()
     subprocess.run(['xorriso', '-as', 'mkisofs', '-V', 'CIDATA', '-J', '-r', '-graft-points', '-o', str(seed),
                     'user-data=' + str(seed_dir / 'user-data'), 'meta-data=' + str(seed_dir / 'meta-data'),
@@ -220,7 +228,7 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
     seed_check = seed_dir / 'seed-layout-check'
     subprocess.run(['xorriso', '-osirrox', 'on', '-indev', str(seed), '-extract', '/wormhole-identity', str(seed_check)],
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=15)
-    expected_identity={'public-key','password','run-id'} | ({'boot-password-hash'} if boot_hash is not None else set()) | ({'sandbox-ca.crt'} if sandbox else set())
+    expected_identity={'public-key','password','run-id'} | ({'boot-password-hash'} if boot_hash is not None else set()) | ({'sandbox-ca.crt','sandbox-ca.crl','sandbox-active.crt','sandbox-revoked.crt'} if sandbox else set())
     require({p.name for p in seed_check.iterdir()} == expected_identity and
             all(sha256(p) == sha256(identity / p.name) for p in seed_check.iterdir()), 'identity_seed_layout_invalid')
     manifest.update(capability='ubuntu-assessment-candidate-iso', candidate_sha256=sha256(destination), seed_sha256=sha256(seed),

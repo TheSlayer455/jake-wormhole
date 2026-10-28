@@ -82,6 +82,14 @@ def observe():
         checks['lab-banner']=command('sshd','-T').stdout.find('banner /etc/issue.net')>=0 and 'private home lab' in Path('/etc/issue.net').read_text()
         command('logger','-t','wormhole-acceptance',(root/'run-id').read_text().strip())
         checks['audit-event-probe']=command('auditctl','-m','wormhole acceptance '+(root/'run-id').read_text().strip()).returncode==0
+        valid=command('openssl','verify','-CAfile','/etc/wormhole-lab-ca.crt','-CRLfile','/etc/pam_pkcs11/crls/lab-ca.crl',
+                      '-crl_check','/usr/local/share/wormhole-pki/active.pem')
+        revoked=command('openssl','verify','-CAfile','/etc/wormhole-lab-ca.crt','-CRLfile','/etc/pam_pkcs11/crls/lab-ca.crl',
+                        '-crl_check','/usr/local/share/wormhole-pki/revoked.pem')
+        untrusted=command('openssl','verify','-CAfile','/etc/ssl/certs/ca-certificates.crt','/usr/local/share/wormhole-pki/active.pem')
+        checks['lab-client-revocation']=valid.returncode==0 and revoked.returncode!=0 and 'certificate revoked' in revoked.stderr and untrusted.returncode!=0
+        # Deliberate validation snapshot/event, not remediation or package setup.
+        checks['weekly-audit-offload']=command('/etc/cron.weekly/audit-offload').returncode==0
     inventory = command('dpkg-query', '-W', '-f=${db:Status-Abbrev}\t${Package}\t${Version}\t${Architecture}\n')
     if inventory.returncode:
         raise RuntimeError('native inventory failed')

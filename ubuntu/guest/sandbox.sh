@@ -10,13 +10,15 @@ cat > /etc/chrony/chrony.conf <<'EOF'
 # Explicit lab host-clock source, not an authenticated external time authority.
 server 192.0.2.1 port 12345 iburst minpoll 4 maxpoll 4
 driftfile /var/lib/chrony/chrony.drift
-makestep 1.0 3
+makestep 1 -1
 rtcsync
 EOF
 systemctl enable chrony
 systemctl restart chrony
 cat > /etc/rsyslog.d/70-wormhole-remote.conf <<'EOF'
 global(DefaultNetstreamDriverCAFile="/etc/wormhole-lab-ca.crt")
+auth.*;authpriv.* action(type="omfile" file="/var/log/wormhole-auth.log" fileCreateMode="0600")
+daemon.* action(type="omfile" file="/var/log/wormhole-daemon.log" fileCreateMode="0600")
 *.* action(type="omfwd" target="192.0.2.1" port="6514" protocol="tcp"
   StreamDriver="gtls" StreamDriverMode="1" StreamDriverAuthMode="x509/name"
   StreamDriverPermittedPeers="wormhole-sandbox"
@@ -24,6 +26,29 @@ global(DefaultNetstreamDriverCAFile="/etc/wormhole-lab-ca.crt")
 EOF
 rsyslogd -N1
 systemctl restart rsyslog
+# A cron dependency must not create an undeclared guest mail ingress service.
+if systemctl list-unit-files exim4.service --no-legend | grep -q '^exim4.service'; then
+  systemctl disable --now exim4.service
+fi
+openssl rehash /etc/pam_pkcs11/cacerts /etc/pam_pkcs11/crls
+test -f /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so
+cat > /etc/pam_pkcs11/pam_pkcs11.conf <<'EOF'
+pam_pkcs11 {
+  use_pkcs11_module = opensc;
+  pkcs11_module opensc {
+    module = /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so;
+    slot_description = "none";
+    ca_dir = /etc/pam_pkcs11/cacerts;
+    crl_dir = /etc/pam_pkcs11/crls;
+    cert_policy = ca, signature, crl_offline;
+  }
+  use_mappers = pwent;
+  mapper pwent { debug = false; ignorecase = false; module = internal; }
+}
+EOF
+# This is certificate validation configuration. Do not silently activate an
+# untested PAM/token login path or represent it as physical-token MFA.
+install -m 0700 /usr/local/lib/wormhole/audit-offload.py /etc/cron.weekly/audit-offload
 cat > /etc/audit/audisp-remote.conf <<'EOF'
 remote_server = 192.0.2.1
 port = 6000
