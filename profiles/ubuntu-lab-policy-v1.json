@@ -32,7 +32,8 @@
     "installed-os-identity", "installed-disk-boot", "finalization-complete", "required-reboot",
     "trusted-final-ssh", "final-home-key-permissions", "password-required-sudo", "ansible-ping",
     "native-package-inventory", "guest-apparmor-enforced", "audit-service", "guest-network-policy",
-    "assessment-content-identity", "scanner-native-results"
+    "assessment-content-identity", "scanner-native-results",
+    "encrypted-root", "encrypted-pbkdf2", "no-plaintext-swap", "no-installed-unlock-key"
   ],
   "tool_coverage": {"openscap": "required-alternative-real-audit", "usg": "preferred-when-authorized", "evaluate_stig": "unverified", "nessus": "unverified"},
   "unresolved_requirements": [

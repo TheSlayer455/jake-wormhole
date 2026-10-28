@@ -111,11 +111,12 @@ def preflight(source):
     return observation
 
 
-def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_store=None):
+def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_store=None, sandbox=False):
     os.umask(0o077)
     revision, dirty = source_identity()
     require(not dirty and sha256(terraform) == TF_SHA, 'unverified_execution_inputs')
     require(ubuntu_mode in {None, 'stock-audit', 'hardened'}, 'ubuntu_mode_invalid')
+    require(not sandbox or ubuntu_mode=='hardened','sandbox_requires_hardened_ubuntu')
     identifier = str(uuid4())
     name = 'wormhole-vm-' + identifier.replace('-', '')[:12]
     run = workspace_path(ROOT / 'vm-runs' / identifier, create=True)
@@ -128,6 +129,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
     deadline = time.monotonic() + 1800
     console = None
     helper = None
+    unlock = None
     applied = False
     unknown = False
     def save():
@@ -209,8 +211,13 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                     boot_password=secrets.token_urlsafe(32)+'bB2!'
                     (run/'boot-password').write_text(boot_password)
                     boot_hash=grub_password_hash(boot_password,secrets.token_bytes(64))
+                if sandbox:
+                    from .ubuntu_encryption import ConsoleUnlock
+                    unlock_file=run/'unlock-secret'
+                    unlock_file.write_text(secrets.token_urlsafe(48));unlock_file.chmod(0o600)
+                    unlock=ConsoleUnlock(unlock_file)
                 manifest = build_assessed(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac,
-                    store=dependency_store, mode=ubuntu_mode, password_hash=hashed, boot_hash=boot_hash,reuse=reuse)
+                    store=dependency_store, mode=ubuntu_mode, password_hash=hashed, boot_hash=boot_hash,reuse=reuse,sandbox=sandbox)
             else:
                 manifest = build_ubuntu(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac, reuse=reuse)
             result['stages'].append({'stage': 'candidate-build','started_at':build_at,'finished_at':now(),
@@ -255,7 +262,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             # virsh console requires a controlling terminal, even for private
             # unattended capture. util-linux script provides that PTY; the
             # generated name contains only validated alphanumeric/hyphen bytes.
-            console = subprocess.Popen(['script', '--quiet', '--return', '--flush', '--command',
+            console = subprocess.Popen(['script', '--quiet', '--return', '--flush', '--echo', 'never', '--command',
                 'virsh -c qemu:///system console ' + name + ' --force', '/dev/null'],
                 stdin=subprocess.PIPE, stdout=console_log, stderr=subprocess.STDOUT, start_new_session=True)
             console_log.close()
@@ -266,6 +273,11 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 path = run / 'console.log'
                 require(path.stat().st_size <= 16 * 1024**2, 'installer_diagnostic_limit')
                 text = path.read_text(errors='replace')
+                if unlock is not None:
+                    unlock.check_capture(path)
+                    if unlock.observe(text,console.stdin):
+                        result['unlock_events']=unlock.events
+                        result.update(phase='waiting-for-unlock',last_progress_at=now());save()
                 progress = re.findall(r'WORMHOLE_HARDENING_PROGRESS completed=(\d+) rule=([a-z0-9_-]+)', text)
                 if progress and result.get('hardening_operations_completed') != int(progress[-1][0]):
                     result.update(hardening_operations_completed=int(progress[-1][0]),

@@ -179,6 +179,7 @@ def main():
     run=sub.add_parser('run');run.add_argument('--source',required=True);run.add_argument('--terraform',required=True)
     run.add_argument('--store',required=True);run.add_argument('--mode',choices=['stock-audit','hardened'],default='stock-audit')
     run.add_argument('--reuse-run',help='Verified immutable ISO from this reconciled run; new disk, identity and assessment are mandatory.')
+    run.add_argument('--sandbox',action='store_true',help='Use the encrypted Ubuntu sandbox installation contract.')
     options=p.parse_args()
     if options.command=='reproduce-package':
         from .ubuntu_reproduction import package
@@ -214,7 +215,7 @@ def main():
     if options.command=='prepare':
         from .ubuntu_inputs import prepare
         value=prepare(options.store);print(json.dumps({'packages':len(value['packages']),'snapshot':value['snapshot']}));return 0
-    value=vm_baseline.execute(options.source,options.terraform,ubuntu_mode=options.mode,dependency_store=options.store,reuse_run=options.reuse_run)
+    value=vm_baseline.execute(options.source,options.terraform,ubuntu_mode=options.mode,dependency_store=options.store,reuse_run=options.reuse_run,sandbox=options.sandbox)
     print(json.dumps(value,indent=2))
     return 0 if value.get('lab_iso_qualified') is True else 1
 

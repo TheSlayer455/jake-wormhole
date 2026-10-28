@@ -12,15 +12,18 @@ from .vm_inputs import build_ubuntu, cloud_config, sha256
 from .ubuntu_assessment import POLICY, inventory, require
 
 
-def input_identity(store, mode):
+def input_identity(store, mode, *, sandbox=False):
     # Execution/reporting changes deliberately do not alter installed bytes.
     paths = ['wormhole/vm_inputs.py', 'wormhole/ubuntu_inputs.py', 'ubuntu/guest/finalize.sh',
              'ubuntu/guest/audit.sh', 'ubuntu/guest/observe.py', 'profiles/ubuntu-lab-policy-v1.json']
     if mode == 'hardened':
         paths += ['wormhole/ubuntu_hardening.py', 'ubuntu/remediation-plan-v1.json', 'ubuntu/guest/remediate.py']
+    if sandbox:
+        paths += ['wormhole/ubuntu_encryption.py', 'ubuntu/guest/encryption-late.sh']
     files = {name: sha256(SOURCE_ROOT / name) for name in paths}
     files['offline-dependencies'] = sha256(Path(store) / 'bundle/manifest.json')
     value = {'mode': mode, 'files': files}
+    if sandbox:value['sandbox']=True
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest(), value
 
 
@@ -78,7 +81,7 @@ def grub_password_hash(password, salt):
     return 'grub.pbkdf2.sha512.100000.'+salt.hex().upper()+'.'+value.hex().upper()
 
 
-def seed_config(identifier, public_key, address, mac, password_hash, boot_hash=None):
+def seed_config(identifier, public_key, address, mac, password_hash, boot_hash=None, *, sandbox=False):
     require(re.fullmatch(r'ssh-rsa [A-Za-z0-9+/=]{300,900}(?: [A-Za-z0-9_.-]+)?', public_key), 'ubuntu_public_key_invalid')
     require(re.fullmatch(r'\$6\$[./A-Za-z0-9$]+', password_hash), 'ubuntu_password_hash_invalid')
     require(boot_hash is None or re.fullmatch(r'grub[.]pbkdf2[.]sha512[.]100000[.][A-F0-9]{128}[.][A-F0-9]{128}',boot_hash),
@@ -134,15 +137,18 @@ rm -rf /tmp/wormhole-identity /tmp/wormhole-payload
     late.append(['curtin', 'in-target', '--target=/target', '--', 'sh', '-c', install])
     value['autoinstall']['late-commands'] = late
     value['autoinstall']['user-data']['hostname'] = 'vm-' + identifier[:8]
+    if sandbox:
+        from .ubuntu_encryption import configure
+        configure(value)
     return '#cloud-config\n' + json.dumps(value, indent=2) + '\n'
 
 
-def build(source, destination, seed_dir, identifier, public_key, address, mac, *, store, mode, password_hash, boot_hash=None, reuse=None):
+def build(source, destination, seed_dir, identifier, public_key, address, mac, *, store, mode, password_hash, boot_hash=None, reuse=None, sandbox=False):
     require(mode in {'stock-audit', 'hardened'}, 'ubuntu_mode_invalid')
     require(mode!='hardened' or boot_hash is not None,'boot_credential_missing')
     store, destination, seed_dir = Path(store), Path(destination), Path(seed_dir)
     prepare(store)
-    fingerprint, inputs = input_identity(store, mode)
+    fingerprint, inputs = input_identity(store, mode,sandbox=sandbox)
     if reuse is not None:
         require(reuse[1].get('installed_input_fingerprint') == fingerprint and reuse[1].get('mode') == mode,
                 'stale_candidate')
@@ -153,12 +159,14 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
     shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/audit.sh', payload / 'audit.sh')
     shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/observe.py', payload / 'observe.py')
     shutil.copyfile(POLICY, payload / 'policy.json')
+    if sandbox:shutil.copyfile(SOURCE_ROOT/'ubuntu/guest/encryption-late.sh',payload/'encryption-late.sh')
     if mode == 'hardened':
         from .ubuntu_hardening import generate
         generate(store, payload)
         shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/remediate.py', payload / 'remediate.py')
         (payload / 'offline-apt.conf').write_text('Dir::Etc::sourcelist "sources.list.d/wormhole-local.list";\nDir::Etc::sourceparts "-";\nAPT::Install-Recommends "false";\n')
     contract = {'mode': mode, 'policy_sha256': sha256(POLICY), 'dependency_manifest_sha256': sha256(store / 'bundle/manifest.json')}
+    contract['sandbox']=sandbox
     (payload / 'install-contract.json').write_text(json.dumps(contract, sort_keys=True))
     (payload / 'wormhole-finalize.service').write_text('[Unit]\nDescription=Wormhole installed-guest finalization\nAfter=local-fs.target cloud-config.service\nBefore=ssh.service ssh.socket\n[Service]\nType=oneshot\nRuntimeDirectory=sshd\nRuntimeDirectoryMode=0755\nExecStart=/bin/bash /usr/local/lib/wormhole/finalize.sh\nTimeoutStartSec=1000\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target\n')
     if reuse is None:
@@ -167,7 +175,7 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
             subprocess.run(['xorriso', '-indev', str(destination), '-outdev', str(final_iso), '-boot_image', 'any', 'replay',
                             '-map', str(payload), '/wormhole'], stdout=log, stderr=log, check=True, timeout=300)
         os.replace(final_iso, destination)
-    (seed_dir / 'user-data').write_text(seed_config(identifier, public_key, address, mac, password_hash,boot_hash))
+    (seed_dir / 'user-data').write_text(seed_config(identifier, public_key, address, mac, password_hash,boot_hash,sandbox=sandbox))
     identity = seed_dir / 'wormhole-identity';identity.mkdir(mode=0o700)
     for name, raw in {'public-key': public_key + '\n', 'password': 'lab.service:' + password_hash + '\n', 'run-id': identifier + '\n'}.items():
         (identity / name).write_text(raw)
@@ -188,5 +196,6 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
         dependency_manifest_sha256=sha256(store / 'bundle/manifest.json'), scanner_package='libopenscap8=1.2.17-0.1ubuntu7.22.04.3',
         installed_input_fingerprint=fingerprint, installed_inputs=inputs,
         nonsecret_seed_template_sha256=sha256(SOURCE_ROOT / 'wormhole/ubuntu_inputs.py'))
+    manifest['sandbox']=sandbox
     atomic_json(seed_dir / 'build-manifest.json', manifest)
     return manifest

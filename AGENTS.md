@@ -13,6 +13,14 @@ decisions keep lab qualification pending; engineers cannot approve their own
 waivers. Acceptance observes the guest and never remediates it. Keep the baseline
 command unqualified and add a separate explicit policy/evidence gate.
 
+The current sandbox assignment authorizes project-owned logging/time services,
+private test CA/identities and protected local secret delivery. Implement valid
+lab settings rather than treating absent production endpoints as approval gates.
+Use the existing shared admission and exact resource journals, bounded services
+and tested guest isolation. Never manufacture a Pro entitlement, government CA,
+physical-token assurance or certification. RHEL remains paused. Preserve actual
+host controls; support services cannot expose public listeners or mutate the host.
+
 The owner has directly authorized the architecture and failure-reproduction follow-up in [the active engineering checkpoint](docs/FAILURE-REPRODUCTION.md). Preserve the original Done ticket history; do not imply an old claim authorizes a new session or that this follow-up is already accepted. Continue in bounded, reviewable increments and record unverified runtime work explicitly.
 
 - Read README.md, docs/STATE.md, docs/ARCHITECTURE.md, docs/FIDELITY.md and handoff/CURRENT.md before changing code. Verify Git status, current source and evidence.

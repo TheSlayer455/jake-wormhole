@@ -48,6 +48,11 @@ def observe():
     policy = json.loads(Path('/usr/local/lib/wormhole/policy.json').read_text())
     content = Path('/usr/local/lib/wormhole/ssg-ubuntu2204-ds.xml')
     checks['assessment-content-identity'] = file_sha256(content) == policy['content']['datastream_sha256']
+    if json.loads(Path('/usr/local/lib/wormhole/install-contract.json').read_text()).get('sandbox'):
+        checks['encrypted-root']=command('findmnt','-n','-o','SOURCE','/').stdout.strip()=='/dev/mapper/wormhole-root' and command('cryptsetup','isLuks','/dev/vda3').returncode==0
+        checks['encrypted-pbkdf2']= 'pbkdf2' in command('cryptsetup','luksDump','/dev/vda3').stdout.lower()
+        checks['no-plaintext-swap']=not Path('/proc/swaps').read_text().splitlines()[1:]
+        checks['no-installed-unlock-key']=not Path('/run/wormhole-unlock').exists() and all(line.split()[2] in {'none','-'} for line in Path('/etc/crypttab').read_text().splitlines() if line.strip() and not line.startswith('#'))
     inventory = command('dpkg-query', '-W', '-f=${db:Status-Abbrev}\t${Package}\t${Version}\t${Architecture}\n')
     if inventory.returncode:
         raise RuntimeError('native inventory failed')
