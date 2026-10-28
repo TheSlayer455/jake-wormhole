@@ -22,7 +22,8 @@ def load(run):
 def compare(previous, current, *, earlier=None):
     a, ar, af, av = load(previous);b, br, bf, bv = load(current)
     compatible = bool(af and bf and af['content_sha256'] == bf['content_sha256'] and af['profile_id'] == bf['profile_id']
-                      and ar['policy_sha256']==br['policy_sha256'])
+                      and ar['policy_sha256']==br['policy_sha256']
+                      and a['build'].get('scanner_toolchain')==b['build'].get('scanner_toolchain'))
     left = {x['rule_id']:x['native_status'] for x in af.get('rules',[])}
     right = {x['rule_id']:x['native_status'] for x in bf.get('rules',[])}
     bad = {'fail','error','unknown','notchecked','missing','fixed'}
@@ -61,6 +62,7 @@ def compare(previous, current, *, earlier=None):
     repeatable = (a['run_id'] != b['run_id'] and same_iso and same_contract and compatible and left==right and required_equal
                   and bool(pa) and pa==pb and av.get('kernel')==bv.get('kernel') and
                   av.get('inventory_complete') is True and bv.get('inventory_complete') is True and av.get('snaps')==bv.get('snaps') and
+                  av.get('payloads',[])==bv.get('payloads',[]) and
                   a.get('installed') is True and b.get('installed') is True and
                   a['cleanup']==b['cleanup']=='verified-absent-inputs-retained')
     old_inputs=a['build'].get('installed_inputs',{}).get('files',{})
@@ -76,6 +78,8 @@ def compare(previous, current, *, earlier=None):
                       'changed':[{'before':sa[k],'after':sb[k]} for k in sorted(sa.keys()&sb.keys()) if sa[k]!=sb[k]]},
         'installed_input_changes':input_changes,'same_installation_contract':same_contract,
         'policy_changed':ar['policy_sha256']!=br['policy_sha256'],
+        'scanner_toolchain_changed':a['build'].get('scanner_toolchain')!=b['build'].get('scanner_toolchain'),
+        'installed_payloads_changed':av.get('payloads',[])!=bv.get('payloads',[]),
         'installed_inputs_changed':a['build'].get('installed_input_fingerprint')!=b['build'].get('installed_input_fingerprint'),
         'functional_changes':[{'id':r['id'],'before':next((x['status'] for x in ar['functional_results'] if x['id']==r['id']), 'missing'),'after':r['status']}
             for r in br['functional_results'] if not any(x['id']==r['id'] and x['status']==r['status'] for x in ar['functional_results'])],

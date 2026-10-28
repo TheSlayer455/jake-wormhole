@@ -69,6 +69,11 @@ def observe():
         except ssl.SSLCertVerificationError:checks['lab-invalid-certificate-refused']=True
         except OSError:checks['lab-invalid-certificate-refused']=False
         try:
+            with socket.create_connection(('192.0.2.1',6514),timeout=3) as sock:ssl.create_default_context().wrap_socket(sock,server_hostname='wormhole-sandbox').close()
+            checks['lab-invalid-certificate-refused']=False
+        except ssl.SSLCertVerificationError:pass
+        except OSError:checks['lab-invalid-certificate-refused']=False
+        try:
             socket.create_connection(('192.0.2.1',22),timeout=2).close();checks['management-plane-blocked']=False
         except OSError:checks['management-plane-blocked']=True
         checks['lab-banner']=command('sshd','-T').stdout.find('banner /etc/issue.net')>=0 and 'private home lab' in Path('/etc/issue.net').read_text()
@@ -82,7 +87,10 @@ def observe():
         status, name, version, architecture = line.split('\t')
         if status.startswith('ii'):
             packages.append({'name': name, 'version': version, 'architecture': architecture})
-    return {'checks': checks, 'packages': packages, 'inventory_kind': 'installed-dpkg',
+    binary=Path('/opt/wormhole-openscap/bin/oscap') if Path('/usr/local/lib/wormhole/toolchain.json').exists() else Path('/usr/bin/oscap')
+    payloads=[{'name':'openscap-scanner','version':command('oscap','--version').stdout.splitlines()[0],
+               'binary_sha256':file_sha256(binary)}]
+    return {'checks': checks, 'packages': packages, 'payloads':payloads,'inventory_kind': 'installed-dpkg',
             'kernel': command('uname', '-r').stdout.strip(), 'run_id': (root / 'run-id').read_text().strip()}
 
 

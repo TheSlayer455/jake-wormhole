@@ -181,6 +181,7 @@ def main():
     prep=sub.add_parser('prepare');prep.add_argument('--store',required=True)
     progress=sub.add_parser('progress');progress.add_argument('run_id')
     listing=sub.add_parser('catalog')
+    consumer=sub.add_parser('verify-release');consumer.add_argument('directory')
     comparison=sub.add_parser('compare');comparison.add_argument('previous');comparison.add_argument('current')
     comparison.add_argument('--earlier',help='Optional third compatible-content observation for reopened findings.')
     reporting=sub.add_parser('report');reporting.add_argument('run_id')
@@ -193,6 +194,9 @@ def main():
     run.add_argument('--reuse-run',help='Verified immutable ISO from this reconciled run; new disk, identity and assessment are mandatory.')
     run.add_argument('--sandbox',action='store_true',help='Use the encrypted Ubuntu sandbox installation contract.')
     options=p.parse_args()
+    if options.command=='verify-release':
+        from .ubuntu_release import verify
+        print(json.dumps(verify(options.directory),indent=2));return 0
     if options.command=='reproduce-package':
         from .ubuntu_reproduction import package
         value=package(vm_baseline.ROOT/'vm-runs'/run_id(options.run_id),options.output)

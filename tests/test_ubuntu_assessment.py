@@ -68,6 +68,22 @@ class Assessment(unittest.TestCase):
         self.content.write_text('changed')
         with self.assertRaises(RunError):self.read()
 
+    def test_known_manual_rule_remains_notchecked_and_requires_separate_evidence(self):
+        self.write('pass')
+        identifier='xccdf_org.ssgproject.content_rule_only_allow_dod_certs'
+        tree=ET.parse(self.content);root=tree.getroot()
+        ET.SubElement(root.find(a.X+'Profile'),a.X+'select',idref=identifier,selected='true')
+        ET.SubElement(root,a.X+'Rule',id=identifier,severity='high')
+        tree.write(self.content);self.policy['content']['datastream_sha256']=a.digest(self.content)
+        tree=ET.parse(self.result);test=tree.getroot().find(a.X+'TestResult')
+        row=ET.SubElement(test,a.X+'rule-result',idref=identifier)
+        ET.SubElement(row,a.X+'result').text='notchecked';tree.write(self.result)
+        observed=self.read()
+        self.assertTrue(observed['all_selected_automated_clean'])
+        self.assertEqual(observed['native_counts']['notchecked'],1)
+        self.assertEqual(observed['selected_manual_rule_count'],1)
+        self.assertFalse(observed['lab_iso_qualified'])
+
     def test_upstream_group_deselection_is_not_a_missing_rule(self):
         tree=ET.parse(self.content);root=tree.getroot()
         profile=next(root.iter(a.X+'Profile'))

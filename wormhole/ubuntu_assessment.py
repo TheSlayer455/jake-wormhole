@@ -84,7 +84,9 @@ def read_results(content, native_result, *, expected_target, scanner_exit, polic
         rows.append(row)
     selected = [x for x in rows if x['selected']]
     complete = all(x['native_status'] != 'missing' for x in rows)
-    automated_clean = all(x['native_status'] in {'pass', 'notapplicable'} for x in selected)
+    from .ubuntu_manual import MANUAL_RULES
+    manual=[x for x in selected if x['rule_id'].removeprefix('xccdf_org.ssgproject.content_rule_') in MANUAL_RULES]
+    automated_clean = all(x['native_status'] in {'pass', 'notapplicable'} for x in selected if x not in manual)
     return {'schema_version': '1.0', 'capability': 'real-ubuntu-scap-assessment',
         'content_sha256': digest(content), 'native_result_sha256': digest(native_result),
         'profile_id': policy['content']['profile_id'], 'target': expected_target,
@@ -93,5 +95,7 @@ def read_results(content, native_result, *, expected_target, scanner_exit, polic
         'native_counts': dict(Counter(x['native_status'] for x in rows)),
         'selected_native_counts': dict(Counter(x['native_status'] for x in selected)),
         'all_selected_automated_clean': automated_clean, 'rules': rows,
+        'selected_manual_rule_count':len(manual),
+        'manual_native_outcomes':{x['rule_id']:x['native_status'] for x in manual},
         'lab_status': 'LAB QUALIFICATION PENDING', 'lab_iso_qualified': False,
         'unresolved_requirements': policy['unresolved_requirements'], 'production_iso_eligible': False}

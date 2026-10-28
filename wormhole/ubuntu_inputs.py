@@ -115,6 +115,9 @@ if python3 -c 'import json,sys;sys.exit(json.load(open("/usr/local/lib/wormhole/
   DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- install $packages
 fi
 useradd --create-home --shell /bin/bash --user-group lab.service
+if python3 -c 'import json,sys;sys.exit(not json.load(open("/usr/local/lib/wormhole/install-contract.json")).get("sandbox"))'; then
+  chage -E "$(date -u -d '+2 days' +%F)" lab.service
+fi
 if test -f /tmp/wormhole-identity/sandbox-ca.crt; then
   install -m 0644 /tmp/wormhole-identity/sandbox-ca.crt /etc/wormhole-lab-ca.crt
 fi

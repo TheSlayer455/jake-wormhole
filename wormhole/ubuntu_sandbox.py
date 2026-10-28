@@ -92,11 +92,17 @@ def health(run):
             context.wrap_socket(sock,server_hostname='untrusted.invalid').close()
     except ssl.SSLCertVerificationError:refused=True
     require(refused,'support_untrusted_identity_accepted')
+    untrusted=False
+    try:
+        with socket.create_connection((BIND,6514),timeout=2) as sock:
+            ssl.create_default_context().wrap_socket(sock,server_hostname='wormhole-sandbox').close()
+    except ssl.SSLCertVerificationError:untrusted=True
+    require(untrusted,'support_untrusted_ca_accepted')
     with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as sock:
         sock.settimeout(2);sock.sendto(bytes([0x23])+bytes(47),(BIND,12345));data,_=sock.recvfrom(512)
     require(len(data)==48 and data[1]==10,'support_time_invalid')
     with socket.create_connection((BIND,6000),timeout=2) as sock:sock.sendall(b'support-health\n')
-    result={'tls_healthy':True,'invalid_identity_refused':True,'audit_tcp_healthy':True,'ntp_healthy':True,
+    result={'tls_healthy':True,'invalid_identity_refused':True,'untrusted_ca_refused':True,'audit_tcp_healthy':True,'ntp_healthy':True,
             'time_source':'stratum-10 lab host UTC clock; no external trusted-time claim',
             'listeners':[BIND+':6514/tcp',BIND+':6000/tcp',BIND+':12345/udp'],
             'memory_limit_bytes':MEMORY,'cpu_limit':.5,'privileged':False}

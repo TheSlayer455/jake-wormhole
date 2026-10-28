@@ -174,6 +174,8 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 from .ubuntu_sandbox import MEMORY
                 observation=read_json(run/'preflight.json')
                 require(observation['memory_available_bytes']>=13*1024**3+MEMORY,'sandbox_memory_headroom')
+                require(observation['cpu_count']-observation['load1']>=3.5,'sandbox_cpu_headroom')
+                require(observation['runtime_disk_free_bytes']>=80*1024**3+3*Path(source).stat().st_size+32*1024**2,'sandbox_disk_headroom')
                 result['support_budget']={'memory_bytes':MEMORY,'cpus':.5,'disk_evidence_limit_bytes':32*1024**2}
             result['stages'].append({'stage':'preflight','started_at':preflight_at,'finished_at':now(),
                                     'elapsed_seconds':round(time.monotonic()-preflight_start,3),'returncode':0});save()
@@ -209,6 +211,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             if ubuntu_mode:
                 import secrets
                 from .ubuntu_inputs import build as build_assessed
+                result.update(phase='candidate-build',last_progress_at=now());save()
                 password = secrets.token_urlsafe(32) + 'aA1!'
                 (run / 'sudo-password').write_text(password)
                 hashed = subprocess.run(['openssl', 'passwd', '-6', '-stdin'], input=password + '\n',

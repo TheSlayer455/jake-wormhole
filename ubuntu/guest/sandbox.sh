@@ -43,7 +43,20 @@ path = /sbin/audisp-remote
 type = always
 format = string
 EOF
-systemctl reload auditd
+# The pinned Jammy auditctl(8) accepts literal signal names, not "reload";
+# its auditd unit has no ExecReload. Follow auditd.service's remote-mode ordering
+# guidance so audisp-remote does not suspend before the static link is configured.
+install -d -m 0755 /etc/systemd/system/auditd.service.d
+cat > /etc/systemd/system/auditd.service.d/50-wormhole-network.conf <<'EOF'
+[Unit]
+After=
+After=network-online.target local-fs.target systemd-tmpfiles-setup.service
+Wants=network-online.target
+Before=
+Before=shutdown.target
+EOF
+systemctl daemon-reload
+auditctl --signal HUP
 # These are guest rules only. The mandatory libvirt NIC filter remains the
 # boundary even before this guest configuration executes or if guest root edits it.
 ufw default deny outgoing

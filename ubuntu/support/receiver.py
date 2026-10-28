@@ -25,11 +25,12 @@ lock=threading.Lock()
 
 def retain(kind,peer,body):
     path=Path('/evidence')/(kind+'.jsonl')
+    record=(json.dumps({'kind':kind,'peer':peer,'received_at':time.time(),
+                       'body':body.decode('utf-8',errors='replace')})+'\n').encode()
     with lock:
-        if path.exists() and path.stat().st_size>16*1024**2:os._exit(2)
-        with path.open('a') as stream:
-            stream.write(json.dumps({'kind':kind,'peer':peer,'received_at':time.time(),
-                                     'body':body.decode('utf-8',errors='replace')})+'\n')
+        if (path.stat().st_size if path.exists() else 0)+len(record)>16*1024**2:os._exit(2)
+        with path.open('ab') as stream:
+            stream.write(record)
             stream.flush();os.fsync(stream.fileno())
 
 
@@ -79,4 +80,7 @@ for cls,port,kind in ((TLS,6514,'syslog'),(TCP,6000,'audit')):
 server=socketserver.UDPServer((c['bind'],12345),NTP);servers.append(server)
 for server in servers:threading.Thread(target=server.serve_forever,daemon=True).start()
 print('WORMHOLE_SUPPORT_READY',flush=True)
-while True:time.sleep(1)
+deadline=time.monotonic()+1800
+while time.monotonic()<deadline:time.sleep(1)
+print('WORMHOLE_SUPPORT_DEADLINE',flush=True)
+sys.exit(1)

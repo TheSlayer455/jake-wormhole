@@ -42,6 +42,13 @@ def eligible(current, previous, *, candidate, dependency_store):
                               expected_target=receipt['target'],scanner_exit=receipt['scanner_exit'])
         require(findings['coverage_complete'] and findings['all_selected_automated_clean']
                 and findings['scanner_execution_completed'],'release_assessment_ineligible')
+        from .ubuntu_manual import MANUAL_RULES
+        records=read_json(path/'controller-records.json')
+        manual=next((r for r in records if r.get('stage')=='manual-observations' and r.get('returncode')==0),None)
+        require(manual is not None,'release_manual_evidence_missing')
+        objectives=json.loads(manual['output']).get('objective_results',{})
+        require(set(objectives)==MANUAL_RULES and all(x.get('observed_satisfied') is True for x in objectives.values()),'release_manual_requirements_pending')
+        require(all(status in {'pass','notapplicable','notchecked'} for status in findings['manual_native_outcomes'].values()),'release_manual_native_failure')
     delta=compare(previous,current)
     require(delta['equivalent_fresh_installations'],'release_repeatability_unproven')
     result=read_json(Path(current)/'result.json')
@@ -62,8 +69,11 @@ def publish(current,previous,*,candidate,dependency_store,destination,name):
     require(sha256(iso)==result['build']['candidate_sha256'],'publication_copy_changed')
     for label,run in [('installation-1',previous),('installation-2',current)]:
         evidence=output/label;evidence.mkdir(mode=0o700)
-        for source in ['qualification.json','qualification.txt','junit.xml','installed-svd.json','installed-svd.txt']:
+        for source in ['qualification.json','qualification.txt','junit.xml','installed-svd.json','installed-svd.txt',
+                       'manual-evidence.json','encryption-evidence.json','timing.json']:
             shutil.copyfile(Path(run)/source,evidence/source)
+        if result['build'].get('sandbox'):
+            for source in ('support-health.json','support-verification.json'):shutil.copyfile(Path(run)/source,evidence/source)
         shutil.copyfile(Path(run)/'inputs/build-manifest.json',evidence/'installation-manifest.json')
         shutil.copytree(Path(run)/'build-svd',evidence/'build-svd')
         assessment=evidence/'assessments';assessment.mkdir(mode=0o700)
@@ -73,6 +83,7 @@ def publish(current,previous,*,candidate,dependency_store,destination,name):
             shutil.copyfile(Path(run)/'assessment'/source,assessment/source)
     (output/'SHA256SUMS').write_text(result['build']['candidate_sha256']+'  '+iso.name+'\n')
     shutil.copyfile(POLICY,output/'policy.json')
+    atomic_json(output/'comparison.json',delta)
     manifest={'schema_version':'1.0','capability':'lab-qualified-ubuntu-iso','candidate_sha256':sha256(iso),
               'lab_iso_qualified':True,'production_iso_eligible':False,
               'policy_sha256':sha256(POLICY),'installations':[delta['previous_run'],delta['current_run']],
@@ -91,4 +102,30 @@ def publish(current,previous,*,candidate,dependency_store,destination,name):
         fd=os.open(directory,os.O_RDONLY|os.O_DIRECTORY)
         try:os.fsync(fd)
         finally:os.close(fd)
+    verify(output)
     return manifest
+
+
+def verify(directory):
+    """Consumer readback checks bytes/closure, not independent accreditation."""
+    root=workspace_path(directory)
+    require((root/'complete.json').is_file() and (root/'manifest.json').is_file(),'publication_incomplete')
+    completion=read_json(root/'complete.json');manifest=read_json(root/'manifest.json')
+    require(completion.get('manifest_sha256')==sha256(root/'manifest.json'),'publication_manifest_changed')
+    require(manifest.get('capability')=='lab-qualified-ubuntu-iso' and manifest.get('lab_iso_qualified') is True
+            and manifest.get('production_iso_eligible') is False,'publication_scope_invalid')
+    names=set()
+    for row in manifest['files']:
+        require(set(row)=={'path','bytes','sha256'} and type(row['bytes']) is int and row['bytes']>=0,'publication_file_record_invalid')
+        relative=Path(row['path'])
+        require(not relative.is_absolute() and not relative.drive and '..' not in relative.parts and relative.as_posix()==row['path']
+                and row['path'] not in names and row['path'] not in {'manifest.json','complete.json'},'publication_path_invalid')
+        target=root/relative
+        require(target.is_file() and all(not p.is_symlink() for p in [target,*target.parents]),'publication_file_invalid')
+        require(target.stat().st_size==row['bytes'] and sha256(target)==row['sha256'],'publication_file_changed')
+        names.add(row['path'])
+    actual={p.relative_to(root).as_posix() for p in root.rglob('*') if p.is_file() or p.is_symlink()}
+    require(actual==names|{'manifest.json','complete.json'},'publication_file_set_changed')
+    isos=[root/n for n in names if n.endswith('.iso')]
+    require(len(isos)==1 and sha256(isos[0])==manifest['candidate_sha256'],'publication_iso_changed')
+    return {'complete':True,'candidate_sha256':manifest['candidate_sha256'],'files_verified':len(names),'production_iso_eligible':False}

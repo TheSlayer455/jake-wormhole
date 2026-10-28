@@ -20,10 +20,18 @@ def generate(run, result, *, findings=None, observations=None, controller_record
               'native_counts':dict(Counter(r['native_status'] for r in rule_rows)),
               'assessment_executed':findings is not None,
               'rules':[{'rule_id':r['rule_id'],'selected':r['selected'],'native_status':r['native_status']} for r in rule_rows]}
+    from .ubuntu_coverage import summarize
+    coverage['profile_mapping']=summarize(rule_rows)
     (run/'assessment-coverage.json').write_text(json.dumps(coverage,indent=2))
     rows = []
     observed = (observations or {}).get('checks', {})
     stages = {r.get('stage'): r for r in controller_records}
+    manual_record=stages.get('manual-observations')
+    if manual_record and manual_record.get('returncode')==0:
+        try:manual=json.loads(manual_record['output'])
+        except (ValueError,KeyError):manual={'objective_results':{},'disposition':'invalid-observation'}
+        atomic_json(run/'manual-evidence.json',manual)
+    else:manual={'objective_results':{},'disposition':'not-collected'}
     derived = {
         'remote-syslog-received':result.get('support_verification',{}).get('syslog_guest_event_received'),
         'remote-audit-received':result.get('support_verification',{}).get('audit_guest_event_received'),
@@ -58,8 +66,14 @@ def generate(run, result, *, findings=None, observations=None, controller_record
               'functional_results': rows, 'functional_counts': dict(Counter(r['status'] for r in rows)),
               'assessment': {k:v for k,v in (findings or {}).items() if k not in {'rules','target'}},
               'stages': result.get('stages', []), 'qualification_reasons': reasons,
+              'manual_evidence':manual,
               'lab_status': 'LAB QUALIFICATION PENDING', 'lab_iso_qualified': False, 'production_iso_eligible': False}
     atomic_json(run / 'qualification.json', report)
+    atomic_json(run/'encryption-evidence.json',{'offline':result.get('offline_encryption'),
+        'cold_start_verified':result.get('cold_start_verified'),'unlock_events':result.get('unlock_events',[]),
+        'secrets_included':False})
+    atomic_json(run/'timing.json',{'stages':result.get('stages',[]),'installation':result.get('installation_observations',[]),
+        'source_revision':result['source_revision']})
     text = ['Ubuntu 22.04 lab evidence', report['lab_status'],
             'Candidate SHA256: ' + str(report['candidate_sha256']),
             'Functional: ' + json.dumps(report['functional_counts'], sort_keys=True),
@@ -95,6 +109,7 @@ def generate(run, result, *, findings=None, observations=None, controller_record
         svd = {'schema_version':'1.0','kind':'observed-installed-software','run_id':result['run_id'],
                'candidate_sha256':report['candidate_sha256'], 'kernel':observations['kernel'],
                'packages':observations['packages'],'snaps':observations.get('snaps',[]),
+               'payloads':observations.get('payloads',[]),
                'inventory_complete':observations.get('inventory_complete',False)}
         (run / 'installed-svd.json').write_text(json.dumps(svd, indent=2))
         (run / 'installed-svd.txt').write_text('\n'.join(

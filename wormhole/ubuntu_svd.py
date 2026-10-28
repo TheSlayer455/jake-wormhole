@@ -56,6 +56,7 @@ def build_svd(run, candidate, manifest):
     value={'schema_version':'1.0','kind':'available-iso-build-input-software','candidate_sha256':manifest['candidate_sha256'],
            'source_media':manifest['source'],'media_layers':layers,'offline_repository_packages':bundle['packages'],
            'package_snapshot':bundle['snapshot'],
+           'scanner_toolchain':manifest.get('scanner_toolchain'),
            'meaning':'Media layers and available offline packages are non-additive build inputs, not proof of installed software.'}
     (output/'svd.json').write_text(json.dumps(value,indent=2))
     (output/'svd.txt').write_text(value['meaning']+'\n'+'\n'.join(
