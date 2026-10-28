@@ -6,9 +6,22 @@ records its actual evidence. `media_store.py` uses a version-2 streaming manifes
 `vm_inputs.py` preserves Ubuntu media boot equipment and binds a separate NoCloud
 seed. `vm_admission.py` shares the canonical infrastructure lock with Docker but
 keeps a distinct backend journal. A released lock never clears unknown VM work.
-`vm_baseline.py` is a bounded Ubuntu installation experiment, not the hardening,
-assessment, lab qualification or publication implementation. No existing
+The `vm_baseline` CLI remains an unqualified installation experiment. Its shared
+lifecycle also serves the separate Ubuntu assessment profile. No existing
 container receipt/schema is reinterpreted as real ISO evidence.
+
+Ubuntu is the active OS milestone; RHEL development/media work is paused.
+`ubuntu_inputs.py` freezes offline packages, boot/seed templates and installed
+payloads. Guest finalization performs bounded installation-local remediation,
+reboots, then enables final SSH. `ubuntu_runtime.py` uses the designated pinned
+helper and persists actual XCCDF/ARF/HTML before teardown. `ubuntu_assessment.py`
+retains all upstream outcomes; unsupported tailoring is refused. Reports, separate
+build/installed SVDs, comparisons and a static local catalog derive from those
+records. `ubuntu_recovery.py` resumes only the original ownership journal after
+supervisor/operation stop proof. The local release boundary refuses pending
+policy. Its eligible positive path is unverified because required findings,
+entitlement and manual dispositions remain unresolved. Production eligibility
+stays false. See [proven hardening](../handoff/solutions/ubuntu-install-hardening.md).
 
 The [active follow-up](FAILURE-REPRODUCTION.md) centralizes the readiness observation
 contract in `execution_state.py`. Normal fleet dispatch requires complete readiness;

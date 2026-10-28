@@ -8,8 +8,8 @@ Container runtime acceptance is established at the sources in the current checkp
 
 | Area | Demonstrated in Wormhole | Not demonstrated by Wormhole |
 | --- | --- | --- |
-| Provisioning | Terraform-managed Docker targets; candidate-bound Ubuntu/UBI; 20 coexisting stock targets; one real Terraform/libvirt Ubuntu 22.04.5 BIOS installation from remastered media and a declared seed | RHEL ISO installation, hardened ISO acceptance, UEFI/Secure Boot |
-| Validation | Container checks/inventories; installed Ubuntu final SSH/Ansible; real OpenSCAP/CaC V2R7 stock audit with native XML, ARF, HTML and 639 accounted outcomes | Complete hardened functional/security acceptance, USG V2R8 equivalence, FIPS evidence, operating-system compliance, production ISO qualification |
+| Provisioning | Terraform-managed Docker targets; candidate-bound Ubuntu/UBI; 20 coexisting stock targets; two fresh hardened Ubuntu 22.04.5 BIOS installations of the same ISO bytes and declared seed template | RHEL ISO installation, UEFI/Secure Boot, work-host compatibility |
+| Validation | Real Ubuntu final SSH/Ansible, 14/14 functional checks, complete inventories, native OpenSCAP/CaC V2R7 reports and 639 accounted outcomes per hardened install | Zero-finding security acceptance, USG V2R8 equivalence, FIPS evidence, operating-system compliance, production ISO qualification |
 | Delivery | Source-bound reference qualification and exact-tested-byte private filesystem publication | Proprietary GitLab integration; actual GitLab runner execution; customer portal or remote artifact publication |
 
 The [verification report](../handoff/MERGED-VERIFICATION.md) binds the latest recorded 43-check Ubuntu reference run to `c3d440a3` and the earlier twenty-target qualification to `825a594`. These are different operations, not a scaling benchmark. See [fidelity limits](FIDELITY.md) for details. Wormhole is a reference implementation; production adapters and production evidence are separate work.
@@ -27,6 +27,7 @@ Use the Test file column with `python -B -m unittest discover -s tests -p TEST_F
 | SSH and Ansible | [readiness/runtime.py](../readiness/runtime.py): pinned host keys, fixed SSH policy and structured Ansible results | `test_readiness.py` |
 | Software Version Description | [software_inventory.py](../wormhole/software_inventory.py), [observed_svd.py](../wormhole/observed_svd.py): complete native versions/architectures, separate execution provenance and shared-kernel scope | `test_software_inventory.py` |
 | Assessment evidence | [assessments.py](../wormhole/assessments.py): process explicitly synthetic findings and applicability | `test_assessments.py` |
+| Real Ubuntu assessment | [ubuntu_runtime.py](../wormhole/ubuntu_runtime.py), [ubuntu_assessment.py](../wormhole/ubuntu_assessment.py): native result/identity/coverage validation; [proven hardening](../handoff/solutions/ubuntu-install-hardening.md) | `test_ubuntu_*.py` |
 | Result aggregation | [pipeline_records.py](../wormhole/pipeline_records.py), [pipeline_replay.py](../wormhole/pipeline_replay.py): complete check grids, JSON/text/JUnit and original-capture replay | `test_pipeline_records.py` |
 | Reference qualification | [pipeline.py](../wormhole/pipeline.py), [reference_acceptance.py](../wormhole/reference_acceptance.py): candidate-bound checks and limited reference gate | `test_reference_acceptance.py` |
 | Publication integrity | [publication.py](../wormhole/publication.py): copy tested bytes, verify the closed file set and commit completion last | `test_publication.py` |

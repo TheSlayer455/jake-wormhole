@@ -11,6 +11,17 @@ from wormhole.ubuntu_assessment import POLICY
 
 
 class Reports(unittest.TestCase):
+    def test_reproduction_package_exports_only_safe_fields(self):
+        from wormhole.ubuntu_reproduction import sanitized
+        value=sanitized({'source_revision':'a'*40,'error_category':'finalization_failed',
+            'run_id':'PRIVATE-RUN-ID','address':'PRIVATE-ADDRESS','password':'PRIVATE-PASSWORD',
+            'diagnostic':'PRIVATE-RAW-LOG','stages':[{'stage':'terraform-apply','returncode':0}]})
+        raw=json.dumps(value)
+        for secret in ['PRIVATE-RUN-ID','PRIVATE-ADDRESS','PRIVATE-PASSWORD','PRIVATE-RAW-LOG']:
+            self.assertNotIn(secret,raw)
+        self.assertEqual(value['evidence_category'],'real-vm-execution')
+        self.assertFalse(value['lab_iso_qualified'])
+
     def test_native_iso_snapshots_and_layer_deltas_are_distinct(self):
         from wormhole.ubuntu_svd import parse_manifest
         snapshot=parse_manifest('package\t1.2\nsnap:example\tstable\t123\n')
@@ -59,7 +70,8 @@ class Reports(unittest.TestCase):
             self.assertEqual(report['functional_counts'],{'blocked':14})
             self.assertFalse(report['lab_iso_qualified'])
             self.assertFalse(report['production_iso_eligible'])
-            self.assertEqual(len(ET.parse(root/'junit.xml').findall('./testcase')),14)
+            self.assertEqual(len(ET.parse(root/'junit.xml').findall('./testcase[@classname="functional"]')),14)
+            self.assertIsNone(json.loads((root/'assessment-coverage.json').read_text())['upstream_rule_count'])
             self.assertIn('cleanup-not-verified',report['qualification_reasons'])
 
     def test_clean_fixture_does_not_satisfy_missing_fips_or_repeatability(self):

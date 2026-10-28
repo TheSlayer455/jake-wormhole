@@ -136,6 +136,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
         remaining = deadline - time.monotonic()
         require(remaining > 0, 'vm_absolute_deadline')
         started = time.monotonic()
+        started_at = now()
         result.update(phase=label, last_progress_at=now());save()
         with (run / (label + '.log')).open('wb') as log:
             process = subprocess.Popen([str(x) for x in args], stdin=subprocess.PIPE if data else subprocess.DEVNULL,
@@ -151,7 +152,8 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                     os.killpg(process.pid, signal.SIGKILL);process.wait(timeout=3)
                 raise RunError('vm_command_unknown', 'A bounded command timed out; reconcile its resources before retrying.') from None
         result.pop('active_command',None)
-        result['stages'].append({'stage': label, 'elapsed_seconds': round(time.monotonic()-started, 3), 'returncode': process.returncode})
+        result['stages'].append({'stage': label,'started_at':started_at,'finished_at':now(),
+                                'elapsed_seconds': round(time.monotonic()-started, 3), 'returncode': process.returncode})
         result['last_progress_at'] = now()
         save()
         if check and process.returncode:
@@ -161,7 +163,10 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
         return subprocess.check_output(['virsh', '-c', 'qemu:///system', *args], stderr=subprocess.DEVNULL, timeout=10).decode()
     with VMLease(CANONICAL_INFRASTRUCTURE_ROOT, identifier, revision) as lease:
         try:
+            preflight_start=time.monotonic();preflight_at=now()
             atomic_json(run / 'preflight.json', preflight(source))
+            result['stages'].append({'stage':'preflight','started_at':preflight_at,'finished_at':now(),
+                                    'elapsed_seconds':round(time.monotonic()-preflight_start,3),'returncode':0});save()
             for query in ('list', 'net-list', 'pool-list'):
                 require(name not in virsh(query, '--all', '--name').split(), 'vm_resource_conflict')
             qemu = pwd.getpwnam('libvirt-qemu')
@@ -181,6 +186,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             for kind, identity in [('installer_iso', str(candidate)), ('seed_iso', str(seed))]:
                 lease.intent(kind, identity)
             started = time.monotonic()
+            build_at = now()
             reuse = None
             if reuse_run is not None:
                 origin = workspace_path(ROOT / 'vm-runs' / run_id(reuse_run))
@@ -207,7 +213,8 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                     store=dependency_store, mode=ubuntu_mode, password_hash=hashed, boot_hash=boot_hash,reuse=reuse)
             else:
                 manifest = build_ubuntu(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac, reuse=reuse)
-            result['stages'].append({'stage': 'candidate-build', 'elapsed_seconds': round(time.monotonic()-started, 3), 'returncode': 0})
+            result['stages'].append({'stage': 'candidate-build','started_at':build_at,'finished_at':now(),
+                                    'elapsed_seconds': round(time.monotonic()-started, 3), 'returncode': 0})
             result['build'] = manifest;save()
             for path in (candidate, seed):
                 os.chown(path, 0, group);path.chmod(0o640)
@@ -234,6 +241,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             require(len(disks) == 1 and disks[0].find('driver').get('type') == 'qcow2' and
                     disks[0].find('source').get('file') == str(pool / (name + '.qcow2')), 'vm_disk_format_mismatch')
             info = json.loads(subprocess.check_output(['qemu-img', 'info', '--output=json', str(pool / (name + '.qcow2'))], timeout=5))
+            atomic_json(run/'disk-observation.json',info)
             require(info['format'] == 'qcow2' and info['virtual-size'] == 64 * 1024**3 and
                     not info.get('backing-filename'), 'vm_disk_capacity_mismatch')
             cds = {x.find('source').get('file') for x in dom.findall('devices/disk') if x.get('device') == 'cdrom'}

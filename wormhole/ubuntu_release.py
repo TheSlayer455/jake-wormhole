@@ -1,5 +1,6 @@
 """Strict local Ubuntu release boundary; pending policy never publishes."""
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -76,6 +77,18 @@ def publish(current,previous,*,candidate,dependency_store,destination,name):
               'lab_iso_qualified':True,'production_iso_eligible':False,
               'policy_sha256':sha256(POLICY),'installations':[delta['previous_run'],delta['current_run']],
               'native_reports':'restricted private local bundle; public export is not authorized'}
+    files=[p for p in output.rglob('*') if p.is_file()]
+    manifest['files']=[{'path':p.relative_to(output).as_posix(),'bytes':p.stat().st_size,'sha256':sha256(p)} for p in sorted(files)]
+    for file in files:
+        with file.open('rb') as stream:os.fsync(stream.fileno())
     atomic_json(output/'manifest.json',manifest)
+    for directory in sorted([p for p in output.rglob('*') if p.is_dir()],key=lambda p:len(p.parts),reverse=True)+[output]:
+        fd=os.open(directory,os.O_RDONLY|os.O_DIRECTORY)
+        try:os.fsync(fd)
+        finally:os.close(fd)
     atomic_json(output/'complete.json',{'manifest_sha256':sha256(output/'manifest.json')})
+    for directory in (output,root):
+        fd=os.open(directory,os.O_RDONLY|os.O_DIRECTORY)
+        try:os.fsync(fd)
+        finally:os.close(fd)
     return manifest

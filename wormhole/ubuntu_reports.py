@@ -15,7 +15,8 @@ def generate(run, result, *, findings=None, observations=None, controller_record
     content=run/'inputs/payload/ssg-ubuntu2204-ds.xml'
     if not rule_rows and content.exists():
         rule_rows=[dict(row,native_status='missing') for row in inventory(content).values()]
-    coverage={'upstream_rule_count':len(rule_rows),'selected_rule_count':sum(r['selected'] for r in rule_rows),
+    coverage={'upstream_rule_count':len(rule_rows) if rule_rows else None,
+              'selected_rule_count':sum(r['selected'] for r in rule_rows) if rule_rows else None,
               'native_counts':dict(Counter(r['native_status'] for r in rule_rows)),
               'assessment_executed':findings is not None,
               'rules':[{'rule_id':r['rule_id'],'selected':r['selected'],'native_status':r['native_status']} for r in rule_rows]}
@@ -64,6 +65,9 @@ def generate(run, result, *, findings=None, observations=None, controller_record
     text += ['', 'Qualification unresolved:'] + reasons
     (run / 'qualification.txt').write_text('\n'.join(text) + '\n')
     tests = ET.Element('testsuite', name='ubuntu-functional-and-assessment')
+    if not rule_rows:
+        case=ET.SubElement(tests,'testcase',classname='scap',name='benchmark-inventory-unavailable')
+        ET.SubElement(case,'failure',message='Required rule inventory unavailable; expected counts are unknown.')
     for row in rows:
         case = ET.SubElement(tests, 'testcase', classname='functional', name=row['id'])
         if row['status'] != 'pass':

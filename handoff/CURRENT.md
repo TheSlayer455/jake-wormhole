@@ -24,8 +24,28 @@ points plus real seed readback); SSH syntax validation before `/run/sshd` existe
 (fixed by the finalization unit's runtime directory); AIDE configuration missing
 when recommendations were disabled (explicit `aide-common`/cron dependency).
 Failures blocked readiness/catalog dispatch; their console evidence remains
-private. Installation hardening is under real fresh-VM verification; do not claim
-that a remediation operation's zero exit proves a passing benchmark rule.
+private. Hardened execution at `be1aac0cc0a027874337cd7587ee42e294a54d38`
+and a fresh reuse installation at `109efdcc42d2896c206dc5d0ea55e0db94f6aa06`
+passed 14/14 functional checks each. Actual OpenSCAP: 191 pass, 18 fail,
+16 not applicable, five not checked, 409 upstream not selected. Native reports,
+630 Debian packages/three Snap entries and cleanup are verified. ISO bytes,
+installed contract, kernel, inventories and required outcomes matched; boot IDs
+and credentials differed. Elapsed: 558/544 seconds, build/reuse 15.0/9.5 seconds
+(one sample each). AIDE initialization is the measured critical path at about
+222 seconds. A remediation operation's zero exit is never substituted for audit.
+
+[PR 31](https://github.com/TheSlayer455/jake-wormhole/pull/31) carries this verified
+increment; consult its merge and CI records for delivery revisions. See the
+[source-pinned hardening handoff](solutions/ubuntu-install-hardening.md).
+The 899-test integration suite passed on Linux (897 pass/two skips at `3f880b4`)
+and Windows (605 pass/294 skips at `408f341`); later focused Ubuntu negatives
+include unsupported-tailoring refusal. No independent review is claimed.
+
+Remaining: approved guest USG/FIPS procedure and modules, encryption/unlock
+integration, smart-card/directory/CA inputs, authorized banner/NTP/remote-audit
+requirements, five accountable manual dispositions and V2R8 distribution mapping.
+The second run collected manual facts without approving them. Qualification and
+positive qualified publication remain unverified. RHEL stays paused.
 
 Use the established operator route, clean pinned source and private stores:
 `python -m wormhole.ubuntu_runtime --help`. `prepare`, `run --mode stock-audit`
