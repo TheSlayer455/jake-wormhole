@@ -1,5 +1,16 @@
 # Minx work index
 
+Active sandbox increment: `codex/WORM-001-ubuntu-sandbox`. The owner authorized
+project-owned time/log receivers, private CA/test identities, protected local
+secret delivery and encrypted installation. These are implementation tasks;
+RHEL remains paused and vendor entitlements/certification cannot be fabricated.
+The earlier partial results below retain their original source attribution.
+Two fresh same-ISO encrypted installations passed 34/34 checks each, with matching
+inventories/assessments and cleanup. See [current continuation](../handoff/CURRENT.md)
+and [PR 34](https://github.com/TheSlayer455/jake-wormhole/pull/34). Qualification is
+pending explicit external/content requirements; no qualified release is claimed.
+Do not start a second runtime while the shared lease is active.
+
 Current owner-authorized milestone: complete Ubuntu 22.04 installation-time
 hardening, actual assessment, repeatability and exact-byte local release while
 preserving the container baseline. RHEL implementation/media work is paused until
@@ -7,6 +18,8 @@ Ubuntu is complete and the owner explicitly starts RHEL. USG/FIPS and required
 manual/external-control evidence remain pending; no engineer waiver is allowed.
 See [current continuation](../handoff/CURRENT.md). Historical Done contracts below
 are not reopened or reused as claim authority.
+## Historical baseline delivery
+
 The Ubuntu baseline was delivered through [PR 29](https://github.com/TheSlayer455/jake-wormhole/pull/29).
 The hardened increment is [PR 31](https://github.com/TheSlayer455/jake-wormhole/pull/31),
 merged as `63d3aa1`: three real fresh installs (including merged source),

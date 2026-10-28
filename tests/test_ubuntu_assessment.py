@@ -68,6 +68,22 @@ class Assessment(unittest.TestCase):
         self.content.write_text('changed')
         with self.assertRaises(RunError):self.read()
 
+    def test_known_manual_rule_remains_notchecked_and_requires_separate_evidence(self):
+        self.write('pass')
+        identifier='xccdf_org.ssgproject.content_rule_only_allow_dod_certs'
+        tree=ET.parse(self.content);root=tree.getroot()
+        ET.SubElement(root.find(a.X+'Profile'),a.X+'select',idref=identifier,selected='true')
+        ET.SubElement(root,a.X+'Rule',id=identifier,severity='high')
+        tree.write(self.content);self.policy['content']['datastream_sha256']=a.digest(self.content)
+        tree=ET.parse(self.result);test=tree.getroot().find(a.X+'TestResult')
+        row=ET.SubElement(test,a.X+'rule-result',idref=identifier)
+        ET.SubElement(row,a.X+'result').text='notchecked';tree.write(self.result)
+        observed=self.read()
+        self.assertTrue(observed['all_selected_automated_clean'])
+        self.assertEqual(observed['native_counts']['notchecked'],1)
+        self.assertEqual(observed['selected_manual_rule_count'],1)
+        self.assertFalse(observed['lab_iso_qualified'])
+
     def test_upstream_group_deselection_is_not_a_missing_rule(self):
         tree=ET.parse(self.content);root=tree.getroot()
         profile=next(root.iter(a.X+'Profile'))
@@ -85,6 +101,41 @@ class Assessment(unittest.TestCase):
         self.policy['tailoring']={'excluded_rules':['rule-a'],'parameters':{},'owner_approved_exceptions':[]}
         with self.assertRaises(RunError) as refused:self.read()
         self.assertEqual(refused.exception.code,'unsupported_assessment_tailoring')
+
+    def test_lab_value_tailoring_preserves_parent_and_cannot_weaken_other_controls(self):
+        from wormhole.ubuntu_tailoring import document,VALUES,PROFILE
+        self.policy['tailoring']={'excluded_rules':[],'parameters':dict(VALUES),'owner_approved_exceptions':[]}
+        tree=ET.fromstring(document(self.policy));profile=tree.find(a.X+'Profile')
+        self.assertEqual(profile.get('extends'),'profile')
+        self.assertEqual(profile.get('id'),PROFILE)
+        self.assertEqual(list(profile.iter(a.X+'select')),[])
+        self.assertEqual(len(profile.findall(a.X+'set-value')),2)
+        self.policy['tailoring']['parameters']['remote_login_banner_text']='.*'
+        with self.assertRaises(RunError):document(self.policy)
+        self.policy['tailoring']['parameters']={'is_fips_mode_enabled':'false'}
+        with self.assertRaises(RunError):document(self.policy)
+
+    def test_manual_revision_mapping_does_not_claim_scanner_equivalence(self):
+        from wormhole.ubuntu_coverage import reconcile
+        def manual(path,release,checks):
+            root=ET.Element(a.X+'Benchmark')
+            ET.SubElement(root,a.X+'version').text='2'
+            ET.SubElement(root,a.X+'plain-text',id='release-info').text=release
+            for key,text in checks.items():
+                rule=ET.SubElement(root,a.X+'Rule',id=key,severity='high')
+                ET.SubElement(rule,a.X+'version').text=key
+                check=ET.SubElement(rule,a.X+'check')
+                ET.SubElement(check,a.X+'check-content').text=text
+            ET.ElementTree(root).write(path)
+        old=self.root/'old.xml';new=self.root/'new.xml'
+        manual(old,'Release: 7',{'UBTU-22-123456':'original check'})
+        manual(new,'Release: 8',{'UBTU-22-123456':'changed check','UBTU-22-123457':'new check'})
+        rows=[{'rule_id':'synthetic','selected':True,'native_status':'pass','references':[{'value':'UBTU-22-123456'}]}]
+        report=reconcile(rows,old,new)
+        self.assertFalse(report['manual_revision_mapping_complete'])
+        self.assertFalse(report['scanner_logic_equivalence_established'])
+        self.assertEqual(report['unmapped_controls'],['UBTU-22-123457'])
+        self.assertEqual(report['changed_controls'][0]['changed_fields'],['check'])
 
     def test_secret_identity_is_not_in_installer_command_arguments(self):
         from wormhole.ubuntu_inputs import seed_config,grub_password_hash

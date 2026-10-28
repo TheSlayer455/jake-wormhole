@@ -21,6 +21,9 @@ class Reports(unittest.TestCase):
             self.assertNotIn(secret,raw)
         self.assertEqual(value['evidence_category'],'real-vm-execution')
         self.assertFalse(value['lab_iso_qualified'])
+        sandbox=sanitized({'source_revision':'b'*40,'error_category':'audit_archive_incomplete','build':{'sandbox':True}})
+        self.assertIn('--sandbox',sandbox['command_template'])
+        self.assertEqual(sandbox['boundary'],'audit_archive_incomplete')
 
     def test_native_iso_snapshots_and_layer_deltas_are_distinct(self):
         from wormhole.ubuntu_svd import parse_manifest
@@ -67,10 +70,11 @@ class Reports(unittest.TestCase):
             result={'run_id':'fixture', 'source_revision':'fixture', 'outcome':'failed','cleanup':'unreconciled',
                     'error_category':'initialization_failed'}
             report=reports.generate(root,result)
-            self.assertEqual(report['functional_counts'],{'blocked':14})
+            expected=len(json.loads(POLICY.read_text())['functional_checks'])
+            self.assertEqual(report['functional_counts'],{'blocked':expected})
             self.assertFalse(report['lab_iso_qualified'])
             self.assertFalse(report['production_iso_eligible'])
-            self.assertEqual(len(ET.parse(root/'junit.xml').findall('./testcase[@classname="functional"]')),14)
+            self.assertEqual(len(ET.parse(root/'junit.xml').findall('./testcase[@classname="functional"]')),expected)
             self.assertIsNone(json.loads((root/'assessment-coverage.json').read_text())['upstream_rule_count'])
             self.assertIn('cleanup-not-verified',report['qualification_reasons'])
 
@@ -84,7 +88,7 @@ class Reports(unittest.TestCase):
                 findings={'scanner_execution_completed':True,'coverage_complete':True,
                           'all_selected_automated_clean':True,'rules':[]})
             self.assertFalse(report['lab_iso_qualified'])
-            self.assertEqual(report['functional_counts'],{'pass':14})
+            self.assertEqual(report['functional_counts'],{'pass':len(policy['functional_checks'])})
             self.assertIn('authorized-guest-procedure-for-usg-and-fips-updates',report['qualification_reasons'])
 
     def test_controller_change_reuses_inputs_but_installed_change_invalidates(self):

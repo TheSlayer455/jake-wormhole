@@ -12,15 +12,27 @@ from .vm_inputs import build_ubuntu, cloud_config, sha256
 from .ubuntu_assessment import POLICY, inventory, require
 
 
-def input_identity(store, mode):
+def input_identity(store, mode, *, sandbox=False):
     # Execution/reporting changes deliberately do not alter installed bytes.
     paths = ['wormhole/vm_inputs.py', 'wormhole/ubuntu_inputs.py', 'ubuntu/guest/finalize.sh',
-             'ubuntu/guest/audit.sh', 'ubuntu/guest/observe.py', 'profiles/ubuntu-lab-policy-v1.json']
+             'ubuntu/guest/audit.sh', 'ubuntu/guest/observe.py', 'profiles/ubuntu-lab-policy-v1.json','wormhole/ubuntu_tailoring.py']
     if mode == 'hardened':
         paths += ['wormhole/ubuntu_hardening.py', 'ubuntu/remediation-plan-v1.json', 'ubuntu/guest/remediate.py']
+    if sandbox:
+        paths += ['ubuntu/guest/encryption-late.sh','ubuntu/guest/sandbox.sh',
+                  'ubuntu/guest/entitlement.py','ubuntu/guest/audit-offload.py','ubuntu/guest/secret-audit.py','ubuntu/support/receiver.py']
     files = {name: sha256(SOURCE_ROOT / name) for name in paths}
     files['offline-dependencies'] = sha256(Path(store) / 'bundle/manifest.json')
+    if sandbox:
+        from .ubuntu_encryption import configure
+        from .ubuntu_sandbox import network_filter,certificates,BIND,GUEST
+        import inspect
+        recipe={'installer':configure({'autoinstall':{'network':{'version':2},'late-commands':[]}}),
+                'network_filter':network_filter('wormhole-contract'),
+                'certificate_issuance':inspect.getsource(certificates),'bind':BIND,'guest':GUEST}
+        files['sandbox-installation-and-service-contract']=hashlib.sha256(json.dumps(recipe,sort_keys=True).encode()).hexdigest()
     value = {'mode': mode, 'files': files}
+    if sandbox:value['sandbox']=True
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest(), value
 
 
@@ -63,6 +75,11 @@ def prepare(store):
     (repo / 'Packages').write_text('\n\n'.join(paragraphs) + '\n', encoding='utf-8')
     for name in ['ssg-ubuntu2204-ds.xml', 'LICENSE']:
         shutil.copyfile(store / name, bundle / name)
+    if (store/'openscap-lab.tar.gz').exists():
+        tool=read_json(store/'toolchain.json')
+        require(tool['artifact_sha256']==sha256(store/'openscap-lab.tar.gz') and tool['version']=='1.4.6',
+                'scanner_bundle_identity')
+        for name in ('openscap-lab.tar.gz','toolchain.json'):shutil.copyfile(store/name,bundle/name)
     files = [{'path': p.relative_to(bundle).as_posix(), 'bytes': p.stat().st_size, 'sha256': sha256(p)}
              for p in sorted(bundle.rglob('*')) if p.is_file()]
     manifest = {'schema_version': '1.0', 'capability': 'ubuntu-offline-assessment-inputs',
@@ -78,7 +95,7 @@ def grub_password_hash(password, salt):
     return 'grub.pbkdf2.sha512.100000.'+salt.hex().upper()+'.'+value.hex().upper()
 
 
-def seed_config(identifier, public_key, address, mac, password_hash, boot_hash=None):
+def seed_config(identifier, public_key, address, mac, password_hash, boot_hash=None, *, sandbox=False):
     require(re.fullmatch(r'ssh-rsa [A-Za-z0-9+/=]{300,900}(?: [A-Za-z0-9_.-]+)?', public_key), 'ubuntu_public_key_invalid')
     require(re.fullmatch(r'\$6\$[./A-Za-z0-9$]+', password_hash), 'ubuntu_password_hash_invalid')
     require(boot_hash is None or re.fullmatch(r'grub[.]pbkdf2[.]sha512[.]100000[.][A-F0-9]{128}[.][A-F0-9]{128}',boot_hash),
@@ -93,11 +110,30 @@ chmod -R a+rX /usr/local/lib/wormhole/repository
 printf '%s\\n' 'deb [trusted=yes] file:/usr/local/lib/wormhole/repository ./' > /etc/apt/sources.list.d/wormhole-local.list
 apt-get -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- update
 DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- install libopenscap8=1.2.17-0.1ubuntu7.22.04.3
+if test -f /usr/local/lib/wormhole/openscap-lab.tar.gz; then
+  runtime=$(python3 -c 'import json;tool=json.load(open("/usr/local/lib/wormhole/toolchain.json"));print(" ".join(tool["runtime_packages"]))')
+  DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- install $runtime
+  tar -xzf /usr/local/lib/wormhole/openscap-lab.tar.gz -C /opt
+  printf '%s\\n' '#!/bin/sh' 'exec /opt/wormhole-openscap/bin/oscap "$@"' > /usr/local/bin/oscap
+  chmod 0755 /usr/local/bin/oscap
+  oscap --version | head -n 1 | grep -F '1.4.6'
+fi
 if python3 -c 'import json,sys;sys.exit(json.load(open("/usr/local/lib/wormhole/install-contract.json"))["mode"] != "hardened")'; then
-  packages=$(python3 -c 'import json;names={"auditd","audispd-plugins","aide","aide-common","cron","libpam-pwquality","apparmor-utils","ufw","vlock"};rows=json.load(open("/usr/local/lib/wormhole/manifest.json"))["packages"];assert names <= {p["name"] for p in rows};print(" ".join(p["name"]+"="+p["version"] for p in rows if p["name"] in names))')
+  packages=$(python3 -c 'import json;names={"auditd","audispd-plugins","aide","aide-common","cron","libpam-pwquality","apparmor-utils","ufw","vlock"};contract=json.load(open("/usr/local/lib/wormhole/install-contract.json"));names.update({"chrony","rsyslog-gnutls","libnss-sss","libpam-sss","opensc","opensc-pkcs11","libpam-pkcs11"} if contract.get("sandbox") else set());rows=json.load(open("/usr/local/lib/wormhole/manifest.json"))["packages"];assert names <= {p["name"] for p in rows};print(" ".join(p["name"]+"="+p["version"] for p in rows if p["name"] in names))')
   DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- install $packages
 fi
 useradd --create-home --shell /bin/bash --user-group lab.service
+if python3 -c 'import json,sys;sys.exit(not json.load(open("/usr/local/lib/wormhole/install-contract.json")).get("sandbox"))'; then
+  chage -E "$(date -u -d '+2 days' +%F)" lab.service
+fi
+if test -f /tmp/wormhole-identity/sandbox-ca.crt; then
+  install -m 0644 /tmp/wormhole-identity/sandbox-ca.crt /etc/wormhole-lab-ca.crt
+  install -d -m 0755 /etc/pam_pkcs11/cacerts /etc/pam_pkcs11/crls /usr/local/share/wormhole-pki
+  install -m 0644 /tmp/wormhole-identity/sandbox-ca.crt /etc/pam_pkcs11/cacerts/lab-ca.pem
+  install -m 0644 /tmp/wormhole-identity/sandbox-ca.crl /etc/pam_pkcs11/crls/lab-ca.crl
+  install -m 0644 /tmp/wormhole-identity/sandbox-active.crt /usr/local/share/wormhole-pki/active.pem
+  install -m 0644 /tmp/wormhole-identity/sandbox-revoked.crt /usr/local/share/wormhole-pki/revoked.pem
+fi
 if test -s /tmp/wormhole-identity/boot-password-hash; then
   printf '%s\\n' '#!/bin/sh' 'exec tail -n +3 "$0"' 'set superusers="boot"' 'export superusers' > /etc/grub.d/40_custom
   printf 'password_pbkdf2 boot %s\\n' "$(cat /tmp/wormhole-identity/boot-password-hash)" >> /etc/grub.d/40_custom
@@ -134,15 +170,18 @@ rm -rf /tmp/wormhole-identity /tmp/wormhole-payload
     late.append(['curtin', 'in-target', '--target=/target', '--', 'sh', '-c', install])
     value['autoinstall']['late-commands'] = late
     value['autoinstall']['user-data']['hostname'] = 'vm-' + identifier[:8]
+    if sandbox:
+        from .ubuntu_encryption import configure
+        configure(value)
     return '#cloud-config\n' + json.dumps(value, indent=2) + '\n'
 
 
-def build(source, destination, seed_dir, identifier, public_key, address, mac, *, store, mode, password_hash, boot_hash=None, reuse=None):
+def build(source, destination, seed_dir, identifier, public_key, address, mac, *, store, mode, password_hash, boot_hash=None, reuse=None, sandbox=False):
     require(mode in {'stock-audit', 'hardened'}, 'ubuntu_mode_invalid')
     require(mode!='hardened' or boot_hash is not None,'boot_credential_missing')
     store, destination, seed_dir = Path(store), Path(destination), Path(seed_dir)
     prepare(store)
-    fingerprint, inputs = input_identity(store, mode)
+    fingerprint, inputs = input_identity(store, mode,sandbox=sandbox)
     if reuse is not None:
         require(reuse[1].get('installed_input_fingerprint') == fingerprint and reuse[1].get('mode') == mode,
                 'stale_candidate')
@@ -153,12 +192,21 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
     shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/audit.sh', payload / 'audit.sh')
     shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/observe.py', payload / 'observe.py')
     shutil.copyfile(POLICY, payload / 'policy.json')
+    from .ubuntu_tailoring import document
+    tailoring=document(json.loads(POLICY.read_text()))
+    if tailoring is not None:(payload/'lab-tailoring.xml').write_bytes(tailoring)
+    if sandbox:
+        for filename in ('encryption-late.sh','sandbox.sh'):
+            shutil.copyfile(SOURCE_ROOT/'ubuntu/guest'/filename,payload/filename)
+        for filename in ('entitlement.py','audit-offload.py','secret-audit.py'):
+            shutil.copyfile(SOURCE_ROOT/'ubuntu/guest'/filename,payload/filename)
     if mode == 'hardened':
         from .ubuntu_hardening import generate
         generate(store, payload)
         shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/remediate.py', payload / 'remediate.py')
         (payload / 'offline-apt.conf').write_text('Dir::Etc::sourcelist "sources.list.d/wormhole-local.list";\nDir::Etc::sourceparts "-";\nAPT::Install-Recommends "false";\n')
     contract = {'mode': mode, 'policy_sha256': sha256(POLICY), 'dependency_manifest_sha256': sha256(store / 'bundle/manifest.json')}
+    contract['sandbox']=sandbox
     (payload / 'install-contract.json').write_text(json.dumps(contract, sort_keys=True))
     (payload / 'wormhole-finalize.service').write_text('[Unit]\nDescription=Wormhole installed-guest finalization\nAfter=local-fs.target cloud-config.service\nBefore=ssh.service ssh.socket\n[Service]\nType=oneshot\nRuntimeDirectory=sshd\nRuntimeDirectoryMode=0755\nExecStart=/bin/bash /usr/local/lib/wormhole/finalize.sh\nTimeoutStartSec=1000\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target\n')
     if reuse is None:
@@ -167,11 +215,14 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
             subprocess.run(['xorriso', '-indev', str(destination), '-outdev', str(final_iso), '-boot_image', 'any', 'replay',
                             '-map', str(payload), '/wormhole'], stdout=log, stderr=log, check=True, timeout=300)
         os.replace(final_iso, destination)
-    (seed_dir / 'user-data').write_text(seed_config(identifier, public_key, address, mac, password_hash,boot_hash))
+    (seed_dir / 'user-data').write_text(seed_config(identifier, public_key, address, mac, password_hash,boot_hash,sandbox=sandbox))
     identity = seed_dir / 'wormhole-identity';identity.mkdir(mode=0o700)
     for name, raw in {'public-key': public_key + '\n', 'password': 'lab.service:' + password_hash + '\n', 'run-id': identifier + '\n'}.items():
         (identity / name).write_text(raw)
     if boot_hash is not None:(identity/'boot-password-hash').write_text(boot_hash+'\n')
+    if sandbox:
+        for source,target in [('ca.crt','ca.crt'),('ca.crl','ca.crl'),('active.crt','active.crt'),('revoked.crt','revoked.crt')]:
+            shutil.copyfile(seed_dir.parent/'support-private'/source,identity/('sandbox-'+target))
     seed = destination.with_name('seed.iso');seed.unlink()
     subprocess.run(['xorriso', '-as', 'mkisofs', '-V', 'CIDATA', '-J', '-r', '-graft-points', '-o', str(seed),
                     'user-data=' + str(seed_dir / 'user-data'), 'meta-data=' + str(seed_dir / 'meta-data'),
@@ -180,7 +231,7 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
     seed_check = seed_dir / 'seed-layout-check'
     subprocess.run(['xorriso', '-osirrox', 'on', '-indev', str(seed), '-extract', '/wormhole-identity', str(seed_check)],
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=15)
-    expected_identity={'public-key','password','run-id'} | ({'boot-password-hash'} if boot_hash is not None else set())
+    expected_identity={'public-key','password','run-id'} | ({'boot-password-hash'} if boot_hash is not None else set()) | ({'sandbox-ca.crt','sandbox-ca.crl','sandbox-active.crt','sandbox-revoked.crt'} if sandbox else set())
     require({p.name for p in seed_check.iterdir()} == expected_identity and
             all(sha256(p) == sha256(identity / p.name) for p in seed_check.iterdir()), 'identity_seed_layout_invalid')
     manifest.update(capability='ubuntu-assessment-candidate-iso', candidate_sha256=sha256(destination), seed_sha256=sha256(seed),
@@ -188,5 +239,7 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
         dependency_manifest_sha256=sha256(store / 'bundle/manifest.json'), scanner_package='libopenscap8=1.2.17-0.1ubuntu7.22.04.3',
         installed_input_fingerprint=fingerprint, installed_inputs=inputs,
         nonsecret_seed_template_sha256=sha256(SOURCE_ROOT / 'wormhole/ubuntu_inputs.py'))
+    manifest['sandbox']=sandbox
+    if (store/'bundle/toolchain.json').exists():manifest['scanner_toolchain']=read_json(store/'bundle/toolchain.json')
     atomic_json(seed_dir / 'build-manifest.json', manifest)
     return manifest

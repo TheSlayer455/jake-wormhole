@@ -3,13 +3,17 @@
 The verified container reference uses generated source and explicitly synthetic assessment policy. The newly authorized [real-ISO extension](../handoff/ISO-FOUNDATION.md) is incomplete and has separate evidence. Neither capability validates proprietary production infrastructure. The [historical matrix](acceptance-matrix.md) binds observations to original tested sources/evidence; it is not a final-source runtime rerun.
 
 The current Ubuntu increment has two independent fresh BIOS installations of the
-same hardened candidate bytes: 14/14 functional checks, trusted SSH/Ansible,
-630 Debian packages/three Snap entries and identical actual OpenSCAP outcomes.
-All 639 rules remain visible: 191 pass, 18 fail, 16 not applicable, five not
-checked and 409 upstream not selected. Content is CaC 0.1.82 STIG V2R7, not
-established USG V2R8 equivalence. Required FIPS, external inputs, encryption and
-manual dispositions remain pending. No ISO qualification or eligible publication
-is claimed. [Actual hardening evidence](../handoff/solutions/ubuntu-install-hardening.md)
+same encrypted/hardened candidate bytes: 34/34 functional checks, trusted SSH/Ansible,
+636 Debian packages/three Snap entries and matching actual OpenSCAP outcomes.
+All 639 rules remain visible: 208 pass, three fail, 14 not applicable, five not
+checked and 409 upstream not selected. Pinned independent OpenSCAP 1.4.6 assesses
+CaC 0.1.82 V2R7 plus two declared lab values; an unmodified upstream audit is also
+retained. Private CA/CRL/OCSP and host-clock tests prove lab behavior, not government
+PKI, physical-token assurance or externally authenticated time. FIPS/USG and
+content/disposition requirements remain pending. Native ASCII audit does not
+claim managed acknowledgments or Kerberos; the separate TLS archive has a tested
+durable receipt. No ISO qualification or eligible publication is claimed.
+[Actual hardening evidence](../handoff/solutions/ubuntu-install-hardening.md)
 is distinct from the historical container milestones below.
 
 ## Historical container milestones and limits

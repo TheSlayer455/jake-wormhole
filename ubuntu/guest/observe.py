@@ -5,6 +5,8 @@ from pathlib import Path
 import pwd
 import stat
 import subprocess
+import socket
+import ssl
 
 
 def command(*args):
@@ -45,9 +47,58 @@ def observe():
         'audit-service': command('systemctl', 'is-active', '--quiet', 'auditd').returncode == 0,
         'guest-network-policy': command('ufw', 'status').stdout.startswith('Status: active'),
     }
+    audit_offload=None
     policy = json.loads(Path('/usr/local/lib/wormhole/policy.json').read_text())
     content = Path('/usr/local/lib/wormhole/ssg-ubuntu2204-ds.xml')
     checks['assessment-content-identity'] = file_sha256(content) == policy['content']['datastream_sha256']
+    if json.loads(Path('/usr/local/lib/wormhole/install-contract.json').read_text()).get('sandbox'):
+        checks['encrypted-root']=command('findmnt','-n','-o','SOURCE','/').stdout.strip()=='/dev/mapper/wormhole-root' and command('cryptsetup','isLuks','/dev/vda3').returncode==0
+        checks['encrypted-pbkdf2']= 'pbkdf2' in command('cryptsetup','luksDump','/dev/vda3').stdout.lower()
+        checks['no-plaintext-swap']=not Path('/proc/swaps').read_text().splitlines()[1:]
+        checks['no-installed-unlock-key']=not Path('/run/wormhole-unlock').exists() and all(line.split()[2] in {'none','-'} for line in Path('/etc/crypttab').read_text().splitlines() if line.strip() and not line.startswith('#'))
+        checks['lab-time-synchronized']='^* 192.0.2.1' in command('chronyc','-n','sources').stdout
+        context=ssl.create_default_context(cafile='/etc/wormhole-lab-ca.crt')
+        try:
+            with socket.create_connection(('192.0.2.1',6514),timeout=3) as sock:
+                with context.wrap_socket(sock,server_hostname='wormhole-sandbox') as tls:
+                    tls.sendall(('WORMHOLE_TLS_PROBE '+(root/'run-id').read_text().strip()+'\n').encode())
+            checks['lab-tls-trust']=True
+        except OSError:checks['lab-tls-trust']=False
+        try:
+            with socket.create_connection(('192.0.2.1',6514),timeout=3) as sock:context.wrap_socket(sock,server_hostname='untrusted.invalid').close()
+            checks['lab-invalid-certificate-refused']=False
+        except ssl.SSLCertVerificationError:checks['lab-invalid-certificate-refused']=True
+        except OSError:checks['lab-invalid-certificate-refused']=False
+        try:
+            with socket.create_connection(('192.0.2.1',6514),timeout=3) as sock:ssl.create_default_context().wrap_socket(sock,server_hostname='wormhole-sandbox').close()
+            checks['lab-invalid-certificate-refused']=False
+        except ssl.SSLCertVerificationError:pass
+        except OSError:checks['lab-invalid-certificate-refused']=False
+        try:
+            socket.create_connection(('192.0.2.1',22),timeout=2).close();checks['management-plane-blocked']=False
+        except OSError:checks['management-plane-blocked']=True
+        isolation=root/'network-isolation.json'
+        prior=json.loads(isolation.read_text()) if isolation.exists() else {}
+        checks['management-plane-blocked'] &= prior.get('run_id')==(root/'run-id').read_text().strip() and prior.get('guest_outgoing_was_allow') is True and prior.get('management_listener_blocked') is True
+        checks['lab-banner']=command('sshd','-T').stdout.find('banner /etc/issue.net')>=0 and 'private home lab' in Path('/etc/issue.net').read_text()
+        command('logger','-t','wormhole-acceptance',(root/'run-id').read_text().strip())
+        checks['audit-event-probe']=command('auditctl','-m','wormhole acceptance '+(root/'run-id').read_text().strip()).returncode==0
+        valid=command('openssl','verify','-CAfile','/etc/wormhole-lab-ca.crt','-CRLfile','/etc/pam_pkcs11/crls/lab-ca.crl',
+                      '-crl_check','/usr/local/share/wormhole-pki/active.pem')
+        revoked=command('openssl','verify','-CAfile','/etc/wormhole-lab-ca.crt','-CRLfile','/etc/pam_pkcs11/crls/lab-ca.crl',
+                        '-crl_check','/usr/local/share/wormhole-pki/revoked.pem')
+        untrusted=command('openssl','verify','-CAfile','/etc/ssl/certs/ca-certificates.crt','/usr/local/share/wormhole-pki/active.pem')
+        checks['lab-client-revocation']=valid.returncode==0 and revoked.returncode!=0 and 'certificate revoked' in revoked.stderr and untrusted.returncode!=0
+        checks['lab-ocsp-status']=True
+        for name,status in (('active','good'),('revoked','revoked')):
+            response=command('openssl','ocsp','-issuer','/etc/wormhole-lab-ca.crt','-cert','/usr/local/share/wormhole-pki/'+name+'.pem',
+                '-CAfile','/etc/wormhole-lab-ca.crt','-url','http://192.0.2.1:8080','-timeout','3')
+            checks['lab-ocsp-status'] &= response.returncode==0 and 'Response verify OK' in response.stderr and ': '+status in response.stdout
+        # Deliberate validation snapshot/event, not remediation or package setup.
+        checks['weekly-audit-offload']=command('/etc/cron.weekly/audit-offload').returncode==0
+        if checks['weekly-audit-offload']:
+            audit_offload=json.loads((root/'audit-offload-receipt.json').read_text())
+            checks['weekly-audit-offload'] &= audit_offload.get('receiver_acknowledged') is True and audit_offload.get('run_id')==(root/'run-id').read_text().strip()
     inventory = command('dpkg-query', '-W', '-f=${db:Status-Abbrev}\t${Package}\t${Version}\t${Architecture}\n')
     if inventory.returncode:
         raise RuntimeError('native inventory failed')
@@ -56,7 +107,10 @@ def observe():
         status, name, version, architecture = line.split('\t')
         if status.startswith('ii'):
             packages.append({'name': name, 'version': version, 'architecture': architecture})
-    return {'checks': checks, 'packages': packages, 'inventory_kind': 'installed-dpkg',
+    binary=Path('/opt/wormhole-openscap/bin/oscap') if Path('/usr/local/lib/wormhole/toolchain.json').exists() else Path('/usr/bin/oscap')
+    payloads=[{'name':'openscap-scanner','version':command('oscap','--version').stdout.splitlines()[0],
+               'binary_sha256':file_sha256(binary)}]
+    return {'checks': checks, 'packages': packages, 'payloads':payloads,'inventory_kind': 'installed-dpkg','audit_offload':audit_offload,
             'kernel': command('uname', '-r').stdout.strip(), 'run_id': (root / 'run-id').read_text().strip()}
 
 

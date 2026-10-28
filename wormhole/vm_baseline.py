@@ -111,23 +111,28 @@ def preflight(source):
     return observation
 
 
-def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_store=None):
+def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_store=None, sandbox=False):
     os.umask(0o077)
     revision, dirty = source_identity()
     require(not dirty and sha256(terraform) == TF_SHA, 'unverified_execution_inputs')
     require(ubuntu_mode in {None, 'stock-audit', 'hardened'}, 'ubuntu_mode_invalid')
+    require(not sandbox or ubuntu_mode=='hardened','sandbox_requires_hardened_ubuntu')
     identifier = str(uuid4())
     name = 'wormhole-vm-' + identifier.replace('-', '')[:12]
     run = workspace_path(ROOT / 'vm-runs' / identifier, create=True)
     result = {'schema_version': '1.0', 'capability': 'real-iso-installation-baseline', 'run_id': identifier,
         'source_revision': revision, 'outcome': 'running', 'started_at': now(), 'stages': [],
-        'phase': 'preflight', 'last_progress_at': now(),
+        'phase': 'preflight', 'last_progress_at': now(), 'network_isolated':bool(ubuntu_mode),
         'supervisor': process_identity(os.getpid()),
         'lab_iso_qualified': False, 'production_iso_eligible': False, 'cleanup': 'pending'}
     atomic_json(run / 'result.json', result)
     deadline = time.monotonic() + 1800
     console = None
     helper = None
+    unlock = None
+    support = None
+    support_process = None
+    filter_name = None
     applied = False
     unknown = False
     def save():
@@ -165,6 +170,13 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
         try:
             preflight_start=time.monotonic();preflight_at=now()
             atomic_json(run / 'preflight.json', preflight(source))
+            if sandbox:
+                from .ubuntu_sandbox import MEMORY
+                observation=read_json(run/'preflight.json')
+                require(observation['memory_available_bytes']>=13*1024**3+MEMORY,'sandbox_memory_headroom')
+                require(observation['cpu_count']-observation['load1']>=3.5,'sandbox_cpu_headroom')
+                require(observation['runtime_disk_free_bytes']>=80*1024**3+3*Path(source).stat().st_size+32*1024**2,'sandbox_disk_headroom')
+                result['support_budget']={'memory_bytes':MEMORY,'cpus':.5,'disk_evidence_limit_bytes':32*1024**2}
             result['stages'].append({'stage':'preflight','started_at':preflight_at,'finished_at':now(),
                                     'elapsed_seconds':round(time.monotonic()-preflight_start,3),'returncode':0});save()
             for query in ('list', 'net-list', 'pool-list'):
@@ -199,6 +211,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             if ubuntu_mode:
                 import secrets
                 from .ubuntu_inputs import build as build_assessed
+                result.update(phase='candidate-build',last_progress_at=now());save()
                 password = secrets.token_urlsafe(32) + 'aA1!'
                 (run / 'sudo-password').write_text(password)
                 hashed = subprocess.run(['openssl', 'passwd', '-6', '-stdin'], input=password + '\n',
@@ -209,8 +222,15 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                     boot_password=secrets.token_urlsafe(32)+'bB2!'
                     (run/'boot-password').write_text(boot_password)
                     boot_hash=grub_password_hash(boot_password,secrets.token_bytes(64))
+                if sandbox:
+                    from .ubuntu_encryption import ConsoleUnlock
+                    from .ubuntu_sandbox import certificates
+                    certificates(run)
+                    unlock_file=run/'unlock-secret'
+                    unlock_file.write_text(secrets.token_urlsafe(48));unlock_file.chmod(0o600)
+                    unlock=ConsoleUnlock(unlock_file,probes=True)
                 manifest = build_assessed(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac,
-                    store=dependency_store, mode=ubuntu_mode, password_hash=hashed, boot_hash=boot_hash,reuse=reuse)
+                    store=dependency_store, mode=ubuntu_mode, password_hash=hashed, boot_hash=boot_hash,reuse=reuse,sandbox=sandbox)
             else:
                 manifest = build_ubuntu(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac, reuse=reuse)
             result['stages'].append({'stage': 'candidate-build','started_at':build_at,'finished_at':now(),
@@ -220,7 +240,15 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 os.chown(path, 0, group);path.chmod(0o640)
             tfdir = run / 'terraform';tfdir.mkdir(mode=0o700)
             shutil.copyfile(SOURCE_ROOT / 'provisioning/libvirt/.terraform.lock.hcl', tfdir / '.terraform.lock.hcl')
-            atomic_json(tfdir / 'main.tf.json', terraform_config(name, pool, candidate, seed, NETWORK, mac, qemu.pw_uid, group))
+            configuration=terraform_config(name, pool, candidate, seed, NETWORK, mac, qemu.pw_uid, group)
+            if ubuntu_mode:
+                from .ubuntu_sandbox import network_filter,attach_filter
+                filter_name=name+'-isolation'
+                filter_file=run/'network-filter.xml';filter_file.write_text(network_filter(filter_name))
+                lease.intent('network_filter',filter_name)
+                command(['virsh','-c','qemu:///system','nwfilter-define',str(filter_file)],'network-filter-define')
+                configuration=attach_filter(configuration,filter_name)
+            atomic_json(tfdir / 'main.tf.json', configuration)
             result['terraform_configuration_sha256'] = sha256(tfdir / 'main.tf.json');save()
             tf = [terraform, '-chdir=' + str(tfdir)]
             command([*tf, 'init', '-input=false', '-lockfile=readonly'], 'terraform-init')
@@ -250,12 +278,19 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             network_xml = ET.fromstring(virsh('net-dumpxml', name))
             require(network_xml.find('forward') is None and network_xml.find('ip/dhcp') is None,
                     'unexpected_network_forwarding')
+            if sandbox:
+                from .ubuntu_sandbox import start,health
+                support=name+'-services'
+                support,support_process=start(run,name,identifier,HELPER,lease,command)
+                result['support_health']=health(run)
+            if filter_name is not None:
+                require(dom.find('devices/interface/filterref').get('filter')==filter_name,'sandbox_filter_not_attached')
             command(['virsh', '-c', 'qemu:///system', 'start', name], 'firmware-boot')
             console_log = (run / 'console.log').open('wb')
             # virsh console requires a controlling terminal, even for private
             # unattended capture. util-linux script provides that PTY; the
             # generated name contains only validated alphanumeric/hyphen bytes.
-            console = subprocess.Popen(['script', '--quiet', '--return', '--flush', '--command',
+            console = subprocess.Popen(['script', '--quiet', '--return', '--flush', '--echo', 'never', '--command',
                 'virsh -c qemu:///system console ' + name + ' --force', '/dev/null'],
                 stdin=subprocess.PIPE, stdout=console_log, stderr=subprocess.STDOUT, start_new_session=True)
             console_log.close()
@@ -266,6 +301,11 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 path = run / 'console.log'
                 require(path.stat().st_size <= 16 * 1024**2, 'installer_diagnostic_limit')
                 text = path.read_text(errors='replace')
+                if unlock is not None:
+                    unlock.check_capture(path)
+                    if unlock.observe(text,console.stdin):
+                        result['unlock_events']=unlock.events
+                        result.update(phase='waiting-for-unlock',last_progress_at=now());save()
                 progress = re.findall(r'WORMHOLE_HARDENING_PROGRESS completed=(\d+) rule=([a-z0-9_-]+)', text)
                 if progress and result.get('hardening_operations_completed') != int(progress[-1][0]):
                     result.update(hardening_operations_completed=int(progress[-1][0]),
@@ -299,6 +339,39 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 time.sleep(3)
             require(host_key is not None, 'installation_deadline')
             result['stages'].append({'stage': 'installation-to-host-key', 'elapsed_seconds': round(time.monotonic()-installation_start, 3), 'returncode': 0});save()
+            if sandbox:
+                # Graceful power-off followed by logical, read-only qemu-img
+                # inspection. No host block mapping, mount or disk mutation.
+                cold_started=time.monotonic()
+                command(['virsh','-c','qemu:///system','shutdown',name],'encrypted-poweroff',timeout=10)
+                stop_by=min(deadline-180,time.monotonic()+60)
+                while time.monotonic()<stop_by and virsh('domstate',name).strip()!='shut off':time.sleep(1)
+                require(virsh('domstate',name).strip()=='shut off','guest_poweroff_deadline')
+                try:os.killpg(console.pid,signal.SIGTERM)
+                except ProcessLookupError:pass
+                try:console.wait(timeout=5)
+                except subprocess.TimeoutExpired:os.killpg(console.pid,signal.SIGKILL);console.wait(timeout=5)
+                from .ubuntu_encryption import offline_inspect
+                result['offline_encryption']=offline_inspect(pool/(name+'.qcow2'),run,run/'unlock-secret');save()
+                offset=(run/'console.log').stat().st_size
+                command(['virsh','-c','qemu:///system','start',name],'encrypted-cold-start',timeout=10)
+                with (run/'console.log').open('ab') as log:
+                    console=subprocess.Popen(['script','--quiet','--return','--flush','--echo','never','--command',
+                        'virsh -c qemu:///system console '+name+' --force','/dev/null'],stdin=subprocess.PIPE,
+                        stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
+                cold_by=min(deadline-180,time.monotonic()+180)
+                ready=False
+                while time.monotonic()<cold_by:
+                    path=run/'console.log';text=path.read_text(errors='replace');unlock.check_capture(path)
+                    if unlock.observe(text,console.stdin):result['unlock_events']=unlock.events;save()
+                    current=path.read_bytes()[offset:].decode(errors='replace')
+                    found=re.search(r'WORMHOLE_FINAL_HOST_KEY_BEGIN\s+(ssh-rsa [A-Za-z0-9+/=]+)[^\n]*\s+WORMHOLE_FINAL_HOST_KEY_END',current)
+                    if found:
+                        require(found[1]==host_key,'cold_start_host_identity_changed');ready=True;break
+                    require(console.poll() is None,'cold_start_console_lost');time.sleep(2)
+                require(ready,'cold_start_unlock_deadline')
+                result['cold_start_verified']=True
+                result['stages'].append({'stage':'offline-inspection-and-cold-start','elapsed_seconds':round(time.monotonic()-cold_started,3),'returncode':0});save()
             helper_code = HELPER_CODE
             if ubuntu_mode:
                 from .ubuntu_runtime import HELPER_CODE as helper_code
@@ -317,6 +390,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             payload_data = {'address': ADDRESS, 'host_key': host_key, 'private_key': (run / 'ssh-key').read_text(),
                             'seconds': max(1, min(900 if ubuntu_mode else 300, int(deadline-time.monotonic()-180)))}
             if ubuntu_mode:payload_data['become_password'] = password
+            if sandbox:payload_data['inspection_secrets']=[(run/'unlock-secret').read_text().strip(),password,(run/'boot-password').read_text().strip()]
             payload = json.dumps(payload_data).encode()
             command(['docker', 'start', '-ai', helper], 'ssh-ansible-inventory', timeout=max(1, deadline-time.monotonic()-180), data=payload)
             rows = [json.loads(line) for line in (run / 'ssh-ansible-inventory.log').read_text().splitlines() if line.startswith('{')]
@@ -330,7 +404,11 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 findings = collect(run, result)
                 result.update(outcome='assessment-complete' if findings['scanner_execution_completed'] else 'assessment-failed',
                               lab_status='LAB QUALIFICATION PENDING')
+                if sandbox:
+                    from .ubuntu_sandbox import evidence
+                    result['support_verification']=evidence(run,identifier)
         except Exception as error:
+            if getattr(error,'code',None)=='vm_command_unknown':unknown=True
             result.update(outcome='unknown' if unknown else 'failed', failure_phase=result['phase'],
                           error_category=getattr(error, 'code', type(error).__name__))
         finally:
@@ -352,6 +430,14 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                         command(['docker', 'rm', '-f', item['Id']], 'controller-cleanup', timeout=20)
                     require(not unknown, 'controller_state_unknown')
                     lease.reconciled('controller_container', helper)
+                if support is not None:
+                    inspected=subprocess.run(['docker','inspect',support],capture_output=True,timeout=10)
+                    if inspected.returncode==0:
+                        item=json.loads(inspected.stdout)[0]
+                        require(item['Config']['Labels'].get('vm-run')==identifier and item['Config']['Image']==HELPER,'support_ownership_mismatch')
+                        command(['docker','rm','-f',item['Id']],'support-cleanup',timeout=20)
+                    if support_process is not None:support_process.wait(timeout=10)
+                    lease.reconciled('support_container',support)
                 if applied and not unknown:
                     state = json.loads((tfdir / 'terraform.tfstate').read_text())
                     require({(x['type'], x['name']) for x in state['resources']} == {
@@ -365,6 +451,10 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                     require(not (pool / (name + '.qcow2')).exists(), 'disk_cleanup_incomplete')
                     for kind, identity in [('domain', name), ('network', name), ('pool', name), ('disk', str(pool / (name + '.qcow2')))]:
                         lease.reconciled(kind, identity)
+                if filter_name is not None:
+                    from .ubuntu_sandbox import remove_filter
+                    remove_filter(run,filter_name)
+                    lease.reconciled('network_filter',filter_name)
                 require(not unknown, 'terraform_state_unknown')
                 for item in list(lease.record['resources']):
                     if item['kind'] in {'installer_iso', 'seed_iso'}:

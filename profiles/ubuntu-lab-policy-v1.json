@@ -15,7 +15,7 @@
     "equivalence_to_usg_established": false
   },
   "package_snapshot": "https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/",
-  "tailoring": {"excluded_rules": [], "parameters": {}, "owner_approved_exceptions": []},
+  "tailoring": {"excluded_rules": [], "parameters": {"var_audispd_remote_server": "192.0.2.1", "remote_login_banner_text": "^Wormhole private home lab\\. Authorized lab use only\\. Activity is monitored\\.$"}, "owner_approved_exceptions": []},
   "requirements": {
     "all_selected_automated_rules_pass": true,
     "scanner_errors_allowed": 0,
@@ -32,7 +32,12 @@
     "installed-os-identity", "installed-disk-boot", "finalization-complete", "required-reboot",
     "trusted-final-ssh", "final-home-key-permissions", "password-required-sudo", "ansible-ping",
     "native-package-inventory", "guest-apparmor-enforced", "audit-service", "guest-network-policy",
-    "assessment-content-identity", "scanner-native-results"
+    "assessment-content-identity", "scanner-native-results",
+    "encrypted-root", "encrypted-pbkdf2", "no-plaintext-swap", "no-installed-unlock-key",
+    "lab-time-synchronized", "lab-tls-trust", "lab-invalid-certificate-refused",
+    "management-plane-blocked", "lab-banner", "audit-event-probe",
+    "remote-syslog-received", "remote-audit-received", "encrypted-cold-start", "offline-encryption-proof",
+    "private-secret-lifecycle", "lab-client-revocation", "weekly-audit-offload", "audit-offload-readback", "lab-ocsp-status", "no-retained-install-secrets"
   ],
   "tool_coverage": {"openscap": "required-alternative-real-audit", "usg": "preferred-when-authorized", "evaluate_stig": "unverified", "nessus": "unverified"},
   "unresolved_requirements": [

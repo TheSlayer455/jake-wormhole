@@ -1,0 +1,24 @@
+{
+  "boundary": "audit_archive_incomplete",
+  "capability": "sanitized-ubuntu-reproduction",
+  "command_template": "python -m wormhole.ubuntu_runtime run --mode hardened --sandbox --store PRIVATE_STAGED_INPUTS --source VERIFIED_STOCK_ISO --terraform PINNED_TERRAFORM",
+  "evidence_category": "real-vm-execution",
+  "failure_signature": "The sender completed but required durable receiver records were incomplete.",
+  "lab_iso_qualified": false,
+  "production_iso_eligible": false,
+  "raw_evidence_exported": false,
+  "recovery": "Reconcile the exact run and preserve private evidence; recover only after the original supervisor and operation have stopped.",
+  "repository": "https://github.com/TheSlayer455/jake-wormhole",
+  "safe_inputs": {
+    "benchmark": "CaC 0.1.82 Ubuntu STIG V2R7",
+    "empty_disk_gib": 64,
+    "firmware": "BIOS",
+    "memory_mib": 8192,
+    "os": "Ubuntu 22.04.5 amd64",
+    "vcpus": 2
+  },
+  "sandbox": true,
+  "schema_version": "1.0",
+  "source_revision": "5c9505dc79f1b3905dc2b070ee16bd850d9c3c94",
+  "source_url": "https://github.com/TheSlayer455/jake-wormhole/tree/5c9505dc79f1b3905dc2b070ee16bd850d9c3c94"
+}

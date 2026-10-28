@@ -20,11 +20,26 @@ def generate(run, result, *, findings=None, observations=None, controller_record
               'native_counts':dict(Counter(r['native_status'] for r in rule_rows)),
               'assessment_executed':findings is not None,
               'rules':[{'rule_id':r['rule_id'],'selected':r['selected'],'native_status':r['native_status']} for r in rule_rows]}
+    from .ubuntu_coverage import summarize
+    coverage['profile_mapping']=summarize(rule_rows)
     (run/'assessment-coverage.json').write_text(json.dumps(coverage,indent=2))
     rows = []
     observed = (observations or {}).get('checks', {})
     stages = {r.get('stage'): r for r in controller_records}
+    manual_record=stages.get('manual-observations')
+    if manual_record and manual_record.get('returncode')==0:
+        try:manual=json.loads(manual_record['output'])
+        except (ValueError,KeyError):manual={'objective_results':{},'disposition':'invalid-observation'}
+        atomic_json(run/'manual-evidence.json',manual)
+    else:manual={'objective_results':{},'disposition':'not-collected'}
     derived = {
+        'audit-offload-readback':result.get('support_verification',{}).get('audit_snapshot_readback_verified'),
+        'no-retained-install-secrets':stages.get('secret-retention-inspection',{}).get('returncode')==0 if 'secret-retention-inspection' in stages else None,
+        'remote-syslog-received':result.get('support_verification',{}).get('syslog_guest_event_received'),
+        'remote-audit-received':result.get('support_verification',{}).get('audit_guest_event_received'),
+        'encrypted-cold-start':result.get('cold_start_verified'),
+        'offline-encryption-proof':result.get('offline_encryption',{}).get('luks_magic_verified'),
+        'private-secret-lifecycle':stages.get('private-secret-lifecycle',{}).get('returncode')==0 if 'private-secret-lifecycle' in stages else None,
         'trusted-final-ssh': stages['final-authentication'].get('returncode')==0 if 'final-authentication' in stages else result.get('final_authentication'),
         'ansible-ping': stages['ansible-readiness'].get('returncode')==0 if 'ansible-readiness' in stages else result.get('ansible_ready'),
         'native-package-inventory': observations.get('inventory_complete') if observations else None,
@@ -53,9 +68,16 @@ def generate(run, result, *, findings=None, observations=None, controller_record
               'functional_results': rows, 'functional_counts': dict(Counter(r['status'] for r in rows)),
               'assessment': {k:v for k,v in (findings or {}).items() if k not in {'rules','target'}},
               'stages': result.get('stages', []), 'qualification_reasons': reasons,
+              'manual_evidence':manual,
               'lab_status': 'LAB QUALIFICATION PENDING', 'lab_iso_qualified': False, 'production_iso_eligible': False}
     atomic_json(run / 'qualification.json', report)
+    atomic_json(run/'encryption-evidence.json',{'offline':result.get('offline_encryption'),
+        'cold_start_verified':result.get('cold_start_verified'),'unlock_events':result.get('unlock_events',[]),
+        'secrets_included':False})
+    atomic_json(run/'timing.json',{'stages':result.get('stages',[]),'installation':result.get('installation_observations',[]),
+        'source_revision':result['source_revision']})
     text = ['Ubuntu 22.04 lab evidence', report['lab_status'],
+            'Implementation: '+result['source_revision'],
             'Candidate SHA256: ' + str(report['candidate_sha256']),
             'Functional: ' + json.dumps(report['functional_counts'], sort_keys=True),
             'Assessment native totals: ' + json.dumps(report['assessment'].get('native_counts', {}), sort_keys=True),
@@ -63,6 +85,17 @@ def generate(run, result, *, findings=None, observations=None, controller_record
             'Cleanup: ' + result['cleanup'], '', 'Required functional checks:']
     text += [r['id'] + ': ' + r['status'] for r in rows]
     text += ['', 'Qualification unresolved:'] + reasons
+    text += ['', 'Encryption and support evidence:',
+             'Cold start: '+str(result.get('cold_start_verified','not observed')),
+             'Offline encryption: '+json.dumps(result.get('offline_encryption',{}),sort_keys=True),
+             'Receiver verification: '+json.dumps(result.get('support_verification',{}),sort_keys=True),
+             'Scanner build: '+str(result.get('build',{}).get('scanner_toolchain',{}).get('version','distribution package')),
+             '', 'Selected nonpassing/native manual outcomes:']
+    text += [r['rule_id']+': '+r['native_status']+' ('+str(r.get('severity','unknown'))+')'
+             for r in rule_rows if r['selected'] and r['native_status'] not in {'pass','notapplicable'}]
+    text += ['', 'Manual observations (native scanner statuses preserved):']
+    text += [key+': '+('observed condition met' if value.get('observed_satisfied') is True else 'unresolved')
+             for key,value in manual.get('objective_results',{}).items()]
     (run / 'qualification.txt').write_text('\n'.join(text) + '\n')
     tests = ET.Element('testsuite', name='ubuntu-functional-and-assessment')
     if not rule_rows:
@@ -90,8 +123,12 @@ def generate(run, result, *, findings=None, observations=None, controller_record
         svd = {'schema_version':'1.0','kind':'observed-installed-software','run_id':result['run_id'],
                'candidate_sha256':report['candidate_sha256'], 'kernel':observations['kernel'],
                'packages':observations['packages'],'snaps':observations.get('snaps',[]),
+               'payloads':observations.get('payloads',[]),
                'inventory_complete':observations.get('inventory_complete',False)}
         (run / 'installed-svd.json').write_text(json.dumps(svd, indent=2))
-        (run / 'installed-svd.txt').write_text('\n'.join(
-            p['name'] + ' ' + p['version'] + ' ' + p['architecture'] for p in observations['packages']) + '\n')
+        lines=['Observed installed software','Kernel: '+observations['kernel'],'Debian packages:']
+        lines += [p['name']+' '+p['version']+' '+p['architecture'] for p in observations['packages']]
+        lines += ['','Snap entries:']+[p['name']+' '+p['version']+' revision='+p['revision']+' channel='+p['tracking'] for p in observations.get('snaps',[])]
+        lines += ['','Installed payloads:']+[p['name']+' '+p['version']+' sha256='+p['binary_sha256'] for p in observations.get('payloads',[])]
+        (run / 'installed-svd.txt').write_text('\n'.join(lines)+'\n')
     return report

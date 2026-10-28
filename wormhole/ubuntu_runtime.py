@@ -48,6 +48,27 @@ r=ssh('sudo -S -p "" /usr/bin/python3 /usr/local/lib/wormhole/observe.py',secret
 print(json.dumps({'stage':'installed-observations','returncode':r.returncode,'output':r.stdout,'diagnostic':r.stderr}),flush=True)
 observation_exit=r.returncode
 observed=json.loads(r.stdout) if r.returncode==0 else {'packages':[]}
+if 'inspection_secrets' in c:
+ private_input=password.read_text()+json.dumps(c.pop('inspection_secrets'))
+ r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'sudo -S -p "" /usr/bin/python3 /usr/local/lib/wormhole/secret-audit.py'],
+                  input=private_input,capture_output=True,text=True,timeout=min(45,deadline-time.monotonic()))
+ valid=r.returncode==0
+ if valid:
+  inspection=json.loads(r.stdout);valid=inspection.get('plaintext_retained') is False and inspection.get('secret_values_returned') is False
+ else:inspection={'inspection_failed':True}
+ print(json.dumps({'stage':'secret-retention-inspection','returncode':0 if valid else 1,'inspection':inspection}),flush=True)
+ del private_input
+if 'encrypted-root' in observed.get('checks',{}):
+ import secrets
+ probe={'operation':'probe','token':secrets.token_urlsafe(32)}
+ private_input=password.read_text()+json.dumps(probe)
+ r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'sudo -S -p "" /usr/bin/python3 /usr/local/lib/wormhole/entitlement.py'],
+                  input=private_input,capture_output=True,text=True,timeout=min(20,deadline-time.monotonic()))
+ valid=r.returncode==0 and probe['token'] not in r.stdout+r.stderr
+ if valid:
+  delivered=json.loads(r.stdout)
+  valid=delivered.get('private_mode_verified') is True and delivered.get('ephemeral_config_removed') is True and delivered.get('vendor_contacted') is False
+ print(json.dumps({'stage':'private-secret-lifecycle','returncode':0 if valid else 1,'vendor_enrollment':'not-executed'}),flush=True)
 if any(p['name']=='snapd' for p in observed['packages']):
  try:
   r=ssh('LC_ALL=C snap list --all',seconds=30)
@@ -99,6 +120,8 @@ def collect(run, result):
     out = run / 'assessment';out.mkdir(mode=0o700)
     names = set()
     allowed = {'xccdf.xml','arf.xml','report.html','scanner-version.txt','started-at.txt',
+               'legacy-encryption.xml','legacy-encryption.log','legacy-encryption-exit.txt',
+               'upstream-xccdf.xml','upstream-scanner.log','upstream-exit.txt',
                'scanner-exit.txt','scanner-receipt.json','scanner.log','finalization.log','remediation-results.json'}
     with tarfile.open(fileobj=io.BytesIO(archive), mode='r:gz') as tar:
         total = 0
@@ -118,8 +141,17 @@ def collect(run, result):
     require(receipt['run_id'] == result['run_id'] and receipt['content_sha256'] == policy['content']['datastream_sha256']
             and receipt['target'] == 'vm-' + result['run_id'][:8]
             and receipt['boot_id'] != receipt['firstboot_id'] and receipt['remediation_during_assessment'] is False, 'assessment_receipt_identity')
+    tailoring=run/'inputs/payload/lab-tailoring.xml'
+    require(receipt.get('tailoring_sha256')==(sha256(tailoring) if tailoring.exists() else None),'assessment_tailoring_identity')
     findings = read_results(run / 'inputs/payload/ssg-ubuntu2204-ds.xml', out / 'xccdf.xml',
                             expected_target=receipt['target'], scanner_exit=receipt['scanner_exit'])
+    if tailoring.exists():
+        upstream_policy=json.loads(json.dumps(policy));upstream_policy['tailoring']['parameters']={}
+        upstream=read_results(run/'inputs/payload/ssg-ubuntu2204-ds.xml',out/'upstream-xccdf.xml',
+            expected_target=receipt['target'],scanner_exit=int((out/'upstream-exit.txt').read_text()),policy=upstream_policy)
+        require(upstream['coverage_complete'] and upstream['scanner_execution_completed'],'upstream_assessment_incomplete')
+        findings['unmodified_upstream_native_counts']=upstream['native_counts']
+        findings['declared_lab_value_result_changes']=[r['rule_id'] for r,u in zip(findings['rules'],upstream['rules']) if r['native_status']!=u['native_status']]
     # Findings are larger than the old 256 KiB small-run-record limit.
     (out / 'findings.json').write_text(json.dumps(findings, indent=2))
     result.update(assessment={k:v for k,v in findings.items() if k != 'rules'},
@@ -169,9 +201,12 @@ def main():
     prep=sub.add_parser('prepare');prep.add_argument('--store',required=True)
     progress=sub.add_parser('progress');progress.add_argument('run_id')
     listing=sub.add_parser('catalog')
+    consumer=sub.add_parser('verify-release');consumer.add_argument('directory')
     comparison=sub.add_parser('compare');comparison.add_argument('previous');comparison.add_argument('current')
     comparison.add_argument('--earlier',help='Optional third compatible-content observation for reopened findings.')
     reporting=sub.add_parser('report');reporting.add_argument('run_id')
+    coverage=sub.add_parser('coverage');coverage.add_argument('run_id')
+    coverage.add_argument('--baseline-manual',required=True);coverage.add_argument('--target-manual',required=True)
     publication=sub.add_parser('publish');publication.add_argument('run_id');publication.add_argument('--previous',required=True)
     publication.add_argument('--store',required=True);publication.add_argument('--destination',required=True);publication.add_argument('--name',required=True)
     recovery=sub.add_parser('recover');recovery.add_argument('run_id');recovery.add_argument('--terraform',required=True)
@@ -179,7 +214,20 @@ def main():
     run=sub.add_parser('run');run.add_argument('--source',required=True);run.add_argument('--terraform',required=True)
     run.add_argument('--store',required=True);run.add_argument('--mode',choices=['stock-audit','hardened'],default='stock-audit')
     run.add_argument('--reuse-run',help='Verified immutable ISO from this reconciled run; new disk, identity and assessment are mandatory.')
+    run.add_argument('--sandbox',action='store_true',help='Use the encrypted Ubuntu sandbox installation contract.')
     options=p.parse_args()
+    if options.command=='coverage':
+        from .ubuntu_coverage import reconcile
+        run=vm_baseline.ROOT/'vm-runs'/run_id(options.run_id)
+        findings=run/'assessment/findings.json'
+        require(0<findings.stat().st_size<=16*1024**2,'assessment_size')
+        rows=json.loads(findings.read_text())['rules']
+        value=reconcile(rows,options.baseline_manual,options.target_manual)
+        atomic_json(run/'benchmark-reconciliation.json',value)
+        print(json.dumps({k:v for k,v in value.items() if k!='controls'},indent=2));return 0
+    if options.command=='verify-release':
+        from .ubuntu_release import verify
+        print(json.dumps(verify(options.directory),indent=2));return 0
     if options.command=='reproduce-package':
         from .ubuntu_reproduction import package
         value=package(vm_baseline.ROOT/'vm-runs'/run_id(options.run_id),options.output)
@@ -214,7 +262,7 @@ def main():
     if options.command=='prepare':
         from .ubuntu_inputs import prepare
         value=prepare(options.store);print(json.dumps({'packages':len(value['packages']),'snapshot':value['snapshot']}));return 0
-    value=vm_baseline.execute(options.source,options.terraform,ubuntu_mode=options.mode,dependency_store=options.store,reuse_run=options.reuse_run)
+    value=vm_baseline.execute(options.source,options.terraform,ubuntu_mode=options.mode,dependency_store=options.store,reuse_run=options.reuse_run,sandbox=options.sandbox)
     print(json.dumps(value,indent=2))
     return 0 if value.get('lab_iso_qualified') is True else 1
 
