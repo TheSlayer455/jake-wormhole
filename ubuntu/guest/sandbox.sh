@@ -43,7 +43,7 @@ path = /sbin/audisp-remote
 type = always
 format = string
 EOF
-auditctl --signal reload
+systemctl reload auditd
 # These are guest rules only. The mandatory libvirt NIC filter remains the
 # boundary even before this guest configuration executes or if guest root edits it.
 ufw default deny outgoing

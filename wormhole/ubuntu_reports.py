@@ -29,6 +29,7 @@ def generate(run, result, *, findings=None, observations=None, controller_record
         'remote-audit-received':result.get('support_verification',{}).get('audit_guest_event_received'),
         'encrypted-cold-start':result.get('cold_start_verified'),
         'offline-encryption-proof':result.get('offline_encryption',{}).get('luks_magic_verified'),
+        'private-secret-lifecycle':stages.get('private-secret-lifecycle',{}).get('returncode')==0 if 'private-secret-lifecycle' in stages else None,
         'trusted-final-ssh': stages['final-authentication'].get('returncode')==0 if 'final-authentication' in stages else result.get('final_authentication'),
         'ansible-ping': stages['ansible-readiness'].get('returncode')==0 if 'ansible-readiness' in stages else result.get('ansible_ready'),
         'native-package-inventory': observations.get('inventory_complete') if observations else None,

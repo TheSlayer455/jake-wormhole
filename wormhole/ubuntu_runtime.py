@@ -48,6 +48,17 @@ r=ssh('sudo -S -p "" /usr/bin/python3 /usr/local/lib/wormhole/observe.py',secret
 print(json.dumps({'stage':'installed-observations','returncode':r.returncode,'output':r.stdout,'diagnostic':r.stderr}),flush=True)
 observation_exit=r.returncode
 observed=json.loads(r.stdout) if r.returncode==0 else {'packages':[]}
+if 'encrypted-root' in observed.get('checks',{}):
+ import secrets
+ probe={'operation':'probe','token':secrets.token_urlsafe(32)}
+ private_input=password.read_text()+json.dumps(probe)
+ r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'sudo -S -p "" /usr/bin/python3 /usr/local/lib/wormhole/entitlement.py'],
+                  input=private_input,capture_output=True,text=True,timeout=min(20,deadline-time.monotonic()))
+ valid=r.returncode==0 and probe['token'] not in r.stdout+r.stderr
+ if valid:
+  delivered=json.loads(r.stdout)
+  valid=delivered.get('private_mode_verified') is True and delivered.get('ephemeral_config_removed') is True and delivered.get('vendor_contacted') is False
+ print(json.dumps({'stage':'private-secret-lifecycle','returncode':0 if valid else 1,'vendor_enrollment':'not-executed'}),flush=True)
 if any(p['name']=='snapd' for p in observed['packages']):
  try:
   r=ssh('LC_ALL=C snap list --all',seconds=30)
