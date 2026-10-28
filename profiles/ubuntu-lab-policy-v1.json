@@ -37,7 +37,7 @@
     "lab-time-synchronized", "lab-tls-trust", "lab-invalid-certificate-refused",
     "management-plane-blocked", "lab-banner", "audit-event-probe",
     "remote-syslog-received", "remote-audit-received", "encrypted-cold-start", "offline-encryption-proof",
-    "private-secret-lifecycle", "lab-client-revocation", "weekly-audit-offload", "audit-offload-readback"
+    "private-secret-lifecycle", "lab-client-revocation", "weekly-audit-offload", "audit-offload-readback", "lab-ocsp-status"
   ],
   "tool_coverage": {"openscap": "required-alternative-real-audit", "usg": "preferred-when-authorized", "evaluate_stig": "unverified", "nessus": "unverified"},
   "unresolved_requirements": [

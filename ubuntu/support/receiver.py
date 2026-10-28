@@ -14,10 +14,14 @@ import struct
 import sys
 import threading
 import time
+import http.server
+import tempfile
+import subprocess
 
 os.umask(0o077)
 c=json.load(sys.stdin)
 for name in ('certificate','key'):(Path('/tmp')/name).write_text(c.pop(name))
+for name in ('ca.crt','responder.crt','responder.key','index'):(Path('/tmp')/name).write_text(c.pop(name))
 ctx=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER);ctx.minimum_version=ssl.TLSVersion.TLSv1_2
 ctx.load_cert_chain('/tmp/certificate','/tmp/key')
 lock=threading.Lock()
@@ -74,10 +78,38 @@ class NTP(socketserver.BaseRequestHandler):
         sock.sendto(packet,self.client_address)
 
 
+class OCSP(http.server.BaseHTTPRequestHandler):
+    # Only the two declared disposable identities and CA index are served.
+    # OpenSSL performs DER parsing, nonce handling and delegated response signing.
+    def log_message(self,*args):pass
+    def do_POST(self):
+        self.connection.settimeout(3)
+        try:size=int(self.headers.get('Content-Length','0'))
+        except ValueError:size=0
+        if self.client_address[0] not in {c['guest'],c['bind']} or not 0<size<=65536:
+            self.send_error(400);return
+        data=self.rfile.read(size)
+        if len(data)!=size:self.send_error(400);return
+        with tempfile.TemporaryDirectory(dir='/tmp',prefix='ocsp-') as directory:
+            request=Path(directory)/'request';response=Path(directory)/'response';request.write_bytes(data)
+            result=subprocess.run(['openssl','ocsp','-index','/tmp/index','-CA','/tmp/ca.crt','-rsigner','/tmp/responder.crt',
+                '-rkey','/tmp/responder.key','-reqin',str(request),'-respout',str(response),'-rmd','sha256','-nmin','1'],
+                capture_output=True,timeout=3)
+            if result.returncode or not response.is_file() or response.stat().st_size>65536:self.send_error(400);return
+            body=response.read_bytes()
+        self.send_response(200);self.send_header('Content-Type','application/ocsp-response')
+        self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
+
+
+class OCSPServer(TCP):
+    slots=threading.BoundedSemaphore(4)
+
+
 servers=[]
 for cls,port,kind in ((TLS,6514,'syslog'),(TCP,6000,'audit')):
     server=cls((c['bind'],port),Lines);server.kind=kind;servers.append(server)
 server=socketserver.UDPServer((c['bind'],12345),NTP);servers.append(server)
+server=OCSPServer((c['bind'],8080),OCSP);servers.append(server)
 for server in servers:threading.Thread(target=server.serve_forever,daemon=True).start()
 print('WORMHOLE_SUPPORT_READY',flush=True)
 deadline=time.monotonic()+1800

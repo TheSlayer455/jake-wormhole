@@ -88,6 +88,11 @@ def observe():
                         '-crl_check','/usr/local/share/wormhole-pki/revoked.pem')
         untrusted=command('openssl','verify','-CAfile','/etc/ssl/certs/ca-certificates.crt','/usr/local/share/wormhole-pki/active.pem')
         checks['lab-client-revocation']=valid.returncode==0 and revoked.returncode!=0 and 'certificate revoked' in revoked.stderr and untrusted.returncode!=0
+        checks['lab-ocsp-status']=True
+        for name,status in (('active','good'),('revoked','revoked')):
+            response=command('openssl','ocsp','-issuer','/etc/wormhole-lab-ca.crt','-cert','/usr/local/share/wormhole-pki/'+name+'.pem',
+                '-CAfile','/etc/wormhole-lab-ca.crt','-url','http://192.0.2.1:8080','-timeout','3')
+            checks['lab-ocsp-status'] &= response.returncode==0 and 'Response verify OK' in response.stderr and ': '+status in response.stdout
         # Deliberate validation snapshot/event, not remediation or package setup.
         checks['weekly-audit-offload']=command('/etc/cron.weekly/audit-offload').returncode==0
     inventory = command('dpkg-query', '-W', '-f=${db:Status-Abbrev}\t${Package}\t${Version}\t${Architecture}\n')

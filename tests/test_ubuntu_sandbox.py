@@ -38,6 +38,17 @@ class Sandbox(unittest.TestCase):
             revoked=subprocess.run(args+[str(private/'revoked.crt')],capture_output=True,text=True,timeout=10)
             self.assertNotEqual(revoked.returncode,0)
             self.assertIn('certificate revoked',revoked.stderr)
+            request=private/'request.der';response=private/'response.der'
+            for name,status in (('active','good'),('revoked','revoked')):
+                client=['openssl','ocsp','-issuer',str(private/'ca.crt'),'-cert',str(private/(name+'.crt'))]
+                subprocess.run(client+['-reqout',str(request)],check=True,capture_output=True,timeout=10)
+                subprocess.run(['openssl','ocsp','-index',str(private/'index'),'-CA',str(private/'ca.crt'),
+                    '-rsigner',str(private/'responder.crt'),'-rkey',str(private/'responder.key'),'-reqin',str(request),
+                    '-respout',str(response),'-rmd','sha256','-nmin','1'],check=True,capture_output=True,timeout=10)
+                verified=subprocess.run(['openssl','ocsp','-reqin',str(request),'-respin',str(response),'-CAfile',str(private/'ca.crt')],
+                    capture_output=True,text=True,timeout=10)
+                self.assertEqual(verified.returncode,0)
+                self.assertIn('Response verify OK',verified.stderr)
     def test_libvirt_canonical_xml_is_equivalent_but_changed_policy_is_not(self):
         original=network_filter('wormhole-test')
         actual=original.replace('0x0800','ipv4')
@@ -72,7 +83,7 @@ class Sandbox(unittest.TestCase):
         rules=root.findall('rule')
         new=[r for r in rules if r[0].get('state')=='NEW']
         self.assertEqual({(r.get('direction'),r[0].tag,r[0].get('dstportstart')) for r in new},
-                         {('in','tcp','22'),('out','tcp','6514'),('out','tcp','6000'),('out','udp','12345')})
+                         {('in','tcp','22'),('out','tcp','6514'),('out','tcp','6000'),('out','tcp','8080'),('out','udp','12345')})
         self.assertTrue(all(r[0].get('dstipaddr')==BIND for r in new if r.get('direction')=='out'))
         self.assertEqual(rules[-1].get('action'),'drop')
         self.assertEqual(rules[-1][0].tag,'mac')

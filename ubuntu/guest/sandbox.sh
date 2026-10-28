@@ -40,7 +40,7 @@ pam_pkcs11 {
     slot_description = "none";
     ca_dir = /etc/pam_pkcs11/cacerts;
     crl_dir = /etc/pam_pkcs11/crls;
-    cert_policy = ca, signature, crl_offline;
+    cert_policy = ca, signature, ocsp_on, crl_offline;
   }
   use_mappers = pwent;
   mapper pwent { debug = false; ignorecase = false; module = internal; }
@@ -108,6 +108,7 @@ chronyc waitsync 20 0 0 1
 ufw default deny outgoing
 ufw allow out on lab0 to 192.0.2.1 port 6514 proto tcp
 ufw allow out on lab0 to 192.0.2.1 port 6000 proto tcp
+ufw allow out on lab0 to 192.0.2.1 port 8080 proto tcp
 ufw allow out on lab0 to 192.0.2.1 port 12345 proto udp
 logger -t wormhole-sandbox 'installation support integration event'
 auditctl -m 'wormhole sandbox installation event'

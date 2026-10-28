@@ -55,7 +55,7 @@ def network_filter(name):
     rule('inout','mac',protocolid='0x0800')
     rule('inout','all',state='ESTABLISHED,RELATED')
     rule('in','tcp',srcipaddr=BIND,dstipaddr=GUEST,dstportstart=22,state='NEW')
-    for port in (6514,6000):rule('out','tcp',srcipaddr=GUEST,dstipaddr=BIND,dstportstart=port,state='NEW')
+    for port in (6514,6000,8080):rule('out','tcp',srcipaddr=GUEST,dstipaddr=BIND,dstportstart=port,state='NEW')
     rule('out','udp',srcipaddr=GUEST,dstipaddr=BIND,dstportstart=12345,state='NEW')
     ET.SubElement(ET.SubElement(root,'rule',action='drop',direction='inout',priority='1000'),'all')
     # all covers IP; also deny non-IP Ethernet traffic other than declared ARP.
@@ -89,11 +89,14 @@ def certificates(run):
     config.write_text('[ca]\ndefault_ca=lab\n[lab]\ndatabase='+str(private/'index')+'\nnew_certs_dir='+str(private/'issued')+
         '\nserial='+str(private/'serial')+'\ncrlnumber='+str(private/'crlnumber')+'\ncertificate='+str(private/'ca.crt')+
         '\nprivate_key='+str(private/'ca.key')+'\ndefault_md=sha256\ndefault_days=2\ndefault_crl_days=2\npolicy=identity\nx509_extensions=client\n'
-        '[identity]\ncommonName=supplied\n[client]\nbasicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=clientAuth\n')
-    for name in ('active','revoked'):
+        '[identity]\ncommonName=supplied\n[client]\nbasicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=clientAuth\n'
+        'authorityInfoAccess=OCSP;URI:http://'+BIND+':8080\n'
+        '[responder]\nbasicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=OCSPSigning\n')
+    for name in ('active','revoked','responder'):
         command('req','-new','-newkey','rsa:3072','-nodes','-subj','/CN=lab-'+name,
                 '-keyout',str(private/(name+'.key')),'-out',str(private/(name+'.csr')))
-        command('ca','-batch','-notext','-config',str(config),'-in',str(private/(name+'.csr')),'-out',str(private/(name+'.crt')))
+        command('ca','-batch','-notext','-config',str(config),'-extensions','responder' if name=='responder' else 'client',
+                '-in',str(private/(name+'.csr')),'-out',str(private/(name+'.crt')))
     command('ca','-config',str(config),'-revoke',str(private/'revoked.crt'))
     command('ca','-config',str(config),'-gencrl','-out',str(private/'ca.crl'))
     return private
@@ -116,6 +119,7 @@ def start(run,name,identifier,image,lease,command):
     limits=validate_service(actual,run,identifier,image)
     atomic_json(Path(run)/'support-limits.json',limits)
     payload={'bind':BIND,'guest':GUEST,'certificate':(private/'server.crt').read_text(),'key':(private/'server.key').read_text()}
+    for name in ('ca.crt','responder.crt','responder.key','index'):payload[name]=(private/name).read_text()
     # A finite stdin payload closes after delivery; the receiver no longer reads it.
     with (Path(run)/'support-start.log').open('wb') as output:
         process=subprocess.Popen(['docker','start','-ai',service],stdin=subprocess.PIPE,stdout=output,stderr=output,start_new_session=True)
@@ -169,9 +173,13 @@ def health(run):
     require(len(data)==48 and data[1]==10,'support_time_invalid')
     with socket.create_connection((BIND,6000),timeout=2) as sock:sock.sendall(b'support-health\n')
     with socket.create_connection((BIND,22),timeout=2):pass
+    for name,status in (('active','good'),('revoked','revoked')):
+        response=subprocess.run(['openssl','ocsp','-issuer',str(private/'ca.crt'),'-cert',str(private/(name+'.crt')),
+            '-CAfile',str(private/'ca.crt'),'-url','http://'+BIND+':8080','-timeout','3'],capture_output=True,text=True,timeout=5)
+        require(response.returncode==0 and 'Response verify OK' in response.stderr and ': '+status in response.stdout,'support_ocsp_invalid')
     result={'tls_healthy':True,'invalid_identity_refused':True,'untrusted_ca_refused':True,'audit_tcp_healthy':True,'ntp_healthy':True,
             'time_source':'stratum-10 lab host UTC clock; no external trusted-time claim',
-            'listeners':[BIND+':6514/tcp',BIND+':6000/tcp',BIND+':12345/udp'],
+            'listeners':[BIND+':6514/tcp',BIND+':6000/tcp',BIND+':8080/tcp',BIND+':12345/udp'],'ocsp_healthy':True,
             'memory_limit_bytes':MEMORY,'cpu_limit':.5,'privileged':False}
     result['host_management_listener_available_for_isolation_negative']=True
     atomic_json(Path(run)/'support-health.json',result)
