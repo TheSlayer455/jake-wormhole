@@ -59,7 +59,7 @@ def network_filter(name):
     rule('out','udp',srcipaddr=GUEST,dstipaddr=BIND,dstportstart=12345,state='NEW')
     ET.SubElement(ET.SubElement(root,'rule',action='drop',direction='inout',priority='1000'),'all')
     # all covers IP; also deny non-IP Ethernet traffic other than declared ARP.
-    ET.SubElement(ET.SubElement(root,'rule',action='drop',direction='inout',priority='1001'),'mac')
+    ET.SubElement(ET.SubElement(root,'rule',action='drop',direction='inout',priority='500'),'mac')
     return ET.tostring(root,encoding='unicode')
 
 
@@ -180,7 +180,21 @@ def remove_filter(run,name):
     if observed.returncode==0:
         expected=ET.parse(Path(run)/'network-filter.xml').getroot();actual=ET.fromstring(observed.stdout)
         require(actual.get('name')==name and actual.get('chain')=='root','network_filter_ownership_mismatch')
-        def rules(root):return [(r.get('action'),r.get('direction'),[(p.tag,sorted(p.attrib.items())) for p in r]) for r in root.findall('rule')]
-        require(rules(actual)==rules(expected),'network_filter_changed')
+        require(canonical_rules(actual)==canonical_rules(expected),'network_filter_changed')
         subprocess.run(['virsh','-c','qemu:///system','nwfilter-undefine',name],check=True,capture_output=True,timeout=10)
     require(subprocess.run(['virsh','-c','qemu:///system','nwfilter-dumpxml',name],capture_output=True,timeout=10).returncode!=0,'network_filter_remains')
+
+
+def canonical_rules(root):
+    """Normalize only libvirt's observed equivalent protocol/default spelling."""
+    rules=[]
+    for rule in root.findall('rule'):
+        priority=int(rule.get('priority','500'))
+        if not -1000<=priority<=1000:priority=500
+        protocols=[]
+        for element in rule:
+            values=dict(element.attrib)
+            if values.get('protocolid')=='ipv4':values['protocolid']='0x0800'
+            protocols.append((element.tag,sorted(values.items())))
+        rules.append((rule.get('action'),rule.get('direction'),priority,protocols))
+    return rules

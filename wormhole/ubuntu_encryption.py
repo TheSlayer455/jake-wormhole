@@ -103,10 +103,7 @@ class ConsoleUnlock:
 def offline_inspect(disk,run,secret_file):
     """Non-destructive logical reads of ONE already stopped owned qcow2 disk."""
     run=Path(run)
-    def read_sectors(output,skip,count):
-        subprocess.run(['qemu-img','dd','-f','qcow2','if='+str(disk),'of='+str(output),
-                        'bs=512','skip='+str(skip),'count='+str(count)],
-                       check=True,capture_output=True,timeout=30)
+    def read_sectors(output,skip,count):read_region(disk,output,skip,count)
     gpt=run/'offline-gpt.bin';read_sectors(gpt,0,34)
     data=gpt.read_bytes()
     if data[512:520]!=b'EFI PART':raise RunError('offline_partition_table','Expected the declared GPT disk.')
@@ -126,3 +123,12 @@ def offline_inspect(disk,run,secret_file):
     return {'powered_off_logical_read':True,'luks_magic_verified':True,'correct_key_accepted':True,
             'wrong_key_refused':True,'missing_key_refused':True,'disk_modified':False,'clear_surfaces':['BIOS boot metadata','/boot'],
             'protected_surfaces':['root filesystem including home, logs and installed configuration'],'swap':'disabled'}
+
+
+def read_region(disk,output,skip,count):
+    # QEMU 8.2 stops at count input blocks INCLUDING skip, unlike GNU dd.
+    # A real tiny-qcow2 regression protects this installed-tool distinction.
+    subprocess.run(['qemu-img','dd','-f','qcow2','if='+str(disk),'of='+str(output),
+                    'bs=512','skip='+str(skip),'count='+str(skip+count)],
+                   check=True,capture_output=True,timeout=30)
+    if Path(output).stat().st_size!=count*512:raise RunError('offline_read_incomplete','The requested logical disk extent was not returned.')

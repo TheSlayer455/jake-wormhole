@@ -9,12 +9,18 @@ import importlib.util
 from unittest.mock import patch
 from types import SimpleNamespace
 
-from wormhole.ubuntu_sandbox import network_filter,BIND,GUEST
+from wormhole.ubuntu_sandbox import network_filter,BIND,GUEST,canonical_rules
 from wormhole.ubuntu_secrets import status,put,read
 from wormhole.runs import RunError
 
 
 class Sandbox(unittest.TestCase):
+    def test_libvirt_canonical_xml_is_equivalent_but_changed_policy_is_not(self):
+        original=network_filter('wormhole-test')
+        actual=original.replace('0x0800','ipv4')
+        self.assertEqual(canonical_rules(ET.fromstring(original)),canonical_rules(ET.fromstring(actual)))
+        changed=actual.replace('dstportstart="6514"','dstportstart="22"')
+        self.assertNotEqual(canonical_rules(ET.fromstring(original)),canonical_rules(ET.fromstring(changed)))
     @unittest.skipIf(os.name=='nt','POSIX private delivery modes required')
     def test_private_guest_config_is_ephemeral_and_vendor_output_is_not_returned(self):
         source=Path(__file__).resolve().parents[1]/'ubuntu/guest/entitlement.py'

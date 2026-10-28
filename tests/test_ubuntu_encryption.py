@@ -5,12 +5,23 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+import shutil
+import subprocess
 
-from wormhole.ubuntu_encryption import ConsoleUnlock,configure,storage
+from wormhole.ubuntu_encryption import ConsoleUnlock,configure,storage,read_region
 from wormhole.runs import RunError
 
 
 class Encryption(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('qemu-img'),'actual qemu-img required for this small real-tool regression')
+    def test_actual_qcow2_skip_reads_the_requested_nonzero_region(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);data=bytearray(32768);data[4096:4112]=b'WORMHOLE-REGION!!'
+            (root/'raw').write_bytes(data)
+            subprocess.run(['qemu-img','convert','-f','raw','-O','qcow2',str(root/'raw'),str(root/'disk')],check=True,capture_output=True)
+            read_region(root/'disk',root/'sample',8,2)
+            self.assertEqual((root/'sample').stat().st_size,1024)
+            self.assertTrue((root/'sample').read_bytes().startswith(b'WORMHOLE-REGION!!'))
     def test_installer_contract_uses_file_not_embedded_secret(self):
         value=configure({'autoinstall':{'late-commands':[],'network':{'version':2}}})
         crypt=next(x for x in storage()['config'] if x['type']=='dm_crypt')
