@@ -57,6 +57,27 @@ Before=shutdown.target
 EOF
 systemctl daemon-reload
 auditctl --signal HUP
+# Prove routing and certificate trust through the VM's actual NIC before the
+# expensive AIDE step. At this point outgoing UFW policy is still permissive,
+# so the management-negative is evidence for the mandatory libvirt filter.
+python3 - <<'PY'
+import socket,ssl,json,subprocess
+from pathlib import Path
+context=ssl.create_default_context(cafile='/etc/wormhole-lab-ca.crt')
+with socket.create_connection(('192.0.2.1',6514),timeout=5) as sock:
+ with context.wrap_socket(sock,server_hostname='wormhole-sandbox') as tls:
+  tls.sendall(('installation-route-probe '+Path('/var/lib/wormhole/run-id').read_text().strip()+'\n').encode())
+with socket.create_connection(('192.0.2.1',6000),timeout=5):pass
+policy=subprocess.check_output(['ufw','status','verbose'],text=True)
+if 'allow (outgoing)' not in policy:raise RuntimeError('cannot establish independent NIC isolation observation')
+blocked=False
+try:socket.create_connection(('192.0.2.1',22),timeout=3).close()
+except OSError:blocked=True
+if not blocked:raise RuntimeError('management plane reachable from guest')
+Path('/var/lib/wormhole/network-isolation.json').write_text(json.dumps({'run_id':Path('/var/lib/wormhole/run-id').read_text().strip(),
+ 'guest_outgoing_was_allow':True,'management_listener_blocked':True,'tls_and_audit_routes_verified':True}))
+PY
+chronyc waitsync 20 0 0 1
 # These are guest rules only. The mandatory libvirt NIC filter remains the
 # boundary even before this guest configuration executes or if guest root edits it.
 ufw default deny outgoing

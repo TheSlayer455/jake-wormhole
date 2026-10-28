@@ -76,6 +76,9 @@ def observe():
         try:
             socket.create_connection(('192.0.2.1',22),timeout=2).close();checks['management-plane-blocked']=False
         except OSError:checks['management-plane-blocked']=True
+        isolation=root/'network-isolation.json'
+        prior=json.loads(isolation.read_text()) if isolation.exists() else {}
+        checks['management-plane-blocked'] &= prior.get('run_id')==(root/'run-id').read_text().strip() and prior.get('guest_outgoing_was_allow') is True and prior.get('management_listener_blocked') is True
         checks['lab-banner']=command('sshd','-T').stdout.find('banner /etc/issue.net')>=0 and 'private home lab' in Path('/etc/issue.net').read_text()
         command('logger','-t','wormhole-acceptance',(root/'run-id').read_text().strip())
         checks['audit-event-probe']=command('auditctl','-m','wormhole acceptance '+(root/'run-id').read_text().strip()).returncode==0

@@ -75,6 +75,7 @@ def generate(run, result, *, findings=None, observations=None, controller_record
     atomic_json(run/'timing.json',{'stages':result.get('stages',[]),'installation':result.get('installation_observations',[]),
         'source_revision':result['source_revision']})
     text = ['Ubuntu 22.04 lab evidence', report['lab_status'],
+            'Implementation: '+result['source_revision'],
             'Candidate SHA256: ' + str(report['candidate_sha256']),
             'Functional: ' + json.dumps(report['functional_counts'], sort_keys=True),
             'Assessment native totals: ' + json.dumps(report['assessment'].get('native_counts', {}), sort_keys=True),
@@ -82,6 +83,17 @@ def generate(run, result, *, findings=None, observations=None, controller_record
             'Cleanup: ' + result['cleanup'], '', 'Required functional checks:']
     text += [r['id'] + ': ' + r['status'] for r in rows]
     text += ['', 'Qualification unresolved:'] + reasons
+    text += ['', 'Encryption and support evidence:',
+             'Cold start: '+str(result.get('cold_start_verified','not observed')),
+             'Offline encryption: '+json.dumps(result.get('offline_encryption',{}),sort_keys=True),
+             'Receiver verification: '+json.dumps(result.get('support_verification',{}),sort_keys=True),
+             'Scanner build: '+str(result.get('build',{}).get('scanner_toolchain',{}).get('version','distribution package')),
+             '', 'Selected nonpassing/native manual outcomes:']
+    text += [r['rule_id']+': '+r['native_status']+' ('+str(r.get('severity','unknown'))+')'
+             for r in rule_rows if r['selected'] and r['native_status'] not in {'pass','notapplicable'}]
+    text += ['', 'Manual observations (native scanner statuses preserved):']
+    text += [key+': '+('observed condition met' if value.get('observed_satisfied') is True else 'unresolved')
+             for key,value in manual.get('objective_results',{}).items()]
     (run / 'qualification.txt').write_text('\n'.join(text) + '\n')
     tests = ET.Element('testsuite', name='ubuntu-functional-and-assessment')
     if not rule_rows:
@@ -112,6 +124,9 @@ def generate(run, result, *, findings=None, observations=None, controller_record
                'payloads':observations.get('payloads',[]),
                'inventory_complete':observations.get('inventory_complete',False)}
         (run / 'installed-svd.json').write_text(json.dumps(svd, indent=2))
-        (run / 'installed-svd.txt').write_text('\n'.join(
-            p['name'] + ' ' + p['version'] + ' ' + p['architecture'] for p in observations['packages']) + '\n')
+        lines=['Observed installed software','Kernel: '+observations['kernel'],'Debian packages:']
+        lines += [p['name']+' '+p['version']+' '+p['architecture'] for p in observations['packages']]
+        lines += ['','Snap entries:']+[p['name']+' '+p['version']+' revision='+p['revision']+' channel='+p['tracking'] for p in observations.get('snaps',[])]
+        lines += ['','Installed payloads:']+[p['name']+' '+p['version']+' sha256='+p['binary_sha256'] for p in observations.get('payloads',[])]
+        (run / 'installed-svd.txt').write_text('\n'.join(lines)+'\n')
     return report

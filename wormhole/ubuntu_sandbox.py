@@ -23,6 +23,10 @@ def network_filter(name):
         r=ET.SubElement(root,'rule',action='accept',direction=direction,priority='100')
         ET.SubElement(r,protocol,**{k:str(v) for k,v in fields.items()})
     rule('inout','arp')
+    # Ethernet and IP rules are enforced at separate hooks. Admit IPv4 frames
+    # at L2, then constrain their connections with the IP rules below; otherwise
+    # the terminal MAC drop also discards IP packets accepted at the IP hook.
+    rule('inout','mac',protocolid='0x0800')
     rule('inout','all',state='ESTABLISHED,RELATED')
     rule('in','tcp',srcipaddr=BIND,dstipaddr=GUEST,dstportstart=22,state='NEW')
     for port in (6514,6000):rule('out','tcp',srcipaddr=GUEST,dstipaddr=BIND,dstportstart=port,state='NEW')
@@ -102,10 +106,12 @@ def health(run):
         sock.settimeout(2);sock.sendto(bytes([0x23])+bytes(47),(BIND,12345));data,_=sock.recvfrom(512)
     require(len(data)==48 and data[1]==10,'support_time_invalid')
     with socket.create_connection((BIND,6000),timeout=2) as sock:sock.sendall(b'support-health\n')
+    with socket.create_connection((BIND,22),timeout=2):pass
     result={'tls_healthy':True,'invalid_identity_refused':True,'untrusted_ca_refused':True,'audit_tcp_healthy':True,'ntp_healthy':True,
             'time_source':'stratum-10 lab host UTC clock; no external trusted-time claim',
             'listeners':[BIND+':6514/tcp',BIND+':6000/tcp',BIND+':12345/udp'],
             'memory_limit_bytes':MEMORY,'cpu_limit':.5,'privileged':False}
+    result['host_management_listener_available_for_isolation_negative']=True
     atomic_json(Path(run)/'support-health.json',result)
     return result
 

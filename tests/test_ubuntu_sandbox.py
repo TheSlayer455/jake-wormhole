@@ -47,6 +47,7 @@ class Sandbox(unittest.TestCase):
         self.assertTrue(all(r[0].get('dstipaddr')==BIND for r in new if r.get('direction')=='out'))
         self.assertEqual(rules[-1].get('action'),'drop')
         self.assertEqual(rules[-1][0].tag,'mac')
+        self.assertTrue(any(r[0].tag=='mac' and r.get('action')=='accept' and r[0].get('protocolid')=='0x0800' for r in rules))
         self.assertNotEqual(BIND,GUEST)
 
     @unittest.skipIf(os.name=='nt','POSIX ownership required')
