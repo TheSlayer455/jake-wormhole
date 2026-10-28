@@ -12,6 +12,20 @@ disks with distinct credentials/boot IDs. Native reports, 630-package/three-Snap
 inventories and cleanup are verified. This is LAB QUALIFICATION PENDING, not a
 completed Ubuntu release. See [proven hardening](../handoff/solutions/ubuntu-install-hardening.md).
 
+[PR 31](https://github.com/TheSlayer455/jake-wormhole/pull/31) merged the verified
+increment at `63d3aa1fb90cdc478f7e50d76384d944130bfbff`, with
+[passing main CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40626679451).
+A third fresh installation of the same ISO from that merged implementation
+reproduced all 14 functional passes, native assessment counts and complete
+inventories in 566 seconds. Final source verification: 901 tests on each platform,
+899 pass/two skips on Linux and 607 pass/294 skips on Windows. Cleanup and shared
+admission reconciliation were verified; the unrelated sentinel was unchanged
+and K3s stayed active. Raw captures remain private. Required entitlement,
+encryption/unlock implementation, external-control inputs, manual dispositions,
+coverage mapping and eligible publication remain outstanding; no qualified ISO
+was published. The [current handoff](../handoff/CURRENT.md) distinguishes tested
+implementation from documentation delivery. No independent review is claimed.
+
 ## Home ISO extension — in progress
 
 The owner authorized home KVM/libvirt and real RHEL 9 / Ubuntu 22.04 installation

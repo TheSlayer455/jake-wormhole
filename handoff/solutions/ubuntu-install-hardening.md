@@ -3,6 +3,13 @@
 Tested installation implementation:
 [be1aac0cc0a027874337cd7587ee42e294a54d38](https://github.com/TheSlayer455/jake-wormhole/tree/be1aac0cc0a027874337cd7587ee42e294a54d38).
 This is a home Ubuntu-host KVM experiment, not work-environment acceptance.
+Delivered through [PR 31](https://github.com/TheSlayer455/jake-wormhole/pull/31).
+The merged implementation
+[63d3aa1fb90cdc478f7e50d76384d944130bfbff](https://github.com/TheSlayer455/jake-wormhole/tree/63d3aa1fb90cdc478f7e50d76384d944130bfbff)
+also completed a third fresh same-ISO installation in 566 seconds: 14/14
+functional passes, identical 191/18/16/5/409 native outcomes and full inventories,
+verified cleanup and green main CI. This is repeatable partial acceptance;
+eighteen findings and five manual checks still prevent qualification.
 
 ## Prerequisites and scope
 
