@@ -12,7 +12,7 @@ from . import admission as docker
 from .media_store import file_lock
 from .runs import RunError, _owned, now, read_json, run_id, workspace_path
 
-KINDS = {'domain', 'network', 'pool', 'disk', 'installer_iso', 'seed_iso', 'controller_container'}
+KINDS = {'domain', 'network', 'pool', 'disk', 'installer_iso', 'seed_iso', 'controller_container','support_container','network_filter'}
 
 
 def require(value, code):

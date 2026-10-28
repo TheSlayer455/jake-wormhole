@@ -5,6 +5,8 @@ from pathlib import Path
 import pwd
 import stat
 import subprocess
+import socket
+import ssl
 
 
 def command(*args):
@@ -53,6 +55,25 @@ def observe():
         checks['encrypted-pbkdf2']= 'pbkdf2' in command('cryptsetup','luksDump','/dev/vda3').stdout.lower()
         checks['no-plaintext-swap']=not Path('/proc/swaps').read_text().splitlines()[1:]
         checks['no-installed-unlock-key']=not Path('/run/wormhole-unlock').exists() and all(line.split()[2] in {'none','-'} for line in Path('/etc/crypttab').read_text().splitlines() if line.strip() and not line.startswith('#'))
+        checks['lab-time-synchronized']='^* 192.0.2.1' in command('chronyc','-n','sources').stdout
+        context=ssl.create_default_context(cafile='/etc/wormhole-lab-ca.crt')
+        try:
+            with socket.create_connection(('192.0.2.1',6514),timeout=3) as sock:
+                with context.wrap_socket(sock,server_hostname='wormhole-sandbox') as tls:
+                    tls.sendall(('WORMHOLE_TLS_PROBE '+(root/'run-id').read_text().strip()+'\n').encode())
+            checks['lab-tls-trust']=True
+        except OSError:checks['lab-tls-trust']=False
+        try:
+            with socket.create_connection(('192.0.2.1',6514),timeout=3) as sock:context.wrap_socket(sock,server_hostname='untrusted.invalid').close()
+            checks['lab-invalid-certificate-refused']=False
+        except ssl.SSLCertVerificationError:checks['lab-invalid-certificate-refused']=True
+        except OSError:checks['lab-invalid-certificate-refused']=False
+        try:
+            socket.create_connection(('192.0.2.1',22),timeout=2).close();checks['management-plane-blocked']=False
+        except OSError:checks['management-plane-blocked']=True
+        checks['lab-banner']=command('sshd','-T').stdout.find('banner /etc/issue.net')>=0 and 'private home lab' in Path('/etc/issue.net').read_text()
+        command('logger','-t','wormhole-acceptance',(root/'run-id').read_text().strip())
+        checks['audit-event-probe']=command('auditctl','-m','wormhole acceptance '+(root/'run-id').read_text().strip()).returncode==0
     inventory = command('dpkg-query', '-W', '-f=${db:Status-Abbrev}\t${Package}\t${Version}\t${Architecture}\n')
     if inventory.returncode:
         raise RuntimeError('native inventory failed')

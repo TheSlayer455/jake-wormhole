@@ -17,7 +17,7 @@ class Encryption(unittest.TestCase):
         self.assertEqual(crypt['keyfile'],'/run/wormhole-unlock')
         self.assertNotIn('key',crypt)
         self.assertEqual(value['autoinstall']['late-commands'][0],['bash','/cdrom/wormhole/encryption-late.sh'])
-        self.assertNotIn('swap',json.dumps(value))
+        self.assertEqual(value['autoinstall']['storage']['swap'],{'size':0})
 
     @unittest.skipIf(os.name=='nt','POSIX owner permissions required')
     def test_missing_secret_and_repeated_prompt_do_not_succeed(self):

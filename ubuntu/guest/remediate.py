@@ -62,6 +62,8 @@ for command in [['ufw','default','deny','incoming'], ['ufw','default','allow','o
                 ['ufw','--force','enable']]:
     subprocess.run(command, check=True, timeout=15, env=env)
 for name in plan['remediation_rules']:
+    if name=='aide_build_database' and json.loads((payload/'install-contract.json').read_text()).get('sandbox'):
+        subprocess.run(['/bin/bash',str(payload/'sandbox.sh')],check=True,timeout=60,env=env)
     if time.monotonic() >= deadline:raise RuntimeError('absolute hardening deadline')
     start = time.monotonic()
     cpu_start=resource.getrusage(resource.RUSAGE_CHILDREN)
