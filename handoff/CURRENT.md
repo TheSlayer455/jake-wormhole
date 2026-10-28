@@ -1,5 +1,19 @@
 # Current handoff
 
+## Active Ubuntu-only hardening milestone
+
+The owner paused RHEL implementation/media work until Ubuntu is fully complete
+and explicitly authorizes RHEL afterward. Continue on
+`codex/WORM-001-ubuntu-hardening`, based on main `1a29ffc`. The existing VM
+baseline below remains historical installation evidence, not hardened acceptance.
+The versioned policy is `profiles/ubuntu-lab-policy-v1.json`: zero unresolved
+applicable automated failures/errors, accountable manual evidence, two fresh
+installs and exact-byte publication. No engineer-created waiver is permitted.
+USG/Pro/FIPS enrollment is unavailable (owner confirmed); keep those requirements
+pending while performing legitimate alternative OpenSCAP work. An initial fresh
+scanner-equipped installation detected a first-boot finalization failure before
+SSH; diagnostics and cleanup were preserved. No scan or qualification is claimed.
+
 ## Active home ISO extension
 
 Continue [ISO foundation](ISO-FOUNDATION.md) from current `main`; the

@@ -9,7 +9,7 @@ test -s /var/lib/wormhole/run-id
 test -s /usr/local/lib/wormhole/install-contract.json
 test "$(findmnt -n -o SOURCE /)" != overlay
 exec >> /var/lib/wormhole/finalization.log 2>&1
-trap 'rc=$?; printf "WORMHOLE_FINALIZATION_FAILED exit=%s\n" "$rc" > /dev/ttyS0; exit "$rc"' ERR
+trap 'rc=$?; { printf "WORMHOLE_FINALIZATION_FAILED exit=%s command=%s\n" "$rc" "$BASH_COMMAND"; tail -n 30 /var/lib/wormhole/finalization.log; } > /dev/ttyS0; exit "$rc"' ERR
 boot_id=$(cat /proc/sys/kernel/random/boot_id)
 if test -f /var/lib/wormhole/firstboot-complete; then
   test "$(cat /var/lib/wormhole/firstboot-id)" != "$boot_id"

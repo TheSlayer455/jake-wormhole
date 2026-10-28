@@ -1,5 +1,10 @@
 # Current engineering state
 
+Ubuntu-only hardening is the active milestone. RHEL development and media work
+are paused by the owner, while existing RHEL/UBI code and regression evidence
+remain preserved. USG enrollment/FIPS requirements are pending, not waived.
+See [current continuation](../handoff/CURRENT.md) and the versioned Ubuntu policy.
+
 ## Home ISO extension — in progress
 
 The owner authorized home KVM/libvirt and real RHEL 9 / Ubuntu 22.04 installation

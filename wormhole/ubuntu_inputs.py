@@ -87,6 +87,8 @@ mv /etc/ssh/ssh_host_rsa_key.new.pub /etc/ssh/ssh_host_rsa_key.pub
 install -m 0644 /usr/local/lib/wormhole/wormhole-finalize.service /etc/systemd/system/wormhole-finalize.service
 systemctl enable wormhole-finalize.service
 cat /tmp/wormhole-identity/run-id > /var/lib/wormhole/run-id
+printf '%s\\n' 'users: []' 'ssh_deletekeys: false' 'preserve_hostname: true' > /etc/cloud/cloud.cfg.d/99-wormhole.cfg
+printf 'vm-%s\\n' "$(cut -c1-8 /var/lib/wormhole/run-id)" > /etc/hostname
 rm -rf /tmp/wormhole-identity /tmp/wormhole-payload
 """
     # Keep even encoded password hashes out of installer command arguments/logs.
