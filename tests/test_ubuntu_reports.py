@@ -1,5 +1,6 @@
 """Synthetic report and installed-input dependency regressions; no VM claims."""
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -10,6 +11,7 @@ from wormhole.ubuntu_assessment import POLICY
 
 
 class Reports(unittest.TestCase):
+    @unittest.skipUnless(os.name=='posix','Installed guest observation imports Linux account metadata')
     def test_guest_hashing_does_not_require_python_311_file_digest(self):
         import importlib.util
         import hashlib
