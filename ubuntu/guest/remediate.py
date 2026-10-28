@@ -7,6 +7,8 @@ import time
 import signal
 import resource
 import shutil
+import re
+import stat
 
 root = Path('/var/lib/wormhole')
 payload = Path('/usr/local/lib/wormhole')
@@ -47,6 +49,13 @@ for file in (Path('/etc/pam.d/sshd'),Path('/etc/pam.d/login')):
         index=next(i for i,line in enumerate(lines) if line.lstrip().startswith('session'))
         lines.insert(index,directive)
         file.write_text('\n'.join(lines)+'\n')
+# The vendor logging handler inherits its caller's mask. Set it at the existing
+# MOTD entry point as well, including rotation; do not suppress diagnostics.
+wrapper=Path('/usr/share/landscape/landscape-sysinfo.wrapper')
+text=wrapper.read_text()
+if not text.startswith('#!/bin/sh\n'):raise RuntimeError('unsupported sysinfo wrapper')
+if not text.startswith('#!/bin/sh\numask 077\n'):
+    wrapper.write_text(text.replace('#!/bin/sh\n','#!/bin/sh\numask 077\n',1))
 # Only the declared guest management service is admitted. No host rules change.
 for command in [['ufw','default','deny','incoming'], ['ufw','default','allow','outgoing'],
                 ['ufw','limit','in','on','lab0','to','any','port','22','proto','tcp'],
@@ -67,6 +76,13 @@ for name in plan['remediation_rules']:
         except subprocess.TimeoutExpired:
             os.killpg(process.pid,signal.SIGKILL);process.wait(timeout=5)
         status = 124
+    if status==0 and name=='permissions_local_var_log':
+        # CaC 0.1.82's generated chmod omits o+r, while its OVAL check rejects
+        # world-readable logs. Preserve its deliberate public-file exceptions.
+        for file in Path('/var/log').rglob('*'):
+            if file.is_symlink() or not file.is_file():continue
+            if re.fullmatch(r'history[.]log.*|eipp[.]log[.]xz.*|[bw]tmp(?:[.-].*)?|lastlog(?:[.].*)?',file.name):continue
+            file.chmod(stat.S_IMODE(file.stat().st_mode)&~0o007)
     cpu_end=resource.getrusage(resource.RUSAGE_CHILDREN)
     outcomes.append({'rule_id':name,'remediation_exit':status,'elapsed_seconds':round(time.monotonic()-start,3),
                      'child_cpu_seconds':round(cpu_end.ru_utime+cpu_end.ru_stime-cpu_start.ru_utime-cpu_start.ru_stime,3),

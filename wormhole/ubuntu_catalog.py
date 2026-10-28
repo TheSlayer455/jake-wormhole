@@ -4,7 +4,7 @@ import html
 import json
 from pathlib import Path
 
-from .runs import read_json
+from .runs import read_json,run_id
 from .ubuntu_assessment import require
 
 
@@ -90,7 +90,7 @@ def catalog(root):
             result,report,_,_=load(file.parent)
         except (ValueError,KeyError,OSError):
             continue
-        identifier=result['run_id']
+        identifier=run_id(result['run_id'])
         require(file.parent.name==identifier,'catalog_run_identity')
         rows.append({'run_id':identifier,'mode':report['mode'],'outcome':report['outcome'],
                      'lab_status':report['lab_status'],'candidate_sha256':report['candidate_sha256'],

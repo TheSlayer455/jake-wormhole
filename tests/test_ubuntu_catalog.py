@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from uuid import uuid5,NAMESPACE_URL
 
 from wormhole.runs import atomic_json
 from wormhole.ubuntu_catalog import catalog,compare
@@ -10,6 +11,7 @@ from wormhole.ubuntu_catalog import catalog,compare
 
 class Catalog(unittest.TestCase):
     def run_record(self,root,identifier,*,status='fail',content='a',mode='hardened'):
+        identifier=str(uuid5(NAMESPACE_URL,'wormhole-synthetic-'+identifier))
         path=root/identifier;path.mkdir(mode=0o700);(path/'assessment').mkdir(mode=0o700)
         result={'run_id':identifier,'source_revision':'fixture','outcome':'assessment-complete',
                 'installed':True,'cleanup':'verified-absent-inputs-retained',
