@@ -1,5 +1,11 @@
 # External integration: start here
 
+[Storage lifecycle](STORAGE.md) provides shared-lock cleanup, verified ISO
+retention and projected disk admission; [current state](STATE.md) pins actual
+execution. Adapt only relevant behavior to the **rhel kvm host** and **ansible
+control node**. Home results do not prove work compatibility or authorize deleting
+unresolved/qualified artifacts.
+
 Luna and other engineering agents can use Wormhole's proven container reference and the separately tracked [home ISO extension](../handoff/ISO-FOUNDATION.md). Start with the [proven solution index](../handoff/solutions/README.md); only entries with actual evidence are listed. The [source repository](https://github.com/TheSlayer455/jake-wormhole) is intentionally public; credentials, Terraform state, runtime inputs and raw logs remain private. Public access supplies neither runtime credentials nor authority to change another environment.
 
 Container runtime acceptance is established at the sources in the current checkpoint. The real-ISO extension is incomplete; Ubuntu is the active milestone and RHEL is paused. A [real Ubuntu stock audit](../handoff/solutions/ubuntu-real-assessment.md) completed with full rule accounting, while USG/FIPS and manual/external-control requirements remain pending. Start with the modules below, adapt only what fits the receiving pipeline, and measure its actual critical path. Production ISO eligibility remains false. For external mappings use only **rhel kvm host** and **ansible control node**; home Ubuntu-host results do not prove RHEL-host or work-runner compatibility.

@@ -1,5 +1,23 @@
 # Current engineering state
 
+Storage delivery: [PR 36](https://github.com/TheSlayer455/jake-wormhole/pull/36).
+Project allocation fell from 108.9 to 70.5 GiB; receipts verify 40.6 GiB unlinked
+blocks, including new acceptance intermediates. Filesystem availability grew by
+51.9 GiB; that shared-filesystem delta is not wholly attributed to Wormhole.
+Retained: 28.2 GiB candidates, 33.9 GiB evidence, 8.5 GiB protected sources/inputs,
+3.8 MiB releases and 1.3 MiB legacy staging/directory metadata. No VM disks remain.
+Fresh execution at `254161b9ed822be350ec691689c8846c95dbfc7a` passed 34/34 checks in
+650 seconds; its post-run hook reclaimed 2.1 GiB. Guards at
+`d5a9e7c757a1fb805a8e530c22606710f4d6f3ae` passed 21 focused Linux tests and
+[CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40787533279).
+Warm cleanup found zero actions in 12 seconds. Active refusal, interruption
+reconciliation and failed-run retention were exercised; 121 original evidence
+and 156 release-file hashes match. Journals are finished, temporary resources
+absent, sentinel unchanged and K3s active. The excluded live media image retains
+its inode, size and blocks; its timestamp changed, so bytewise immutability is
+not claimed. Self-review only. See [storage policy](STORAGE.md) and
+[continuation](../handoff/CURRENT.md). Ubuntu qualification remains pending.
+
 [PR 34](https://github.com/TheSlayer455/jake-wormhole/pull/34) merged as
 `564cfc5f02cdaf348b15fe788a62987b7d156b2a` with
 [passing main CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40716620271).
