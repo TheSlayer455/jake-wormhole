@@ -67,6 +67,11 @@ def prepare(store):
     (repo / 'Packages').write_text('\n\n'.join(paragraphs) + '\n', encoding='utf-8')
     for name in ['ssg-ubuntu2204-ds.xml', 'LICENSE']:
         shutil.copyfile(store / name, bundle / name)
+    if (store/'openscap-lab.tar.gz').exists():
+        tool=read_json(store/'toolchain.json')
+        require(tool['artifact_sha256']==sha256(store/'openscap-lab.tar.gz') and tool['version']=='1.4.6',
+                'scanner_bundle_identity')
+        for name in ('openscap-lab.tar.gz','toolchain.json'):shutil.copyfile(store/name,bundle/name)
     files = [{'path': p.relative_to(bundle).as_posix(), 'bytes': p.stat().st_size, 'sha256': sha256(p)}
              for p in sorted(bundle.rglob('*')) if p.is_file()]
     manifest = {'schema_version': '1.0', 'capability': 'ubuntu-offline-assessment-inputs',
@@ -97,6 +102,14 @@ chmod -R a+rX /usr/local/lib/wormhole/repository
 printf '%s\\n' 'deb [trusted=yes] file:/usr/local/lib/wormhole/repository ./' > /etc/apt/sources.list.d/wormhole-local.list
 apt-get -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- update
 DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- install libopenscap8=1.2.17-0.1ubuntu7.22.04.3
+if test -f /usr/local/lib/wormhole/openscap-lab.tar.gz; then
+  runtime=$(python3 -c 'import json;tool=json.load(open("/usr/local/lib/wormhole/toolchain.json"));print(" ".join(tool["runtime_packages"]))')
+  DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- install $runtime
+  tar -xzf /usr/local/lib/wormhole/openscap-lab.tar.gz -C /opt
+  printf '%s\\n' '#!/bin/sh' 'exec /opt/wormhole-openscap/bin/oscap "$@"' > /usr/local/bin/oscap
+  chmod 0755 /usr/local/bin/oscap
+  oscap --version | head -n 1 | grep -F '1.4.6'
+fi
 if python3 -c 'import json,sys;sys.exit(json.load(open("/usr/local/lib/wormhole/install-contract.json"))["mode"] != "hardened")'; then
   packages=$(python3 -c 'import json;names={"auditd","audispd-plugins","aide","aide-common","cron","libpam-pwquality","apparmor-utils","ufw","vlock"};contract=json.load(open("/usr/local/lib/wormhole/install-contract.json"));names.update({"chrony","rsyslog-gnutls","libnss-sss","libpam-sss","opensc","opensc-pkcs11","libpam-pkcs11"} if contract.get("sandbox") else set());rows=json.load(open("/usr/local/lib/wormhole/manifest.json"))["packages"];assert names <= {p["name"] for p in rows};print(" ".join(p["name"]+"="+p["version"] for p in rows if p["name"] in names))')
   DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- install $packages
@@ -205,5 +218,6 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
         installed_input_fingerprint=fingerprint, installed_inputs=inputs,
         nonsecret_seed_template_sha256=sha256(SOURCE_ROOT / 'wormhole/ubuntu_inputs.py'))
     manifest['sandbox']=sandbox
+    if (store/'bundle/toolchain.json').exists():manifest['scanner_toolchain']=read_json(store/'bundle/toolchain.json')
     atomic_json(seed_dir / 'build-manifest.json', manifest)
     return manifest

@@ -17,6 +17,17 @@ if test -f /var/lib/wormhole/remediation-results.json; then
   cp /var/lib/wormhole/remediation-results.json ./remediation-results.json
 fi
 oscap --version > scanner-version.txt
+if test -f /usr/local/lib/wormhole/toolchain.json; then
+  # Focused side-by-side diagnostic of the observed old partition-probe result.
+  # Keep its native outcome separate; it cannot substitute for the full new scan.
+  set +e
+  timeout 60 /usr/bin/oscap xccdf eval --profile xccdf_org.ssgproject.content_profile_stig \
+    --rule xccdf_org.ssgproject.content_rule_encrypt_partitions --results legacy-encryption.xml \
+    /usr/local/lib/wormhole/ssg-ubuntu2204-ds.xml > legacy-encryption.log 2>&1
+  legacy_exit=$?
+  set -e
+  printf '%s\n' "$legacy_exit" > legacy-encryption-exit.txt
+fi
 date --utc --iso-8601=seconds > started-at.txt
 set +e
 timeout --signal=TERM --kill-after=10 600 oscap xccdf eval \

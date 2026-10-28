@@ -25,7 +25,7 @@ def eligible(current, previous, *, candidate, dependency_store):
                 and result['ansible_ready'] is True and result['cleanup']=='verified-absent-inputs-retained',
                 'release_runtime_incomplete')
         require(build['policy_sha256']==sha256(POLICY) and
-                build['installed_input_fingerprint']==input_identity(dependency_store,'hardened')[0],
+                build['installed_input_fingerprint']==input_identity(dependency_store,'hardened',sandbox=build.get('sandbox',False))[0],
                 'stale_candidate')
         require(all(r['status']=='pass' for r in report['functional_results']) and
                 {r['id'] for r in report['functional_results']}==set(policy['functional_checks']),

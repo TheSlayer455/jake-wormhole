@@ -110,6 +110,7 @@ def collect(run, result):
     out = run / 'assessment';out.mkdir(mode=0o700)
     names = set()
     allowed = {'xccdf.xml','arf.xml','report.html','scanner-version.txt','started-at.txt',
+               'legacy-encryption.xml','legacy-encryption.log','legacy-encryption-exit.txt',
                'scanner-exit.txt','scanner-receipt.json','scanner.log','finalization.log','remediation-results.json'}
     with tarfile.open(fileobj=io.BytesIO(archive), mode='r:gz') as tar:
         total = 0
