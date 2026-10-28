@@ -29,6 +29,9 @@ def xml(path):
 
 def inventory(content, policy=None):
     policy = policy or json.loads(POLICY.read_text())
+    if 'tailoring' in policy:
+        require(policy['tailoring']=={'excluded_rules':[],'parameters':{},'owner_approved_exceptions':[]},
+                'unsupported_assessment_tailoring')
     require(digest(content) == policy['content']['datastream_sha256'], 'assessment_content_mismatch')
     root = xml(content)
     profile = root.find('./' + X + 'Profile')

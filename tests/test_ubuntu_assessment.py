@@ -81,6 +81,11 @@ class Assessment(unittest.TestCase):
         self.assertFalse(plan['rule-c']['selected'])
         self.assertEqual(len(plan),3)
 
+    def test_unimplemented_tailoring_cannot_hide_a_selected_rule(self):
+        self.policy['tailoring']={'excluded_rules':['rule-a'],'parameters':{},'owner_approved_exceptions':[]}
+        with self.assertRaises(RunError) as refused:self.read()
+        self.assertEqual(refused.exception.code,'unsupported_assessment_tailoring')
+
     def test_secret_identity_is_not_in_installer_command_arguments(self):
         from wormhole.ubuntu_inputs import seed_config,grub_password_hash
         from uuid import uuid4
