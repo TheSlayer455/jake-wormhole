@@ -2,6 +2,25 @@
 
 ## Ubuntu sandbox: verified engineering, qualification pending
 
+Implementation delivery: [PR 34](https://github.com/TheSlayer455/jake-wormhole/pull/34)
+merged as `564cfc5f02cdaf348b15fe788a62987b7d156b2a`.
+[Merged-main CI passed](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40716620271).
+A third fresh installation from that exact merge reused the same ISO and again
+passed 34/34 checks, with matching package/Snap/kernel/payload inventories and
+208/3/14/5/409 native outcomes. It took 622.454 seconds: reuse 14.106, installation
+471.387, offline/cold start 63.239, SSH/Ansible/inventory/assessment 56.539 and
+Terraform cleanup 2.224 seconds. All three guest host keys are distinct and stable
+across their cold starts. This is repeated technical acceptance, not qualification.
+
+Final private audit: zero owned containers, Docker networks, libvirt domains,
+networks, pools or filters; both journals finished with zero pending resources
+and the canonical lock available. All 34 recorded retained images are present;
+32 private candidate copies, seeds, credential originals and failure evidence
+remain intentionally retained. The unrelated sentinel is unchanged and K3s is
+active. The publisher refused the matching final pair for pending requirements
+and created no release. This later documentation delivery does not relabel a
+runtime as testing a different implementation revision.
+
 Tested implementation: `deda43f7100fb8aec42285fc941e2eecffcdb795`. A second independent
 fresh installation at `8e510ce023aeb2196f3d637c69b7e50ee81a9520` reused the same ISO;
 only the sanitized reproduction adapter changed between these sources. Both

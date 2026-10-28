@@ -1,6 +1,12 @@
 # Ubuntu installation hardening and post-reboot assessment
 
-Sandbox implementation tested:
+Verified merged implementation:
+[564cfc5f02cdaf348b15fe788a62987b7d156b2a](https://github.com/TheSlayer455/jake-wormhole/tree/564cfc5f02cdaf348b15fe788a62987b7d156b2a),
+delivered in [PR 34](https://github.com/TheSlayer455/jake-wormhole/pull/34).
+Its fresh post-merge run passed 34/34 checks in 622 seconds, with unchanged
+inventories/native findings, distinct host identity, verified cleanup and
+[green main CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40716620271).
+The same-ISO installation pair was initially tested at
 [deda43f7100fb8aec42285fc941e2eecffcdb795](https://github.com/TheSlayer455/jake-wormhole/tree/deda43f7100fb8aec42285fc941e2eecffcdb795).
 Two independent fresh encrypted installations passed all 34 functional checks, trusted final
 SSH/Ansible, required reboot, powered-off inspection, cold start and exact-owned
