@@ -54,10 +54,11 @@ if any(p['name']=='snapd' for p in observed['packages']):
   print(json.dumps({'stage':'snap-inventory','returncode':r.returncode,'output':r.stdout,'diagnostic':r.stderr}),flush=True)
  except subprocess.TimeoutExpired:
   print(json.dumps({'stage':'snap-inventory','returncode':124,'output':'','diagnostic':'bounded Snap inventory timed out'}),flush=True)
-started=time.monotonic()
 import shlex
+manual_started=time.monotonic()
 r=ssh('sudo -S -p "" /usr/bin/python3 -c '+shlex.quote(manual_code),secret=True,seconds=50)
-print(json.dumps({'stage':'manual-observations','returncode':r.returncode,'output':r.stdout,'diagnostic':r.stderr}),flush=True)
+print(json.dumps({'stage':'manual-observations','elapsed_seconds':round(time.monotonic()-manual_started,3),'returncode':r.returncode,'output':r.stdout,'diagnostic':r.stderr}),flush=True)
+started=time.monotonic()
 r=ssh('sudo -S -p "" /bin/bash /usr/local/lib/wormhole/audit.sh',secret=True,seconds=650)
 print(json.dumps({'stage':'real-assessment','elapsed_seconds':round(time.monotonic()-started,3),'returncode':r.returncode,'diagnostic':r.stderr}),flush=True)
 if r.returncode:sys.exit(1)
