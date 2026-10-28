@@ -102,6 +102,28 @@ class Assessment(unittest.TestCase):
         with self.assertRaises(RunError) as refused:self.read()
         self.assertEqual(refused.exception.code,'unsupported_assessment_tailoring')
 
+    def test_manual_revision_mapping_does_not_claim_scanner_equivalence(self):
+        from wormhole.ubuntu_coverage import reconcile
+        def manual(path,release,checks):
+            root=ET.Element(a.X+'Benchmark')
+            ET.SubElement(root,a.X+'version').text='2'
+            ET.SubElement(root,a.X+'plain-text',id='release-info').text=release
+            for key,text in checks.items():
+                rule=ET.SubElement(root,a.X+'Rule',id=key,severity='high')
+                ET.SubElement(rule,a.X+'version').text=key
+                check=ET.SubElement(rule,a.X+'check')
+                ET.SubElement(check,a.X+'check-content').text=text
+            ET.ElementTree(root).write(path)
+        old=self.root/'old.xml';new=self.root/'new.xml'
+        manual(old,'Release: 7',{'UBTU-22-123456':'original check'})
+        manual(new,'Release: 8',{'UBTU-22-123456':'changed check','UBTU-22-123457':'new check'})
+        rows=[{'rule_id':'synthetic','selected':True,'native_status':'pass','references':[{'value':'UBTU-22-123456'}]}]
+        report=reconcile(rows,old,new)
+        self.assertFalse(report['manual_revision_mapping_complete'])
+        self.assertFalse(report['scanner_logic_equivalence_established'])
+        self.assertEqual(report['unmapped_controls'],['UBTU-22-123457'])
+        self.assertEqual(report['changed_controls'][0]['changed_fields'],['check'])
+
     def test_secret_identity_is_not_in_installer_command_arguments(self):
         from wormhole.ubuntu_inputs import seed_config,grub_password_hash
         from uuid import uuid4

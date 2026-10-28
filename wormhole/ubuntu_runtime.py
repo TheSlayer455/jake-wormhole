@@ -185,6 +185,8 @@ def main():
     comparison=sub.add_parser('compare');comparison.add_argument('previous');comparison.add_argument('current')
     comparison.add_argument('--earlier',help='Optional third compatible-content observation for reopened findings.')
     reporting=sub.add_parser('report');reporting.add_argument('run_id')
+    coverage=sub.add_parser('coverage');coverage.add_argument('run_id')
+    coverage.add_argument('--baseline-manual',required=True);coverage.add_argument('--target-manual',required=True)
     publication=sub.add_parser('publish');publication.add_argument('run_id');publication.add_argument('--previous',required=True)
     publication.add_argument('--store',required=True);publication.add_argument('--destination',required=True);publication.add_argument('--name',required=True)
     recovery=sub.add_parser('recover');recovery.add_argument('run_id');recovery.add_argument('--terraform',required=True)
@@ -194,6 +196,13 @@ def main():
     run.add_argument('--reuse-run',help='Verified immutable ISO from this reconciled run; new disk, identity and assessment are mandatory.')
     run.add_argument('--sandbox',action='store_true',help='Use the encrypted Ubuntu sandbox installation contract.')
     options=p.parse_args()
+    if options.command=='coverage':
+        from .ubuntu_coverage import reconcile
+        run=vm_baseline.ROOT/'vm-runs'/run_id(options.run_id)
+        rows=read_json(run/'assessment/findings.json')['rules']
+        value=reconcile(rows,options.baseline_manual,options.target_manual)
+        atomic_json(run/'benchmark-reconciliation.json',value)
+        print(json.dumps({k:v for k,v in value.items() if k!='controls'},indent=2));return 0
     if options.command=='verify-release':
         from .ubuntu_release import verify
         print(json.dumps(verify(options.directory),indent=2));return 0
