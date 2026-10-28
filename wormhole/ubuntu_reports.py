@@ -5,7 +5,7 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 
 from .runs import atomic_json
-from .ubuntu_assessment import POLICY, inventory
+from .ubuntu_assessment import POLICY, inventory, digest
 
 
 def generate(run, result, *, findings=None, observations=None, controller_records=()):
@@ -24,8 +24,8 @@ def generate(run, result, *, findings=None, observations=None, controller_record
     observed = (observations or {}).get('checks', {})
     stages = {r.get('stage'): r for r in controller_records}
     derived = {
-        'trusted-final-ssh': result.get('final_authentication'),
-        'ansible-ping': result.get('ansible_ready'),
+        'trusted-final-ssh': stages['final-authentication'].get('returncode')==0 if 'final-authentication' in stages else result.get('final_authentication'),
+        'ansible-ping': stages['ansible-readiness'].get('returncode')==0 if 'ansible-readiness' in stages else result.get('ansible_ready'),
         'native-package-inventory': bool((observations or {}).get('packages')) if observations else None,
         'password-required-sudo': stages.get('password-required-sudo', {}).get('returncode') == 0 if 'password-required-sudo' in stages else None,
         'scanner-native-results': findings.get('scanner_execution_completed') and findings.get('coverage_complete') if findings else None,
@@ -45,6 +45,7 @@ def generate(run, result, *, findings=None, observations=None, controller_record
     reasons.append('two-independent-matching-installations-not-yet-verified')
     if result.get('cleanup') != 'verified-absent-inputs-retained':reasons.append('cleanup-not-verified')
     report = {'schema_version': '1.0', 'capability': 'ubuntu-lab-evidence-report', 'run_id': result['run_id'],
+              'report_implementation_sha256':digest(__file__),
               'source_revision': result['source_revision'], 'candidate_sha256': result.get('build', {}).get('candidate_sha256'),
               'mode': result.get('build', {}).get('mode'), 'outcome': result['outcome'], 'cleanup': result['cleanup'],
               'policy_id': policy['policy_id'], 'policy_sha256': result.get('build', {}).get('policy_sha256'),

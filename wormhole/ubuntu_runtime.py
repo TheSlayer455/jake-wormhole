@@ -24,6 +24,7 @@ HELPER_CODE = HELPER_CODE.replace("opts=['-o'", "opts=['-o','ControlMaster=auto'
 HELPER_CODE = HELPER_CODE.replace("common='-o HostKeyAlgorithms", "common='-o ControlMaster=auto -o ControlPersist=30 -o ControlPath='+str(p/'control')+' -o HostKeyAlgorithms")
 HELPER_CODE = HELPER_CODE.replace(" r=subprocess.run(base+args", " stage_started=time.monotonic()\n r=subprocess.run(base+args")
 HELPER_CODE = HELPER_CODE.replace("{'stage':label,'returncode'", "{'stage':label,'elapsed_seconds':round(time.monotonic()-stage_started,3),'returncode'")
+HELPER_CODE = HELPER_CODE.replace("c=json.load(sys.stdin)","c=json.load(sys.stdin)\nimport platform\nprovenance=subprocess.run(['/opt/wormhole/venv/bin/ansible','--version'],capture_output=True,text=True,timeout=10)\nprint(json.dumps({'stage':'helper-provenance','python':platform.python_version(),'ansible':provenance.stdout,'returncode':provenance.returncode}),flush=True)")
 # Strip the baseline terminal line, not any underlying required operation.
 HELPER_CODE = HELPER_CODE[:HELPER_CODE.rfind("print(json.dumps({'final_authentication':True")]
 HELPER_CODE += r'''
@@ -106,9 +107,20 @@ def collect(run, result):
 
 def report(run, result):
     from .ubuntu_reports import generate
+    if result.get('build') and (vm_baseline.SHARED/result['run_id']/'candidate.iso').exists():
+        from .ubuntu_svd import build_svd
+        build_svd(run,vm_baseline.SHARED/result['run_id']/'candidate.iso',result['build'])
     findings = json.loads((run / 'assessment/findings.json').read_text()) if (run / 'assessment/findings.json').exists() else None
     observations = read_json(run / 'installed-observations.json') if (run / 'installed-observations.json').exists() else None
     records = read_json(run / 'controller-records.json') if (run / 'controller-records.json').exists() else []
+    if not records and (run/'ssh-ansible-inventory.log').exists():
+        for line in (run/'ssh-ansible-inventory.log').open():
+            if line.startswith('{'):
+                item=json.loads(line)
+                if item.get('stage')!='assessment-artifacts':records.append(item)
+    if observations is None:
+        observations=next((json.loads(r['output']) for r in records if r.get('stage')=='installed-observations' and r.get('returncode')==0),None)
+        if observations is not None:require(observations['run_id']==result['run_id'],'installed_observation_identity')
     return generate(run, result, findings=findings, observations=observations, controller_records=records)
 
 
