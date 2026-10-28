@@ -55,6 +55,10 @@ class Cleanup(unittest.TestCase):
                'cleanup':'verified-absent-inputs-retained','error_category':'original-failure' if outcome=='failed' else None}
         atomic_json(run/'result.json',value)
         atomic_json(run/'diagnostic.json',{'original_evidence':True})
+        if outcome=='assessment-complete':
+            assessment=run/'assessment';assessment.mkdir(mode=0o700)
+            for name in ('xccdf.xml','arf.xml','report.html'):(assessment/name).write_text('SYNTHETIC PARSER FIXTURE')
+            atomic_json(assessment/'scanner-receipt.json',{'run_id':identifier})
         journal={'schema_version':'1.0','backend':'libvirt-iso','run_id':identifier,'source_revision':'a'*40,
                  'state':'finished','created_at':now(),'updated_at':now(),'production_iso_eligible':False,
                  'resources':[{'kind':'installer_iso','identity':str(candidate),'outcome':'retained-input'},
@@ -241,3 +245,10 @@ class Cleanup(unittest.TestCase):
         with patch.object(self.store,'invalidated',return_value=['ubuntu/guest/finalize.sh']),patch.object(s,'ARTIFACT_BUDGET',0):
             receipt=self.clean()
         self.assertTrue(candidate.exists());self.assertTrue(receipt['retention_budget_exceeded'])
+
+    def test_missing_required_native_evidence_preserves_candidate_and_staging(self):
+        run,candidate,package=self.fixture(outcome='assessment-complete')
+        (run/'assessment/arf.xml').unlink()
+        receipt=self.clean()
+        self.assertTrue(candidate.exists());self.assertTrue(package.exists())
+        self.assertIn('storage_evidence_incomplete',{r['reason'] for r in receipt['blocked']})

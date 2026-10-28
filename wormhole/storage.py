@@ -237,6 +237,16 @@ class Store:
                 journal['source_revision']==value['source_revision'])
         require(value['outcome']!='running' and (value.get('finished_at') or
                 value.get('recovery',{}).get('state')=='stopped-and-cleaned'), 'storage_unfinished_evidence')
+        require(not value.get('report_error'),'storage_evidence_incomplete')
+        if value.get('installed') is True:
+            require((run/'ssh-ansible-inventory.log').is_file() and
+                    (run/'ssh-ansible-inventory.log').stat().st_size>0,'storage_evidence_incomplete')
+        if value['outcome']=='assessment-complete':
+            require(all((run/'assessment'/name).is_file() and (run/'assessment'/name).stat().st_size>0
+                    for name in ('xccdf.xml','arf.xml','report.html','scanner-receipt.json')),
+                    'storage_evidence_incomplete')
+            require(read_json(run/'assessment/scanner-receipt.json')['run_id']==identifier,
+                    'storage_evidence_mismatch')
         for key in ('supervisor','active_command'):
             process=value.get(key)
             if process and not (identifier==current and process['pid']==os.getpid()):
