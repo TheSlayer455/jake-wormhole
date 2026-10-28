@@ -7,6 +7,8 @@ tracks pending installation, hardening, assessment and publication work.
 | --- | --- | --- |
 | [Streaming ISO reconstruction](streaming-iso.md) | Real 2.14 GB official Ubuntu media; controlled interruption/resume; exact hash match | Local Linux artifact store, not GitLab or installed-OS acceptance |
 | [Ubuntu ISO and VM baseline](ubuntu-vm-baseline.md) | Fresh 8 GiB KVM installation, final dotted account, trusted SSH, real Ansible, native inventory and exact-owned cleanup | Ubuntu-host BIOS baseline; no hardening, RHEL installation or assessment claim |
+| [Ubuntu native audit and finalization](ubuntu-real-assessment.md) | Fresh scanner-equipped install, final reboot, trusted SSH/Ansible, real OpenSCAP XCCDF/ARF/HTML and all 639 rule outcomes; real pending-publication refusal | CaC V2R7 alternative; USG/FIPS/manual requirements pending; no qualified release |
+| [Ubuntu installation hardening](ubuntu-install-hardening.md) | Two fresh installations of identical bytes, 14/14 functional checks each, 191 native passes/18 failures, complete inventories and exact-owned cleanup | BIOS home experiment; required dependencies/dispositions and qualified publication remain pending |
 
 Existing [container runtime acceptance](../RUNTIME-ACCEPTANCE.md) remains a
 separate proven regression layer. Do not relabel its simulated installer failures

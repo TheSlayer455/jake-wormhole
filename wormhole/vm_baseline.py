@@ -31,6 +31,14 @@ TF_SHA = '664b66cc0bcd7ed28fd27569719ccaa8a40c230b8be45060ce4d65e2852e1bcc'
 NETWORK = '192.0.2.0/24'
 ADDRESS = '192.0.2.10'
 
+
+def process_identity(pid):
+    try:
+        raw=Path('/proc/'+str(pid)+'/stat').read_text()
+        return {'pid':pid,'start_ticks':raw.rsplit(') ',1)[1].split()[19]}
+    except FileNotFoundError:
+        return None
+
 # Runs inside the existing nonroot, pinned helper; only outgoing guest SSH.
 # Secrets arrive through stdin and live in its private tmpfs, never argv/env/state.
 HELPER_CODE = r'''
@@ -103,15 +111,18 @@ def preflight(source):
     return observation
 
 
-def execute(source, terraform, *, reuse_run=None):
+def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_store=None):
     os.umask(0o077)
     revision, dirty = source_identity()
     require(not dirty and sha256(terraform) == TF_SHA, 'unverified_execution_inputs')
+    require(ubuntu_mode in {None, 'stock-audit', 'hardened'}, 'ubuntu_mode_invalid')
     identifier = str(uuid4())
     name = 'wormhole-vm-' + identifier.replace('-', '')[:12]
     run = workspace_path(ROOT / 'vm-runs' / identifier, create=True)
     result = {'schema_version': '1.0', 'capability': 'real-iso-installation-baseline', 'run_id': identifier,
         'source_revision': revision, 'outcome': 'running', 'started_at': now(), 'stages': [],
+        'phase': 'preflight', 'last_progress_at': now(),
+        'supervisor': process_identity(os.getpid()),
         'lab_iso_qualified': False, 'production_iso_eligible': False, 'cleanup': 'pending'}
     atomic_json(run / 'result.json', result)
     deadline = time.monotonic() + 1800
@@ -125,9 +136,13 @@ def execute(source, terraform, *, reuse_run=None):
         remaining = deadline - time.monotonic()
         require(remaining > 0, 'vm_absolute_deadline')
         started = time.monotonic()
+        started_at = now()
+        result.update(phase=label, last_progress_at=now());save()
         with (run / (label + '.log')).open('wb') as log:
             process = subprocess.Popen([str(x) for x in args], stdin=subprocess.PIPE if data else subprocess.DEVNULL,
                 stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+            result['active_command'] = process_identity(process.pid)
+            save()
             try:
                 process.communicate(data, timeout=min(timeout, remaining))
             except subprocess.TimeoutExpired:
@@ -136,7 +151,10 @@ def execute(source, terraform, *, reuse_run=None):
                 except subprocess.TimeoutExpired:
                     os.killpg(process.pid, signal.SIGKILL);process.wait(timeout=3)
                 raise RunError('vm_command_unknown', 'A bounded command timed out; reconcile its resources before retrying.') from None
-        result['stages'].append({'stage': label, 'elapsed_seconds': round(time.monotonic()-started, 3), 'returncode': process.returncode})
+        result.pop('active_command',None)
+        result['stages'].append({'stage': label,'started_at':started_at,'finished_at':now(),
+                                'elapsed_seconds': round(time.monotonic()-started, 3), 'returncode': process.returncode})
+        result['last_progress_at'] = now()
         save()
         if check and process.returncode:
             raise RunError(label + '_failed', 'The operation failed; inspect its preserved private diagnostic.')
@@ -145,7 +163,10 @@ def execute(source, terraform, *, reuse_run=None):
         return subprocess.check_output(['virsh', '-c', 'qemu:///system', *args], stderr=subprocess.DEVNULL, timeout=10).decode()
     with VMLease(CANONICAL_INFRASTRUCTURE_ROOT, identifier, revision) as lease:
         try:
+            preflight_start=time.monotonic();preflight_at=now()
             atomic_json(run / 'preflight.json', preflight(source))
+            result['stages'].append({'stage':'preflight','started_at':preflight_at,'finished_at':now(),
+                                    'elapsed_seconds':round(time.monotonic()-preflight_start,3),'returncode':0});save()
             for query in ('list', 'net-list', 'pool-list'):
                 require(name not in virsh(query, '--all', '--name').split(), 'vm_resource_conflict')
             qemu = pwd.getpwnam('libvirt-qemu')
@@ -158,12 +179,14 @@ def execute(source, terraform, *, reuse_run=None):
             create_qemu_directory(share, group)
             pool = share / 'disk'
             candidate, seed = share / 'candidate.iso', share / 'seed.iso'
-            command(['ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-C', 'wormhole-lab', '-f', run / 'ssh-key'], 'key-generation')
+            key_args = ['-t', 'rsa', '-b', '3072'] if ubuntu_mode else ['-t', 'ed25519']
+            command(['ssh-keygen', '-q', *key_args, '-N', '', '-C', 'wormhole-lab', '-f', run / 'ssh-key'], 'key-generation')
             public = (run / 'ssh-key.pub').read_text().strip()
             mac = '52:54:00:' + ':'.join(identifier.replace('-', '')[n:n+2] for n in (0, 2, 4))
             for kind, identity in [('installer_iso', str(candidate)), ('seed_iso', str(seed))]:
                 lease.intent(kind, identity)
             started = time.monotonic()
+            build_at = now()
             reuse = None
             if reuse_run is not None:
                 origin = workspace_path(ROOT / 'vm-runs' / run_id(reuse_run))
@@ -173,14 +196,32 @@ def execute(source, terraform, *, reuse_run=None):
                         'verified-absent-inputs-retained', 'candidate_origin_unreconciled')
                 reuse = (SHARED / reuse_run / 'candidate.iso', original_manifest)
                 result['candidate_origin_run'] = reuse_run
-            manifest = build_ubuntu(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac, reuse=reuse)
-            result['stages'].append({'stage': 'candidate-build', 'elapsed_seconds': round(time.monotonic()-started, 3), 'returncode': 0})
+            if ubuntu_mode:
+                import secrets
+                from .ubuntu_inputs import build as build_assessed
+                password = secrets.token_urlsafe(32) + 'aA1!'
+                (run / 'sudo-password').write_text(password)
+                hashed = subprocess.run(['openssl', 'passwd', '-6', '-stdin'], input=password + '\n',
+                                        capture_output=True, text=True, check=True, timeout=10).stdout.strip()
+                boot_hash=None
+                if ubuntu_mode=='hardened':
+                    from .ubuntu_inputs import grub_password_hash
+                    boot_password=secrets.token_urlsafe(32)+'bB2!'
+                    (run/'boot-password').write_text(boot_password)
+                    boot_hash=grub_password_hash(boot_password,secrets.token_bytes(64))
+                manifest = build_assessed(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac,
+                    store=dependency_store, mode=ubuntu_mode, password_hash=hashed, boot_hash=boot_hash,reuse=reuse)
+            else:
+                manifest = build_ubuntu(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac, reuse=reuse)
+            result['stages'].append({'stage': 'candidate-build','started_at':build_at,'finished_at':now(),
+                                    'elapsed_seconds': round(time.monotonic()-started, 3), 'returncode': 0})
             result['build'] = manifest;save()
             for path in (candidate, seed):
                 os.chown(path, 0, group);path.chmod(0o640)
             tfdir = run / 'terraform';tfdir.mkdir(mode=0o700)
             shutil.copyfile(SOURCE_ROOT / 'provisioning/libvirt/.terraform.lock.hcl', tfdir / '.terraform.lock.hcl')
             atomic_json(tfdir / 'main.tf.json', terraform_config(name, pool, candidate, seed, NETWORK, mac, qemu.pw_uid, group))
+            result['terraform_configuration_sha256'] = sha256(tfdir / 'main.tf.json');save()
             tf = [terraform, '-chdir=' + str(tfdir)]
             command([*tf, 'init', '-input=false', '-lockfile=readonly'], 'terraform-init')
             command([*tf, 'validate', '-no-color'], 'terraform-validate')
@@ -200,6 +241,7 @@ def execute(source, terraform, *, reuse_run=None):
             require(len(disks) == 1 and disks[0].find('driver').get('type') == 'qcow2' and
                     disks[0].find('source').get('file') == str(pool / (name + '.qcow2')), 'vm_disk_format_mismatch')
             info = json.loads(subprocess.check_output(['qemu-img', 'info', '--output=json', str(pool / (name + '.qcow2'))], timeout=5))
+            atomic_json(run/'disk-observation.json',info)
             require(info['format'] == 'qcow2' and info['virtual-size'] == 64 * 1024**3 and
                     not info.get('backing-filename'), 'vm_disk_capacity_mismatch')
             cds = {x.find('source').get('file') for x in dom.findall('devices/disk') if x.get('device') == 'cdrom'}
@@ -219,41 +261,78 @@ def execute(source, terraform, *, reuse_run=None):
             console_log.close()
             host_key = None
             installation_start = time.monotonic()
+            observed_phases = []
             while time.monotonic() < deadline - 180:
                 path = run / 'console.log'
                 require(path.stat().st_size <= 16 * 1024**2, 'installer_diagnostic_limit')
                 text = path.read_text(errors='replace')
+                progress = re.findall(r'WORMHOLE_HARDENING_PROGRESS completed=(\d+) rule=([a-z0-9_-]+)', text)
+                if progress and result.get('hardening_operations_completed') != int(progress[-1][0]):
+                    result.update(hardening_operations_completed=int(progress[-1][0]),
+                                  last_hardening_operation=progress[-1][1],last_progress_at=now());save()
+                phase = ('required-reboot' if 'WORMHOLE_REQUIRED_REBOOT' in text else
+                         'hardening-complete' if 'WORMHOLE_HARDENING_COMPLETE' in text else
+                         'hardening' if 'WORMHOLE_HARDENING_STARTED' in text else
+                         'installed-finalization' if 'WORMHOLE_FINALIZATION_STARTED' in text else
+                         'installing' if 'subiquity/Install/install' in text else 'firmware-and-installer-boot')
+                if result['phase'] != phase:
+                    if observed_phases:
+                        observed_phases[-1]['elapsed_seconds'] = round(time.monotonic() - phase_start, 3)
+                    phase_start = time.monotonic()
+                    observed_phases.append({'phase':phase, 'observed_at':now()})
+                    result['installation_observations'] = observed_phases
+                    result.update(phase=phase,last_progress_at=now());save()
                 require('WORMHOLE_INSTALLATION_FAILED' not in text, 'installation_failed')
-                found = re.search(r'WORMHOLE_FINAL_HOST_KEY_BEGIN\s+(ssh-ed25519 [A-Za-z0-9+/=]+)[^\n]*\s+WORMHOLE_FINAL_HOST_KEY_END', text)
+                require('WORMHOLE_FINALIZATION_FAILED' not in text, 'finalization_failed')
+                if 'WORMHOLE_REQUIRED_REBOOT' in text:
+                    after_reboot=text.rsplit('WORMHOLE_REQUIRED_REBOOT',1)[1]
+                    require('Enter username:' not in after_reboot and 'Enter password:' not in after_reboot,
+                            'bootloader_unattended_boot_blocked')
+                    require(time.monotonic()-phase_start < 180,'required_reboot_progress_deadline')
+                host_type = 'ssh-rsa' if ubuntu_mode else 'ssh-ed25519'
+                found = re.search(r'WORMHOLE_FINAL_HOST_KEY_BEGIN\s+(' + host_type + r' [A-Za-z0-9+/=]+)[^\n]*\s+WORMHOLE_FINAL_HOST_KEY_END', text)
                 if found:
+                    if observed_phases:
+                        observed_phases[-1]['elapsed_seconds'] = round(time.monotonic()-phase_start,3)
                     host_key = found[1];break
                 require(console.poll() is None, 'installer_console_lost')
                 time.sleep(3)
             require(host_key is not None, 'installation_deadline')
             result['stages'].append({'stage': 'installation-to-host-key', 'elapsed_seconds': round(time.monotonic()-installation_start, 3), 'returncode': 0});save()
+            helper_code = HELPER_CODE
+            if ubuntu_mode:
+                from .ubuntu_runtime import HELPER_CODE as helper_code
             args = ['docker', 'create', '-i', '--name', name + '-controller', '--label', 'application=jake-wormhole',
                 '--label', 'vm-run=' + identifier, '--network', 'host', '--read-only', '--cap-drop', 'ALL',
                 '--security-opt', 'no-new-privileges:true', '--user', '10001:10001', '--memory', '512m',
                 '--memory-swap', '512m', '--cpus', '1', '--pids-limit', '128', '--log-opt', 'max-size=1m', '--log-opt', 'max-file=2',
                 '--tmpfs', '/tmp:rw,nosuid,nodev,noexec,size=32m,mode=0700,uid=10001,gid=10001',
-                '--entrypoint', '/opt/wormhole/venv/bin/python', HELPER, '-c', HELPER_CODE]
+                '--entrypoint', '/opt/wormhole/venv/bin/python', HELPER, '-c', helper_code]
             # Name intent is durable before create; its exact returned ID is then bound by label verification.
             helper = name + '-controller'
             lease.intent('controller_container', helper)
             unknown = True
             command(args, 'controller-create')
             unknown = False
-            payload = json.dumps({'address': ADDRESS, 'host_key': host_key, 'private_key': (run / 'ssh-key').read_text(),
-                                  'seconds': max(1, min(300, int(deadline-time.monotonic()-180)))}).encode()
+            payload_data = {'address': ADDRESS, 'host_key': host_key, 'private_key': (run / 'ssh-key').read_text(),
+                            'seconds': max(1, min(900 if ubuntu_mode else 300, int(deadline-time.monotonic()-180)))}
+            if ubuntu_mode:payload_data['become_password'] = password
+            payload = json.dumps(payload_data).encode()
             command(['docker', 'start', '-ai', helper], 'ssh-ansible-inventory', timeout=max(1, deadline-time.monotonic()-180), data=payload)
             rows = [json.loads(line) for line in (run / 'ssh-ansible-inventory.log').read_text().splitlines() if line.startswith('{')]
             terminal = rows[-1] if rows else {}
-            require(terminal.get('outcome') == 'baseline-passed' and terminal.get('final_authentication') is True and
+            require(terminal.get('outcome') == ('assessment-evidence-collected' if ubuntu_mode else 'baseline-passed') and terminal.get('final_authentication') is True and
                     terminal.get('ansible_ready') is True and {x.get('stage') for x in rows if x.get('returncode') == 0} >=
                     {'final-authentication', 'ansible-readiness', 'functional', 'inventory'}, 'controller_results_incomplete')
             result.update(outcome='baseline-passed', installed=True, final_authentication=True, ansible_ready=True)
+            if ubuntu_mode:
+                from .ubuntu_runtime import collect
+                findings = collect(run, result)
+                result.update(outcome='assessment-complete' if findings['scanner_execution_completed'] else 'assessment-failed',
+                              lab_status='LAB QUALIFICATION PENDING')
         except Exception as error:
-            result.update(outcome='unknown' if unknown else 'failed', error_category=getattr(error, 'code', type(error).__name__))
+            result.update(outcome='unknown' if unknown else 'failed', failure_phase=result['phase'],
+                          error_category=getattr(error, 'code', type(error).__name__))
         finally:
             if console is not None:
                 try:os.killpg(console.pid, signal.SIGTERM)
@@ -296,6 +375,12 @@ def execute(source, terraform, *, reuse_run=None):
                 result['cleanup'] = 'unreconciled'
                 result['cleanup_error'] = getattr(error, 'code', type(error).__name__)
             result['finished_at'] = now();save()
+            if ubuntu_mode:
+                try:
+                    from .ubuntu_runtime import report
+                    report(run, result)
+                except Exception as error:
+                    result['report_error'] = getattr(error, 'code', type(error).__name__);save()
     return result
 
 

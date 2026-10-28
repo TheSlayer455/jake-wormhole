@@ -1,6 +1,67 @@
 # Current handoff
 
-## Active home ISO extension
+## Active Ubuntu-only hardening milestone
+
+The owner paused RHEL implementation/media work until Ubuntu is fully complete
+and explicitly authorizes RHEL afterward. Continue on
+`codex/WORM-001-ubuntu-hardening`, based on main `1a29ffc`. The existing VM
+baseline below remains historical installation evidence, not hardened acceptance.
+The versioned policy is `profiles/ubuntu-lab-policy-v1.json`: zero unresolved
+applicable automated failures/errors, accountable manual evidence, two fresh
+installs and exact-byte publication. No engineer-created waiver is permitted.
+USG/Pro/FIPS enrollment is unavailable (owner confirmed); keep those requirements
+pending while performing legitimate alternative OpenSCAP work. Source `c22653d`
+completed a fresh stock-audit installation, final reboot, trusted final SSH,
+password-required sudo, real Ansible and OpenSCAP 1.2.17 in about 264 seconds.
+CaC 0.1.82 Ubuntu V2R7: 639 accounted rules, 230 selected; 55 pass, 64 fail,
+107 not applicable, four not checked, 409 upstream not selected. Native XML,
+ARF, HTML and receipt stay private. This is not Canonical USG V2R8 equivalence.
+The stock audit includes pinned offline scanner prerequisites, not untouched
+stock package state. Cleanup was verified before the next allocation.
+
+Confirmed installation defects: NoCloud directory flattening (fixed with graft
+points plus real seed readback); SSH syntax validation before `/run/sshd` existed
+(fixed by the finalization unit's runtime directory); AIDE configuration missing
+when recommendations were disabled (explicit `aide-common`/cron dependency).
+Failures blocked readiness/catalog dispatch; their console evidence remains
+private. Hardened execution at `be1aac0cc0a027874337cd7587ee42e294a54d38`
+and a fresh reuse installation at `109efdcc42d2896c206dc5d0ea55e0db94f6aa06`
+passed 14/14 functional checks each. Actual OpenSCAP: 191 pass, 18 fail,
+16 not applicable, five not checked, 409 upstream not selected. Native reports,
+630 Debian packages/three Snap entries and cleanup are verified. ISO bytes,
+installed contract, kernel, inventories and required outcomes matched; boot IDs
+and credentials differed. Elapsed: 558/544 seconds, build/reuse 15.0/9.5 seconds
+(one sample each). AIDE initialization is the measured critical path at about
+222 seconds. A remediation operation's zero exit is never substituted for audit.
+
+[PR 31](https://github.com/TheSlayer455/jake-wormhole/pull/31) carries this verified
+increment; consult its merge and CI records for delivery revisions. See the
+[source-pinned hardening handoff](solutions/ubuntu-install-hardening.md).
+The 899-test integration suite passed on Linux (897 pass/two skips at `3f880b4`)
+and Windows (605 pass/294 skips at `408f341`); later focused Ubuntu negatives
+include unsupported-tailoring refusal. No independent review is claimed.
+
+Remaining: approved guest USG/FIPS procedure and modules, encryption/unlock
+integration, smart-card/directory/CA inputs, authorized banner/NTP/remote-audit
+requirements, five accountable manual dispositions and V2R8 distribution mapping.
+The second run collected manual facts without approving them. Qualification and
+positive qualified publication remain unverified. RHEL stays paused.
+
+Use the established operator route, clean pinned source and private stores:
+`python -m wormhole.ubuntu_runtime --help`. `prepare`, `run --mode stock-audit`
+or `run --mode hardened`, `run --reuse-run UUID`, `progress UUID`, `report UUID`,
+`compare PREVIOUS CURRENT`, `catalog`, `recover UUID --terraform TOOL`, and
+`reproduce-package UUID --output PRIVATE_DIRECTORY` plus `publish` share the
+existing lifecycle/ownership boundary. Never execute files
+under `ubuntu/guest/` on the host. Reuse needs unchanged installed-input identity;
+each run creates a fresh disk, credentials and native assessment. Report-only
+changes are excluded from that input fingerprint. Recovery requires the original
+supervisor/operation to be stopped and exact journal/configuration/resource proof.
+Publication is required to refuse the currently pending policy. Its eligible
+positive path remains unverified; no qualified ISO or completed Ubuntu milestone
+is claimed.
+
+## Accepted ISO foundation (historical two-OS scope)
 
 Continue [ISO foundation](ISO-FOUNDATION.md) from current `main`; the
 `codex/WORM-001-iso-foundation` branch is its merged delivery history.

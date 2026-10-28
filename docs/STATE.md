@@ -1,5 +1,17 @@
 # Current engineering state
 
+Ubuntu-only hardening is the active milestone. RHEL development and media work
+are paused by the owner, while existing RHEL/UBI code and regression evidence
+remain preserved. USG enrollment/FIPS requirements are pending, not waived.
+See [current continuation](../handoff/CURRENT.md) and the versioned Ubuntu policy.
+Hardened Ubuntu execution at `be1aac0` and verified reuse at `109efdc` passed
+14/14 functional checks each and completed real OpenSCAP: 191 pass, 18 fail,
+16 not applicable, five not checked and 409 upstream not selected (639 total,
+230 selected). Inventories, kernel and required outcomes matched across fresh
+disks with distinct credentials/boot IDs. Native reports, 630-package/three-Snap
+inventories and cleanup are verified. This is LAB QUALIFICATION PENDING, not a
+completed Ubuntu release. See [proven hardening](../handoff/solutions/ubuntu-install-hardening.md).
+
 ## Home ISO extension — in progress
 
 The owner authorized home KVM/libvirt and real RHEL 9 / Ubuntu 22.04 installation

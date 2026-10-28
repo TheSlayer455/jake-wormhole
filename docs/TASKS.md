@@ -1,13 +1,18 @@
 # Minx work index
 
-Current owner-authorized extension: [home ISO foundation](../handoff/ISO-FOUNDATION.md).
-Implement and verify one RHEL 9 and one Ubuntu 22.04 real installation path while
-preserving the container baseline. This is a new assignment; historical Done
-contracts below are not reopened or reused as claim authority.
-The Ubuntu baseline is verified at `55bb2fb` and delivered through [PR 29](https://github.com/TheSlayer455/jake-wormhole/pull/29).
-RHEL media/installation, hardening, real assessment, the lab gate/publication and
-remaining VM negatives are still outstanding; no original Minx ticket is
-reopened or marked complete by this checkpoint.
+Current owner-authorized milestone: complete Ubuntu 22.04 installation-time
+hardening, actual assessment, repeatability and exact-byte local release while
+preserving the container baseline. RHEL implementation/media work is paused until
+Ubuntu is complete and the owner explicitly starts RHEL. USG/FIPS and required
+manual/external-control evidence remain pending; no engineer waiver is allowed.
+See [current continuation](../handoff/CURRENT.md). Historical Done contracts below
+are not reopened or reused as claim authority.
+The Ubuntu baseline was delivered through [PR 29](https://github.com/TheSlayer455/jake-wormhole/pull/29).
+The hardened increment is [PR 31](https://github.com/TheSlayer455/jake-wormhole/pull/31):
+two real fresh installs, 14/14 functional checks each, full native rule accounting,
+verified reuse, recovery and refused pending publication. Eighteen findings,
+five manual checks, entitlement/coverage and qualified release remain open.
+No original Minx ticket is reopened or marked complete by this checkpoint.
 Implementation merge `44f33f8` passed a fresh post-merge Ubuntu VM run and main
 CI. Continue from current main; the merged feature branch is historical.
 
