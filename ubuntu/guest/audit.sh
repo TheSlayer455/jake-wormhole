@@ -12,6 +12,10 @@ test "$(cat /var/lib/wormhole/firstboot-id)" != "$(cat /var/lib/wormhole/final-b
 install -d -m 0700 /var/lib/wormhole/assessment
 cd /var/lib/wormhole/assessment
 test ! -e scanner-receipt.json
+cp /var/lib/wormhole/finalization.log ./finalization.log
+if test -f /var/lib/wormhole/remediation-results.json; then
+  cp /var/lib/wormhole/remediation-results.json ./remediation-results.json
+fi
 oscap --version > scanner-version.txt
 date --utc --iso-8601=seconds > started-at.txt
 set +e

@@ -16,6 +16,8 @@ def input_identity(store, mode):
     # Execution/reporting changes deliberately do not alter installed bytes.
     paths = ['wormhole/vm_inputs.py', 'wormhole/ubuntu_inputs.py', 'ubuntu/guest/finalize.sh',
              'ubuntu/guest/audit.sh', 'ubuntu/guest/observe.py', 'profiles/ubuntu-lab-policy-v1.json']
+    if mode == 'hardened':
+        paths += ['wormhole/ubuntu_hardening.py', 'ubuntu/remediation-plan-v1.json', 'ubuntu/guest/remediate.py']
     files = {name: sha256(SOURCE_ROOT / name) for name in paths}
     files['offline-dependencies'] = sha256(Path(store) / 'bundle/manifest.json')
     value = {'mode': mode, 'files': files}
@@ -83,6 +85,10 @@ chmod -R a+rX /usr/local/lib/wormhole/repository
 printf '%s\\n' 'deb [trusted=yes] file:/usr/local/lib/wormhole/repository ./' > /etc/apt/sources.list.d/wormhole-local.list
 apt-get -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- update
 DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- install libopenscap8=1.2.17-0.1ubuntu7.22.04.3
+if python3 -c 'import json,sys;sys.exit(json.load(open("/usr/local/lib/wormhole/install-contract.json"))["mode"] != "hardened")'; then
+  packages=$(python3 -c 'import json;names={"auditd","audispd-plugins","aide","libpam-pwquality","apparmor-utils","ufw"};rows=json.load(open("/usr/local/lib/wormhole/manifest.json"))["packages"];assert names <= {p["name"] for p in rows};print(" ".join(p["name"]+"="+p["version"] for p in rows if p["name"] in names))')
+  DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- install $packages
+fi
 useradd --create-home --shell /bin/bash --user-group lab.service
 chpasswd --encrypted < /tmp/wormhole-identity/password
 install -d -o lab.service -g lab.service -m 0700 /home/lab.service/.ssh
@@ -116,7 +122,6 @@ rm -rf /tmp/wormhole-identity /tmp/wormhole-payload
 
 def build(source, destination, seed_dir, identifier, public_key, address, mac, *, store, mode, password_hash, reuse=None):
     require(mode in {'stock-audit', 'hardened'}, 'ubuntu_mode_invalid')
-    require(mode == 'stock-audit', 'hardening_not_yet_implemented')
     store, destination, seed_dir = Path(store), Path(destination), Path(seed_dir)
     prepare(store)
     fingerprint, inputs = input_identity(store, mode)
@@ -130,6 +135,11 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
     shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/audit.sh', payload / 'audit.sh')
     shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/observe.py', payload / 'observe.py')
     shutil.copyfile(POLICY, payload / 'policy.json')
+    if mode == 'hardened':
+        from .ubuntu_hardening import generate
+        generate(store, payload)
+        shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/remediate.py', payload / 'remediate.py')
+        (payload / 'offline-apt.conf').write_text('Dir::Etc::sourcelist "sources.list.d/wormhole-local.list";\nDir::Etc::sourceparts "-";\nAPT::Install-Recommends "false";\n')
     contract = {'mode': mode, 'policy_sha256': sha256(POLICY), 'dependency_manifest_sha256': sha256(store / 'bundle/manifest.json')}
     (payload / 'install-contract.json').write_text(json.dumps(contract, sort_keys=True))
     (payload / 'wormhole-finalize.service').write_text('[Unit]\nDescription=Wormhole installed-guest finalization\nAfter=local-fs.target cloud-config.service\nBefore=ssh.service ssh.socket\n[Service]\nType=oneshot\nRuntimeDirectory=sshd\nRuntimeDirectoryMode=0755\nExecStart=/bin/bash /usr/local/lib/wormhole/finalize.sh\nTimeoutStartSec=1000\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target\n')

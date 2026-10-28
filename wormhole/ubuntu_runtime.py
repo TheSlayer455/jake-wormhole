@@ -20,6 +20,8 @@ HELPER_CODE = HELPER_CODE.replace("'inventory',['-m'", "'inventory',['-b','-m'")
 HELPER_CODE = HELPER_CODE.replace("'ansible-readiness',['-m'", "'ansible-readiness',['-m'")
 HELPER_CODE = HELPER_CODE.replace("common='-o StrictHostKeyChecking", "common='-o HostKeyAlgorithms=rsa-sha2-512,rsa-sha2-256 -o PubkeyAcceptedAlgorithms=rsa-sha2-512,rsa-sha2-256 -o StrictHostKeyChecking")
 HELPER_CODE = HELPER_CODE.replace("opts=['-o','BatchMode=yes',", "opts=['-o','HostKeyAlgorithms=rsa-sha2-512,rsa-sha2-256','-o','PubkeyAcceptedAlgorithms=rsa-sha2-512,rsa-sha2-256','-o','BatchMode=yes',")
+HELPER_CODE = HELPER_CODE.replace("opts=['-o'", "opts=['-o','ControlMaster=auto','-o','ControlPersist=30','-o','ControlPath='+str(p/'control'),'-o'", 1)
+HELPER_CODE = HELPER_CODE.replace("common='-o HostKeyAlgorithms", "common='-o ControlMaster=auto -o ControlPersist=30 -o ControlPath='+str(p/'control')+' -o HostKeyAlgorithms")
 # Strip the baseline terminal line, not any underlying required operation.
 HELPER_CODE = HELPER_CODE[:HELPER_CODE.rfind("print(json.dumps({'final_authentication':True")]
 HELPER_CODE += r'''
@@ -73,7 +75,7 @@ def collect(run, result):
     out = run / 'assessment';out.mkdir(mode=0o700)
     names = set()
     allowed = {'xccdf.xml','arf.xml','report.html','scanner-version.txt','started-at.txt',
-               'scanner-exit.txt','scanner-receipt.json','scanner.log'}
+               'scanner-exit.txt','scanner-receipt.json','scanner.log','finalization.log','remediation-results.json'}
     with tarfile.open(fileobj=io.BytesIO(archive), mode='r:gz') as tar:
         total = 0
         for member in tar:

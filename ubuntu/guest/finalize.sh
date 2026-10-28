@@ -24,8 +24,8 @@ printf '%s\n' "$boot_id" > /var/lib/wormhole/firstboot-id
 printf '%s\n' WORMHOLE_FINALIZATION_STARTED > /dev/ttyS0
 test -x /usr/bin/oscap
 oscap --version > /var/lib/wormhole/scanner-version.txt
-if test -s /usr/local/lib/wormhole/remediation.sh; then
-  timeout --signal=TERM --kill-after=10 900 /bin/bash /usr/local/lib/wormhole/remediation.sh
+if test -s /usr/local/lib/wormhole/remediate.py; then
+  timeout --signal=TERM --kill-after=10 900 /usr/bin/python3 /usr/local/lib/wormhole/remediate.py
 fi
 /usr/sbin/sshd -t
 visudo -cf /etc/sudoers.d/wormhole-lab
