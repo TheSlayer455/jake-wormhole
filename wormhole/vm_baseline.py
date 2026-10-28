@@ -103,10 +103,11 @@ def preflight(source):
     return observation
 
 
-def execute(source, terraform, *, reuse_run=None):
+def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_store=None):
     os.umask(0o077)
     revision, dirty = source_identity()
     require(not dirty and sha256(terraform) == TF_SHA, 'unverified_execution_inputs')
+    require(ubuntu_mode in {None, 'stock-audit', 'hardened'}, 'ubuntu_mode_invalid')
     identifier = str(uuid4())
     name = 'wormhole-vm-' + identifier.replace('-', '')[:12]
     run = workspace_path(ROOT / 'vm-runs' / identifier, create=True)
@@ -158,7 +159,8 @@ def execute(source, terraform, *, reuse_run=None):
             create_qemu_directory(share, group)
             pool = share / 'disk'
             candidate, seed = share / 'candidate.iso', share / 'seed.iso'
-            command(['ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-C', 'wormhole-lab', '-f', run / 'ssh-key'], 'key-generation')
+            key_args = ['-t', 'rsa', '-b', '3072'] if ubuntu_mode else ['-t', 'ed25519']
+            command(['ssh-keygen', '-q', *key_args, '-N', '', '-C', 'wormhole-lab', '-f', run / 'ssh-key'], 'key-generation')
             public = (run / 'ssh-key.pub').read_text().strip()
             mac = '52:54:00:' + ':'.join(identifier.replace('-', '')[n:n+2] for n in (0, 2, 4))
             for kind, identity in [('installer_iso', str(candidate)), ('seed_iso', str(seed))]:
@@ -173,7 +175,17 @@ def execute(source, terraform, *, reuse_run=None):
                         'verified-absent-inputs-retained', 'candidate_origin_unreconciled')
                 reuse = (SHARED / reuse_run / 'candidate.iso', original_manifest)
                 result['candidate_origin_run'] = reuse_run
-            manifest = build_ubuntu(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac, reuse=reuse)
+            if ubuntu_mode:
+                import secrets
+                from .ubuntu_inputs import build as build_assessed
+                password = secrets.token_urlsafe(32) + 'aA1!'
+                (run / 'sudo-password').write_text(password)
+                hashed = subprocess.run(['openssl', 'passwd', '-6', '-stdin'], input=password + '\n',
+                                        capture_output=True, text=True, check=True, timeout=10).stdout.strip()
+                manifest = build_assessed(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac,
+                    store=dependency_store, mode=ubuntu_mode, password_hash=hashed, reuse=reuse)
+            else:
+                manifest = build_ubuntu(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac, reuse=reuse)
             result['stages'].append({'stage': 'candidate-build', 'elapsed_seconds': round(time.monotonic()-started, 3), 'returncode': 0})
             result['build'] = manifest;save()
             for path in (candidate, seed):
@@ -224,27 +236,34 @@ def execute(source, terraform, *, reuse_run=None):
                 require(path.stat().st_size <= 16 * 1024**2, 'installer_diagnostic_limit')
                 text = path.read_text(errors='replace')
                 require('WORMHOLE_INSTALLATION_FAILED' not in text, 'installation_failed')
-                found = re.search(r'WORMHOLE_FINAL_HOST_KEY_BEGIN\s+(ssh-ed25519 [A-Za-z0-9+/=]+)[^\n]*\s+WORMHOLE_FINAL_HOST_KEY_END', text)
+                require('WORMHOLE_FINALIZATION_FAILED' not in text, 'finalization_failed')
+                host_type = 'ssh-rsa' if ubuntu_mode else 'ssh-ed25519'
+                found = re.search(r'WORMHOLE_FINAL_HOST_KEY_BEGIN\s+(' + host_type + r' [A-Za-z0-9+/=]+)[^\n]*\s+WORMHOLE_FINAL_HOST_KEY_END', text)
                 if found:
                     host_key = found[1];break
                 require(console.poll() is None, 'installer_console_lost')
                 time.sleep(3)
             require(host_key is not None, 'installation_deadline')
             result['stages'].append({'stage': 'installation-to-host-key', 'elapsed_seconds': round(time.monotonic()-installation_start, 3), 'returncode': 0});save()
+            helper_code = HELPER_CODE
+            if ubuntu_mode:
+                from .ubuntu_runtime import HELPER_CODE as helper_code
             args = ['docker', 'create', '-i', '--name', name + '-controller', '--label', 'application=jake-wormhole',
                 '--label', 'vm-run=' + identifier, '--network', 'host', '--read-only', '--cap-drop', 'ALL',
                 '--security-opt', 'no-new-privileges:true', '--user', '10001:10001', '--memory', '512m',
                 '--memory-swap', '512m', '--cpus', '1', '--pids-limit', '128', '--log-opt', 'max-size=1m', '--log-opt', 'max-file=2',
                 '--tmpfs', '/tmp:rw,nosuid,nodev,noexec,size=32m,mode=0700,uid=10001,gid=10001',
-                '--entrypoint', '/opt/wormhole/venv/bin/python', HELPER, '-c', HELPER_CODE]
+                '--entrypoint', '/opt/wormhole/venv/bin/python', HELPER, '-c', helper_code]
             # Name intent is durable before create; its exact returned ID is then bound by label verification.
             helper = name + '-controller'
             lease.intent('controller_container', helper)
             unknown = True
             command(args, 'controller-create')
             unknown = False
-            payload = json.dumps({'address': ADDRESS, 'host_key': host_key, 'private_key': (run / 'ssh-key').read_text(),
-                                  'seconds': max(1, min(300, int(deadline-time.monotonic()-180)))}).encode()
+            payload_data = {'address': ADDRESS, 'host_key': host_key, 'private_key': (run / 'ssh-key').read_text(),
+                            'seconds': max(1, min(900 if ubuntu_mode else 300, int(deadline-time.monotonic()-180)))}
+            if ubuntu_mode:payload_data['become_password'] = password
+            payload = json.dumps(payload_data).encode()
             command(['docker', 'start', '-ai', helper], 'ssh-ansible-inventory', timeout=max(1, deadline-time.monotonic()-180), data=payload)
             rows = [json.loads(line) for line in (run / 'ssh-ansible-inventory.log').read_text().splitlines() if line.startswith('{')]
             terminal = rows[-1] if rows else {}
@@ -252,6 +271,11 @@ def execute(source, terraform, *, reuse_run=None):
                     terminal.get('ansible_ready') is True and {x.get('stage') for x in rows if x.get('returncode') == 0} >=
                     {'final-authentication', 'ansible-readiness', 'functional', 'inventory'}, 'controller_results_incomplete')
             result.update(outcome='baseline-passed', installed=True, final_authentication=True, ansible_ready=True)
+            if ubuntu_mode:
+                from .ubuntu_runtime import collect
+                findings = collect(run, result)
+                result.update(outcome='assessment-complete' if findings['scanner_execution_completed'] else 'assessment-failed',
+                              lab_status='LAB QUALIFICATION PENDING')
         except Exception as error:
             result.update(outcome='unknown' if unknown else 'failed', error_category=getattr(error, 'code', type(error).__name__))
         finally:

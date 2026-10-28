@@ -2,6 +2,17 @@
 
 Build this public Linux image reference project. Preserve the verified container backend as the fast regression layer. The owner explicitly authorized a separate home KVM/libvirt and real-ISO profile for RHEL 9 and Ubuntu 22.04 on October 27, 2026; this supersedes the former container-only prohibition, not its historical evidence. Runtime state, licensed media, credentials and raw evidence remain private. Original ticket records are historical, not new claim leases.
 
+Current owner milestone: complete Ubuntu 22.04 hardening, real assessment,
+repeatability and exact-byte local release independently. RHEL implementation and
+media work are paused until Ubuntu is complete and the owner explicitly starts
+RHEL. Preserve its existing code/tests. Canonical USG/FIPS require authorized
+entitlement; never retrieve tokens from private state or invent enrollment.
+An alternative pinned OpenSCAP audit must retain its content identity and all
+upstream rule outcomes. Missing required FIPS, manual evidence or owner exception
+decisions keep lab qualification pending; engineers cannot approve their own
+waivers. Acceptance observes the guest and never remediates it. Keep the baseline
+command unqualified and add a separate explicit policy/evidence gate.
+
 The owner has directly authorized the architecture and failure-reproduction follow-up in [the active engineering checkpoint](docs/FAILURE-REPRODUCTION.md). Preserve the original Done ticket history; do not imply an old claim authorizes a new session or that this follow-up is already accepted. Continue in bounded, reviewable increments and record unverified runtime work explicitly.
 
 - Read README.md, docs/STATE.md, docs/ARCHITECTURE.md, docs/FIDELITY.md and handoff/CURRENT.md before changing code. Verify Git status, current source and evidence.

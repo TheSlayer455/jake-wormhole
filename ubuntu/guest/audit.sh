@@ -1,0 +1,39 @@
+#!/bin/bash
+# Assessment only. Remediation is a separate installation payload.
+set -euo pipefail
+test "$(id -u)" = 0
+. /etc/os-release
+test "$ID:$VERSION_ID" = ubuntu:22.04
+test "$(systemd-detect-virt)" = kvm || test "$(systemd-detect-virt)" = qemu
+test -s /var/lib/wormhole/run-id
+test -f /var/lib/wormhole/installation-complete
+test "$(cat /var/lib/wormhole/final-boot-id)" = "$(cat /proc/sys/kernel/random/boot_id)"
+test "$(cat /var/lib/wormhole/firstboot-id)" != "$(cat /var/lib/wormhole/final-boot-id)"
+install -d -m 0700 /var/lib/wormhole/assessment
+cd /var/lib/wormhole/assessment
+test ! -e scanner-receipt.json
+oscap --version > scanner-version.txt
+date --utc --iso-8601=seconds > started-at.txt
+set +e
+timeout --signal=TERM --kill-after=10 600 oscap xccdf eval \
+ --profile xccdf_org.ssgproject.content_profile_stig \
+ --results xccdf.xml --results-arf arf.xml --report report.html \
+ /usr/local/lib/wormhole/ssg-ubuntu2204-ds.xml > scanner.log 2>&1
+scanner_exit=$?
+set -e
+printf '%s\n' "$scanner_exit" > scanner-exit.txt
+python3 - <<'PY'
+import hashlib,json,pathlib,platform,datetime
+r=pathlib.Path('/var/lib/wormhole')
+value={'schema_version':'1.0','run_id':(r/'run-id').read_text().strip(),
+ 'target':platform.node(),'boot_id':pathlib.Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
+ 'firstboot_id':(r/'firstboot-id').read_text().strip(),
+ 'content_sha256':hashlib.sha256(pathlib.Path('/usr/local/lib/wormhole/ssg-ubuntu2204-ds.xml').read_bytes()).hexdigest(),
+ 'scanner_exit':int((r/'assessment/scanner-exit.txt').read_text()),
+ 'started_at':(r/'assessment/started-at.txt').read_text().strip(),
+ 'completed_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+ 'remediation_during_assessment':False}
+(r/'assessment/scanner-receipt.json').write_text(json.dumps(value,sort_keys=True))
+PY
+# The real scanner exit remains in the receipt. Collection is possible on failure.
+exit 0
