@@ -38,14 +38,22 @@ def inventory(content, policy=None):
     # This pinned profile has explicit selections and no inherited profile.
     require(profile.get('extends') is None, 'unsupported_profile_inheritance')
     selections = {x.get('idref'): x.get('selected') == 'true' for x in profile.findall(X + 'select')}
+    groups = {x.get('id') for x in root.iter(X + 'Group')}
+    require(set(selections) <= {x.get('id') for x in root.iter(X + 'Rule')} | groups, 'benchmark_rule_coverage')
+    require(not any(selections.get(g) is True for g in groups), 'unsupported_group_selection')
+    suppressed = set()
+    for group in root.iter(X + 'Group'):
+        if selections.get(group.get('id')) is False:
+            suppressed.update(x.get('id') for x in group.iter(X + 'Rule'))
+    require(not any(selections.get(r) is True for r in suppressed), 'conflicting_profile_selection')
     rows = {}
     for rule in root.iter(X + 'Rule'):
         identifier = rule.get('id')
         require(identifier not in rows, 'duplicate_benchmark_rule')
         rows[identifier] = {'rule_id': identifier, 'title': rule.findtext(X + 'title'),
-            'severity': rule.get('severity'), 'selected': selections.get(identifier, False),
+            'severity': rule.get('severity'), 'selected': selections.get(identifier, rule.get('selected') == 'true') and identifier not in suppressed,
             'references': [{'href': x.get('href'), 'value': x.text} for x in rule.findall(X + 'reference')]}
-    require(rows and set(selections) <= set(rows), 'benchmark_rule_coverage')
+    require(rows, 'benchmark_rule_coverage')
     return rows
 
 
