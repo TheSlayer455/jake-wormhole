@@ -94,9 +94,15 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     sub=p.add_subparsers(dest='command',required=True)
     prep=sub.add_parser('prepare');prep.add_argument('--store',required=True)
+    progress=sub.add_parser('progress');progress.add_argument('run_id')
     run=sub.add_parser('run');run.add_argument('--source',required=True);run.add_argument('--terraform',required=True)
     run.add_argument('--store',required=True);run.add_argument('--mode',choices=['stock-audit','hardened'],default='stock-audit')
     options=p.parse_args()
+    if options.command=='progress':
+        run=vm_baseline.ROOT/'vm-runs'/run_id(options.run_id)
+        value=read_json(run/'result.json')
+        print(json.dumps({k:value.get(k) for k in ['run_id','phase','last_progress_at','outcome','error_category','cleanup','stages']},indent=2))
+        return 0
     if options.command=='prepare':
         from .ubuntu_inputs import prepare
         value=prepare(options.store);print(json.dumps({'packages':len(value['packages']),'snapshot':value['snapshot']}));return 0

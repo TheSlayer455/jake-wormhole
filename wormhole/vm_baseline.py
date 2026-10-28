@@ -113,6 +113,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
     run = workspace_path(ROOT / 'vm-runs' / identifier, create=True)
     result = {'schema_version': '1.0', 'capability': 'real-iso-installation-baseline', 'run_id': identifier,
         'source_revision': revision, 'outcome': 'running', 'started_at': now(), 'stages': [],
+        'phase': 'preflight', 'last_progress_at': now(),
         'lab_iso_qualified': False, 'production_iso_eligible': False, 'cleanup': 'pending'}
     atomic_json(run / 'result.json', result)
     deadline = time.monotonic() + 1800
@@ -126,6 +127,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
         remaining = deadline - time.monotonic()
         require(remaining > 0, 'vm_absolute_deadline')
         started = time.monotonic()
+        result.update(phase=label, last_progress_at=now());save()
         with (run / (label + '.log')).open('wb') as log:
             process = subprocess.Popen([str(x) for x in args], stdin=subprocess.PIPE if data else subprocess.DEVNULL,
                 stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
@@ -138,6 +140,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                     os.killpg(process.pid, signal.SIGKILL);process.wait(timeout=3)
                 raise RunError('vm_command_unknown', 'A bounded command timed out; reconcile its resources before retrying.') from None
         result['stages'].append({'stage': label, 'elapsed_seconds': round(time.monotonic()-started, 3), 'returncode': process.returncode})
+        result['last_progress_at'] = now()
         save()
         if check and process.returncode:
             raise RunError(label + '_failed', 'The operation failed; inspect its preserved private diagnostic.')
@@ -235,6 +238,11 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 path = run / 'console.log'
                 require(path.stat().st_size <= 16 * 1024**2, 'installer_diagnostic_limit')
                 text = path.read_text(errors='replace')
+                phase = ('required-reboot' if 'WORMHOLE_REQUIRED_REBOOT' in text else
+                         'installed-finalization' if 'WORMHOLE_FINALIZATION_STARTED' in text else
+                         'installing' if 'subiquity/Install/install' in text else 'firmware-and-installer-boot')
+                if result['phase'] != phase:
+                    result.update(phase=phase,last_progress_at=now());save()
                 require('WORMHOLE_INSTALLATION_FAILED' not in text, 'installation_failed')
                 require('WORMHOLE_FINALIZATION_FAILED' not in text, 'finalization_failed')
                 host_type = 'ssh-rsa' if ubuntu_mode else 'ssh-ed25519'

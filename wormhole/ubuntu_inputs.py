@@ -113,6 +113,7 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
     payload = seed_dir / 'payload';shutil.copytree(store / 'bundle', payload)
     shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/finalize.sh', payload / 'finalize.sh')
     shutil.copyfile(SOURCE_ROOT / 'ubuntu/guest/audit.sh', payload / 'audit.sh')
+    shutil.copyfile(POLICY, payload / 'policy.json')
     contract = {'mode': mode, 'policy_sha256': sha256(POLICY), 'dependency_manifest_sha256': sha256(store / 'bundle/manifest.json')}
     (payload / 'install-contract.json').write_text(json.dumps(contract, sort_keys=True))
     (payload / 'wormhole-finalize.service').write_text('[Unit]\nDescription=Wormhole installed-guest finalization\nAfter=local-fs.target cloud-config.service\nBefore=ssh.service ssh.socket\n[Service]\nType=oneshot\nExecStart=/bin/bash /usr/local/lib/wormhole/finalize.sh\nTimeoutStartSec=1000\nRemainAfterExit=yes\n[Install]\nWantedBy=multi-user.target\n')
