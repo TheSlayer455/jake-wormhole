@@ -97,12 +97,33 @@ def start(run,name,identifier,image,lease,command):
              '--mount','type=bind,src='+str(evidence)+',dst=/evidence',
              '--tmpfs','/tmp:rw,nosuid,nodev,noexec,size=8m,mode=0700,uid=10001,gid=10001',
              '--entrypoint','/opt/wormhole/venv/bin/python',image,'-c',code],'support-create')
+    actual=json.loads(subprocess.check_output(['docker','inspect',service],timeout=10))[0]
+    limits=validate_service(actual,run,identifier,image)
+    atomic_json(Path(run)/'support-limits.json',limits)
     payload={'bind':BIND,'guest':GUEST,'certificate':(private/'server.crt').read_text(),'key':(private/'server.key').read_text()}
     # A finite stdin payload closes after delivery; the receiver no longer reads it.
     with (Path(run)/'support-start.log').open('wb') as output:
         process=subprocess.Popen(['docker','start','-ai',service],stdin=subprocess.PIPE,stdout=output,stderr=output,start_new_session=True)
         process.stdin.write(json.dumps(payload).encode());process.stdin.close()
     return service,process
+
+
+def validate_service(actual,run,identifier,image):
+    host=actual['HostConfig'];config=actual['Config']
+    require(config['Image']==image and config['Labels'].get('vm-run')==identifier,'support_identity_mismatch')
+    require(host['Memory']==MEMORY and host['MemorySwap']==MEMORY and host['NanoCpus']==500_000_000
+            and host['PidsLimit']==64,'support_limits_missing')
+    require(config['User']=='10001:10001' and host['ReadonlyRootfs'] is True and host['Privileged'] is False
+            and host['CapDrop']==['ALL'] and not host.get('CapAdd') and host['NetworkMode']=='host'
+            and host.get('PidMode')!='host' and host.get('IpcMode')!='host'
+            and any(x in host['SecurityOpt'] for x in ['no-new-privileges:true','no-new-privileges']), 'support_isolation_missing')
+    binds=[m for m in actual['Mounts'] if m['Type']=='bind']
+    require(len(binds)==1 and binds[0]['Source']==str(Path(run)/'support-evidence')
+            and binds[0]['Destination']=='/evidence' and binds[0]['RW'] is True
+            and all(m['Type'] in {'bind','tmpfs'} for m in actual['Mounts']), 'support_mounts_invalid')
+    return {'memory_bytes':host['Memory'],'nano_cpus':host['NanoCpus'],'pids_limit':host['PidsLimit'],
+            'read_only_root':True,'nonroot':True,'capabilities_dropped':True,'privileged':False,
+            'sole_host_mount':'run-owned support evidence','network':'host namespace; listeners confined to the owned bridge address'}
 
 
 def health(run):

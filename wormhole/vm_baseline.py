@@ -280,6 +280,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                     'unexpected_network_forwarding')
             if sandbox:
                 from .ubuntu_sandbox import start,health
+                support=name+'-services'
                 support,support_process=start(run,name,identifier,HELPER,lease,command)
                 result['support_health']=health(run)
                 require(dom.find('devices/interface/filterref').get('filter')==filter_name,'sandbox_filter_not_attached')
@@ -405,6 +406,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                     from .ubuntu_sandbox import evidence
                     result['support_verification']=evidence(run,identifier)
         except Exception as error:
+            if getattr(error,'code',None)=='vm_command_unknown':unknown=True
             result.update(outcome='unknown' if unknown else 'failed', failure_phase=result['phase'],
                           error_category=getattr(error, 'code', type(error).__name__))
         finally:
