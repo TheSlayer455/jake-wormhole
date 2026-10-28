@@ -113,10 +113,24 @@ def main():
     sub=p.add_subparsers(dest='command',required=True)
     prep=sub.add_parser('prepare');prep.add_argument('--store',required=True)
     progress=sub.add_parser('progress');progress.add_argument('run_id')
+    listing=sub.add_parser('catalog')
+    comparison=sub.add_parser('compare');comparison.add_argument('previous');comparison.add_argument('current')
+    reporting=sub.add_parser('report');reporting.add_argument('run_id')
     run=sub.add_parser('run');run.add_argument('--source',required=True);run.add_argument('--terraform',required=True)
     run.add_argument('--store',required=True);run.add_argument('--mode',choices=['stock-audit','hardened'],default='stock-audit')
     run.add_argument('--reuse-run',help='Verified immutable ISO from this reconciled run; new disk, identity and assessment are mandatory.')
     options=p.parse_args()
+    if options.command=='catalog':
+        from .ubuntu_catalog import catalog
+        print(json.dumps(catalog(vm_baseline.ROOT/'vm-runs'),indent=2));return 0
+    if options.command=='compare':
+        from .ubuntu_catalog import compare
+        value=compare(vm_baseline.ROOT/'vm-runs'/run_id(options.previous),vm_baseline.ROOT/'vm-runs'/run_id(options.current))
+        print(json.dumps(value,indent=2));return 0
+    if options.command=='report':
+        run=vm_baseline.ROOT/'vm-runs'/run_id(options.run_id)
+        value=report(run,read_json(run/'result.json'))
+        print(json.dumps({'lab_status':value['lab_status'],'functional_counts':value['functional_counts']}));return 0
     if options.command=='progress':
         run=vm_baseline.ROOT/'vm-runs'/run_id(options.run_id)
         value=read_json(run/'result.json')
