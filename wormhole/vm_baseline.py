@@ -197,8 +197,14 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 (run / 'sudo-password').write_text(password)
                 hashed = subprocess.run(['openssl', 'passwd', '-6', '-stdin'], input=password + '\n',
                                         capture_output=True, text=True, check=True, timeout=10).stdout.strip()
+                boot_hash=None
+                if ubuntu_mode=='hardened':
+                    from .ubuntu_inputs import grub_password_hash
+                    boot_password=secrets.token_urlsafe(32)+'bB2!'
+                    (run/'boot-password').write_text(boot_password)
+                    boot_hash=grub_password_hash(boot_password,secrets.token_bytes(64))
                 manifest = build_assessed(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac,
-                    store=dependency_store, mode=ubuntu_mode, password_hash=hashed, reuse=reuse)
+                    store=dependency_store, mode=ubuntu_mode, password_hash=hashed, boot_hash=boot_hash,reuse=reuse)
             else:
                 manifest = build_ubuntu(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac, reuse=reuse)
             result['stages'].append({'stage': 'candidate-build', 'elapsed_seconds': round(time.monotonic()-started, 3), 'returncode': 0})

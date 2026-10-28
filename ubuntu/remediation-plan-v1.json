@@ -164,6 +164,10 @@
     "file_permissions_etc_audit_auditd",
     "file_permissions_etc_audit_rules",
     "file_permissions_etc_audit_rulesd",
+    "vlock_installed",
+    "auditd_data_disk_full_action",
+    "auditd_data_retention_space_left_action",
+    "auditd_data_retention_space_left_percentage",
     "aide_build_database"
   ],
   "additional_controls": [

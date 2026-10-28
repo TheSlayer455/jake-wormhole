@@ -21,6 +21,29 @@ plan = json.loads((payload / 'remediation-plan.json').read_text())
 deadline = time.monotonic() + 800
 outcomes = []
 env = dict(os.environ, DEBIAN_FRONTEND='noninteractive', APT_CONFIG=str(payload / 'offline-apt.conf'))
+# Protect editing/console commands while retaining unattended normal OS boot.
+# Recovery entries are disabled; the separate boot secret never enters the ISO.
+generator=Path('/etc/grub.d/10_linux')
+if 'password_pbkdf2 boot grub.pbkdf2.sha512.100000.' not in Path('/etc/grub.d/40_custom').read_text():
+    raise RuntimeError('run-scoped boot credential missing')
+original=generator.read_text()
+old='CLASS="--class gnu-linux --class gnu --class os"'
+new='CLASS="--unrestricted --class gnu-linux --class gnu --class os"'
+if new not in original:
+    if original.count(old)!=1:raise RuntimeError('unsupported installed GRUB generator')
+    generator.write_text(original.replace(old,new,1))
+Path('/etc/default/grub.d/99-wormhole-access.cfg').write_text('GRUB_DISABLE_RECOVERY=true\nGRUB_DISABLE_SUBMENU=y\n')
+subprocess.run(['update-grub'],check=True,timeout=30)
+# pam_motd can create/rotate logs before the later common-session umask runs.
+# Set the declared 077 mask before session modules on both login paths. This
+# preserves diagnostics and fixes file creation rather than chmod after audit.
+for file in (Path('/etc/pam.d/sshd'),Path('/etc/pam.d/login')):
+    lines=file.read_text().splitlines()
+    directive='session required pam_umask.so umask=0077 nousergroups'
+    if directive not in lines:
+        index=next(i for i,line in enumerate(lines) if line.lstrip().startswith('session'))
+        lines.insert(index,directive)
+        file.write_text('\n'.join(lines)+'\n')
 # Only the declared guest management service is admitted. No host rules change.
 for command in [['ufw','default','deny','incoming'], ['ufw','default','allow','outgoing'],
                 ['ufw','limit','in','on','lab0','to','any','port','22','proto','tcp'],

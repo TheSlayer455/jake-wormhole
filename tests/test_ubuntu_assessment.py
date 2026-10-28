@@ -82,10 +82,15 @@ class Assessment(unittest.TestCase):
         self.assertEqual(len(plan),3)
 
     def test_secret_identity_is_not_in_installer_command_arguments(self):
-        from wormhole.ubuntu_inputs import seed_config
+        from wormhole.ubuntu_inputs import seed_config,grub_password_hash
         from uuid import uuid4
         value=seed_config(str(uuid4()),'ssh-rsa '+'A'*500,'192.0.2.10/24','52:54:00:11:22:33','$6$private$hash')
         self.assertNotIn('$6$private$hash',value)
         self.assertIn('CIDATA',value)
         self.assertIn('lab.service ALL=(ALL) ALL',value)
         self.assertNotIn('NOPASSWD',value)
+        boot=grub_password_hash('synthetic-boot-credential',b'a'*64)
+        value=seed_config(str(uuid4()),'ssh-rsa '+'A'*500,'192.0.2.10/24','52:54:00:11:22:33','$6$private$hash',boot)
+        self.assertNotIn(boot,value)
+        self.assertNotIn('synthetic-boot-credential',value)
+        self.assertIn('boot-password-hash',value)

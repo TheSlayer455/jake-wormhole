@@ -72,9 +72,17 @@ def prepare(store):
     return manifest
 
 
-def seed_config(identifier, public_key, address, mac, password_hash):
+def grub_password_hash(password, salt):
+    require(type(salt) is bytes and len(salt)==64,'boot_credential_salt_invalid')
+    value=hashlib.pbkdf2_hmac('sha512',password.encode(),salt,100000)
+    return 'grub.pbkdf2.sha512.100000.'+salt.hex().upper()+'.'+value.hex().upper()
+
+
+def seed_config(identifier, public_key, address, mac, password_hash, boot_hash=None):
     require(re.fullmatch(r'ssh-rsa [A-Za-z0-9+/=]{300,900}(?: [A-Za-z0-9_.-]+)?', public_key), 'ubuntu_public_key_invalid')
     require(re.fullmatch(r'\$6\$[./A-Za-z0-9$]+', password_hash), 'ubuntu_password_hash_invalid')
+    require(boot_hash is None or re.fullmatch(r'grub[.]pbkdf2[.]sha512[.]100000[.][A-F0-9]{128}[.][A-F0-9]{128}',boot_hash),
+            'boot_credential_hash_invalid')
     value = json.loads(cloud_config(identifier, 'ssh-ed25519 ' + 'A' * 68, address, mac).split('\n', 1)[1])
     install = """set -eu
 . /etc/os-release
@@ -86,10 +94,15 @@ printf '%s\\n' 'deb [trusted=yes] file:/usr/local/lib/wormhole/repository ./' > 
 apt-get -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- update
 DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- install libopenscap8=1.2.17-0.1ubuntu7.22.04.3
 if python3 -c 'import json,sys;sys.exit(json.load(open("/usr/local/lib/wormhole/install-contract.json"))["mode"] != "hardened")'; then
-  packages=$(python3 -c 'import json;names={"auditd","audispd-plugins","aide","aide-common","cron","libpam-pwquality","apparmor-utils","ufw"};rows=json.load(open("/usr/local/lib/wormhole/manifest.json"))["packages"];assert names <= {p["name"] for p in rows};print(" ".join(p["name"]+"="+p["version"] for p in rows if p["name"] in names))')
+  packages=$(python3 -c 'import json;names={"auditd","audispd-plugins","aide","aide-common","cron","libpam-pwquality","apparmor-utils","ufw","vlock"};rows=json.load(open("/usr/local/lib/wormhole/manifest.json"))["packages"];assert names <= {p["name"] for p in rows};print(" ".join(p["name"]+"="+p["version"] for p in rows if p["name"] in names))')
   DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- install $packages
 fi
 useradd --create-home --shell /bin/bash --user-group lab.service
+if test -s /tmp/wormhole-identity/boot-password-hash; then
+  printf '%s\\n' '#!/bin/sh' 'exec tail -n +3 "$0"' 'set superusers="boot"' 'export superusers' > /etc/grub.d/40_custom
+  printf 'password_pbkdf2 boot %s\\n' "$(cat /tmp/wormhole-identity/boot-password-hash)" >> /etc/grub.d/40_custom
+  chmod 0700 /etc/grub.d/40_custom
+fi
 chpasswd --encrypted < /tmp/wormhole-identity/password
 install -d -o lab.service -g lab.service -m 0700 /home/lab.service/.ssh
 install -o lab.service -g lab.service -m 0600 /tmp/wormhole-identity/public-key /home/lab.service/.ssh/authorized_keys
@@ -120,8 +133,9 @@ rm -rf /tmp/wormhole-identity /tmp/wormhole-payload
     return '#cloud-config\n' + json.dumps(value, indent=2) + '\n'
 
 
-def build(source, destination, seed_dir, identifier, public_key, address, mac, *, store, mode, password_hash, reuse=None):
+def build(source, destination, seed_dir, identifier, public_key, address, mac, *, store, mode, password_hash, boot_hash=None, reuse=None):
     require(mode in {'stock-audit', 'hardened'}, 'ubuntu_mode_invalid')
+    require(mode!='hardened' or boot_hash is not None,'boot_credential_missing')
     store, destination, seed_dir = Path(store), Path(destination), Path(seed_dir)
     prepare(store)
     fingerprint, inputs = input_identity(store, mode)
@@ -149,10 +163,11 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
             subprocess.run(['xorriso', '-indev', str(destination), '-outdev', str(final_iso), '-boot_image', 'any', 'replay',
                             '-map', str(payload), '/wormhole'], stdout=log, stderr=log, check=True, timeout=300)
         os.replace(final_iso, destination)
-    (seed_dir / 'user-data').write_text(seed_config(identifier, public_key, address, mac, password_hash))
+    (seed_dir / 'user-data').write_text(seed_config(identifier, public_key, address, mac, password_hash,boot_hash))
     identity = seed_dir / 'wormhole-identity';identity.mkdir(mode=0o700)
     for name, raw in {'public-key': public_key + '\n', 'password': 'lab.service:' + password_hash + '\n', 'run-id': identifier + '\n'}.items():
         (identity / name).write_text(raw)
+    if boot_hash is not None:(identity/'boot-password-hash').write_text(boot_hash+'\n')
     seed = destination.with_name('seed.iso');seed.unlink()
     subprocess.run(['xorriso', '-as', 'mkisofs', '-V', 'CIDATA', '-J', '-r', '-graft-points', '-o', str(seed),
                     'user-data=' + str(seed_dir / 'user-data'), 'meta-data=' + str(seed_dir / 'meta-data'),
@@ -161,7 +176,8 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
     seed_check = seed_dir / 'seed-layout-check'
     subprocess.run(['xorriso', '-osirrox', 'on', '-indev', str(seed), '-extract', '/wormhole-identity', str(seed_check)],
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=15)
-    require({p.name for p in seed_check.iterdir()} == {'public-key', 'password', 'run-id'} and
+    expected_identity={'public-key','password','run-id'} | ({'boot-password-hash'} if boot_hash is not None else set())
+    require({p.name for p in seed_check.iterdir()} == expected_identity and
             all(sha256(p) == sha256(identity / p.name) for p in seed_check.iterdir()), 'identity_seed_layout_invalid')
     manifest.update(capability='ubuntu-assessment-candidate-iso', candidate_sha256=sha256(destination), seed_sha256=sha256(seed),
         installation_input_sha256=sha256(seed_dir / 'user-data'), mode=mode, policy_sha256=sha256(POLICY),
