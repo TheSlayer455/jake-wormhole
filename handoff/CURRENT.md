@@ -30,6 +30,16 @@ focused tests and CI; they do not relabel the tested runtime source. Delivery an
 merge identity are recorded by [PR 34](https://github.com/TheSlayer455/jake-wormhole/pull/34).
 Do not infer independent review; execution and self-review are the actual review.
 
+Integration source `d6ad3523867d8afbb365e01251190f656e10eec0` also passed all
+918 source tests on Linux (916/two skips, 148 seconds) and Windows (618/300 skips,
+170 seconds), plus CI. It extends the same mandatory filter to assessment-only
+Ubuntu guests. Its fresh stock audit completed SSH/Ansible and native collection:
+56 pass/63 fail/107 not applicable/four not checked/409 unselected. The guest
+management probe failed with guest UFW inactive and a successful host positive
+control. Same-scanner comparison: 60 failing controls became passes, zero new
+failures, 93 applicability changes. Stock retains two functional failures and 20
+blocked sandbox checks; do not call it hardened acceptance. Cleanup was verified.
+
 The remaining native results are 208 pass/three fail/14 not applicable/five not
 checked/409 upstream not selected. The unmodified upstream audit is retained
 separately (206 pass/five fail); no rules are excluded. Four objective manual

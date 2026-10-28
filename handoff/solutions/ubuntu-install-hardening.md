@@ -14,6 +14,17 @@ each. AIDE initialized once at the stable end of hardening, about 122 seconds;
 these samples do not establish a causal speedup over older runs.
 This home Ubuntu-host BIOS experiment does not establish work compatibility.
 
+A fresh stock-audit baseline at `d6ad3523867d8afbb365e01251190f656e10eec0`
+used the same scanner/content and completed final SSH/Ansible, native assessment
+and cleanup under the mandatory NIC filter. With its guest firewall inactive,
+the management listener was refused while the host-side positive control worked.
+Its native results were 56 pass/63 fail/107 not applicable/four not checked/409
+unselected. The comparison found 60 failing rules became passes, no new failures
+and 93 applicability changes. Scanner prerequisites mean this is not untouched
+stock. Its hardened functional contract correctly retained two failures
+(audit service/firewall inactive) and 20 blocked sandbox checks; it is not an
+accepted hardened installation or a qualified artifact.
+
 Actual OpenSCAP 1.4.6 accounts for all 639 rules: **208 pass, three fail,
 14 not applicable, five not checked and 409 upstream not selected**. The unchanged
 upstream profile is also assessed: 206 pass/five fail, with the other totals
