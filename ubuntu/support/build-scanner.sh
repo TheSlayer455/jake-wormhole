@@ -8,8 +8,11 @@ printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
 chmod 0755 /usr/sbin/policy-rc.d
 printf 'deb [trusted=yes] file:/inputs/repository ./\n' > /etc/apt/sources.list
 rm -f /etc/apt/sources.list.d/*
-apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends --allow-downgrades \
+# The read-only input mount is owner-only private storage. This ordinary,
+# network-less build container already installs packages as root; limit this
+# APT setting to the offline builder rather than relaxing host input permissions.
+apt-get -o APT::Sandbox::User=root update
+DEBIAN_FRONTEND=noninteractive apt-get -o APT::Sandbox::User=root install -y --no-install-recommends --allow-downgrades \
  build-essential cmake pkg-config libdbus-1-dev libdbus-glib-1-dev libcurl4-openssl-dev \
  libgcrypt20-dev libselinux1-dev libxslt1-dev libglib2.0-dev libacl1-dev libblkid-dev libcap-dev \
  libxml2-dev libldap2-dev libpcre2-dev libbz2-dev librpm-dev libyaml-dev libxmlsec1-dev

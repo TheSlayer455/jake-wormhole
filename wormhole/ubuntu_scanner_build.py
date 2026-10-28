@@ -71,7 +71,7 @@ def build(store,base):
                 require(current['SizeRw']+size<4*1024**3,'scanner_disk_budget')
                 if not current['State']['Running']:break
                 require(time.monotonic()-started<limits['timeout_seconds'],'scanner_build_deadline');time.sleep(3)
-            (run/'build.log').write_bytes(call(['logs',container]).stdout)
+            logs=call(['logs',container]);(run/'build.log').write_bytes(logs.stdout+logs.stderr)
             require(current['State']['ExitCode']==0,'scanner_build_failed')
             receipt.update(state='complete',elapsed_seconds=round(time.monotonic()-started,3),
                 artifact_sha256=sha256(work/'openscap-lab.tar.gz'),base_image_id=base_info['Id'])
