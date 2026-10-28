@@ -1,9 +1,12 @@
 # Minx work index
 
-Current owner-authorized extension: [home ISO foundation](../handoff/ISO-FOUNDATION.md).
-Implement and verify one RHEL 9 and one Ubuntu 22.04 real installation path while
-preserving the container baseline. This is a new assignment; historical Done
-contracts below are not reopened or reused as claim authority.
+Current owner-authorized milestone: complete Ubuntu 22.04 installation-time
+hardening, actual assessment, repeatability and exact-byte local release while
+preserving the container baseline. RHEL implementation/media work is paused until
+Ubuntu is complete and the owner explicitly starts RHEL. USG/FIPS and required
+manual/external-control evidence remain pending; no engineer waiver is allowed.
+See [current continuation](../handoff/CURRENT.md). Historical Done contracts below
+are not reopened or reused as claim authority.
 The Ubuntu baseline is verified at `55bb2fb` and delivered through [PR 29](https://github.com/TheSlayer455/jake-wormhole/pull/29).
 RHEL media/installation, hardening, real assessment, the lab gate/publication and
 remaining VM negatives are still outstanding; no original Minx ticket is

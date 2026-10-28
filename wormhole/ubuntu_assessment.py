@@ -58,6 +58,7 @@ def inventory(content, policy=None):
 
 
 def read_results(content, native_result, *, expected_target, scanner_exit, policy=None):
+    require(type(scanner_exit) is int, 'assessment_exit_status_invalid')
     policy = policy or json.loads(POLICY.read_text())
     planned = inventory(content, policy)
     root = xml(native_result)
@@ -80,7 +81,7 @@ def read_results(content, native_result, *, expected_target, scanner_exit, polic
         rows.append(row)
     selected = [x for x in rows if x['selected']]
     complete = all(x['native_status'] != 'missing' for x in rows)
-    automated_clean = all(x['native_status'] in {'pass', 'notapplicable', 'informational'} for x in selected)
+    automated_clean = all(x['native_status'] in {'pass', 'notapplicable'} for x in selected)
     return {'schema_version': '1.0', 'capability': 'real-ubuntu-scap-assessment',
         'content_sha256': digest(content), 'native_result_sha256': digest(native_result),
         'profile_id': policy['content']['profile_id'], 'target': expected_target,

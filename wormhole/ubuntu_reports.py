@@ -5,12 +5,21 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 
 from .runs import atomic_json
-from .ubuntu_assessment import POLICY
+from .ubuntu_assessment import POLICY, inventory
 
 
 def generate(run, result, *, findings=None, observations=None, controller_records=()):
     run = Path(run)
     policy = json.loads(POLICY.read_text())
+    rule_rows=(findings or {}).get('rules',[])
+    content=run/'inputs/payload/ssg-ubuntu2204-ds.xml'
+    if not rule_rows and content.exists():
+        rule_rows=[dict(row,native_status='missing') for row in inventory(content).values()]
+    coverage={'upstream_rule_count':len(rule_rows),'selected_rule_count':sum(r['selected'] for r in rule_rows),
+              'native_counts':dict(Counter(r['native_status'] for r in rule_rows)),
+              'assessment_executed':findings is not None,
+              'rules':[{'rule_id':r['rule_id'],'selected':r['selected'],'native_status':r['native_status']} for r in rule_rows]}
+    (run/'assessment-coverage.json').write_text(json.dumps(coverage,indent=2))
     rows = []
     observed = (observations or {}).get('checks', {})
     stages = {r.get('stage'): r for r in controller_records}
@@ -59,10 +68,12 @@ def generate(run, result, *, findings=None, observations=None, controller_record
         if row['status'] != 'pass':
             ET.SubElement(case, 'failure' if row['status'] == 'fail' else 'skipped',
                           message=row['reason']).text = row['status']
-    for row in (findings or {}).get('rules', []):
+    for row in rule_rows:
         case = ET.SubElement(tests, 'testcase', classname='scap', name=row['rule_id'])
         status = row['native_status']
-        if status in {'notselected','notapplicable','informational'}:
+        if status=='missing' and findings is None:
+            ET.SubElement(case, 'skipped', message='blocked: assessment unavailable')
+        elif status in {'notselected','notapplicable','informational'}:
             ET.SubElement(case, 'skipped', message=status)
         elif status != 'pass':
             ET.SubElement(case, 'failure', message=status)

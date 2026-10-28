@@ -10,9 +10,35 @@ The versioned policy is `profiles/ubuntu-lab-policy-v1.json`: zero unresolved
 applicable automated failures/errors, accountable manual evidence, two fresh
 installs and exact-byte publication. No engineer-created waiver is permitted.
 USG/Pro/FIPS enrollment is unavailable (owner confirmed); keep those requirements
-pending while performing legitimate alternative OpenSCAP work. An initial fresh
-scanner-equipped installation detected a first-boot finalization failure before
-SSH; diagnostics and cleanup were preserved. No scan or qualification is claimed.
+pending while performing legitimate alternative OpenSCAP work. Source `c22653d`
+completed a fresh stock-audit installation, final reboot, trusted final SSH,
+password-required sudo, real Ansible and OpenSCAP 1.2.17 in about 264 seconds.
+CaC 0.1.82 Ubuntu V2R7: 639 accounted rules, 230 selected; 55 pass, 64 fail,
+107 not applicable, four not checked, 409 upstream not selected. Native XML,
+ARF, HTML and receipt stay private. This is not Canonical USG V2R8 equivalence.
+The stock audit includes pinned offline scanner prerequisites, not untouched
+stock package state. Cleanup was verified before the next allocation.
+
+Confirmed installation defects: NoCloud directory flattening (fixed with graft
+points plus real seed readback); SSH syntax validation before `/run/sshd` existed
+(fixed by the finalization unit's runtime directory); AIDE configuration missing
+when recommendations were disabled (explicit `aide-common`/cron dependency).
+Failures blocked readiness/catalog dispatch; their console evidence remains
+private. Installation hardening is under real fresh-VM verification; do not claim
+that a remediation operation's zero exit proves a passing benchmark rule.
+
+Use the established operator route, clean pinned source and private stores:
+`python -m wormhole.ubuntu_runtime --help`. `prepare`, `run --mode stock-audit`
+or `run --mode hardened`, `run --reuse-run UUID`, `progress UUID`, `report UUID`,
+`compare PREVIOUS CURRENT`, `catalog`, `recover UUID --terraform TOOL`, and
+`publish` share the existing lifecycle/ownership boundary. Never execute files
+under `ubuntu/guest/` on the host. Reuse needs unchanged installed-input identity;
+each run creates a fresh disk, credentials and native assessment. Report-only
+changes are excluded from that input fingerprint. Recovery requires the original
+supervisor/operation to be stopped and exact journal/configuration/resource proof.
+Publication is required to refuse the currently pending policy. Its eligible
+positive path remains unverified; no qualified ISO or completed Ubuntu milestone
+is claimed.
 
 ## Active home ISO extension
 

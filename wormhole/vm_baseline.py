@@ -31,6 +31,14 @@ TF_SHA = '664b66cc0bcd7ed28fd27569719ccaa8a40c230b8be45060ce4d65e2852e1bcc'
 NETWORK = '192.0.2.0/24'
 ADDRESS = '192.0.2.10'
 
+
+def process_identity(pid):
+    try:
+        raw=Path('/proc/'+str(pid)+'/stat').read_text()
+        return {'pid':pid,'start_ticks':raw.rsplit(') ',1)[1].split()[19]}
+    except FileNotFoundError:
+        return None
+
 # Runs inside the existing nonroot, pinned helper; only outgoing guest SSH.
 # Secrets arrive through stdin and live in its private tmpfs, never argv/env/state.
 HELPER_CODE = r'''
@@ -114,6 +122,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
     result = {'schema_version': '1.0', 'capability': 'real-iso-installation-baseline', 'run_id': identifier,
         'source_revision': revision, 'outcome': 'running', 'started_at': now(), 'stages': [],
         'phase': 'preflight', 'last_progress_at': now(),
+        'supervisor': process_identity(os.getpid()),
         'lab_iso_qualified': False, 'production_iso_eligible': False, 'cleanup': 'pending'}
     atomic_json(run / 'result.json', result)
     deadline = time.monotonic() + 1800
@@ -131,6 +140,8 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
         with (run / (label + '.log')).open('wb') as log:
             process = subprocess.Popen([str(x) for x in args], stdin=subprocess.PIPE if data else subprocess.DEVNULL,
                 stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+            result['active_command'] = process_identity(process.pid)
+            save()
             try:
                 process.communicate(data, timeout=min(timeout, remaining))
             except subprocess.TimeoutExpired:
@@ -139,6 +150,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 except subprocess.TimeoutExpired:
                     os.killpg(process.pid, signal.SIGKILL);process.wait(timeout=3)
                 raise RunError('vm_command_unknown', 'A bounded command timed out; reconcile its resources before retrying.') from None
+        result.pop('active_command',None)
         result['stages'].append({'stage': label, 'elapsed_seconds': round(time.monotonic()-started, 3), 'returncode': process.returncode})
         result['last_progress_at'] = now()
         save()
@@ -196,6 +208,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             tfdir = run / 'terraform';tfdir.mkdir(mode=0o700)
             shutil.copyfile(SOURCE_ROOT / 'provisioning/libvirt/.terraform.lock.hcl', tfdir / '.terraform.lock.hcl')
             atomic_json(tfdir / 'main.tf.json', terraform_config(name, pool, candidate, seed, NETWORK, mac, qemu.pw_uid, group))
+            result['terraform_configuration_sha256'] = sha256(tfdir / 'main.tf.json');save()
             tf = [terraform, '-chdir=' + str(tfdir)]
             command([*tf, 'init', '-input=false', '-lockfile=readonly'], 'terraform-init')
             command([*tf, 'validate', '-no-color'], 'terraform-validate')
@@ -239,6 +252,10 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 path = run / 'console.log'
                 require(path.stat().st_size <= 16 * 1024**2, 'installer_diagnostic_limit')
                 text = path.read_text(errors='replace')
+                progress = re.findall(r'WORMHOLE_HARDENING_PROGRESS completed=(\d+) rule=([a-z0-9_-]+)', text)
+                if progress and result.get('hardening_operations_completed') != int(progress[-1][0]):
+                    result.update(hardening_operations_completed=int(progress[-1][0]),
+                                  last_hardening_operation=progress[-1][1],last_progress_at=now());save()
                 phase = ('required-reboot' if 'WORMHOLE_REQUIRED_REBOOT' in text else
                          'hardening-complete' if 'WORMHOLE_HARDENING_COMPLETE' in text else
                          'hardening' if 'WORMHOLE_HARDENING_STARTED' in text else
@@ -295,7 +312,8 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 result.update(outcome='assessment-complete' if findings['scanner_execution_completed'] else 'assessment-failed',
                               lab_status='LAB QUALIFICATION PENDING')
         except Exception as error:
-            result.update(outcome='unknown' if unknown else 'failed', error_category=getattr(error, 'code', type(error).__name__))
+            result.update(outcome='unknown' if unknown else 'failed', failure_phase=result['phase'],
+                          error_category=getattr(error, 'code', type(error).__name__))
         finally:
             if console is not None:
                 try:os.killpg(console.pid, signal.SIGTERM)

@@ -58,12 +58,13 @@ class Assessment(unittest.TestCase):
         with self.assertRaises(RunError):self.read()
 
     def test_error_unknown_unchecked_are_not_passes(self):
-        for status in ['error','unknown','notchecked','fixed']:
+        for status in ['error','unknown','notchecked','fixed','informational']:
             self.write(status)
             self.assertFalse(self.read()['all_selected_automated_clean'])
         self.write('pass')
         self.assertFalse(self.read(1)['scanner_execution_completed'])
         self.assertFalse(self.read(1)['lab_iso_qualified'])
+        with self.assertRaises(RunError):self.read(False)
         self.content.write_text('changed')
         with self.assertRaises(RunError):self.read()
 

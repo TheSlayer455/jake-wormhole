@@ -93,6 +93,7 @@ def collect(run, result):
     receipt = json.loads((out / 'scanner-receipt.json').read_text())
     policy = json.loads(POLICY.read_text())
     require(receipt['run_id'] == result['run_id'] and receipt['content_sha256'] == policy['content']['datastream_sha256']
+            and receipt['target'] == 'vm-' + result['run_id'][:8]
             and receipt['boot_id'] != receipt['firstboot_id'] and receipt['remediation_during_assessment'] is False, 'assessment_receipt_identity')
     findings = read_results(run / 'inputs/payload/ssg-ubuntu2204-ds.xml', out / 'xccdf.xml',
                             expected_target=receipt['target'], scanner_exit=receipt['scanner_exit'])
@@ -121,10 +122,14 @@ def main():
     reporting=sub.add_parser('report');reporting.add_argument('run_id')
     publication=sub.add_parser('publish');publication.add_argument('run_id');publication.add_argument('--previous',required=True)
     publication.add_argument('--store',required=True);publication.add_argument('--destination',required=True);publication.add_argument('--name',required=True)
+    recovery=sub.add_parser('recover');recovery.add_argument('run_id');recovery.add_argument('--terraform',required=True)
     run=sub.add_parser('run');run.add_argument('--source',required=True);run.add_argument('--terraform',required=True)
     run.add_argument('--store',required=True);run.add_argument('--mode',choices=['stock-audit','hardened'],default='stock-audit')
     run.add_argument('--reuse-run',help='Verified immutable ISO from this reconciled run; new disk, identity and assessment are mandatory.')
     options=p.parse_args()
+    if options.command=='recover':
+        from .ubuntu_recovery import recover
+        print(json.dumps(recover(options.run_id,options.terraform),indent=2));return 0
     if options.command=='publish':
         from .ubuntu_release import publish
         identifier=run_id(options.run_id)

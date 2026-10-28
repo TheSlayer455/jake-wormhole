@@ -8,7 +8,7 @@ and fleet fault experiments, explicit initialization/configuration receipts and
 verified Ubuntu/UBI candidate reuse and contained initialization recovery after
 coordinator interruption. Actual Ubuntu/UBI, fault, reuse, mixed/twenty-target, recovery and private local publication execution is verified at the recorded sources. Production ISO eligibility remains false.
 
-Container reference automation remains the fast regression layer. An explicitly authorized [home real-ISO extension](handoff/ISO-FOUNDATION.md) is in progress for RHEL 9 and Ubuntu 22.04: separate Terraform/libvirt resources, streamed multi-gigabyte media and real installed-system evidence. This increment does not establish hardened or lab-qualified ISOs. The source repository is public by [Jake's October 24 decision](docs/decisions/0006-public-source.md); runtime inputs, credentials and raw evidence remain private.
+Container reference automation remains the fast regression layer. The authorized [home real-ISO extension](handoff/ISO-FOUNDATION.md) now has an Ubuntu-only milestone: fresh Terraform/libvirt installation, installation-time hardening and real pinned assessment. RHEL development/media work is paused. A real OpenSCAP stock audit completed; hardening and lab qualification are still in progress. USG/FIPS enrollment is unavailable and remains required pending evidence, not waived. See [current continuation](handoff/CURRENT.md). The source repository is public by [Jake's October 24 decision](docs/decisions/0006-public-source.md); runtime inputs, credentials and raw evidence remain private.
 
 **Luna and external engineering agents: [start here](docs/EXTERNAL-INTEGRATION.md).** The short guide maps capabilities to source and tests, with explicit integration limits.
 
