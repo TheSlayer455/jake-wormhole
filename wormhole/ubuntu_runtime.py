@@ -199,7 +199,9 @@ def main():
     if options.command=='coverage':
         from .ubuntu_coverage import reconcile
         run=vm_baseline.ROOT/'vm-runs'/run_id(options.run_id)
-        rows=read_json(run/'assessment/findings.json')['rules']
+        findings=run/'assessment/findings.json'
+        require(0<findings.stat().st_size<=16*1024**2,'assessment_size')
+        rows=json.loads(findings.read_text())['rules']
         value=reconcile(rows,options.baseline_manual,options.target_manual)
         atomic_json(run/'benchmark-reconciliation.json',value)
         print(json.dumps({k:v for k,v in value.items() if k!='controls'},indent=2));return 0
