@@ -117,15 +117,15 @@ def authenticate(pin):
 
 
 def parser_probe():
-    module=C.CDLL('/lib/x86_64-linux-gnu/security/pam_pkcs11.so')
-    module.scconf_new.argtypes=[C.c_char_p];module.scconf_new.restype=C.c_void_p
-    module.scconf_parse.argtypes=[C.c_void_p];module.scconf_free.argtypes=[C.c_void_p]
     source=Path('/etc/pam_pkcs11/pam_pkcs11.conf').read_text()
     def parse(path):
-        context=module.scconf_new(os.fsencode(path))
-        if not context:raise RuntimeError('configuration parser allocation failed')
-        try:return module.scconf_parse(context)>0
-        finally:module.scconf_free(context)
+        # The package hides its scconf symbols. Exercise its real configuration
+        # reader through the supported utility, with no token/PIN supplied.
+        result=subprocess.run(['pkcs11_inspect','debug','config_file='+str(path)],stdin=subprocess.DEVNULL,
+                              capture_output=True,text=True,timeout=10)
+        text=result.stdout+result.stderr
+        if 'Using config file '+str(path) not in text:raise RuntimeError('vendor parser diagnostic unavailable')
+        return 'Error parsing file' not in text and 'pam_pkcs11 block not found' not in text
     with tempfile.TemporaryDirectory(prefix='wormhole-parser-',dir='/run') as folder:
         invalid=Path(folder)/'invalid.conf';invalid.write_text(source.replace('use_mappers = pwent;','use_mappers = pwent',1))
         return {'vendor_configuration_parses':parse('/etc/pam_pkcs11/pam_pkcs11.conf'),
