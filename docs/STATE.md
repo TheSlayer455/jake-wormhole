@@ -1,5 +1,12 @@
 # Current engineering state
 
+Delivery: [PR 37](https://github.com/TheSlayer455/jake-wormhole/pull/37).
+Its head and merge records distinguish documentation delivery from the runtime
+revision below. Final resource audit found no owned temporary resources or
+pending journal entries; the admission lock was available, the unrelated sentinel
+was unchanged and K3s remained active. Private media, native evidence and failure
+records are intentionally retained within the storage budget.
+
 Ubuntu PAM closure tested `3e1e00bc64d6d7c3fb4d3f2d846188626db8eace`:
 two independent fresh encrypted installations of identical ISO bytes passed
 40/40 checks each in 651/638 seconds. Host keys, seeds and boot identities differ;

@@ -1,5 +1,8 @@
 # Ubuntu PAM CRL crash and automation output
 
+Delivery and merge identity: [PR 37](https://github.com/TheSlayer455/jake-wormhole/pull/37).
+The runtime source is pinned below; later documentation does not relabel it.
+
 This is an independently developed home-lab reproduction. It does not establish
 the cause of a failure in another environment. Physical-token assurance, FIPS
 validation and production eligibility are separate requirements.

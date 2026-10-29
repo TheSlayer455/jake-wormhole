@@ -2,6 +2,11 @@
 
 ## Ubuntu PAM closure
 
+Delivery is tracked by [PR 37](https://github.com/TheSlayer455/jake-wormhole/pull/37);
+its head and merge records identify delivered/main revisions separately from the
+tested source below. Final audit: zero owned temporary resources, no pending
+journal entries, available shared lock, unchanged sentinel and active K3s.
+
 Tested implementation: `3e1e00bc64d6d7c3fb4d3f2d846188626db8eace`.
 Two fresh same-ISO encrypted KVM installations passed 40/40 checks in 651/638
 seconds with matching native results/inventories and distinct credentials,
