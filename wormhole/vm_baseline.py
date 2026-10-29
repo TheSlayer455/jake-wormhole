@@ -1,4 +1,4 @@
-"""Bounded one-VM Ubuntu ISO installation experiment, explicitly unqualified.
+"""Bounded one-VM Ubuntu/RHEL ISO installation experiment, explicitly unqualified.
 
 Run as the established runtime owner on Linux. This is an installation baseline,
 not the forthcoming hardened two-OS workflow. Unknown Terraform outcomes retain
@@ -50,7 +50,10 @@ known=p/'known_hosts';known.write_text(c['address']+' '+c['host_key']+'\n');know
 opts=['-o','BatchMode=yes','-o','StrictHostKeyChecking=yes','-o','UserKnownHostsFile='+str(known),
       '-o','IdentitiesOnly=yes','-o','ConnectTimeout=5','-o','ConnectionAttempts=1','-i',str(key)]
 deadline=time.monotonic()+c['seconds']
-check='test -f /var/lib/wormhole/installation-complete && test "$(id -un)" = lab.service && . /etc/os-release && test "$VERSION_ID" = 22.04 && findmnt -n -o SOURCE / && sudo -n true'
+release='rhel' if c.get('distribution')=='rhel10' else 'ubuntu'
+version='10.0' if release=='rhel' else '22.04'
+check='test -f /var/lib/wormhole/installation-complete && test "$(id -un)" = lab.service && . /etc/os-release && test "$ID" = '+release+' && test "$VERSION_ID" = '+version+' && findmnt -n -o SOURCE / && sudo -n true'
+if release=='rhel':check+=' && test "$(getenforce)" = Enforcing'
 ready=False
 while time.monotonic()<deadline:
  try:
@@ -67,8 +70,9 @@ env=dict(os.environ,HOME='/tmp',ANSIBLE_HOME='/tmp/.ansible',ANSIBLE_HOST_KEY_CH
 common='-o StrictHostKeyChecking=yes -o UserKnownHostsFile='+str(known)+' -o IdentitiesOnly=yes'
 base=['/opt/wormhole/venv/bin/ansible','all','-i',c['address']+',','-u','lab.service','--private-key',str(key),
       '-e','ansible_python_interpreter=/usr/bin/python3','--ssh-common-args='+common]
+inventory="rpm -qa --qf '%{NAME}|%{EPOCHNUM}|%{VERSION}|%{RELEASE}|%{ARCH}\\n'" if release=='rhel' else "dpkg-query -W -f='${Package}=${Version}\\n'"
 for label,args in [('ansible-readiness',['-m','ping']),('functional',['-b','-m','command','-a','/usr/bin/id -u']),
-                   ('inventory',['-m','command','-a',"dpkg-query -W -f='${Package}=${Version}\\n'"])]:
+                   ('inventory',['-m','command','-a',inventory])]:
  remaining=deadline-time.monotonic()
  if remaining<=0:sys.exit(1)
  r=subprocess.run(base+args,env=env,capture_output=True,text=True,timeout=min(90,remaining))
@@ -88,13 +92,20 @@ def create_qemu_directory(path, group):
     path.chmod(0o710)
 
 
-def preflight(source):
+def preflight(source, *, distribution='ubuntu'):
     require(os.geteuid() == 0, 'runtime_owner_required')
     require(all(shutil.which(x) for x in ('virsh', 'qemu-system-x86_64', 'xorriso', 'dnsmasq', 'xsltproc', 'script', 'ssh-keygen', 'docker')),
             'missing_vm_tool')
     observation = collect_observations(CANONICAL_INFRASTRUCTURE_ROOT)
     require(observation['memory_available_bytes'] >= 13 * 1024**3, 'vm_memory_headroom')
-    require(observation['runtime_disk_free_bytes'] >= 80 * 1024**3 + 3 * Path(source).stat().st_size, 'vm_disk_headroom')
+    # RHEL streams one output and extracts only boot files; Ubuntu retains its
+    # existing three-media allowance for extraction/remastering paths.
+    media_copies=1 if distribution=='rhel10' else 3
+    disk_gib=32 if distribution=='rhel10' else 64
+    require(observation['runtime_disk_free_bytes'] >= (disk_gib+16) * 1024**3 + media_copies * Path(source).stat().st_size, 'vm_disk_headroom')
+    if distribution=='rhel10':
+        flags=Path('/proc/cpuinfo').read_text().split()
+        require(all(flag in flags for flag in ('avx2','bmi1','bmi2','f16c','fma','movbe','xsave')), 'rhel10_cpu_v3_required')
     require(observation['cpu_count'] - observation['load1'] >= 3, 'vm_cpu_headroom')
     require(shutil.disk_usage('/').free >= 2 * 1024**3, 'system_disk_headroom')
     with open('/dev/kvm', 'rb', buffering=0) as kvm:
@@ -106,23 +117,25 @@ def preflight(source):
         if route.get('dst', 'default') != 'default':
             require(not ipaddress.IPv4Network(route['dst'], strict=False).overlaps(ipaddress.IPv4Network(NETWORK)),
                     'vm_subnet_overlap')
-    observation.update(guest_memory_mib=8192, guest_vcpus=2, guest_disk_gib=64,
+    observation.update(guest_memory_mib=8192, guest_vcpus=2, guest_disk_gib=disk_gib,
                        maximum_simultaneous_guests=1, network_mode='isolated-no-dhcp-no-dns-no-nat')
     return observation
 
 
-def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_store=None, sandbox=False):
+def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_store=None, sandbox=False, distribution='ubuntu'):
     os.umask(0o077)
     revision, dirty = source_identity()
     require(not dirty and sha256(terraform) == TF_SHA, 'unverified_execution_inputs')
     require(ubuntu_mode in {None, 'stock-audit', 'hardened'}, 'ubuntu_mode_invalid')
     require(not sandbox or ubuntu_mode=='hardened','sandbox_requires_hardened_ubuntu')
+    require(distribution in {'ubuntu','rhel10'} and (distribution=='ubuntu' or (ubuntu_mode is None and not sandbox)), 'vm_distribution_invalid')
+    disk_bytes=(32 if distribution=='rhel10' else 64)*1024**3
     identifier = str(uuid4())
     name = 'wormhole-vm-' + identifier.replace('-', '')[:12]
     run = workspace_path(ROOT / 'vm-runs' / identifier, create=True)
     result = {'schema_version': '1.0', 'capability': 'real-iso-installation-baseline', 'run_id': identifier,
-        'source_revision': revision, 'outcome': 'running', 'started_at': now(), 'stages': [],
-        'phase': 'preflight', 'last_progress_at': now(), 'network_isolated':bool(ubuntu_mode),
+        'source_revision': revision, 'distribution':distribution, 'outcome': 'running', 'started_at': now(), 'stages': [],
+        'phase': 'preflight', 'last_progress_at': now(), 'network_isolated':bool(ubuntu_mode or distribution=='rhel10'),
         'supervisor': process_identity(os.getpid()),
         'lab_iso_qualified': False, 'production_iso_eligible': False, 'cleanup': 'pending'}
     atomic_json(run / 'result.json', result)
@@ -180,10 +193,10 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             # Source bytes already reside on disk; reserve extraction + two ISO
             # outputs, the full guest disk, and a GiB for evidence/support data.
             atomic_json(run/'storage-admission.json', storage_admission(ROOT,
-                65*1024**3 + 3*Path(source).stat().st_size,
+                disk_bytes+1024**3 + (1 if distribution=='rhel10' else 3)*Path(source).stat().st_size,
                 managed_bytes=usage['total_allocated_bytes'],
                 candidate_bytes=result['storage_preflight_cleanup']['candidate_budget_allocated_bytes']+incoming))
-            atomic_json(run / 'preflight.json', preflight(source))
+            atomic_json(run / 'preflight.json', preflight(source,distribution=distribution))
             if sandbox:
                 from .ubuntu_sandbox import MEMORY
                 observation=read_json(run/'preflight.json')
@@ -224,10 +237,10 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                         'verified-absent-inputs-retained', 'candidate_origin_unreconciled')
                 reuse = (Store().resolve(reuse_run), original_manifest)
                 result['candidate_origin_run'] = reuse_run
+            result.update(phase='candidate-build',last_progress_at=now());save()
             if ubuntu_mode:
                 import secrets
                 from .ubuntu_inputs import build as build_assessed
-                result.update(phase='candidate-build',last_progress_at=now());save()
                 password = secrets.token_urlsafe(32) + 'aA1!'
                 (run / 'sudo-password').write_text(password)
                 hashed = subprocess.run(['openssl', 'passwd', '-6', '-stdin'], input=password + '\n',
@@ -247,6 +260,13 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                     unlock=ConsoleUnlock(unlock_file,probes=True)
                 manifest = build_assessed(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac,
                     store=dependency_store, mode=ubuntu_mode, password_hash=hashed, boot_hash=boot_hash,reuse=reuse,sandbox=sandbox)
+            elif distribution=='rhel10':
+                import secrets
+                from .rhel_inputs import build_rhel
+                password=secrets.token_urlsafe(32)+'aA1!'
+                (run/'sudo-password').write_text(password)
+                hashed=subprocess.run(['openssl','passwd','-6','-stdin'],input=password+'\n',capture_output=True,text=True,check=True,timeout=10).stdout.strip()
+                manifest=build_rhel(source,candidate,run/'inputs',identifier,public,ADDRESS+'/24',mac,password_hash=hashed,reuse=reuse)
             else:
                 manifest = build_ubuntu(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac, reuse=reuse)
             result['stages'].append({'stage': 'candidate-build','started_at':build_at,'finished_at':now(),
@@ -256,8 +276,8 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 os.chown(path, 0, group);path.chmod(0o640)
             tfdir = run / 'terraform';tfdir.mkdir(mode=0o700)
             shutil.copyfile(SOURCE_ROOT / 'provisioning/libvirt/.terraform.lock.hcl', tfdir / '.terraform.lock.hcl')
-            configuration=terraform_config(name, pool, candidate, seed, NETWORK, mac, qemu.pw_uid, group)
-            if ubuntu_mode:
+            configuration=terraform_config(name, pool, candidate, seed, NETWORK, mac, qemu.pw_uid, group,disk_bytes=disk_bytes)
+            if ubuntu_mode or distribution=='rhel10':
                 from .ubuntu_sandbox import network_filter,attach_filter
                 filter_name=name+'-isolation'
                 filter_file=run/'network-filter.xml';filter_file.write_text(network_filter(filter_name))
@@ -286,7 +306,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                     disks[0].find('source').get('file') == str(pool / (name + '.qcow2')), 'vm_disk_format_mismatch')
             info = json.loads(subprocess.check_output(['qemu-img', 'info', '--output=json', str(pool / (name + '.qcow2'))], timeout=5))
             atomic_json(run/'disk-observation.json',info)
-            require(info['format'] == 'qcow2' and info['virtual-size'] == 64 * 1024**3 and
+            require(info['format'] == 'qcow2' and info['virtual-size'] == disk_bytes and
                     not info.get('backing-filename'), 'vm_disk_capacity_mismatch')
             cds = {x.find('source').get('file') for x in dom.findall('devices/disk') if x.get('device') == 'cdrom'}
             require(cds == {str(candidate), str(seed)}, 'attached_media_mismatch')
@@ -330,7 +350,8 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                          'hardening-complete' if 'WORMHOLE_HARDENING_COMPLETE' in text else
                          'hardening' if 'WORMHOLE_HARDENING_STARTED' in text else
                          'installed-finalization' if 'WORMHOLE_FINALIZATION_STARTED' in text else
-                         'installing' if 'subiquity/Install/install' in text else 'firmware-and-installer-boot')
+                         'installing' if any(marker in text for marker in ('subiquity/Install/install',
+                            'Starting automated install.','WORMHOLE_INSTALLATION_STARTED')) else 'firmware-and-installer-boot')
                 if result['phase'] != phase:
                     if observed_phases:
                         observed_phases[-1]['elapsed_seconds'] = round(time.monotonic() - phase_start, 3)
@@ -391,6 +412,9 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             helper_code = HELPER_CODE
             if ubuntu_mode:
                 from .ubuntu_runtime import HELPER_CODE as helper_code
+            elif distribution=='rhel10':
+                from .rhel_assessment import RHEL_AUDIT_CODE
+                helper_code+=RHEL_AUDIT_CODE
             args = ['docker', 'create', '-i', '--name', name + '-controller', '--label', 'application=jake-wormhole',
                 '--label', 'vm-run=' + identifier, '--network', 'host', '--read-only', '--cap-drop', 'ALL',
                 '--security-opt', 'no-new-privileges:true', '--user', '10001:10001', '--memory', '512m',
@@ -404,6 +428,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             command(args, 'controller-create')
             unknown = False
             payload_data = {'address': ADDRESS, 'host_key': host_key, 'private_key': (run / 'ssh-key').read_text(),
+                            'distribution':distribution,
                             'seconds': max(1, min(900 if ubuntu_mode else 300, int(deadline-time.monotonic()-180)))}
             if ubuntu_mode:payload_data['become_password'] = password
             if sandbox:payload_data['inspection_secrets']=[(run/'unlock-secret').read_text().strip(),password,(run/'boot-password').read_text().strip()]
@@ -418,6 +443,11 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                     terminal.get('ansible_ready') is True and {x.get('stage') for x in rows if x.get('returncode') == 0} >=
                     {'final-authentication', 'ansible-readiness', 'functional', 'inventory'}, 'controller_results_incomplete')
             result.update(outcome='baseline-passed', installed=True, final_authentication=True, ansible_ready=True)
+            if distribution=='rhel10':
+                from .rhel_assessment import collect
+                assessment=collect(run,result,rows)
+                result['assessment']={key:assessment[key] for key in ('capability','content_sha256','native_counts',
+                    'coverage_complete','scanner_execution_completed','limitation')}
             if ubuntu_mode:
                 from .ubuntu_runtime import collect
                 findings = collect(run, result)
@@ -505,11 +535,17 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--source', required=True)
+    action=parser.add_mutually_exclusive_group(required=True)
+    action.add_argument('--source')
+    action.add_argument('--recover-run',help='Reconcile the exact stopped supervisor using its recorded ownership.')
     parser.add_argument('--terraform', required=True)
+    parser.add_argument('--distribution', choices=['ubuntu','rhel10'], default='ubuntu')
     parser.add_argument('--reuse-run', help='Exact reconciled baseline run whose unchanged ISO bytes may be reused; a new seed and acceptance are required.')
     options = parser.parse_args()
-    value = execute(options.source, options.terraform, reuse_run=options.reuse_run)
+    if options.recover_run:
+        from .ubuntu_recovery import recover
+        value=recover(options.recover_run,options.terraform)
+    else:value = execute(options.source, options.terraform, reuse_run=options.reuse_run,distribution=options.distribution)
     print(json.dumps(value, indent=2))
     return 0 if value['outcome'] == 'baseline-passed' and value['cleanup'] != 'unreconciled' else 1
 

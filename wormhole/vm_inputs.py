@@ -167,12 +167,14 @@ def build_ubuntu(source, destination, seed_dir, identifier, public_key, guest_ad
     return manifest
 
 
-def terraform_config(name, pool_path, installer, seed, network, mac, qemu_uid, qemu_gid):
+def terraform_config(name, pool_path, installer, seed, network, mac, qemu_uid, qemu_gid, *, disk_bytes=64*1024**3):
     """Pinned provider 0.8.3 schema. ISO suffix selects a real CD-ROM device."""
     if not re.fullmatch('wormhole-vm-[a-f0-9]{12}', name):
         raise RunError('invalid_vm_name', 'Use a run-owned VM identity.')
     if not all(type(x) is int and 0 < x < 2**32 for x in (qemu_uid, qemu_gid)):
         raise RunError('invalid_qemu_identity', 'Use the observed unprivileged QEMU runtime identity.')
+    if disk_bytes not in {32*1024**3,64*1024**3}:
+        raise RunError('invalid_guest_disk', 'Use a declared 32 or 64 GiB lab disk.')
     net = ipaddress.IPv4Network(network)
     volume_xslt = f'''<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
       <xsl:template match="@*|node()"><xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy></xsl:template>
@@ -185,7 +187,7 @@ def terraform_config(name, pool_path, installer, seed, network, mac, qemu_uid, q
         'resource': {
             'libvirt_pool': {'run': {'name': name, 'type': 'dir', 'target': {'path': str(pool_path)}}},
             'libvirt_volume': {'disk': {'name': name + '.qcow2', 'pool': '${libvirt_pool.run.name}',
-                'format': 'qcow2', 'size': 64 * 1024**3, 'xml': {'xslt': volume_xslt}}},
+                'format': 'qcow2', 'size': disk_bytes, 'xml': {'xslt': volume_xslt}}},
             'libvirt_network': {'run': {'name': name, 'mode': 'none', 'addresses': [str(net)],
                 'autostart': False, 'dhcp': {'enabled': False}, 'dns': {'enabled': False}}},
             'libvirt_domain': {'run': {'name': name, 'description': 'jake-wormhole libvirt-iso ' + name,

@@ -1,5 +1,34 @@
 # Current engineering state
 
+RHEL delivery: [PR 39](https://github.com/TheSlayer455/jake-wormhole/pull/39).
+Its head/merge records are separate from the tested runtime revision below.
+
+RHEL 10.0 is now owner-authorized as the next target. The separate BIOS baseline
+uses the official x86_64 DVD, 8 GiB RAM, two vCPUs and a 32 GiB empty disk; the
+smaller disk is a measured lab choice, not the Ubuntu 64 GiB profile. The first
+attempt at `28b23ad` installed and allowed diagnostic final-user SSH with SELinux
+enforcing, but a root-owned `0700` completion-marker directory blocked normal
+readiness and prevented the catalog. It remains failed and was cleaned up.
+Implementation `d39f7a0bc6c10e200fff44fa26bf866bef9ab517` changes that directory to
+`0755`, preserves protected account/key paths, and adds a pinned native audit.
+Its fresh retry reuses identical ISO bytes with a corrected, declared seed;
+it passed real final SSH, Ansible ping, privileged smoke and 413-package RPM
+inventory in 272.246 seconds. Native audit accounts for all 948 rules: 172 pass,
+261 fail, 56 not applicable, nine not checked and 450 not selected. XCCDF, ARF,
+HTML and receipt agree; exit 2 preserves findings. Exact-owned cleanup completed
+without errors, no VM domains remain and K3s stayed active.
+Final audit found reconciled journals, an available shared lock and no owned
+temporary containers, networks or filters. Project storage is 77.17 GiB against
+the unchanged 100 GiB budget, with 107.9 GiB filesystem space available. Unrelated
+resources were excluded from cleanup; broad bytewise immutability is not proven.
+See [RHEL evidence and commands](../handoff/solutions/rhel10-install-baseline.md).
+No RHEL hardening, encryption, FIPS, qualification or publication is claimed.
+Linux source checks passed 953/956 tests with three explicit skips in 93.513
+seconds; 17/17 parity cases passed. The skipped qemu-img integration also passed
+separately on the homelab; two remaining skips are Windows-specific. Source
+[CI passed](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40970024592).
+An independent engineering-agent review found no blocking code findings.
+
 Repeatability comparison repair: [PR 38](https://github.com/TheSlayer455/jake-wormhole/pull/38),
 tested implementation `7fdf05be546b8c13af519d4310355079b5a0a8fe`. Different run
 UUIDs alone previously allowed copied/missing guest identity evidence to count
@@ -30,7 +59,8 @@ pending-publication refusal are verified. This is not a qualified ISO release.
 See the [source-pinned PAM solution](../handoff/solutions/ubuntu-pam-crl.md).
 Owner dependencies: legitimate Pro input/USG-FIPS execution and content checks,
 physical-token assurance, and accountable disposition of all 141 trust anchors.
-RHEL remains paused; production eligibility remains false. Self-review only.
+RHEL was paused at that Ubuntu checkpoint; its new baseline is tracked above.
+Production eligibility remains false. That checkpoint recorded self-review only.
 The complete source suite at that runtime revision passed 947 tests on Linux:
 945 pass/two platform skips, 158 seconds. Hosted CI passed the same 947 tests
 with 12 explicit skips; its controlled parity job also passed. Windows at the
@@ -113,7 +143,7 @@ coverage mapping and eligible publication remain outstanding; no qualified ISO
 was published. The [current handoff](../handoff/CURRENT.md) distinguishes tested
 implementation from documentation delivery. No independent review is claimed.
 
-## Home ISO extension — in progress
+## Historical home ISO foundation
 
 The owner authorized home KVM/libvirt and real RHEL 9 / Ubuntu 22.04 installation
 profiles, superseding the earlier container-only scope restriction. The container

@@ -1,5 +1,11 @@
 # External integration: start here
 
+RHEL 10.0 is newly active: [installation baseline and readiness defect](../handoff/solutions/rhel10-install-baseline.md).
+The first real install exposed inaccessible completion evidence despite working
+diagnostic SSH. The corrected fresh retry passed normal final SSH/Ansible, RPM
+inventory and complete native vendor-draft audit. It remains an unqualified
+installation baseline with security findings, not a hardened release.
+
 Current Ubuntu result: [source-pinned PAM solution](../handoff/solutions/ubuntu-pam-crl.md).
 Two fresh encrypted installations passed 40/40 checks each with matching native
 results and inventories. The repaired OpenSSL/CRL path and quiet PAM conversation
@@ -13,13 +19,13 @@ unresolved/qualified artifacts.
 
 Luna and other engineering agents can use Wormhole's proven container reference and the separately tracked [home ISO extension](../handoff/ISO-FOUNDATION.md). Start with the [proven solution index](../handoff/solutions/README.md); only entries with actual evidence are listed. The [source repository](https://github.com/TheSlayer455/jake-wormhole) is intentionally public; credentials, Terraform state, runtime inputs and raw logs remain private. Public access supplies neither runtime credentials nor authority to change another environment.
 
-Container runtime acceptance is established at the sources in the current checkpoint. The real-ISO extension is incomplete; Ubuntu is the active milestone and RHEL is paused. A [real Ubuntu stock audit](../handoff/solutions/ubuntu-real-assessment.md) completed with full rule accounting, while USG/FIPS and manual/external-control requirements remain pending. Start with the modules below, adapt only what fits the receiving pipeline, and measure its actual critical path. Production ISO eligibility remains false. For external mappings use only **rhel kvm host** and **ansible control node**; home Ubuntu-host results do not prove RHEL-host or work-runner compatibility.
+Container runtime acceptance is established at the sources in the current checkpoint. The real-ISO extension is incomplete; Ubuntu qualification and the newly activated RHEL 10 baseline have separate evidence. A [real Ubuntu stock audit](../handoff/solutions/ubuntu-real-assessment.md) completed with full rule accounting, while USG/FIPS and manual/external-control requirements remain pending. Start with the modules below, adapt only what fits the receiving pipeline, and measure its actual critical path. Production ISO eligibility remains false. For external mappings use only **rhel kvm host** and **ansible control node**; home Ubuntu-host results do not prove RHEL-host or work-runner compatibility.
 
 ## Capability boundary
 
 | Area | Demonstrated in Wormhole | Not demonstrated by Wormhole |
 | --- | --- | --- |
-| Provisioning | Terraform-managed Docker targets; candidate-bound Ubuntu/UBI; 20 coexisting stock targets; two fresh hardened Ubuntu 22.04.5 BIOS installations of the same ISO bytes and declared seed template | RHEL ISO installation, UEFI/Secure Boot, work-host compatibility |
+| Provisioning | Terraform-managed Docker targets; candidate-bound Ubuntu/UBI; 20 coexisting stock targets; two fresh hardened Ubuntu 22.04.5 BIOS installations of the same ISO bytes and declared seed template; RHEL 10.0 BIOS baseline with final SSH/Ansible and complete native audit | Hardened RHEL qualification, UEFI/Secure Boot, work-host compatibility |
 | Validation | Real Ubuntu final SSH/Ansible, two encrypted installs with 40/40 checks, six native PAM cases, isolated service/PKI integration, cold-start unlock and native OpenSCAP/CaC V2R7 reports with all 639 outcomes | Zero-finding security acceptance, USG V2R8 equivalence, FIPS evidence, physical-token/government-PKI assurance, production ISO qualification |
 | Delivery | Source-bound reference qualification and exact-tested-byte private filesystem publication | Proprietary GitLab integration; actual GitLab runner execution; customer portal or remote artifact publication |
 
@@ -39,6 +45,7 @@ Use the Test file column with `python -B -m unittest discover -s tests -p TEST_F
 | Software Version Description | [software_inventory.py](../wormhole/software_inventory.py), [observed_svd.py](../wormhole/observed_svd.py): complete native versions/architectures, separate execution provenance and shared-kernel scope | `test_software_inventory.py` |
 | Assessment evidence | [assessments.py](../wormhole/assessments.py): process explicitly synthetic findings and applicability | `test_assessments.py` |
 | Real Ubuntu assessment | [ubuntu_runtime.py](../wormhole/ubuntu_runtime.py), [ubuntu_assessment.py](../wormhole/ubuntu_assessment.py): native result/identity/coverage validation; [proven hardening](../handoff/solutions/ubuntu-install-hardening.md) | `test_ubuntu_*.py` |
+| RHEL 10 baseline | [rhel_inputs.py](../wormhole/rhel_inputs.py), [rhel_assessment.py](../wormhole/rhel_assessment.py): BIOS DVD replay, separate seed and pinned vendor-draft native accounting; fresh runtime verified | `test_vm_foundation.py` |
 | Encrypted sandbox | [ubuntu_encryption.py](../wormhole/ubuntu_encryption.py), [ubuntu_sandbox.py](../wormhole/ubuntu_sandbox.py): controlled console unlock, offline disk proof, isolated services and durable archive readback; [actual failed transfer](../handoff/solutions/ubuntu-audit-transfer-reproduction.json) | `test_ubuntu_encryption.py`, `test_ubuntu_sandbox.py` |
 | Result aggregation | [pipeline_records.py](../wormhole/pipeline_records.py), [pipeline_replay.py](../wormhole/pipeline_replay.py): complete check grids, JSON/text/JUnit and original-capture replay | `test_pipeline_records.py` |
 | Reference qualification | [pipeline.py](../wormhole/pipeline.py), [reference_acceptance.py](../wormhole/reference_acceptance.py): candidate-bound checks and limited reference gate | `test_reference_acceptance.py` |

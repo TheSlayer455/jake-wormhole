@@ -1,5 +1,30 @@
 # Current handoff
 
+RHEL delivery: [PR 39](https://github.com/TheSlayer455/jake-wormhole/pull/39);
+use its head/merge records for delivery attribution, not a new runtime claim.
+
+RHEL 10.0 is the newly activated target on `codex/WORM-001-rhel10-baseline`.
+Current implementation: `d39f7a0bc6c10e200fff44fa26bf866bef9ab517`.
+The first real attempt at `28b23ad` installed and supported diagnostic SSH with
+SELinux enforcing, but `0700` on the completion-marker directory blocked final-user
+readiness. It remains failed; owned resources were removed. The narrow `0755`
+correction is in the declared Kickstart seed. A fresh empty-disk retry using the
+same candidate ISO passed final SSH, actual Ansible, privileged smoke and complete
+413-package inventory. The real DVD SSG 0.1.76 vendor-draft audit retained all 948
+outcomes: 172 pass, 261 fail, 56 not applicable, nine not checked and 450 not selected.
+Exit 2 is retained; neither lab nor production qualification is granted.
+Runtime was 272.246 seconds, with verified exact-owned cleanup and no errors.
+No VM domains remain; K3s stayed active. Source CI and 17/17 parity passed;
+Linux source tests passed 953 with three explicit skips. See [commands, tested
+source and limits](solutions/rhel10-install-baseline.md). Next RHEL engineering is
+installation-time hardening, current benchmark mapping and qualification/publication.
+Final journals are reconciled and the shared lock is available; no owned temporary
+containers, networks or filters remain. Retained project storage is 77.17 GiB
+within the 100 GiB budget. Unrelated resources were excluded from cleanup;
+this audit does not prove their bytewise immutability against historical metadata.
+One BIOS guest uses 8 GiB RAM, two vCPUs and a 32 GiB disk under shared admission.
+Ubuntu evidence and its exact owner dependencies below remain unchanged.
+
 Latest comparison repair: [PR 38](https://github.com/TheSlayer455/jake-wormhole/pull/38),
 implementation `7fdf05be546b8c13af519d4310355079b5a0a8fe`. Seven focused tests,
 independent engineering-agent review and replay of the retained real pair passed;
@@ -39,7 +64,7 @@ maintenance, not a new automatic cleanup capability. Unknown/running runs,
 qualified artifacts and unrelated data were excluded. Private receipts record it.
 
 Do not repeat authentication discovery, weaken policy, or relabel old evidence.
-RHEL stays paused; review is self-review, not an invented independent approval.
+RHEL was paused at that Ubuntu checkpoint; review there was self-review, not an invented independent approval.
 Full Linux source verification at the tested revision: 947 tests, 945 pass/two
 platform skips in 158 seconds. Hosted CI passed 947 with 12 explicit skips and
 the controlled parity job. Documentation delivery does not change tested guest
@@ -300,7 +325,7 @@ Latest actual runtime is Ubuntu reference Run `8f14b817-486f-4340-87fd-85fe53a9a
 
 Latest actual twenty-target qualification remains source `825a594862b816401d4b963329e6242bd8ed8aeb`, Run `290ad14a-e6ec-4822-ae36-258d336ecc38`, with 160/200/200 checks, twenty full inventories, 22 measured containers and all 23 transient resources absent. The [WORM-020 checkpoint](WORM-020-checkpoint.md) preserves four failed predecessors. Retained private state/images and intentionally incomplete publications remain; do not repair old markers or reinterpret old Runs under new code.
 
-## Next bounded activity
+## Historical container continuation
 
 No original Wormhole delivery PR remains to merge. The documentation-only follow-up has its own normal PR/main checks. Safe local verification remains:
 

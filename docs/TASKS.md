@@ -1,5 +1,16 @@
 # Minx work index
 
+RHEL increment: `codex/WORM-001-rhel10-baseline`, [PR 39](https://github.com/TheSlayer455/jake-wormhole/pull/39). The owner explicitly
+activated RHEL 10.0 using supplied official media. Preserve Ubuntu's completed
+engineering and unresolved qualification dependencies. The first RHEL installation
+exposed a completion-marker traversal defect; the corrected same-ISO fresh retry
+at `d39f7a0` passed final SSH/Ansible, RPM inventory, complete native vendor-draft
+audit and exact-owned cleanup. Next RHEL work is reproducible hardening, current
+benchmark mapping and eventual qualified publication; this baseline does not
+satisfy those requirements.
+See [current state](STATE.md) and [RHEL baseline](../handoff/solutions/rhel10-install-baseline.md).
+This increment does not claim hardening or reopen historical Minx contracts.
+
 Repeatability follow-up: `codex/WORM-001-repeatability-evidence`, [PR 38](https://github.com/TheSlayer455/jake-wormhole/pull/38).
 Existing comparison now requires independent recorded installation identities;
 retained real-pair replay and focused refusal tests passed. See [state](STATE.md).
@@ -16,10 +27,10 @@ projected disk admission are implemented and exercised; see [measured state](STA
 Preserve unmanifested legacy fragments and qualification evidence. This delivery
 does not change historical Minx review state or complete Ubuntu qualification.
 
-Active sandbox increment: `codex/WORM-001-ubuntu-sandbox`. The owner authorized
+Earlier sandbox increment: `codex/WORM-001-ubuntu-sandbox`. The owner authorized
 project-owned time/log receivers, private CA/test identities, protected local
 secret delivery and encrypted installation. These are implementation tasks;
-RHEL remains paused and vendor entitlements/certification cannot be fabricated.
+RHEL was paused during that increment; vendor entitlements/certification cannot be fabricated.
 The earlier partial results below retain their original source attribution.
 Two fresh same-ISO encrypted installations passed 34/34 checks each, with matching
 inventories/assessments and cleanup. See [current continuation](../handoff/CURRENT.md)
@@ -27,11 +38,10 @@ and [PR 34](https://github.com/TheSlayer455/jake-wormhole/pull/34). Qualificatio
 pending explicit external/content requirements; no qualified release is claimed.
 Do not start a second runtime while the shared lease is active.
 
-Current owner-authorized milestone: complete Ubuntu 22.04 installation-time
-hardening, actual assessment, repeatability and exact-byte local release while
-preserving the container baseline. RHEL implementation/media work is paused until
-Ubuntu is complete and the owner explicitly starts RHEL. USG/FIPS and required
-manual/external-control evidence remain pending; no engineer waiver is allowed.
+Ubuntu 22.04 qualification and exact-byte qualified publication remain pending
+USG/FIPS and required manual/external-control evidence; no engineer waiver is
+allowed. RHEL 10's newly authorized baseline is separate from those dependencies
+and preserves the container regression layer.
 See [current continuation](../handoff/CURRENT.md). Historical Done contracts below
 are not reopened or reused as claim authority.
 ## Historical baseline delivery

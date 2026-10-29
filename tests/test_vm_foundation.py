@@ -8,6 +8,8 @@ from unittest.mock import patch
 from uuid import uuid4
 
 from wormhole import admission as a, vm_admission as v, vm_inputs as i
+from wormhole import rhel_inputs as r
+from wormhole import rhel_assessment as ra
 from wormhole.runs import RunError, atomic_json, now
 from test_admission import observed
 
@@ -70,6 +72,115 @@ class Inputs(unittest.TestCase):
         self.assertIn('<mode>0600</mode>', resource['libvirt_volume']['disk']['xml']['xslt'])
         self.assertEqual(resource['libvirt_network']['run']['mode'], 'none')
         self.assertFalse(resource['libvirt_network']['run']['dhcp']['enabled'])
+        smaller = i.terraform_config('wormhole-vm-0123456789ab', '/lab/pool', '/lab/candidate.iso',
+            '/lab/seed.iso', '192.0.2.0/24', '52:54:00:11:22:33', 1001, 1002, disk_bytes=32 * 1024**3)
+        self.assertEqual(smaller['resource']['libvirt_volume']['disk']['size'], 32 * 1024**3)
+        self.assertEqual(resource['libvirt_volume']['disk']['size'], 64 * 1024**3)
+
+
+class RHELInputs(unittest.TestCase):
+    def config(self, **changes):
+        values = {'identifier':str(uuid4()), 'public_key':'ssh-ed25519 ' + 'A' * 68,
+                  'guest_address':'192.0.2.10/24', 'mac':'52:54:00:11:22:33',
+                  'password_hash':'$6$synthetic$' + 'A' * 86}
+        return r.kickstart(**{**values, **changes})
+
+    def test_bios_boot_retains_stage2_and_rescue_without_direct_kernel_boot(self):
+        prefix = "search --no-floppy --set=root -l '" + r.LABEL + "'\n"
+        kernel = ' linux /images/pxeboot/vmlinuz inst.stage2=hd:LABEL=' + r.LABEL
+        original = 'set default="1"\nset timeout=60\n' + prefix + kernel + ' quiet\n' + kernel + ' inst.rescue quiet\n'
+        changed = r.boot_config(original)
+        self.assertIn('set default="0"\nset timeout=1', changed)
+        self.assertIn(kernel + ' quiet inst.ks=hd:LABEL=WORMHOLEKS:/ks.cfg console=ttyS0,115200n8', changed)
+        self.assertIn(kernel + ' inst.rescue quiet\n', changed)
+        with self.assertRaises(RunError):r.boot_config(changed)
+        with self.assertRaises(RunError):r.boot_config(original.replace(r.LABEL, 'WRONG-LABEL'))
+
+    def test_seed_preserves_final_identity_selinux_and_installed_only_host_key(self):
+        config = self.config()
+        self.assertIn('cdrom\n', config)
+        self.assertIn('selinux --enforcing', config)
+        self.assertIn('ignoredisk --only-use=vda', config)
+        self.assertIn('clearpart --all --initlabel --drives=vda', config)
+        self.assertIn('user --name=lab.service', config)
+        self.assertIn('PasswordAuthentication no', config)
+        self.assertNotIn('PRIVATE KEY', config)
+        self.assertNotIn('--gateway=', config)
+        self.assertIn('%post --interpreter=/bin/bash --erroronfail', config)
+        before, script = config.split("<<'READY'\n", 1)
+        script, after = script.split('\nREADY\n', 1)
+        self.assertNotIn('WORMHOLE_FINAL_HOST_KEY_BEGIN', before + after)
+        self.assertIn('test "$VERSION_ID" = 10.0', script)
+        self.assertIn('test "$(getenforce)" = Enforcing', script)
+        self.assertIn('WORMHOLE_FINAL_HOST_KEY_BEGIN', script)
+        self.assertIn('systemctl enable wormhole-ready.service', after)
+        self.assertIn('install -d -m 0755 /var/lib/wormhole', config)
+        for changes in ({'password_hash':'PLAINTEXT-NOT-ALLOWED'}, {'public_key':'ssh-ed25519 A; bad'}):
+            with self.assertRaises(RunError):self.config(**changes)
+
+    def test_reuse_rejects_other_os_source_changed_boot_and_changed_candidate(self):
+        manifest = {'capability':r.CAPABILITY, 'source':dict(r.RHEL), 'candidate_sha256':'a' * 64}
+        r.verify_reuse(manifest, 'a' * 64, b'current', b'current')
+        for change in ({'capability':'ubuntu-iso-installation-baseline'}, {'source':dict(i.UBUNTU)}):
+            with self.assertRaises(RunError):r.verify_reuse({**manifest, **change}, 'a' * 64, b'current', b'current')
+        with self.assertRaises(RunError):r.verify_reuse(manifest, 'a' * 64, b'current', b'stale')
+        with self.assertRaises(RunError):r.verify_reuse(manifest, 'b' * 64, b'current', b'current')
+
+    def test_invalid_media_is_refused_before_build_outputs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory);source = root/'wrong.iso';source.write_bytes(b'NOT-AN-ISO')
+            with self.assertRaises(RunError) as error:
+                r.build_rhel(source, root/'candidate.iso', root/'inputs', str(uuid4()),
+                    'ssh-ed25519 ' + 'A' * 68, '192.0.2.10/24', '52:54:00:11:22:33',
+                    password_hash='$6$synthetic$' + 'A' * 86)
+            self.assertEqual(error.exception.code, 'source_identity_mismatch')
+            self.assertFalse((root/'inputs').exists())
+            self.assertFalse((root/'candidate.iso').exists())
+
+
+class RHELAssessment(unittest.TestCase):
+    def test_native_coverage_preserves_findings_and_rejects_missing_or_wrong_identity(self):
+        import hashlib
+        content = ('<Benchmark xmlns="' + ra.X[1:-1] + '"><Profile id="' + ra.PROFILE + '"/>'
+            '<Rule id="one"><title>First synthetic rule</title></Rule><Rule id="two"/></Benchmark>').encode()
+        native = ('<Benchmark xmlns="' + ra.X[1:-1] + '"><TestResult><profile idref="' + ra.PROFILE + '"/>'
+            '<target>synthetic</target><rule-result idref="one"><result>pass</result></rule-result>'
+            '<rule-result idref="two"><result>fail</result></rule-result></TestResult></Benchmark>').encode()
+        def parse(value, **changes):
+            args = {'expected_target':'synthetic', 'scanner_exit':2,
+                    'expected_hash':hashlib.sha256(content).hexdigest(), 'expected_rules':2}
+            return ra.read_results(content, value, **{**args, **changes})
+        observed = parse(native)
+        self.assertEqual(observed['native_counts'], {'pass':1, 'fail':1})
+        self.assertTrue(observed['coverage_complete'])
+        self.assertFalse(observed['lab_iso_qualified'])
+        self.assertFalse(observed['production_iso_eligible'])
+        for value in (native.replace(b'<rule-result idref="two"><result>fail</result></rule-result>', b''),
+                      native.replace(b'idref="two"', b'idref="one"'),
+                      native.replace(ra.PROFILE.encode(), b'wrong-profile'),
+                      native.replace(b'<target>synthetic</target>', b'')):
+            with self.assertRaises(RunError):parse(value)
+        with self.assertRaises(RunError):parse(native, expected_hash='0' * 64)
+        with self.assertRaises(RunError):parse(native, scanner_exit=124)
+
+    def test_native_archive_rejects_unexpected_paths_links_and_missing_outputs(self):
+        import base64, hashlib, io, tarfile
+        compile(ra.RHEL_AUDIT_CODE, '<rhel-audit-helper>', 'exec')
+        self.assertNotIn('--remediate', ra.RHEL_AUDIT_CODE)
+        self.assertIn('timeout --signal=TERM --kill-after=5', ra.RHEL_AUDIT_CODE)
+        for name, link in (('../escaped', False), ('scan.log', True), ('scan.log', False)):
+            archive = io.BytesIO()
+            with tarfile.open(fileobj=archive, mode='w:gz') as tar:
+                member = tarfile.TarInfo(name)
+                if link:member.type = tarfile.SYMTYPE;member.linkname = '../escaped'
+                else:member.size = 4
+                tar.addfile(member, None if link else io.BytesIO(b'test'))
+            payload = archive.getvalue()
+            row = {'stage':'assessment-archive', 'returncode':0,
+                   'sha256':hashlib.sha256(payload).hexdigest(), 'archive_base64':base64.b64encode(payload).decode()}
+            with tempfile.TemporaryDirectory() as directory:
+                with self.assertRaises(RunError):ra.collect(Path(directory), {'run_id':str(uuid4())}, [row])
+                self.assertFalse((Path(directory)/'escaped').exists())
 
 
 @unittest.skipUnless(os.name == 'posix', 'Linux private storage/flock fixtures')
