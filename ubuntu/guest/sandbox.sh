@@ -73,7 +73,9 @@ p=Path('/etc/pam.d/common-auth');text=p.read_text()
 # The documented quiet option suppresses conversation notices when no reader is
 # attached. Authentication decisions remain intact, and the dedicated probe
 # retains failure evidence. Notices must not contaminate JSON or binary output.
-line='auth sufficient pam_pkcs11.so quiet'
+# Linux-PAM's exact extended form of sufficient: no guessed numeric jump, and
+# an earlier required failure still cannot be overridden by token success.
+line='auth [success=done new_authtok_reqd=done default=ignore] pam_pkcs11.so quiet'
 if not any('pam_pkcs11.so' in s and not s.lstrip().startswith('#') for s in text.splitlines()):
     p.write_text(line+'\n'+text)
 PY

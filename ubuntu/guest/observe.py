@@ -24,6 +24,19 @@ def file_sha256(path):
     return digest.hexdigest()
 
 
+def trust_inventory(bundle='/etc/ssl/certs/ca-certificates.crt'):
+    # get_ca_certs lists already-loaded roots, not the lazy capath inventory.
+    # Enumerate the actual installed bundle explicitly, without changing trust.
+    context=ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.load_verify_locations(cafile=str(bundle))
+    certificates=context.get_ca_certs(binary_form=True)
+    return {'fingerprints':sorted({hashlib.sha256(der).hexdigest() for der in certificates}),
+            'bundle_sha256':file_sha256(Path(bundle)),
+            'default_verify_paths':ssl.get_default_verify_paths()._asdict(),
+            'default_loaded_count':len(ssl.create_default_context().get_ca_certs()),
+            'subjects':[cert['subject'] for cert in context.get_ca_certs()]}
+
+
 def observe():
     release = dict(line.split('=', 1) for line in Path('/etc/os-release').read_text().splitlines() if '=' in line)
     if release.get('ID', '').strip('"') != 'ubuntu' or release.get('VERSION_ID', '').strip('"') != '22.04':
@@ -84,7 +97,7 @@ def observe():
         status=command('ufw','status')
         checks['v2r8-ufw-effective-status']=status.returncode==0 and status.stdout.splitlines()[0]=='Status: active'
         checks['v2r8-banner-effective-file']=checks['lab-banner'] and Path('/etc/issue.net').read_text().strip()=='Wormhole private home lab. Authorized lab use only. Activity is monitored.'
-        anchors={hashlib.sha256(der).hexdigest() for der in ssl.create_default_context().get_ca_certs(binary_form=True)}
+        trust=trust_inventory();anchors=set(trust['fingerprints'])
         source=json.loads(Path('/usr/local/lib/wormhole/dod-ca-source.json').read_text())
         checks['official-public-dod-roots-staged']=bool(source['roots']) and {r['sha256'] for r in source['roots']}<=anchors
         command('logger','-t','wormhole-acceptance',(root/'run-id').read_text().strip())
@@ -125,6 +138,7 @@ def observe():
         payloads.append({'name':'pam-pkcs11-lab-repair','version':version,'binary_sha256':library,
                          'repair_source_sha256':tool['repair_sha256'],'canonical_signed_binary':False})
     return {'checks': checks, 'packages': packages, 'payloads':payloads,'inventory_kind': 'installed-dpkg','audit_offload':audit_offload,
+            'system_trust_inventory':trust_inventory(),
             'kernel': command('uname', '-r').stdout.strip(), 'run_id': (root / 'run-id').read_text().strip()}
 
 

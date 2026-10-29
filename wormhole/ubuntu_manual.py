@@ -36,10 +36,13 @@ audit_bytes=sum(p.stat().st_size for p in Path('/var/log/audit').glob('*') if p.
 uptime=float(Path('/proc/uptime').read_text().split()[0])
 required=int(max(1024,audit_bytes/max(1,uptime))*7*86400*2)
 free=shutil.disk_usage('/var/log/audit').free
-anchors=sorted({hashlib.sha256(der).hexdigest() for der in ssl.create_default_context().get_ca_certs(binary_form=True)})
+import runpy
+trust=runpy.run_path('/usr/local/lib/wormhole/observe.py')['trust_inventory']()
+anchors=trust['fingerprints']
 source=Path('/usr/local/lib/wormhole/dod-ca-source.json')
 expected={r['sha256'] for r in json.loads(source.read_text())['roots']} if source.exists() else set()
 facts['system-trust-root-fingerprints']=anchors
+facts['system-trust-inventory']=trust
 objective={
  'account_temp_expire_date':{'observed_satisfied':remaining is not None and 0<remaining<=2,'expires_in_days':remaining,'assumption':'disposable lab identities expire within 48 hours'},
  'ensure_sudo_group_restricted':{'observed_satisfied':set(members)<={'','lab.service'} and {x['name'] for x in facts['interactive-accounts']}=={'lab.service'},'assumption':'one declared final lab operator'},
