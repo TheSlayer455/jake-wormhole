@@ -58,6 +58,13 @@ if 'inspection_secrets' in c:
  else:inspection={'inspection_failed':True}
  print(json.dumps({'stage':'secret-retention-inspection','returncode':0 if valid else 1,'inspection':inspection}),flush=True)
  del private_input
+if 'pkcs11_probe' in c:
+ private_input=password.read_text()+json.dumps(c.pop('pkcs11_probe'))
+ r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'sudo -S -p "" /usr/bin/python3 /usr/local/lib/wormhole/pkcs11-probe.py'],
+                  input=private_input,capture_output=True,text=True,timeout=min(180,deadline-time.monotonic()))
+ token_result=json.loads(r.stdout) if r.stdout.startswith('{') else {'probe_failed':True}
+ print(json.dumps({'stage':'pkcs11-pam-probe','returncode':r.returncode,'evidence':token_result,'diagnostic':r.stderr[:4000]}),flush=True)
+ del private_input
 if 'encrypted-root' in observed.get('checks',{}):
  import secrets
  probe={'operation':'probe','token':secrets.token_urlsafe(32)}
@@ -147,11 +154,22 @@ def collect(run, result):
                             expected_target=receipt['target'], scanner_exit=receipt['scanner_exit'])
     if tailoring.exists():
         upstream_policy=json.loads(json.dumps(policy));upstream_policy['tailoring']['parameters']={}
-        upstream=read_results(run/'inputs/payload/ssg-ubuntu2204-ds.xml',out/'upstream-xccdf.xml',
+        upstream_content=run/'inputs/payload/ssg-ubuntu2204-ds.xml'
+        if policy['content'].get('upstream_datastream_sha256'):
+            upstream_content=run/'inputs/payload/upstream-ssg-ubuntu2204-ds.xml'
+            upstream_policy['content']['datastream_sha256']=policy['content']['upstream_datastream_sha256']
+            require(receipt.get('upstream_content_sha256')==upstream_policy['content']['datastream_sha256'],'upstream_receipt_content_identity')
+        upstream=read_results(upstream_content,out/'upstream-xccdf.xml',
             expected_target=receipt['target'],scanner_exit=int((out/'upstream-exit.txt').read_text()),policy=upstream_policy)
         require(upstream['coverage_complete'] and upstream['scanner_execution_completed'],'upstream_assessment_incomplete')
         findings['unmodified_upstream_native_counts']=upstream['native_counts']
-        findings['declared_lab_value_result_changes']=[r['rule_id'] for r,u in zip(findings['rules'],upstream['rules']) if r['native_status']!=u['native_status']]
+        changed=[r['rule_id'] for r,u in zip(findings['rules'],upstream['rules']) if r['native_status']!=u['native_status']]
+        values={'xccdf_org.ssgproject.content_rule_banner_etc_issue_net','xccdf_org.ssgproject.content_rule_auditd_audispd_configure_remote_server'}
+        corrections={'xccdf_org.ssgproject.content_rule_verify_use_mappers'} if policy['content'].get('local_check_corrections') else set()
+        require(set(changed)<=values|corrections,'undeclared_assessment_result_difference')
+        findings['declared_lab_value_result_changes']=[r for r in changed if r in values]
+        findings['declared_check_correction_result_changes']=[r for r in changed if r in corrections]
+        findings['content_check_corrections']=policy['content'].get('local_check_corrections',[])
     # Findings are larger than the old 256 KiB small-run-record limit.
     (out / 'findings.json').write_text(json.dumps(findings, indent=2))
     result.update(assessment={k:v for k,v in findings.items() if k != 'rules'},

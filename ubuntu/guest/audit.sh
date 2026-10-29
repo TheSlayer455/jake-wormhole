@@ -36,7 +36,7 @@ if test -f /usr/local/lib/wormhole/lab-tailoring.xml; then
   # endpoint/banner values. Neither profile removes or deselects any rule.
   set +e
   timeout 600 oscap xccdf eval --profile "$profile" --results upstream-xccdf.xml \
-    /usr/local/lib/wormhole/ssg-ubuntu2204-ds.xml > upstream-scanner.log 2>&1
+    /usr/local/lib/wormhole/upstream-ssg-ubuntu2204-ds.xml > upstream-scanner.log 2>&1
   upstream_exit=$?
   set -e
   printf '%s\n' "$upstream_exit" > upstream-exit.txt
@@ -59,6 +59,7 @@ value={'schema_version':'1.0','run_id':(r/'run-id').read_text().strip(),
  'target':platform.node(),'boot_id':pathlib.Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
  'firstboot_id':(r/'firstboot-id').read_text().strip(),
  'content_sha256':hashlib.sha256(pathlib.Path('/usr/local/lib/wormhole/ssg-ubuntu2204-ds.xml').read_bytes()).hexdigest(),
+ 'upstream_content_sha256':hashlib.sha256(pathlib.Path('/usr/local/lib/wormhole/upstream-ssg-ubuntu2204-ds.xml').read_bytes()).hexdigest(),
  'scanner_exit':int((r/'assessment/scanner-exit.txt').read_text()),
  'started_at':(r/'assessment/started-at.txt').read_text().strip(),
  'completed_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),

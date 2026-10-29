@@ -81,6 +81,12 @@ def observe():
         prior=json.loads(isolation.read_text()) if isolation.exists() else {}
         checks['management-plane-blocked'] &= prior.get('run_id')==(root/'run-id').read_text().strip() and prior.get('guest_outgoing_was_allow') is True and prior.get('management_listener_blocked') is True
         checks['lab-banner']=command('sshd','-T').stdout.find('banner /etc/issue.net')>=0 and 'private home lab' in Path('/etc/issue.net').read_text()
+        status=command('ufw','status')
+        checks['v2r8-ufw-effective-status']=status.returncode==0 and status.stdout.splitlines()[0]=='Status: active'
+        checks['v2r8-banner-effective-file']=checks['lab-banner'] and Path('/etc/issue.net').read_text().strip()=='Wormhole private home lab. Authorized lab use only. Activity is monitored.'
+        anchors={hashlib.sha256(der).hexdigest() for der in ssl.create_default_context().get_ca_certs(binary_form=True)}
+        source=json.loads(Path('/usr/local/lib/wormhole/dod-ca-source.json').read_text())
+        checks['official-public-dod-roots-staged']=bool(source['roots']) and {r['sha256'] for r in source['roots']}<=anchors
         command('logger','-t','wormhole-acceptance',(root/'run-id').read_text().strip())
         checks['audit-event-probe']=command('auditctl','-m','wormhole acceptance '+(root/'run-id').read_text().strip()).returncode==0
         valid=command('openssl','verify','-CAfile','/etc/wormhole-lab-ca.crt','-CRLfile','/etc/pam_pkcs11/crls/lab-ca.crl',

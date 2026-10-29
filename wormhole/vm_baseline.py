@@ -407,6 +407,9 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                             'seconds': max(1, min(900 if ubuntu_mode else 300, int(deadline-time.monotonic()-180)))}
             if ubuntu_mode:payload_data['become_password'] = password
             if sandbox:payload_data['inspection_secrets']=[(run/'unlock-secret').read_text().strip(),password,(run/'boot-password').read_text().strip()]
+            if sandbox:
+                payload_data['pkcs11_probe']={name:(run/'support-private'/name).read_text() for name in
+                    ('token.crt','token.key','token-revoked.crt','token-revoked.key','active.crt','active.key')}
             payload = json.dumps(payload_data).encode()
             command(['docker', 'start', '-ai', helper], 'ssh-ansible-inventory', timeout=max(1, deadline-time.monotonic()-180), data=payload)
             rows = [json.loads(line) for line in (run / 'ssh-ansible-inventory.log').read_text().splitlines() if line.startswith('{')]

@@ -92,12 +92,14 @@ def certificates(run):
         '[identity]\ncommonName=supplied\n[client]\nbasicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=clientAuth\n'
         'authorityInfoAccess=OCSP;URI:http://'+BIND+':8080\n'
         '[responder]\nbasicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=OCSPSigning\n')
-    for name in ('active','revoked','responder'):
-        command('req','-new','-newkey','rsa:3072','-nodes','-subj','/CN=lab-'+name,
+    for name in ('active','revoked','responder','token','token-revoked'):
+        subject='lab.service' if name.startswith('token') else 'lab-'+name
+        command('req','-new','-newkey','rsa:3072','-nodes','-subj','/CN='+subject,
                 '-keyout',str(private/(name+'.key')),'-out',str(private/(name+'.csr')))
         command('ca','-batch','-notext','-config',str(config),'-extensions','responder' if name=='responder' else 'client',
                 '-in',str(private/(name+'.csr')),'-out',str(private/(name+'.crt')))
     command('ca','-config',str(config),'-revoke',str(private/'revoked.crt'))
+    command('ca','-config',str(config),'-revoke',str(private/'token-revoked.crt'))
     command('ca','-config',str(config),'-gencrl','-out',str(private/'ca.crl'))
     return private
 
