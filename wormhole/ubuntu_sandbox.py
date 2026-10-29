@@ -88,7 +88,7 @@ def certificates(run):
     config=private/'ca.conf'
     config.write_text('[ca]\ndefault_ca=lab\n[lab]\ndatabase='+str(private/'index')+'\nnew_certs_dir='+str(private/'issued')+
         '\nserial='+str(private/'serial')+'\ncrlnumber='+str(private/'crlnumber')+'\ncertificate='+str(private/'ca.crt')+
-        '\nprivate_key='+str(private/'ca.key')+'\ndefault_md=sha256\ndefault_days=2\ndefault_crl_days=2\npolicy=identity\nx509_extensions=client\n'
+        '\nprivate_key='+str(private/'ca.key')+'\ndefault_md=sha256\ndefault_days=2\ndefault_crl_days=2\nunique_subject=no\npolicy=identity\nx509_extensions=client\n'
         '[identity]\ncommonName=supplied\n[client]\nbasicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=clientAuth\n'
         'authorityInfoAccess=OCSP;URI:http://'+BIND+':8080\n'
         '[responder]\nbasicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=OCSPSigning\n')

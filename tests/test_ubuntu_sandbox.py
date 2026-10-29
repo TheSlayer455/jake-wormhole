@@ -50,6 +50,10 @@ class Sandbox(unittest.TestCase):
             revoked=subprocess.run(args+[str(private/'revoked.crt')],capture_output=True,text=True,timeout=10)
             self.assertNotEqual(revoked.returncode,0)
             self.assertIn('certificate revoked',revoked.stderr)
+            self.assertEqual(subprocess.run(args+[str(private/'token.crt')],capture_output=True,timeout=10).returncode,0)
+            token_revoked=subprocess.run(args+[str(private/'token-revoked.crt')],capture_output=True,text=True,timeout=10)
+            self.assertNotEqual(token_revoked.returncode,0)
+            self.assertIn('certificate revoked',token_revoked.stderr)
             request=private/'request.der';response=private/'response.der'
             for name,status in (('active','good'),('revoked','revoked')):
                 client=['openssl','ocsp','-issuer',str(private/'ca.crt'),'-cert',str(private/(name+'.crt'))]
