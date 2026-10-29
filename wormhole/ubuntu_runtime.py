@@ -201,10 +201,11 @@ def report(run, result):
     observations = read_json(run / 'installed-observations.json') if (run / 'installed-observations.json').exists() else None
     records = read_json(run / 'controller-records.json') if (run / 'controller-records.json').exists() else []
     if not records and (run/'ssh-ansible-inventory.log').exists():
-        for line in (run/'ssh-ansible-inventory.log').open():
-            if line.startswith('{'):
-                item=json.loads(line)
-                if item.get('stage')!='assessment-artifacts':records.append(item)
+        with (run/'ssh-ansible-inventory.log').open() as stream:
+            for line in stream:
+                if line.startswith('{'):
+                    item=json.loads(line)
+                    if item.get('stage')!='assessment-artifacts':records.append(item)
     if observations is None:
         try:
             observations=next((json.loads(r['output']) for r in records if r.get('stage')=='installed-observations' and r.get('returncode')==0),None)
