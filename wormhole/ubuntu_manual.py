@@ -4,7 +4,7 @@ MANUAL_RULES={
     'only_allow_dod_certs','auditd_audispd_configure_sufficiently_large_partition'}
 
 CODE = r'''
-import json,subprocess,pwd,os,datetime,shutil
+import json,subprocess,pwd,os,datetime,shutil,ssl,hashlib
 from pathlib import Path
 commands={
  'sudo-group':['getent','group','sudo'],
@@ -36,12 +36,21 @@ audit_bytes=sum(p.stat().st_size for p in Path('/var/log/audit').glob('*') if p.
 uptime=float(Path('/proc/uptime').read_text().split()[0])
 required=int(max(1024,audit_bytes/max(1,uptime))*7*86400*2)
 free=shutil.disk_usage('/var/log/audit').free
+import runpy
+trust=runpy.run_path('/usr/local/lib/wormhole/observe.py')['trust_inventory']()
+anchors=trust['fingerprints']
+source=Path('/usr/local/lib/wormhole/dod-ca-source.json')
+expected={r['sha256'] for r in json.loads(source.read_text())['roots']} if source.exists() else set()
+facts['system-trust-root-fingerprints']=anchors
+facts['system-trust-inventory']=trust
 objective={
  'account_temp_expire_date':{'observed_satisfied':remaining is not None and 0<remaining<=2,'expires_in_days':remaining,'assumption':'disposable lab identities expire within 48 hours'},
  'ensure_sudo_group_restricted':{'observed_satisfied':set(members)<={'','lab.service'} and {x['name'] for x in facts['interactive-accounts']}=={'lab.service'},'assumption':'one declared final lab operator'},
  'ufw_only_required_services':{'observed_satisfied':bool(external) and all(x.endswith(':22') for x in external),'external_listeners':external,'assumption':'only SSH is a guest ingress service; mandatory NIC filter independently restricts peers'},
  'auditd_audispd_configure_sufficiently_large_partition':{'observed_satisfied':free>=max(8*1024**3,required),'available_bytes':free,'observed_audit_bytes':audit_bytes,'estimated_seven_days_with_double_margin':required,'assumption':'bounded disposable lab workload; observed-rate extrapolation is not a production retention guarantee'},
- 'only_allow_dod_certs':{'observed_satisfied':False,'reason':'A private home-lab CA is not DoD PKI; no government trust evidence is supplied'}
+ 'only_allow_dod_certs':{'observed_satisfied':False,'official_public_roots_present':bool(expected) and expected<=set(anchors),
+    'system_trust_root_count':len(anchors),'authorizing_official_approval_supplied':False,
+    'reason':'Official public DoD roots establish presence, not AO approval of every installed trust anchor or possession of a government client credential'}
 }
 print(json.dumps({'schema_version':'1.0','facts':facts,'disposition':'pending-accountable-review',
  'objective_results':objective,'native_notchecked_statuses_preserved':True,'exception_approved':False}))

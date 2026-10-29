@@ -21,6 +21,9 @@ def input_identity(store, mode, *, sandbox=False):
     if sandbox:
         paths += ['ubuntu/guest/encryption-late.sh','ubuntu/guest/sandbox.sh',
                   'ubuntu/guest/entitlement.py','ubuntu/guest/audit-offload.py','ubuntu/guest/secret-audit.py','ubuntu/support/receiver.py']
+        paths += ['ubuntu/guest/pkcs11-probe.py']
+        paths += ['ubuntu/support/build-pam.sh','ubuntu/support/patch-pam-crl.py']
+        paths += ['ubuntu/support/pam-config-check.c']
     files = {name: sha256(SOURCE_ROOT / name) for name in paths}
     files['offline-dependencies'] = sha256(Path(store) / 'bundle/manifest.json')
     if sandbox:
@@ -41,6 +44,26 @@ def prepare(store):
     store = workspace_path(store)
     policy = json.loads(POLICY.read_text())
     inventory(store / 'ssg-ubuntu2204-ds.xml', policy)
+    if policy.get('native_pam'):
+        pam=policy['native_pam'];tool=read_json(store/'pam-toolchain.json')
+        require(sha256(store/'libpam-pkcs11-lab.deb')==pam['artifact_sha256'] and
+                tool['artifact_sha256']==pam['artifact_sha256'] and tool['library_sha256']==pam['library_sha256'] and
+                tool['source_files']==pam['source_files'] and
+                tool['recipe_sha256']==sha256(SOURCE_ROOT/'ubuntu/support/build-pam.sh') and
+                tool['repair_sha256']==sha256(SOURCE_ROOT/'ubuntu/support/patch-pam-crl.py') and
+                tool['parser_harness_sha256']==sha256(SOURCE_ROOT/'ubuntu/support/pam-config-check.c') and
+                tool['canonical_signed_binary'] is False,'ubuntu_pam_build_identity')
+    if policy.get('public_ca_bundle'):
+        require(sha256(store/'dod-public-roots.pem')==policy['public_ca_bundle']['roots_pem_sha256'] and
+                sha256(store/'official-dod-public-ca.zip')==policy['public_ca_bundle']['archive_sha256'],
+                'ubuntu_public_ca_source_mismatch')
+    if policy['content'].get('upstream_datastream_sha256'):
+        require(sha256(store/'upstream-ssg-ubuntu2204-ds.xml')==policy['content']['upstream_datastream_sha256'],
+                'ubuntu_upstream_content_mismatch')
+        correction=read_json(store/'content-erratum.json')
+        require(correction['derived_sha256']==policy['content']['datastream_sha256'] and
+                correction['upstream_sha256']==policy['content']['upstream_datastream_sha256'] and
+                [correction['id']]==policy['content']['local_check_corrections'],'ubuntu_content_derivation_mismatch')
     bundle = store / 'bundle'
     if (bundle / 'manifest.json').exists():
         manifest = read_json(bundle / 'manifest.json')
@@ -64,6 +87,8 @@ def prepare(store):
         fields = subprocess.check_output(['dpkg-deb', '-f', str(deb), 'Package', 'Version', 'Architecture'], timeout=10).decode()
         values = dict(re.findall(r'^(Package|Version|Architecture): (.+)$', fields, re.M))
         require(set(values) == {'Package', 'Version', 'Architecture'}, 'ubuntu_package_metadata')
+        if policy.get('native_pam') and values['Package']==policy['native_pam']['package']:
+            continue
         actual = sha256(deb)
         metadata = subprocess.check_output(['apt-cache', *config, 'show', values['Package'] + '=' + values['Version']], timeout=15).decode()
         require('SHA256: ' + actual in metadata, 'ubuntu_package_origin_mismatch')
@@ -71,10 +96,25 @@ def prepare(store):
         shutil.copyfile(deb, repo / deb.name)
         paragraphs.append(control + '\nFilename: ./' + deb.name + '\nSize: ' + str(deb.stat().st_size) + '\nSHA256: ' + actual)
         packages.append({'name': values['Package'], 'version': values['Version'], 'architecture': values['Architecture'], 'sha256': actual})
+    if policy.get('native_pam'):
+        deb=store/'libpam-pkcs11-lab.deb';pam=policy['native_pam']
+        fields=subprocess.check_output(['dpkg-deb','-f',str(deb),'Package','Version','Architecture'],timeout=10).decode()
+        values=dict(re.findall(r'^(Package|Version|Architecture): (.+)$',fields,re.M))
+        require(values=={'Package':pam['package'],'Version':pam['version'],'Architecture':'amd64'},'ubuntu_pam_package_identity')
+        actual=sha256(deb);shutil.copyfile(deb,repo/deb.name)
+        control=subprocess.check_output(['dpkg-deb','-f',str(deb)],timeout=10).decode().strip()
+        paragraphs.append(control+'\nFilename: ./'+deb.name+'\nSize: '+str(deb.stat().st_size)+'\nSHA256: '+actual)
+        packages.append({'name':values['Package'],'version':values['Version'],'architecture':values['Architecture'],
+            'sha256':actual,'source_kind':'local-rebuild-of-Ubuntu-signed-source','build_receipt_sha256':sha256(store/'pam-toolchain.json')})
+        shutil.copyfile(store/'pam-toolchain.json',bundle/'pam-toolchain.json')
     require(any(x['name'] == 'libopenscap8' for x in packages), 'ubuntu_scanner_dependency_missing')
     (repo / 'Packages').write_text('\n\n'.join(paragraphs) + '\n', encoding='utf-8')
     for name in ['ssg-ubuntu2204-ds.xml', 'LICENSE']:
         shutil.copyfile(store / name, bundle / name)
+    if policy.get('public_ca_bundle'):
+        for name in ('dod-public-roots.pem','dod-ca-source.json'):shutil.copyfile(store/name,bundle/name)
+    if policy['content'].get('upstream_datastream_sha256'):
+        for name in ('upstream-ssg-ubuntu2204-ds.xml','content-erratum.json'):shutil.copyfile(store/name,bundle/name)
     if (store/'openscap-lab.tar.gz').exists():
         tool=read_json(store/'toolchain.json')
         require(tool['artifact_sha256']==sha256(store/'openscap-lab.tar.gz') and tool['version']=='1.4.6',
@@ -119,7 +159,7 @@ if test -f /usr/local/lib/wormhole/openscap-lab.tar.gz; then
   oscap --version | head -n 1 | grep -F '1.4.6'
 fi
 if python3 -c 'import json,sys;sys.exit(json.load(open("/usr/local/lib/wormhole/install-contract.json"))["mode"] != "hardened")'; then
-  packages=$(python3 -c 'import json;names={"auditd","audispd-plugins","aide","aide-common","cron","libpam-pwquality","apparmor-utils","ufw","vlock"};contract=json.load(open("/usr/local/lib/wormhole/install-contract.json"));names.update({"chrony","rsyslog-gnutls","libnss-sss","libpam-sss","opensc","opensc-pkcs11","libpam-pkcs11"} if contract.get("sandbox") else set());rows=json.load(open("/usr/local/lib/wormhole/manifest.json"))["packages"];assert names <= {p["name"] for p in rows};print(" ".join(p["name"]+"="+p["version"] for p in rows if p["name"] in names))')
+  packages=$(python3 -c 'import json;names={"auditd","audispd-plugins","aide","aide-common","cron","libpam-pwquality","apparmor-utils","ufw","vlock"};contract=json.load(open("/usr/local/lib/wormhole/install-contract.json"));names.update({"chrony","rsyslog-gnutls","libnss-sss","libpam-sss","opensc","opensc-pkcs11","libpam-pkcs11","libsofthsm2"} if contract.get("sandbox") else set());rows=json.load(open("/usr/local/lib/wormhole/manifest.json"))["packages"];assert names <= {p["name"] for p in rows};print(" ".join(p["name"]+"="+p["version"] for p in rows if p["name"] in names))')
   DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends -o Dir::Etc::sourcelist=sources.list.d/wormhole-local.list -o Dir::Etc::sourceparts=- install $packages
 fi
 useradd --create-home --shell /bin/bash --user-group lab.service
@@ -198,7 +238,7 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
     if sandbox:
         for filename in ('encryption-late.sh','sandbox.sh'):
             shutil.copyfile(SOURCE_ROOT/'ubuntu/guest'/filename,payload/filename)
-        for filename in ('entitlement.py','audit-offload.py','secret-audit.py'):
+        for filename in ('entitlement.py','audit-offload.py','secret-audit.py','pkcs11-probe.py'):
             shutil.copyfile(SOURCE_ROOT/'ubuntu/guest'/filename,payload/filename)
     if mode == 'hardened':
         from .ubuntu_hardening import generate
@@ -241,5 +281,6 @@ def build(source, destination, seed_dir, identifier, public_key, address, mac, *
         nonsecret_seed_template_sha256=sha256(SOURCE_ROOT / 'wormhole/ubuntu_inputs.py'))
     manifest['sandbox']=sandbox
     if (store/'bundle/toolchain.json').exists():manifest['scanner_toolchain']=read_json(store/'bundle/toolchain.json')
+    if (store/'bundle/pam-toolchain.json').exists():manifest['pam_toolchain']=read_json(store/'bundle/pam-toolchain.json')
     atomic_json(seed_dir / 'build-manifest.json', manifest)
     return manifest

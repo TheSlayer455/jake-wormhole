@@ -1,5 +1,33 @@
 # Current engineering state
 
+Delivery: [PR 37](https://github.com/TheSlayer455/jake-wormhole/pull/37).
+Its head and merge records distinguish documentation delivery from the runtime
+revision below. Final resource audit found no owned temporary resources or
+pending journal entries; the admission lock was available, the unrelated sentinel
+was unchanged and K3s remained active. Private media, native evidence and failure
+records are intentionally retained within the storage budget.
+
+Ubuntu PAM closure tested `3e1e00bc64d6d7c3fb4d3f2d846188626db8eace`:
+two independent fresh encrypted installations of identical ISO bytes passed
+40/40 checks each in 651/638 seconds. Host keys, seeds and boot identities differ;
+638 package versions, three Snap entries, kernel, payloads and findings match.
+Real installed PAM accepts the valid software credential and rejects five invalid
+cases with OCSP/CRL enabled. Native lab results are 210 pass, one FIPS failure,
+14 not applicable, five manual and 409 unselected; unmodified upstream remains
+207 pass/four fail. Cleanup, stale refusal, missing-result rejection and actual
+pending-publication refusal are verified. This is not a qualified ISO release.
+See the [source-pinned PAM solution](../handoff/solutions/ubuntu-pam-crl.md).
+Owner dependencies: legitimate Pro input/USG-FIPS execution and content checks,
+physical-token assurance, and accountable disposition of all 141 trust anchors.
+RHEL remains paused; production eligibility remains false. Self-review only.
+The complete source suite at that runtime revision passed 947 tests on Linux:
+945 pass/two platform skips, 158 seconds. Hosted CI passed the same 947 tests
+with 12 explicit skips; its controlled parity job also passed. Windows at the
+earlier controller checkpoint passed 947 tests with 321 platform skips; focused
+Ubuntu checks cover the later source changes without relabeling that full run.
+
+## Previous storage delivery
+
 Storage delivery: [PR 36](https://github.com/TheSlayer455/jake-wormhole/pull/36).
 Project allocation fell from 108.9 to 70.5 GiB; receipts verify 40.6 GiB unlinked
 blocks, including new acceptance intermediates. Filesystem availability grew by

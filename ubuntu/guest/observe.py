@@ -24,6 +24,19 @@ def file_sha256(path):
     return digest.hexdigest()
 
 
+def trust_inventory(bundle='/etc/ssl/certs/ca-certificates.crt'):
+    # get_ca_certs lists already-loaded roots, not the lazy capath inventory.
+    # Enumerate the actual installed bundle explicitly, without changing trust.
+    context=ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.load_verify_locations(cafile=str(bundle))
+    certificates=context.get_ca_certs(binary_form=True)
+    return {'fingerprints':sorted({hashlib.sha256(der).hexdigest() for der in certificates}),
+            'bundle_sha256':file_sha256(Path(bundle)),
+            'default_verify_paths':ssl.get_default_verify_paths()._asdict(),
+            'default_loaded_count':len(ssl.create_default_context().get_ca_certs()),
+            'subjects':[cert['subject'] for cert in context.get_ca_certs()]}
+
+
 def observe():
     release = dict(line.split('=', 1) for line in Path('/etc/os-release').read_text().splitlines() if '=' in line)
     if release.get('ID', '').strip('"') != 'ubuntu' or release.get('VERSION_ID', '').strip('"') != '22.04':
@@ -81,6 +94,12 @@ def observe():
         prior=json.loads(isolation.read_text()) if isolation.exists() else {}
         checks['management-plane-blocked'] &= prior.get('run_id')==(root/'run-id').read_text().strip() and prior.get('guest_outgoing_was_allow') is True and prior.get('management_listener_blocked') is True
         checks['lab-banner']=command('sshd','-T').stdout.find('banner /etc/issue.net')>=0 and 'private home lab' in Path('/etc/issue.net').read_text()
+        status=command('ufw','status')
+        checks['v2r8-ufw-effective-status']=status.returncode==0 and status.stdout.splitlines()[0]=='Status: active'
+        checks['v2r8-banner-effective-file']=checks['lab-banner'] and Path('/etc/issue.net').read_text().strip()=='Wormhole private home lab. Authorized lab use only. Activity is monitored.'
+        trust=trust_inventory();anchors=set(trust['fingerprints'])
+        source=json.loads(Path('/usr/local/lib/wormhole/dod-ca-source.json').read_text())
+        checks['official-public-dod-roots-staged']=bool(source['roots']) and {r['sha256'] for r in source['roots']}<=anchors
         command('logger','-t','wormhole-acceptance',(root/'run-id').read_text().strip())
         checks['audit-event-probe']=command('auditctl','-m','wormhole acceptance '+(root/'run-id').read_text().strip()).returncode==0
         valid=command('openssl','verify','-CAfile','/etc/wormhole-lab-ca.crt','-CRLfile','/etc/pam_pkcs11/crls/lab-ca.crl',
@@ -110,7 +129,16 @@ def observe():
     binary=Path('/opt/wormhole-openscap/bin/oscap') if Path('/usr/local/lib/wormhole/toolchain.json').exists() else Path('/usr/bin/oscap')
     payloads=[{'name':'openscap-scanner','version':command('oscap','--version').stdout.splitlines()[0],
                'binary_sha256':file_sha256(binary)}]
+    pam_receipt=Path('/usr/local/lib/wormhole/pam-toolchain.json')
+    if pam_receipt.exists():
+        tool=json.loads(pam_receipt.read_text())
+        library=file_sha256(Path('/lib/x86_64-linux-gnu/security/pam_pkcs11.so'))
+        version=command('dpkg-query','-W','-f=${Version}','libpam-pkcs11').stdout.strip()
+        checks['pam-repair-installed-identity']=version=='0.6.11-4ubuntu0.1+wormhole4' and library==tool['library_sha256']
+        payloads.append({'name':'pam-pkcs11-lab-repair','version':version,'binary_sha256':library,
+                         'repair_source_sha256':tool['repair_sha256'],'canonical_signed_binary':False})
     return {'checks': checks, 'packages': packages, 'payloads':payloads,'inventory_kind': 'installed-dpkg','audit_offload':audit_offload,
+            'system_trust_inventory':trust_inventory(),
             'kernel': command('uname', '-r').stdout.strip(), 'run_id': (root / 'run-id').read_text().strip()}
 
 

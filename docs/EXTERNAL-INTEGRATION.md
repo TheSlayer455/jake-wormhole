@@ -1,5 +1,10 @@
 # External integration: start here
 
+Current Ubuntu result: [source-pinned PAM solution](../handoff/solutions/ubuntu-pam-crl.md).
+Two fresh encrypted installations passed 40/40 checks each with matching native
+results and inventories. The repaired OpenSSL/CRL path and quiet PAM conversation
+are proven; qualification remains pending the exact external inputs listed there.
+
 [Storage lifecycle](STORAGE.md) provides shared-lock cleanup, verified ISO
 retention and projected disk admission; [current state](STATE.md) pins actual
 execution. Adapt only relevant behavior to the **rhel kvm host** and **ansible
@@ -15,7 +20,7 @@ Container runtime acceptance is established at the sources in the current checkp
 | Area | Demonstrated in Wormhole | Not demonstrated by Wormhole |
 | --- | --- | --- |
 | Provisioning | Terraform-managed Docker targets; candidate-bound Ubuntu/UBI; 20 coexisting stock targets; two fresh hardened Ubuntu 22.04.5 BIOS installations of the same ISO bytes and declared seed template | RHEL ISO installation, UEFI/Secure Boot, work-host compatibility |
-| Validation | Real Ubuntu final SSH/Ansible, two encrypted installs with 34/34 checks, isolated service/PKI integration, cold-start unlock and native OpenSCAP/CaC V2R7 reports with all 639 outcomes | Zero-finding security acceptance, USG V2R8 equivalence, FIPS evidence, physical-token/government-PKI assurance, production ISO qualification |
+| Validation | Real Ubuntu final SSH/Ansible, two encrypted installs with 40/40 checks, six native PAM cases, isolated service/PKI integration, cold-start unlock and native OpenSCAP/CaC V2R7 reports with all 639 outcomes | Zero-finding security acceptance, USG V2R8 equivalence, FIPS evidence, physical-token/government-PKI assurance, production ISO qualification |
 | Delivery | Source-bound reference qualification and exact-tested-byte private filesystem publication | Proprietary GitLab integration; actual GitLab runner execution; customer portal or remote artifact publication |
 
 The [verification report](../handoff/MERGED-VERIFICATION.md) binds the latest recorded 43-check Ubuntu reference run to `c3d440a3` and the earlier twenty-target qualification to `825a594`. These are different operations, not a scaling benchmark. See [fidelity limits](FIDELITY.md) for details. Wormhole is a reference implementation; production adapters and production evidence are separate work.

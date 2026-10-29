@@ -33,6 +33,9 @@ def generate(run, result, *, findings=None, observations=None, controller_record
         atomic_json(run/'manual-evidence.json',manual)
     else:manual={'objective_results':{},'disposition':'not-collected'}
     derived = {
+        'pkcs11-pam-positive-and-negative':stages['pkcs11-pam-probe']['evidence'].get('all_expected_observed') if 'pkcs11-pam-probe' in stages else None,
+        'pkcs11-mapper-config-parser':set(stages['pkcs11-pam-probe']['evidence'].get('parser',{}))=={'vendor_configuration_parses','malformed_assignment_refused','pwent_with_required_semicolon'} and
+            all(v is True for v in stages['pkcs11-pam-probe']['evidence']['parser'].values()) if stages.get('pkcs11-pam-probe',{}).get('returncode')==0 else None,
         'audit-offload-readback':result.get('support_verification',{}).get('audit_snapshot_readback_verified'),
         'no-retained-install-secrets':stages.get('secret-retention-inspection',{}).get('returncode')==0 if 'secret-retention-inspection' in stages else None,
         'remote-syslog-received':result.get('support_verification',{}).get('syslog_guest_event_received'),

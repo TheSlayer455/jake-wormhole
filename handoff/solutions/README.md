@@ -5,6 +5,7 @@ tracks pending installation, hardening, assessment and publication work.
 
 | Solution | Actual evidence | Boundary |
 | --- | --- | --- |
+| [Ubuntu PAM revocation and final acceptance pair](ubuntu-pam-crl.md) | Native crash/control-flow reproduction, two same-ISO encrypted installs with 40/40 checks each, matching inventories and 210 pass/one FIPS failure | Pro/USG/FIPS, physical-token assurance and accountable trust-root disposition remain pending; no qualified publication |
 | [Storage lifecycle](../../docs/STORAGE.md) | Real cleanup/interruption recovery, active-VM refusal, retained hashes and fresh 34/34 Ubuntu acceptance | Shared home filesystem; protected retention can block admission; no qualification waiver |
 | [Streaming ISO reconstruction](streaming-iso.md) | Real 2.14 GB official Ubuntu media; controlled interruption/resume; exact hash match | Local Linux artifact store, not GitLab or installed-OS acceptance |
 | [Ubuntu ISO and VM baseline](ubuntu-vm-baseline.md) | Fresh 8 GiB KVM installation, final dotted account, trusted SSH, real Ansible, native inventory and exact-owned cleanup | Ubuntu-host BIOS baseline; no hardening, RHEL installation or assessment claim |

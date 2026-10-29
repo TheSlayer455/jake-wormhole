@@ -1,5 +1,17 @@
 # Ubuntu installation hardening and post-reboot assessment
 
+Current verified increment: [PAM revocation repair and final pair](ubuntu-pam-crl.md),
+tested at `3e1e00bc64d6d7c3fb4d3f2d846188626db8eace`. Two fresh encrypted installations
+of identical ISO bytes passed 40/40 checks in 651/638 seconds, with matching
+inventories and 210 pass/one FIPS fail/14 not applicable/five native manual/409
+unselected outcomes. Actual pending publication is refused. Owner inputs remain:
+legitimate Pro entitlement for USG/FIPS and vendor-content verification, real
+physical-token assurance, and accountable review of 141 installed trust anchors.
+The private provider procedure below remains applicable. No qualified Ubuntu ISO
+or production eligibility is claimed. Earlier evidence below retains its attribution.
+
+## Earlier merged sandbox baseline
+
 Verified merged implementation:
 [564cfc5f02cdaf348b15fe788a62987b7d156b2a](https://github.com/TheSlayer455/jake-wormhole/tree/564cfc5f02cdaf348b15fe788a62987b7d156b2a),
 delivered in [PR 34](https://github.com/TheSlayer455/jake-wormhole/pull/34).

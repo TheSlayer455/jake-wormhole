@@ -45,11 +45,28 @@ class Sandbox(unittest.TestCase):
     def test_disposable_ca_actually_accepts_valid_and_refuses_revoked_certificate(self):
         with tempfile.TemporaryDirectory() as directory:
             private=certificates(directory)
+            # Real OpenSSL capath loading is lazy; an empty loaded-root list is
+            # not proof that the installed bundle lacks the required roots.
+            trust_dir=Path(directory)/'hashed-trust';trust_dir.mkdir()
+            shutil.copyfile(private/'ca.crt',trust_dir/'ca.pem')
+            subprocess.run(['openssl','rehash',str(trust_dir)],check=True,capture_output=True,timeout=10)
+            lazy=ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT);lazy.load_verify_locations(capath=str(trust_dir))
+            self.assertEqual(lazy.get_ca_certs(),[])
+            if os.name=='posix':
+                spec=importlib.util.spec_from_file_location('trust_observe_fixture',Path(__file__).resolve().parents[1]/'ubuntu/guest/observe.py')
+                observer=importlib.util.module_from_spec(spec);spec.loader.exec_module(observer)
+                roots=observer.trust_inventory(private/'ca.crt')
+                expected=hashlib.sha256(ssl.PEM_cert_to_DER_cert((private/'ca.crt').read_text())).hexdigest()
+                self.assertEqual(roots['fingerprints'],[expected])
             args=['openssl','verify','-CAfile',str(private/'ca.crt'),'-CRLfile',str(private/'ca.crl'),'-crl_check']
             self.assertEqual(subprocess.run(args+[str(private/'active.crt')],capture_output=True,timeout=10).returncode,0)
             revoked=subprocess.run(args+[str(private/'revoked.crt')],capture_output=True,text=True,timeout=10)
             self.assertNotEqual(revoked.returncode,0)
             self.assertIn('certificate revoked',revoked.stderr)
+            self.assertEqual(subprocess.run(args+[str(private/'token.crt')],capture_output=True,timeout=10).returncode,0)
+            token_revoked=subprocess.run(args+[str(private/'token-revoked.crt')],capture_output=True,text=True,timeout=10)
+            self.assertNotEqual(token_revoked.returncode,0)
+            self.assertIn('certificate revoked',token_revoked.stderr)
             request=private/'request.der';response=private/'response.der'
             for name,status in (('active','good'),('revoked','revoked')):
                 client=['openssl','ocsp','-issuer',str(private/'ca.crt'),'-cert',str(private/(name+'.crt'))]

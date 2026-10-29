@@ -4,6 +4,18 @@ set -euo pipefail
 test "$(systemd-detect-virt)" = kvm
 test -f /var/lib/wormhole/run-id
 test -f /etc/wormhole-lab-ca.crt
+python3 - <<'PY'
+from pathlib import Path
+import hashlib,json,re,subprocess
+payload=Path('/usr/local/lib/wormhole');policy=json.loads((payload/'policy.json').read_text())
+source=payload/'dod-public-roots.pem'
+if hashlib.sha256(source.read_bytes()).hexdigest()!=policy['public_ca_bundle']['roots_pem_sha256']:
+    raise RuntimeError('public CA source mismatch')
+target=Path('/usr/local/share/ca-certificates/wormhole-public-dod');target.mkdir(mode=0o755)
+for index,pem in enumerate(re.findall(r'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----',source.read_text(),re.S)):
+    (target/(str(index)+'.crt')).write_text(pem+'\n')
+subprocess.run(['update-ca-certificates'],check=True,timeout=20)
+PY
 printf '%s\n' 'Wormhole private home lab. Authorized lab use only. Activity is monitored.' > /etc/issue.net
 printf '%s\n' 'Banner /etc/issue.net' > /etc/ssh/sshd_config.d/05-wormhole-banner.conf
 cat > /etc/chrony/chrony.conf <<'EOF'
@@ -52,8 +64,29 @@ pam_pkcs11 {
   mapper pwent { debug = false; ignorecase = false; module = internal; }
 }
 EOF
-# This is certificate validation configuration. Do not silently activate an
-# untested PAM/token login path or represent it as physical-token MFA.
+# The login stack accepts the configured real OpenSC token when available;
+# retain the existing Unix-password path for the declared service operator.
+# This configuration is not evidence of mandatory physical-token enforcement.
+python3 - <<'PY'
+from pathlib import Path
+p=Path('/etc/pam.d/common-auth');text=p.read_text()
+# The documented quiet option suppresses conversation notices when no reader is
+# attached. Authentication decisions remain intact, and the dedicated probe
+# retains failure evidence. Notices must not contaminate JSON or binary output.
+# Linux-PAM's exact extended form of sufficient: no guessed numeric jump, and
+# an earlier required failure still cannot be overridden by token success.
+line='auth [success=done new_authtok_reqd=done default=ignore] pam_pkcs11.so quiet'
+if not any('pam_pkcs11.so' in s and not s.lstrip().startswith('#') for s in text.splitlines()):
+    p.write_text(line+'\n'+text)
+PY
+# Isolated acceptance service: no software-token module enters common-auth.
+# Temporary token objects arrive only during probes in private /run storage.
+test -f /usr/lib/softhsm/libsofthsm2.so
+sed 's/use_pkcs11_module = opensc;/use_pkcs11_module = software;/;s/pkcs11_module opensc {/pkcs11_module software {/;s|/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so|/usr/lib/softhsm/libsofthsm2.so|' \
+  /etc/pam_pkcs11/pam_pkcs11.conf > /etc/pam_pkcs11/wormhole-software-token.conf
+printf '%s\n' 'auth required pam_pkcs11.so quiet config_file=/etc/pam_pkcs11/wormhole-software-token.conf' \
+  'account required pam_permit.so' > /etc/pam.d/wormhole-token-probe
+chmod 0600 /etc/pam_pkcs11/wormhole-software-token.conf /etc/pam.d/wormhole-token-probe
 install -m 0700 /usr/local/lib/wormhole/audit-offload.py /etc/cron.weekly/audit-offload
 cat > /etc/audit/audisp-remote.conf <<'EOF'
 remote_server = 192.0.2.1

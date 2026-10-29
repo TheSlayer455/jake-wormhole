@@ -1,5 +1,40 @@
 # Current handoff
 
+## Ubuntu PAM closure
+
+Delivery is tracked by [PR 37](https://github.com/TheSlayer455/jake-wormhole/pull/37);
+its head and merge records identify delivered/main revisions separately from the
+tested source below. Final audit: zero owned temporary resources, no pending
+journal entries, available shared lock, unchanged sentinel and active K3s.
+
+Tested implementation: `3e1e00bc64d6d7c3fb4d3f2d846188626db8eace`.
+Two fresh same-ISO encrypted KVM installations passed 40/40 checks in 651/638
+seconds with matching native results/inventories and distinct credentials,
+host keys and boot IDs. The repaired native PAM passes all six real software-token
+cases; required earlier PAM failures remain failed. Trust inventory and extended
+PAM controls close the two final technical findings. See
+[implementation, commands and adaptation limits](solutions/ubuntu-pam-crl.md).
+Native lab counts: 210 pass/one FIPS fail/14 not applicable/five manual/409
+unselected. The original upstream audit remains 207 pass/four fail. Qualification
+is pending legitimate vendor input/content verification, physical-token assurance
+and accountable approval/disposition of 141 trust roots. Actual publication was
+refused; no qualified ISO exists. Both guests/support services were removed.
+
+Storage admission initially refused new allocation after unrelated shared-disk
+growth. Under the shared and individual run locks, 100 byte-verified, duplicate
+tool binary extractions from 50 terminal failed/reconciled container runs were
+unlinked, reclaiming 9.5 GiB. Every original ZIP, receipt and failure/evidence file
+was retained; ZIP member hashes prove exact reconstruction. This was scoped
+maintenance, not a new automatic cleanup capability. Unknown/running runs,
+qualified artifacts and unrelated data were excluded. Private receipts record it.
+
+Do not repeat authentication discovery, weaken policy, or relabel old evidence.
+RHEL stays paused; review is self-review, not an invented independent approval.
+Full Linux source verification at the tested revision: 947 tests, 945 pass/two
+platform skips in 158 seconds. Hosted CI passed 947 with 12 explicit skips and
+the controlled parity job. Documentation delivery does not change tested guest
+inputs or relabel historical executions as testing a later source revision.
+
 ## Automatic storage lifecycle
 
 [PR 36](https://github.com/TheSlayer455/jake-wormhole/pull/36) tracks delivery;

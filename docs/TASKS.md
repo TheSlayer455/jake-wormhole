@@ -1,5 +1,11 @@
 # Minx work index
 
+Ubuntu PAM closure: `codex/WORM-001-ubuntu-qualification-closure`, tested at
+`3e1e00bc64d6d7c3fb4d3f2d846188626db8eace`. Two matching fresh installations passed
+40/40 checks; real PAM, native assessment, inventory, encryption and cleanup are
+verified. [Continuation and exact external dependencies](../handoff/CURRENT.md)
+remain separate from qualification, publication and historical Minx review state.
+
 Storage increment: `codex/WORM-001-storage-lifecycle`, [PR 36](https://github.com/TheSlayer455/jake-wormhole/pull/36).
 Shared-lock lifecycle cleanup, bounded candidate retention, preview/status and
 projected disk admission are implemented and exercised; see [measured state](STATE.md).
