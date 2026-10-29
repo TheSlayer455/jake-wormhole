@@ -126,9 +126,11 @@ def parser_probe():
         if result.returncode not in (0,1):raise RuntimeError('vendor parser diagnostic unavailable')
         return result.returncode==0
     with tempfile.TemporaryDirectory(prefix='wormhole-parser-',dir='/run') as folder:
-        invalid=Path(folder)/'invalid.conf';invalid.write_text(source.replace('use_mappers = pwent;','use_mappers = pwent',1))
+        # scconf tolerates an omitted semicolon with an internal warning. Use a
+        # genuinely malformed assignment, not that tolerated syntax, as negative.
+        invalid=Path(folder)/'invalid.conf';invalid.write_text(source.replace('use_mappers = pwent;','use_mappers == pwent;',1))
         return {'vendor_configuration_parses':parse('/etc/pam_pkcs11/pam_pkcs11.conf'),
-                'missing_semicolon_refused':not parse(invalid),
+                'malformed_assignment_refused':not parse(invalid),
                 'pwent_with_required_semicolon':source.count('use_mappers = pwent;')==1}
 
 
