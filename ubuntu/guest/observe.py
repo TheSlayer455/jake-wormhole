@@ -121,7 +121,7 @@ def observe():
         tool=json.loads(pam_receipt.read_text())
         library=file_sha256(Path('/lib/x86_64-linux-gnu/security/pam_pkcs11.so'))
         version=command('dpkg-query','-W','-f=${Version}','libpam-pkcs11').stdout.strip()
-        checks['pam-repair-installed-identity']=version=='0.6.11-4ubuntu0.1+wormhole2' and library==tool['library_sha256']
+        checks['pam-repair-installed-identity']=version=='0.6.11-4ubuntu0.1+wormhole3' and library==tool['library_sha256']
         payloads.append({'name':'pam-pkcs11-lab-repair','version':version,'binary_sha256':library,
                          'repair_source_sha256':tool['repair_sha256'],'canonical_signed_binary':False})
     return {'checks': checks, 'packages': packages, 'payloads':payloads,'inventory_kind': 'installed-dpkg','audit_offload':audit_offload,

@@ -19,9 +19,9 @@
   "package_snapshot": "https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/",
   "native_pam": {
     "package": "libpam-pkcs11",
-    "version": "0.6.11-4ubuntu0.1+wormhole2",
-    "artifact_sha256": "398e1d275b6427895366b2715d609c17add44b14f2bce00bec2503eb13a3a61c",
-    "library_sha256": "182396a7ee6df3b2d9fec2395bc673337c0416a0d93442aee5f279a5a1269b5e",
+    "version": "0.6.11-4ubuntu0.1+wormhole3",
+    "artifact_sha256": "c2356c46e2e5c1d592f617343756bef88f617f0a704d44dbfc1a2a50349df025",
+    "library_sha256": "a1746a2fbe3f33d11a3a5e0d81dac272937c39c2bdcf45e9966a4f5de5701b0d",
     "canonical_signed_binary": false,
     "source_files": {
       "pam-pkcs11_0.6.11.orig.tar.gz": "44d717d285ad862cd63002e901b21fcbd808c65b063f71be1c2aece04dfa23ca",

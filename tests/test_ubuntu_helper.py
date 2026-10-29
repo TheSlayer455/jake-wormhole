@@ -13,6 +13,20 @@ from unittest.mock import patch
 
 @unittest.skipUnless(os.name=='posix','VM controller requires Linux')
 class Helper(unittest.TestCase):
+    def test_non_json_privileged_output_still_generates_a_failed_complete_grid(self):
+        from wormhole.ubuntu_runtime import report
+        from wormhole.ubuntu_assessment import POLICY
+        with tempfile.TemporaryDirectory() as value:
+            root=Path(value)
+            record={'stage':'installed-observations','returncode':0,'output':'PAM notice\n{}'}
+            (root/'ssh-ansible-inventory.log').write_text(json.dumps(record)+'\n')
+            result={'run_id':'fixture','source_revision':'fixture','outcome':'failed',
+                    'cleanup':'verified-absent-inputs-retained','error_category':'ssh-ansible-inventory_failed'}
+            actual=report(root,result)
+            self.assertEqual(actual['functional_counts'],{'blocked':len(json.loads(POLICY.read_text())['functional_checks'])})
+            self.assertFalse(actual['lab_iso_qualified'])
+            self.assertTrue((root/'junit.xml').is_file())
+
     def test_confirmed_authentication_rejection_blocks_catalog_promptly(self):
         from wormhole.ubuntu_runtime import HELPER_CODE
         calls=[]

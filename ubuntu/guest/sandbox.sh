@@ -71,8 +71,8 @@ python3 - <<'PY'
 from pathlib import Path
 p=Path('/etc/pam.d/common-auth');text=p.read_text()
 # The documented quiet option suppresses conversation notices when no reader is
-# attached. Authentication decisions and syslog errors remain intact; notices
-# must not contaminate privileged JSON or binary assessment output.
+# attached. Authentication decisions remain intact, and the dedicated probe
+# retains failure evidence. Notices must not contaminate JSON or binary output.
 line='auth sufficient pam_pkcs11.so quiet'
 if not any('pam_pkcs11.so' in s and not s.lstrip().startswith('#') for s in text.splitlines()):
     p.write_text(line+'\n'+text)

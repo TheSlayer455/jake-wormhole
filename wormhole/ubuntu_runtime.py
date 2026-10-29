@@ -206,7 +206,13 @@ def report(run, result):
                 item=json.loads(line)
                 if item.get('stage')!='assessment-artifacts':records.append(item)
     if observations is None:
-        observations=next((json.loads(r['output']) for r in records if r.get('stage')=='installed-observations' and r.get('returncode')==0),None)
+        try:
+            observations=next((json.loads(r['output']) for r in records if r.get('stage')=='installed-observations' and r.get('returncode')==0),None)
+        except (ValueError,TypeError,KeyError):
+            # Preserve the failed command's raw evidence privately, but still
+            # generate the complete blocked grid rather than losing the report.
+            observations=None
+            records.append({'stage':'installed-observations-invalid','returncode':1})
         if observations is not None:require(observations['run_id']==result['run_id'],'installed_observation_identity')
     if observations is not None:supplement_inventory(observations,records)
     return generate(run, result, findings=findings, observations=observations, controller_records=records)
