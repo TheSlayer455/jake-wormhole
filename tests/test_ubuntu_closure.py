@@ -38,6 +38,13 @@ class Closure(unittest.TestCase):
         self.assertIn('X509_get_issuer_name(x509), obj);',repaired)
         with self.assertRaises(ValueError):module.repair(repaired)
         with self.assertRaises(ValueError):module.repair(source.replace('issuer_cert =','changed =',1))
+        notice='  pam_prompt(pamh, PAM_TEXT_INFO , NULL, _("Smartcard authentication starts"));'
+        anchor='  /* Either slot_description or slot_num, but not both, needs to be used */'
+        original=notice+'\nconfiguration = pk_configure(argc,argv);\n'+anchor
+        corrected=module.repair_notice(original)
+        self.assertGreater(corrected.index(notice),corrected.index('pk_configure'))
+        self.assertIn('!configuration->quiet && !(flags & PAM_SILENT)',corrected)
+        with self.assertRaises(ValueError):module.repair_notice('changed source')
 
     def test_corrected_check_accepts_vendor_grammar_and_refuses_wrong_missing_commented_values(self):
         for line in ('  use_mappers = pwent;','\tuse_mappers\t=\tpwent ;  '):

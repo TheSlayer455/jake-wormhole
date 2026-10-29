@@ -91,7 +91,7 @@ def token(directory, certificate, private_key, pin):
     return config
 
 
-def authenticate(pin):
+def authenticate(pin, *, notice_styles=None):
     class Message(C.Structure):_fields_=[('style',C.c_int),('text',C.c_char_p)]
     class Response(C.Structure):_fields_=[('text',C.c_void_p),('code',C.c_int)]
     callback=C.CFUNCTYPE(C.c_int,C.c_int,C.POINTER(C.POINTER(Message)),C.POINTER(C.POINTER(Response)),C.c_void_p)
@@ -104,6 +104,7 @@ def authenticate(pin):
         values=C.cast(libc.calloc(count,C.sizeof(Response)),C.POINTER(Response))
         for index in range(count):
             style=messages[index].contents.style
+            if style in (3,4) and notice_styles is not None:notice_styles.append(style)
             if style in (1,2):values[index].text=libc.strdup(pin if style==1 else b'lab.service')
         responses[0]=values
         return 0
@@ -158,7 +159,9 @@ def execute(value):
             if result.returncode or not records:
                 raise RuntimeError('PAM probe child exited '+str(result.returncode)+': '+result.stderr[-800:].decode(errors='replace'))
             code=json.loads(records[-1])['pam_returncode']
-            outcomes[case]={'pam_returncode':code,'expected_observed':code==0 if case=='valid' else code!=0}
+            notices=json.loads(records[-1])['conversation_notice_count']
+            outcomes[case]={'pam_returncode':code,'conversation_notice_count':notices,
+                            'expected_observed':(code==0 if case=='valid' else code!=0) and notices==0}
     return {'schema_version':'1.0','evidence_category':'real installed libpam/pam_pkcs11 with disposable software PKCS11 objects',
             'cases':outcomes,'all_expected_observed':all(x['expected_observed'] for x in outcomes.values()),
             'temporary_objects_removed':not root.exists(),'parser':parser_probe(),
@@ -170,7 +173,9 @@ if __name__=='__main__':
     if os.geteuid()!=0 or not Path('/var/lib/wormhole/run-id').is_file() or subprocess.check_output(['systemd-detect-virt'],text=True).strip() not in {'kvm','qemu'}:
         raise RuntimeError('requires declared disposable guest')
     if sys.argv[1:]==['authenticate']:
-        print(json.dumps({'pam_returncode':authenticate(sys.stdin.buffer.read(256))}))
+        notices=[]
+        code=authenticate(sys.stdin.buffer.read(256),notice_styles=notices)
+        print(json.dumps({'pam_returncode':code,'conversation_notice_count':len(notices)}))
     else:
         raw=sys.stdin.buffer.read(65537)
         if len(raw)>65536:raise ValueError('bounded private probe input required')

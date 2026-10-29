@@ -82,7 +82,7 @@ PY
 test -f /usr/lib/softhsm/libsofthsm2.so
 sed 's/use_pkcs11_module = opensc;/use_pkcs11_module = software;/;s/pkcs11_module opensc {/pkcs11_module software {/;s|/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so|/usr/lib/softhsm/libsofthsm2.so|' \
   /etc/pam_pkcs11/pam_pkcs11.conf > /etc/pam_pkcs11/wormhole-software-token.conf
-printf '%s\n' 'auth required pam_pkcs11.so config_file=/etc/pam_pkcs11/wormhole-software-token.conf' \
+printf '%s\n' 'auth required pam_pkcs11.so quiet config_file=/etc/pam_pkcs11/wormhole-software-token.conf' \
   'account required pam_permit.so' > /etc/pam.d/wormhole-token-probe
 chmod 0600 /etc/pam_pkcs11/wormhole-software-token.conf /etc/pam.d/wormhole-token-probe
 install -m 0700 /usr/local/lib/wormhole/audit-offload.py /etc/cron.weekly/audit-offload

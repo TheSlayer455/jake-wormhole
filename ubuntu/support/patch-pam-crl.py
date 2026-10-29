@@ -45,12 +45,29 @@ def repair(text):
     return text
 
 
+def repair_notice(text):
+    # The startup notice precedes pk_configure, so upstream ignores its quiet
+    # option for this one message. Honor both configured quiet and PAM_SILENT.
+    notice='  pam_prompt(pamh, PAM_TEXT_INFO , NULL, _("Smartcard authentication starts"));'
+    anchor='  /* Either slot_description or slot_num, but not both, needs to be used */'
+    if text.count(notice)!=1 or text.count(anchor)!=1:
+        raise ValueError('unexpected pinned PAM conversation source')
+    return text.replace(notice,'',1).replace(anchor,
+        '  if (!configuration->quiet && !(flags & PAM_SILENT))\n'+notice+'\n\n'+anchor,1)
+
+
 if __name__=='__main__':
     path=Path('src/common/cert_vfy.c')
     before=path.read_bytes();after=repair(before.decode()).encode()
     Path('wormhole-pam-crl.patch').write_text(''.join(difflib.unified_diff(before.decode().splitlines(True),
         after.decode().splitlines(True),fromfile='a/src/common/cert_vfy.c',tofile='b/src/common/cert_vfy.c')))
     path.write_bytes(after)
+    auth=Path('src/pam_pkcs11/pam_pkcs11.c');auth_before=auth.read_bytes();auth_after=repair_notice(auth_before.decode()).encode()
+    with Path('wormhole-pam-crl.patch').open('a') as patch:
+        patch.write(''.join(difflib.unified_diff(auth_before.decode().splitlines(True),auth_after.decode().splitlines(True),
+            fromfile='a/src/pam_pkcs11/pam_pkcs11.c',tofile='b/src/pam_pkcs11/pam_pkcs11.c')))
+    auth.write_bytes(auth_after)
     Path('wormhole-pam-repair.json').write_text(json.dumps({'id':'openssl-object-and-crl-ownership-1',
         'before_sha256':hashlib.sha256(before).hexdigest(),'after_sha256':hashlib.sha256(after).hexdigest(),
+        'conversation_before_sha256':hashlib.sha256(auth_before).hexdigest(),'conversation_after_sha256':hashlib.sha256(auth_after).hexdigest(),
         'revocation_checks_retained':True,'supported_runtime_test':'Ubuntu 22.04 / OpenSSL 3'},sort_keys=True))
