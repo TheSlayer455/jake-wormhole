@@ -22,9 +22,16 @@ from pathlib import Path
 import os,datetime
 path=Path('debian/changelog');original=path.read_text()
 stamp=datetime.datetime.fromtimestamp(int(os.environ['SOURCE_DATE_EPOCH']),datetime.timezone.utc).strftime('%a, %d %b %Y %H:%M:%S +0000')
-path.write_text('pam-pkcs11 (0.6.11-4ubuntu0.1+wormhole1) jammy; urgency=medium\n\n'
+path.write_text('pam-pkcs11 (0.6.11-4ubuntu0.1+wormhole2) jammy; urgency=medium\n\n'
     '  * Lab backport: correct OpenSSL object pointers and retain owned CRL references.\n\n'
     ' -- Wormhole Lab <nobody@example.invalid>  '+stamp+'\n\n'+original)
+rules=Path('debian/rules')
+text=rules.read_text()
+if text.count('override_dh_auto_install:')!=1 or 'wormhole-pam-config-check' in text:
+    raise RuntimeError('unexpected pinned Debian installation rules')
+rules.write_text(text+'\n\tmkdir -p debian/libpam-pkcs11/usr/libexec\n'
+    '\t$(CC) $(CFLAGS) $(CPPFLAGS) -I./src/scconf /recipe/pam-config-check.c '
+    'src/scconf/.libs/libscconf.a $(LDFLAGS) -o debian/libpam-pkcs11/usr/libexec/wormhole-pam-config-check\n')
 PY
 dpkg-buildpackage -us -uc -b
 cp wormhole-pam-repair.json wormhole-pam-crl.patch /work/

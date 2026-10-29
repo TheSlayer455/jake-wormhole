@@ -119,13 +119,12 @@ def authenticate(pin):
 def parser_probe():
     source=Path('/etc/pam_pkcs11/pam_pkcs11.conf').read_text()
     def parse(path):
-        # The package hides its scconf symbols. Exercise its real configuration
-        # reader through the supported utility, with no token/PIN supplied.
-        result=subprocess.run(['pkcs11_inspect','debug','config_file='+str(path)],stdin=subprocess.DEVNULL,
+        # The module hides scconf symbols and its general inspector falls back
+        # silently. Use the read-only harness linked to the SAME vendor parser.
+        result=subprocess.run(['/usr/libexec/wormhole-pam-config-check',str(path)],stdin=subprocess.DEVNULL,
                               capture_output=True,text=True,timeout=10)
-        text=result.stdout+result.stderr
-        if 'Using config file '+str(path) not in text:raise RuntimeError('vendor parser diagnostic unavailable')
-        return 'Error parsing file' not in text and 'pam_pkcs11 block not found' not in text
+        if result.returncode not in (0,1):raise RuntimeError('vendor parser diagnostic unavailable')
+        return result.returncode==0
     with tempfile.TemporaryDirectory(prefix='wormhole-parser-',dir='/run') as folder:
         invalid=Path(folder)/'invalid.conf';invalid.write_text(source.replace('use_mappers = pwent;','use_mappers = pwent',1))
         return {'vendor_configuration_parses':parse('/etc/pam_pkcs11/pam_pkcs11.conf'),
