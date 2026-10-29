@@ -1,5 +1,9 @@
 # Minx work index
 
+Repeatability follow-up: `codex/WORM-001-repeatability-evidence`, [PR 38](https://github.com/TheSlayer455/jake-wormhole/pull/38).
+Existing comparison now requires independent recorded installation identities;
+retained real-pair replay and focused refusal tests passed. See [state](STATE.md).
+
 Ubuntu PAM closure: `codex/WORM-001-ubuntu-qualification-closure`, tested at
 `3e1e00bc64d6d7c3fb4d3f2d846188626db8eace`. Two matching fresh installations passed
 40/40 checks; real PAM, native assessment, inventory, encryption and cleanup are

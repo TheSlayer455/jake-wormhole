@@ -1,5 +1,15 @@
 # Current handoff
 
+Latest comparison repair: [PR 38](https://github.com/TheSlayer455/jake-wormhole/pull/38),
+implementation `7fdf05be546b8c13af519d4310355079b5a0a8fe`. Seven focused tests,
+independent engineering-agent review and replay of the retained real pair passed;
+copied seed/boot/host identities and missing receipts cannot prove freshness.
+This changes retained-evidence comparison only, so no new VM or candidate build
+was needed. The private Pro provider remains empty. Resume vendor-dependent work
+when legitimate input is supplied; physical-token assurance and accountable
+trust-root disposition also remain pending. Required qualification policy is
+unchanged. Follow the owner's simplicity rules in [AGENTS](../AGENTS.md).
+
 ## Ubuntu PAM closure
 
 Delivery is tracked by [PR 37](https://github.com/TheSlayer455/jake-wormhole/pull/37);
