@@ -1,5 +1,8 @@
 # Current handoff
 
+RHEL delivery: [PR 39](https://github.com/TheSlayer455/jake-wormhole/pull/39);
+use its head/merge records for delivery attribution, not a new runtime claim.
+
 RHEL 10.0 is the newly activated target on `codex/WORM-001-rhel10-baseline`.
 Current implementation: `d39f7a0bc6c10e200fff44fa26bf866bef9ab517`.
 The first real attempt at `28b23ad` installed and supported diagnostic SSH with

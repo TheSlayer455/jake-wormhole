@@ -1,5 +1,8 @@
 # Current engineering state
 
+RHEL delivery: [PR 39](https://github.com/TheSlayer455/jake-wormhole/pull/39).
+Its head/merge records are separate from the tested runtime revision below.
+
 RHEL 10.0 is now owner-authorized as the next target. The separate BIOS baseline
 uses the official x86_64 DVD, 8 GiB RAM, two vCPUs and a 32 GiB empty disk; the
 smaller disk is a measured lab choice, not the Ubuntu 64 GiB profile. The first

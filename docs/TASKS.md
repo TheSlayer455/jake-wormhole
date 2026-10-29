@@ -1,6 +1,6 @@
 # Minx work index
 
-Active RHEL increment: `codex/WORM-001-rhel10-baseline`. The owner explicitly
+RHEL increment: `codex/WORM-001-rhel10-baseline`, [PR 39](https://github.com/TheSlayer455/jake-wormhole/pull/39). The owner explicitly
 activated RHEL 10.0 using supplied official media. Preserve Ubuntu's completed
 engineering and unresolved qualification dependencies. The first RHEL installation
 exposed a completion-marker traversal defect; the corrected same-ISO fresh retry
