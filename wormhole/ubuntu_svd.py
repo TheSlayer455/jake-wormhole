@@ -57,6 +57,7 @@ def build_svd(run, candidate, manifest):
            'source_media':manifest['source'],'media_layers':layers,'offline_repository_packages':bundle['packages'],
            'package_snapshot':bundle['snapshot'],
            'scanner_toolchain':manifest.get('scanner_toolchain'),
+           'pam_toolchain':manifest.get('pam_toolchain'),
            'meaning':'Media layers and available offline packages are non-additive build inputs, not proof of installed software.'}
     (output/'svd.json').write_text(json.dumps(value,indent=2))
     (output/'svd.txt').write_text(value['meaning']+'\n'+'\n'.join(

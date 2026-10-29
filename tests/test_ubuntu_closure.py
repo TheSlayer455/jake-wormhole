@@ -20,6 +20,23 @@ def probe_module():
 
 
 class Closure(unittest.TestCase):
+    def test_native_repair_requires_exact_accessors_and_retains_crl_ownership(self):
+        path=Path(__file__).resolve().parents[1]/'ubuntu/support/patch-pam-crl.py'
+        spec=importlib.util.spec_from_file_location('pam_repair',path)
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        source='\n'.join(['issuer_cert = X509_OBJECT_get0_X509((&obj));',
+            'crl = X509_OBJECT_get0_X509_CRL((&obj));',
+            'x509_ca = X509_OBJECT_get0_X509((&obj));',
+            '  rv = verify_crl(crl, ctx);',
+            '  } else if (rv == 0) {\n    return 0;\n  }\n  DBG("checking revocation");'])
+        repaired=module.repair(source)
+        self.assertIn('X509_CRL_up_ref(crl)',repaired)
+        self.assertIn('if (crl == NULL)',repaired)
+        self.assertIn('X509_CRL_free(crl);\n    return 0;',repaired)
+        self.assertNotIn('((&obj))',repaired)
+        with self.assertRaises(ValueError):module.repair(repaired)
+        with self.assertRaises(ValueError):module.repair(source.replace('issuer_cert =','changed =',1))
+
     def test_corrected_check_accepts_vendor_grammar_and_refuses_wrong_missing_commented_values(self):
         for line in ('  use_mappers = pwent;','\tuse_mappers\t=\tpwent ;  '):
             self.assertIsNotNone(re.fullmatch(content.PATTERN,line))

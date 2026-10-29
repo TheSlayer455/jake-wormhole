@@ -17,6 +17,18 @@
     "equivalence_to_usg_established": false
   },
   "package_snapshot": "https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/",
+  "native_pam": {
+    "package": "libpam-pkcs11",
+    "version": "0.6.11-4ubuntu0.1+wormhole2",
+    "artifact_sha256": "398e1d275b6427895366b2715d609c17add44b14f2bce00bec2503eb13a3a61c",
+    "library_sha256": "182396a7ee6df3b2d9fec2395bc673337c0416a0d93442aee5f279a5a1269b5e",
+    "canonical_signed_binary": false,
+    "source_files": {
+      "pam-pkcs11_0.6.11.orig.tar.gz": "44d717d285ad862cd63002e901b21fcbd808c65b063f71be1c2aece04dfa23ca",
+      "pam-pkcs11_0.6.11-4ubuntu0.1.debian.tar.xz": "9a3f5fe060c9549df3dea489608f0f50cffc07444bb70abe6211d4b79a6e10b7",
+      "pam-pkcs11_0.6.11-4ubuntu0.1.dsc": "208309a462f3d3042e137dc12227edaf3faa90cdcdeb46ca77915925697813ab"
+    }
+  },
   "public_ca_bundle": {
     "source": "https://dl.dod.cyber.mil/wp-content/uploads/pki-pke/zip/unclass-certificates_pkcs7_DoD.zip",
     "archive_sha256": "32595adbe752df5823cedd2c6a4f206c07fcc3c1520fb831015204e9fbb75711",
@@ -37,6 +49,7 @@
     "evidence_identity_and_cleanup_verified": true
   },
   "functional_checks": [
+    "pam-repair-installed-identity",
     "installed-os-identity", "installed-disk-boot", "finalization-complete", "required-reboot",
     "trusted-final-ssh", "final-home-key-permissions", "password-required-sudo", "ansible-ping",
     "native-package-inventory", "guest-apparmor-enforced", "audit-service", "guest-network-policy",
