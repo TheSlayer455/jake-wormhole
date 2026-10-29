@@ -153,7 +153,10 @@ def execute(value):
             env=dict(os.environ,SOFTHSM2_CONF=str(config))
             result=subprocess.run([sys.executable,__file__,'authenticate'],input=(b'wrong-pin' if case=='wrong-pin' else pin),
                                   capture_output=True,timeout=20,env=env)
-            code=json.loads(result.stdout)['pam_returncode']
+            records=[line for line in result.stdout.splitlines() if line.startswith(b'{')]
+            if result.returncode or not records:
+                raise RuntimeError('PAM probe child exited '+str(result.returncode)+': '+result.stderr[-800:].decode(errors='replace'))
+            code=json.loads(records[-1])['pam_returncode']
             outcomes[case]={'pam_returncode':code,'expected_observed':code==0 if case=='valid' else code!=0}
     return {'schema_version':'1.0','evidence_category':'real installed libpam/pam_pkcs11 with disposable software PKCS11 objects',
             'cases':outcomes,'all_expected_observed':all(x['expected_observed'] for x in outcomes.values()),
