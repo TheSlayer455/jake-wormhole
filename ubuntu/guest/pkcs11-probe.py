@@ -151,7 +151,7 @@ def execute(value):
                     import shutil
                     shutil.rmtree(child) if child.is_dir() else child.unlink()
             env=dict(os.environ,SOFTHSM2_CONF=str(config))
-            result=subprocess.run([sys.executable,__file__,'authenticate'],input=(b'wrong-pin' if case=='wrong-pin' else pin),
+            result=subprocess.run([sys.executable,'-X','faulthandler',__file__,'authenticate'],input=(b'wrong-pin' if case=='wrong-pin' else pin),
                                   capture_output=True,timeout=20,env=env)
             records=[line for line in result.stdout.splitlines() if line.startswith(b'{')]
             if result.returncode or not records:
