@@ -1,5 +1,16 @@
 # Current engineering state
 
+Repeatability comparison repair: [PR 38](https://github.com/TheSlayer455/jake-wormhole/pull/38),
+tested implementation `7fdf05be546b8c13af519d4310355079b5a0a8fe`. Different run
+UUIDs alone previously allowed copied/missing guest identity evidence to count
+as fresh installations. The existing comparator now checks bound scanner
+receipts, distinct seeds/host keys and disjoint first/final boot identities.
+Seven focused tests and independent engineering-agent review passed. Replay
+accepts the real pair below and rejects private copies with reused identities
+or missing receipts. Pending publication is still refused. No guest/input code
+changed and no additional VM was needed; historical installation attribution
+remains intact. Full-suite, delivery and merge results are recorded in the PR.
+
 Delivery: [PR 37](https://github.com/TheSlayer455/jake-wormhole/pull/37).
 Its head and merge records distinguish documentation delivery from the runtime
 revision below. Final resource audit found no owned temporary resources or

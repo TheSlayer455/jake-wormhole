@@ -1,5 +1,37 @@
 # Jake Wormhole engineering instructions
 
+## Engineering simplicity
+
+Deliver working functionality with the smallest maintainable implementation.
+Identify the first confirmed defect, fix the existing owning component and reuse
+its libraries/contracts. Prefer fewer files, dependencies and simpler control
+flow. Do not refactor unrelated working code or add speculative frameworks,
+wrappers, services, approval, attestation, validation or recovery layers. Add a
+layer only when a demonstrated requirement cannot use existing mechanisms.
+Delete superseded code once its replacement is proven.
+
+Inspect existing coverage first. Extend the closest test for a distinct
+requirement, realistic failure or observed regression. Prefer cheap real tests
+over mocks; avoid duplicate tests, trivial permutation matrices, giant fixtures
+and new test frameworks. Ordinary fixes usually need 1-5 focused tests; this is
+guidance, not a security coverage cap. More than 200 added test lines or a new
+test framework requires a concise justification of new coverage before delivery.
+Preserve valuable existing tests regardless of counts.
+
+Use focused unit tests, small boundary integrations and actual KVM acceptance.
+Run focused checks first, relevant integrations next and full verification at
+delivery boundaries. Repeat VM installation only after relevant implementation,
+installation inputs or acceptance-contract changes, or for explicit repeatability
+proof. Unit tests never establish ISO installation, SSH/Ansible or assessment.
+
+For each delivery report the confirmed defect/requirement, changed files,
+production and test lines added/removed, each new test's distinct behavior,
+actual runtime evidence and remaining blocker. Explain disproportionate test
+changes before delivery. Stop adding code when the requirement and relevant
+regressions pass and the actual runtime outcome is proven.
+
+## Authorized scope
+
 The owner authorizes automatic manifest-bound transient cleanup and storage
 budget enforcement under the existing shared admission lock. Preserve reusable
 current ISO bytes, qualification evidence, releases and unresolved recovery state;
