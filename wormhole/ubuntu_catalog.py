@@ -3,6 +3,8 @@ from collections import Counter
 import html
 import json
 from pathlib import Path
+import re
+from uuid import UUID
 
 from .runs import read_json,run_id
 from .ubuntu_assessment import require
@@ -17,6 +19,22 @@ def load(run):
     findings = json.loads((run / 'assessment/findings.json').read_text()) if (run / 'assessment/findings.json').exists() else {}
     svd = json.loads((run / 'installed-svd.json').read_text()) if (run / 'installed-svd.json').exists() else {}
     return result, report, findings, svd
+
+
+def installation_identity(run, result):
+    """Read existing private observations; absent identity cannot prove freshness."""
+    try:
+        receipt=read_json(Path(run)/'assessment/scanner-receipt.json')
+        seed=result['build']['seed_sha256']
+        boots={str(UUID(receipt[key])) for key in ('firstboot_id','boot_id')}
+        console=Path(run)/'console.log'
+        if console.stat().st_size>64*1024**2:return None
+        keys=set(re.findall(r'WORMHOLE_FINAL_HOST_KEY_BEGIN\s+(ssh-rsa [A-Za-z0-9+/=]+)[^\n]*\s+WORMHOLE_FINAL_HOST_KEY_END',console.read_text(errors='replace')))
+        if (receipt.get('run_id')!=result['run_id'] or receipt.get('target')!='vm-'+result['run_id'][:8]
+                or re.fullmatch('[0-9a-f]{64}',seed) is None or len(boots)!=2 or len(keys)!=1):return None
+        return seed,boots,keys.pop()
+    except (OSError,ValueError,KeyError,TypeError,AttributeError):
+        return None
 
 
 def compare(previous, current, *, earlier=None):
@@ -59,7 +77,9 @@ def compare(previous, current, *, earlier=None):
         {r['id']:r['status'] for r in ar['functional_results']} == {r['id']:r['status'] for r in br['functional_results']})
     same_iso = ar['candidate_sha256'] == br['candidate_sha256']
     same_contract=a['build'].get('installed_input_fingerprint')==b['build'].get('installed_input_fingerprint')
-    repeatable = (a['run_id'] != b['run_id'] and same_iso and same_contract and compatible and left==right and required_equal
+    ai,bi=installation_identity(previous,a),installation_identity(current,b)
+    independent=bool(ai and bi and ai[0]!=bi[0] and ai[1].isdisjoint(bi[1]) and ai[2]!=bi[2])
+    repeatable = (a['run_id'] != b['run_id'] and independent and same_iso and same_contract and compatible and left==right and required_equal
                   and bool(pa) and pa==pb and av.get('kernel')==bv.get('kernel') and
                   av.get('inventory_complete') is True and bv.get('inventory_complete') is True and av.get('snaps')==bv.get('snaps') and
                   av.get('payloads',[])==bv.get('payloads',[]) and
@@ -84,6 +104,7 @@ def compare(previous, current, *, earlier=None):
         'functional_changes':[{'id':r['id'],'before':next((x['status'] for x in ar['functional_results'] if x['id']==r['id']), 'missing'),'after':r['status']}
             for r in br['functional_results'] if not any(x['id']==r['id'] and x['status']==r['status'] for x in ar['functional_results'])],
         'findings_trends':trends if compatible else {'status':'incompatible-content; no security improvement conclusion'},
+        'independent_installation_identities':independent,
         'equivalent_fresh_installations':bool(repeatable),
         'normalization':'Compare required statuses, package name/version/architecture and running kernel. Unique host identities, secrets, boot IDs and timing remain in private evidence.',
         'lab_iso_qualified':False,'production_iso_eligible':False}

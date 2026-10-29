@@ -3,12 +3,14 @@
 The verified container reference uses generated source and explicitly synthetic assessment policy. The newly authorized [real-ISO extension](../handoff/ISO-FOUNDATION.md) is incomplete and has separate evidence. Neither capability validates proprietary production infrastructure. The [historical matrix](acceptance-matrix.md) binds observations to original tested sources/evidence; it is not a final-source runtime rerun.
 
 The current Ubuntu increment has two independent fresh BIOS installations of the
-same encrypted/hardened candidate bytes: 34/34 functional checks, trusted SSH/Ansible,
-636 Debian packages/three Snap entries and matching actual OpenSCAP outcomes.
-All 639 rules remain visible: 208 pass, three fail, 14 not applicable, five not
+same encrypted/hardened candidate bytes: 40/40 functional checks, trusted SSH/Ansible,
+638 Debian packages/three Snap entries and matching actual OpenSCAP outcomes.
+All 639 rules remain visible: 210 pass, one FIPS failure, 14 not applicable, five not
 checked and 409 upstream not selected. Pinned independent OpenSCAP 1.4.6 assesses
-CaC 0.1.82 V2R7 plus two declared lab values; an unmodified upstream audit is also
-retained. Private CA/CRL/OCSP and host-clock tests prove lab behavior, not government
+CaC 0.1.82 V2R7 plus two declared lab values and one documented mapper grammar
+correction; the unmodified upstream audit remains 207 pass/four fail. The
+[PAM solution](../handoff/solutions/ubuntu-pam-crl.md) pins the tested source.
+Private CA/CRL/OCSP and host-clock tests prove lab behavior, not government
 PKI, physical-token assurance or externally authenticated time. FIPS/USG and
 content/disposition requirements remain pending. Native ASCII audit does not
 claim managed acknowledgments or Kerberos; the separate TLS archive has a tested
