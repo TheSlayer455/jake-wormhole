@@ -10,7 +10,16 @@ The `vm_baseline` CLI remains an unqualified installation experiment. Its shared
 lifecycle also serves the separate Ubuntu assessment profile. No existing
 container receipt/schema is reinterpreted as real ISO evidence.
 
-Ubuntu is the active OS milestone; RHEL development/media work is paused.
+RHEL 10.0 now has a separate installation-baseline adapter, `rhel_inputs.py`.
+It preserves the DVD's BIOS boot equipment, label and installer source, with a
+declared private Kickstart seed and a fresh 32 GiB disk. The installed-system
+service emits trusted host-key evidence; the existing helper supplies final SSH,
+Ansible and RPM inventory. `rhel_assessment.py` pins DVD vendor-draft SCAP content
+and requires matching native result coverage before returning an explicitly
+unqualified baseline. A fresh retry verified that path and complete native output. Shared
+admission, ownership and cleanup remain in the existing VM lifecycle.
+
+Ubuntu's verified hardening implementation remains unchanged.
 `ubuntu_inputs.py` freezes offline packages, boot/seed templates and installed
 payloads. Guest finalization performs bounded installation-local remediation,
 reboots, then enables final SSH. `ubuntu_runtime.py` uses the designated pinned

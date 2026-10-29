@@ -5,6 +5,7 @@ tracks pending installation, hardening, assessment and publication work.
 
 | Solution | Actual evidence | Boundary |
 | --- | --- | --- |
+| [RHEL 10.0 installation and readiness](rhel10-install-baseline.md) | Real failed marker-traversal case, corrected fresh BIOS install, final SSH/Ansible, 413 RPM records, all 948 native vendor-draft outcomes and cleanup | 32 GiB lab disk; no hardening, encryption, FIPS, released-DISA alignment or ISO qualification |
 | [Ubuntu PAM revocation and final acceptance pair](ubuntu-pam-crl.md) | Native crash/control-flow reproduction, two same-ISO encrypted installs with 40/40 checks each, matching inventories and 210 pass/one FIPS failure | Pro/USG/FIPS, physical-token assurance and accountable trust-root disposition remain pending; no qualified publication |
 | [Storage lifecycle](../../docs/STORAGE.md) | Real cleanup/interruption recovery, active-VM refusal, retained hashes and fresh 34/34 Ubuntu acceptance | Shared home filesystem; protected retention can block admission; no qualification waiver |
 | [Streaming ISO reconstruction](streaming-iso.md) | Real 2.14 GB official Ubuntu media; controlled interruption/resume; exact hash match | Local Linux artifact store, not GitLab or installed-OS acceptance |

@@ -2,6 +2,17 @@
 
 The verified container reference uses generated source and explicitly synthetic assessment policy. The newly authorized [real-ISO extension](../handoff/ISO-FOUNDATION.md) is incomplete and has separate evidence. Neither capability validates proprietary production infrastructure. The [historical matrix](acceptance-matrix.md) binds observations to original tested sources/evidence; it is not a final-source runtime rerun.
 
+The [RHEL 10.0 baseline](../handoff/solutions/rhel10-install-baseline.md) is a
+BIOS-only, 8 GiB/two-vCPU/32 GiB lab installation. Its first real installation
+reached diagnostic SSH with SELinux enforcing, but the normal readiness gate
+failed on marker-directory traversal. The corrected fresh retry passed actual
+final SSH/Ansible and basic privileged smoke, collected 413 RPM records, retained
+all 948 native assessment outcomes, and completed exact-owned cleanup in 272.246
+seconds. This is installation-baseline smoke, not a full hardening catalog.
+DVD SCAP Security Guide 0.1.76 contains an anticipated vendor STIG, not a released
+DISA RHEL 10 benchmark; newer content alignment cannot be claimed for those bytes.
+No RHEL hardening, encryption, FIPS, UEFI, ISO qualification or publication is proven.
+
 The current Ubuntu increment has two independent fresh BIOS installations of the
 same encrypted/hardened candidate bytes: 40/40 functional checks, trusted SSH/Ansible,
 638 Debian packages/three Snap entries and matching actual OpenSCAP outcomes.
