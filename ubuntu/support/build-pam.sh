@@ -22,7 +22,7 @@ from pathlib import Path
 import os,datetime
 path=Path('debian/changelog');original=path.read_text()
 stamp=datetime.datetime.fromtimestamp(int(os.environ['SOURCE_DATE_EPOCH']),datetime.timezone.utc).strftime('%a, %d %b %Y %H:%M:%S +0000')
-path.write_text('pam-pkcs11 (0.6.11-4ubuntu0.1+wormhole2) jammy; urgency=medium\n\n'
+path.write_text('pam-pkcs11 (0.6.11-4ubuntu0.1+wormhole3) jammy; urgency=medium\n\n'
     '  * Lab backport: correct OpenSSL object pointers and retain owned CRL references.\n\n'
     ' -- Wormhole Lab <nobody@example.invalid>  '+stamp+'\n\n'+original)
 rules=Path('debian/rules')

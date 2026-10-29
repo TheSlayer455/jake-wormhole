@@ -12,6 +12,12 @@ from pathlib import Path
 
 def repair(text):
     before=text
+    # The online-CRL fallback has the same legacy address-of mismatch in its
+    # lookup call. Preserve both supported OpenSSL ABIs explicitly.
+    lookup='      rv = X509_STORE_get_by_subject(ctx, X509_LU_X509, X509_get_issuer_name(x509), &obj);'
+    if text.count(lookup)!=1:raise ValueError('unexpected online issuer lookup source')
+    text=text.replace(lookup, '#if OPENSSL_VERSION_NUMBER >= 0x10100000L\n'+
+        lookup.replace('&obj','obj')+'\n#else\n'+lookup+'\n#endif',1)
     for target,function in [('issuer_cert','X509_OBJECT_get0_X509'),
                             ('crl','X509_OBJECT_get0_X509_CRL'),('x509_ca','X509_OBJECT_get0_X509')]:
         old=target+' = '+function+'((&obj));'

@@ -24,7 +24,8 @@ class Closure(unittest.TestCase):
         path=Path(__file__).resolve().parents[1]/'ubuntu/support/patch-pam-crl.py'
         spec=importlib.util.spec_from_file_location('pam_repair',path)
         module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
-        source='\n'.join(['issuer_cert = X509_OBJECT_get0_X509((&obj));',
+        source='\n'.join(['      rv = X509_STORE_get_by_subject(ctx, X509_LU_X509, X509_get_issuer_name(x509), &obj);',
+            'issuer_cert = X509_OBJECT_get0_X509((&obj));',
             'crl = X509_OBJECT_get0_X509_CRL((&obj));',
             'x509_ca = X509_OBJECT_get0_X509((&obj));',
             '  rv = verify_crl(crl, ctx);',
@@ -34,6 +35,7 @@ class Closure(unittest.TestCase):
         self.assertIn('if (crl == NULL)',repaired)
         self.assertIn('X509_CRL_free(crl);\n    return 0;',repaired)
         self.assertNotIn('((&obj))',repaired)
+        self.assertIn('X509_get_issuer_name(x509), obj);',repaired)
         with self.assertRaises(ValueError):module.repair(repaired)
         with self.assertRaises(ValueError):module.repair(source.replace('issuer_cert =','changed =',1))
 
