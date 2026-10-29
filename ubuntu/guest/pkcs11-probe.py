@@ -104,7 +104,8 @@ def authenticate(pin, *, notice_styles=None):
         values=C.cast(libc.calloc(count,C.sizeof(Response)),C.POINTER(Response))
         for index in range(count):
             style=messages[index].contents.style
-            if style in (3,4) and notice_styles is not None:notice_styles.append(style)
+            if style in (3,4) and notice_styles is not None:
+                notice_styles.append({'style':style,'startup':messages[index].contents.text==b'Smartcard authentication starts'})
             if style in (1,2):values[index].text=libc.strdup(pin if style==1 else b'lab.service')
         responses[0]=values
         return 0
@@ -160,8 +161,10 @@ def execute(value):
                 raise RuntimeError('PAM probe child exited '+str(result.returncode)+': '+result.stderr[-800:].decode(errors='replace'))
             code=json.loads(records[-1])['pam_returncode']
             notices=json.loads(records[-1])['conversation_notice_count']
+            startup=json.loads(records[-1])['startup_notice_count']
             outcomes[case]={'pam_returncode':code,'conversation_notice_count':notices,
-                            'expected_observed':(code==0 if case=='valid' else code!=0) and notices==0}
+                            'startup_notice_count':startup,
+                            'expected_observed':(code==0 if case=='valid' else code!=0) and startup==0}
     return {'schema_version':'1.0','evidence_category':'real installed libpam/pam_pkcs11 with disposable software PKCS11 objects',
             'cases':outcomes,'all_expected_observed':all(x['expected_observed'] for x in outcomes.values()),
             'temporary_objects_removed':not root.exists(),'parser':parser_probe(),
@@ -175,7 +178,8 @@ if __name__=='__main__':
     if sys.argv[1:]==['authenticate']:
         notices=[]
         code=authenticate(sys.stdin.buffer.read(256),notice_styles=notices)
-        print(json.dumps({'pam_returncode':code,'conversation_notice_count':len(notices)}))
+        print(json.dumps({'pam_returncode':code,'conversation_notice_count':len(notices),
+                          'startup_notice_count':sum(x['startup'] for x in notices)}))
     else:
         raw=sys.stdin.buffer.read(65537)
         if len(raw)>65536:raise ValueError('bounded private probe input required')
