@@ -88,7 +88,7 @@ scap-security-guide
 %post --interpreter=/bin/bash --erroronfail --log=/root/wormhole-post.log
 set -euo pipefail
 trap 'printf "%s\\n" WORMHOLE_INSTALLATION_FAILED > /dev/ttyS0' ERR
-install -d -m 0700 /var/lib/wormhole
+install -d -m 0755 /var/lib/wormhole
 printf '%s\\n' '{identifier}' > /var/lib/wormhole/run-id
 test "$(getent passwd lab.service | cut -d: -f6)" = /home/lab.service
 chown -R lab.service:lab.service /home/lab.service

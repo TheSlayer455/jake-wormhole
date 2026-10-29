@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from wormhole import admission as a, vm_admission as v, vm_inputs as i
 from wormhole import rhel_inputs as r
+from wormhole import rhel_assessment as ra
 from wormhole.runs import RunError, atomic_json, now
 from test_admission import observed
 
@@ -113,6 +114,7 @@ class RHELInputs(unittest.TestCase):
         self.assertIn('test "$(getenforce)" = Enforcing', script)
         self.assertIn('WORMHOLE_FINAL_HOST_KEY_BEGIN', script)
         self.assertIn('systemctl enable wormhole-ready.service', after)
+        self.assertIn('install -d -m 0755 /var/lib/wormhole', config)
         for changes in ({'password_hash':'PLAINTEXT-NOT-ALLOWED'}, {'public_key':'ssh-ed25519 A; bad'}):
             with self.assertRaises(RunError):self.config(**changes)
 
@@ -134,6 +136,51 @@ class RHELInputs(unittest.TestCase):
             self.assertEqual(error.exception.code, 'source_identity_mismatch')
             self.assertFalse((root/'inputs').exists())
             self.assertFalse((root/'candidate.iso').exists())
+
+
+class RHELAssessment(unittest.TestCase):
+    def test_native_coverage_preserves_findings_and_rejects_missing_or_wrong_identity(self):
+        import hashlib
+        content = ('<Benchmark xmlns="' + ra.X[1:-1] + '"><Profile id="' + ra.PROFILE + '"/>'
+            '<Rule id="one"><title>First synthetic rule</title></Rule><Rule id="two"/></Benchmark>').encode()
+        native = ('<Benchmark xmlns="' + ra.X[1:-1] + '"><TestResult><profile idref="' + ra.PROFILE + '"/>'
+            '<target>synthetic</target><rule-result idref="one"><result>pass</result></rule-result>'
+            '<rule-result idref="two"><result>fail</result></rule-result></TestResult></Benchmark>').encode()
+        def parse(value, **changes):
+            args = {'expected_target':'synthetic', 'scanner_exit':2,
+                    'expected_hash':hashlib.sha256(content).hexdigest(), 'expected_rules':2}
+            return ra.read_results(content, value, **{**args, **changes})
+        observed = parse(native)
+        self.assertEqual(observed['native_counts'], {'pass':1, 'fail':1})
+        self.assertTrue(observed['coverage_complete'])
+        self.assertFalse(observed['lab_iso_qualified'])
+        self.assertFalse(observed['production_iso_eligible'])
+        for value in (native.replace(b'<rule-result idref="two"><result>fail</result></rule-result>', b''),
+                      native.replace(b'idref="two"', b'idref="one"'),
+                      native.replace(ra.PROFILE.encode(), b'wrong-profile'),
+                      native.replace(b'<target>synthetic</target>', b'')):
+            with self.assertRaises(RunError):parse(value)
+        with self.assertRaises(RunError):parse(native, expected_hash='0' * 64)
+        with self.assertRaises(RunError):parse(native, scanner_exit=124)
+
+    def test_native_archive_rejects_unexpected_paths_links_and_missing_outputs(self):
+        import base64, hashlib, io, tarfile
+        compile(ra.RHEL_AUDIT_CODE, '<rhel-audit-helper>', 'exec')
+        self.assertNotIn('--remediate', ra.RHEL_AUDIT_CODE)
+        self.assertIn('timeout --signal=TERM --kill-after=5', ra.RHEL_AUDIT_CODE)
+        for name, link in (('../escaped', False), ('scan.log', True), ('scan.log', False)):
+            archive = io.BytesIO()
+            with tarfile.open(fileobj=archive, mode='w:gz') as tar:
+                member = tarfile.TarInfo(name)
+                if link:member.type = tarfile.SYMTYPE;member.linkname = '../escaped'
+                else:member.size = 4
+                tar.addfile(member, None if link else io.BytesIO(b'test'))
+            payload = archive.getvalue()
+            row = {'stage':'assessment-archive', 'returncode':0,
+                   'sha256':hashlib.sha256(payload).hexdigest(), 'archive_base64':base64.b64encode(payload).decode()}
+            with tempfile.TemporaryDirectory() as directory:
+                with self.assertRaises(RunError):ra.collect(Path(directory), {'run_id':str(uuid4())}, [row])
+                self.assertFalse((Path(directory)/'escaped').exists())
 
 
 @unittest.skipUnless(os.name == 'posix', 'Linux private storage/flock fixtures')

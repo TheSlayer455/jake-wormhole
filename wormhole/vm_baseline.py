@@ -237,10 +237,10 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                         'verified-absent-inputs-retained', 'candidate_origin_unreconciled')
                 reuse = (Store().resolve(reuse_run), original_manifest)
                 result['candidate_origin_run'] = reuse_run
+            result.update(phase='candidate-build',last_progress_at=now());save()
             if ubuntu_mode:
                 import secrets
                 from .ubuntu_inputs import build as build_assessed
-                result.update(phase='candidate-build',last_progress_at=now());save()
                 password = secrets.token_urlsafe(32) + 'aA1!'
                 (run / 'sudo-password').write_text(password)
                 hashed = subprocess.run(['openssl', 'passwd', '-6', '-stdin'], input=password + '\n',
@@ -350,7 +350,8 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                          'hardening-complete' if 'WORMHOLE_HARDENING_COMPLETE' in text else
                          'hardening' if 'WORMHOLE_HARDENING_STARTED' in text else
                          'installed-finalization' if 'WORMHOLE_FINALIZATION_STARTED' in text else
-                         'installing' if 'subiquity/Install/install' in text or 'WORMHOLE_INSTALLATION_STARTED' in text else 'firmware-and-installer-boot')
+                         'installing' if any(marker in text for marker in ('subiquity/Install/install',
+                            'Starting automated install.','WORMHOLE_INSTALLATION_STARTED')) else 'firmware-and-installer-boot')
                 if result['phase'] != phase:
                     if observed_phases:
                         observed_phases[-1]['elapsed_seconds'] = round(time.monotonic() - phase_start, 3)
@@ -411,6 +412,9 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             helper_code = HELPER_CODE
             if ubuntu_mode:
                 from .ubuntu_runtime import HELPER_CODE as helper_code
+            elif distribution=='rhel10':
+                from .rhel_assessment import RHEL_AUDIT_CODE
+                helper_code+=RHEL_AUDIT_CODE
             args = ['docker', 'create', '-i', '--name', name + '-controller', '--label', 'application=jake-wormhole',
                 '--label', 'vm-run=' + identifier, '--network', 'host', '--read-only', '--cap-drop', 'ALL',
                 '--security-opt', 'no-new-privileges:true', '--user', '10001:10001', '--memory', '512m',
@@ -439,6 +443,11 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                     terminal.get('ansible_ready') is True and {x.get('stage') for x in rows if x.get('returncode') == 0} >=
                     {'final-authentication', 'ansible-readiness', 'functional', 'inventory'}, 'controller_results_incomplete')
             result.update(outcome='baseline-passed', installed=True, final_authentication=True, ansible_ready=True)
+            if distribution=='rhel10':
+                from .rhel_assessment import collect
+                assessment=collect(run,result,rows)
+                result['assessment']={key:assessment[key] for key in ('capability','content_sha256','native_counts',
+                    'coverage_complete','scanner_execution_completed','limitation')}
             if ubuntu_mode:
                 from .ubuntu_runtime import collect
                 findings = collect(run, result)
