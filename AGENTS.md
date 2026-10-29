@@ -39,10 +39,13 @@ never touch unrelated storage. See [storage lifecycle](docs/STORAGE.md).
 
 Build this public Linux image reference project. Preserve the verified container backend as the fast regression layer. The owner explicitly authorized a separate home KVM/libvirt and real-ISO profile for RHEL 9 and Ubuntu 22.04 on October 27, 2026; this supersedes the former container-only prohibition, not its historical evidence. Runtime state, licensed media, credentials and raw evidence remain private. Original ticket records are historical, not new claim leases.
 
-Current owner milestone: complete Ubuntu 22.04 hardening, real assessment,
-repeatability and exact-byte local release independently. RHEL implementation and
-media work are paused until Ubuntu is complete and the owner explicitly starts
-RHEL. Preserve its existing code/tests. Canonical USG/FIPS require authorized
+On October 29, 2026 the owner explicitly activated RHEL 10 next and supplied the
+official RHEL 10.0 x86_64 DVD. Start its separate real-installation baseline using
+existing lifecycle/admission components. The initial measured RHEL profile uses
+8 GiB RAM, two vCPUs and a 32 GiB disk; Ubuntu retains its 64 GiB disk. RHEL 9
+and other versions remain outside this increment. Ubuntu's working installation
+and outstanding qualification requirements retain their existing evidence.
+Canonical USG/FIPS require authorized
 entitlement; never discover tokens in unrelated private state or invent access.
 Only an explicit owner-populated protected provider slot may supply enrollment.
 An alternative pinned OpenSCAP audit must retain its content identity and all
@@ -56,7 +59,7 @@ private test CA/identities and protected local secret delivery. Implement valid
 lab settings rather than treating absent production endpoints as approval gates.
 Use the existing shared admission and exact resource journals, bounded services
 and tested guest isolation. Never manufacture a Pro entitlement, government CA,
-physical-token assurance or certification. RHEL remains paused. Preserve actual
+physical-token assurance or certification. Preserve actual
 host controls; support services cannot expose public listeners or mutate the host.
 
 The owner has directly authorized the architecture and failure-reproduction follow-up in [the active engineering checkpoint](docs/FAILURE-REPRODUCTION.md). Preserve the original Done ticket history; do not imply an old claim authorizes a new session or that this follow-up is already accepted. Continue in bounded, reviewable increments and record unverified runtime work explicitly.

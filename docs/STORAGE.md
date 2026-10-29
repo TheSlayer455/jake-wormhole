@@ -14,7 +14,12 @@ There is no arbitrary deletion-root argument. Unrelated homelab storage, includi
 the media backing image, is outside scope.
 
 The post-run managed footprint budget is 100 GiB, including protected evidence;
-the reusable candidate cache budget is 32 GiB. Identical ISOs share one verified
+the reusable candidate cache budget is 40 GiB for the combined Ubuntu/RHEL lab.
+The measured retained Ubuntu candidates occupy 28.2 GiB; one RHEL DVD candidate
+adds 7.9 GiB. The 100 GiB total and 90% projected filesystem ceiling remain.
+The initial RHEL baseline reserves its full 32 GiB disk, one streamed candidate
+output and evidence; it extracts only small boot files. Ubuntu retains its full
+64 GiB disk and existing three-media build allowance. Identical ISOs share one verified
 copy through durable run aliases. Candidates whose recorded installed source
 inputs demonstrably differ from the current clean checkout may be evicted.
 Original reports, manifests, SVDs and native assessment output remain. Unresolved

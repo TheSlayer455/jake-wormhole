@@ -8,6 +8,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 from wormhole import admission as a, vm_admission as v, vm_inputs as i
+from wormhole import rhel_inputs as r
 from wormhole.runs import RunError, atomic_json, now
 from test_admission import observed
 
@@ -70,6 +71,69 @@ class Inputs(unittest.TestCase):
         self.assertIn('<mode>0600</mode>', resource['libvirt_volume']['disk']['xml']['xslt'])
         self.assertEqual(resource['libvirt_network']['run']['mode'], 'none')
         self.assertFalse(resource['libvirt_network']['run']['dhcp']['enabled'])
+        smaller = i.terraform_config('wormhole-vm-0123456789ab', '/lab/pool', '/lab/candidate.iso',
+            '/lab/seed.iso', '192.0.2.0/24', '52:54:00:11:22:33', 1001, 1002, disk_bytes=32 * 1024**3)
+        self.assertEqual(smaller['resource']['libvirt_volume']['disk']['size'], 32 * 1024**3)
+        self.assertEqual(resource['libvirt_volume']['disk']['size'], 64 * 1024**3)
+
+
+class RHELInputs(unittest.TestCase):
+    def config(self, **changes):
+        values = {'identifier':str(uuid4()), 'public_key':'ssh-ed25519 ' + 'A' * 68,
+                  'guest_address':'192.0.2.10/24', 'mac':'52:54:00:11:22:33',
+                  'password_hash':'$6$synthetic$' + 'A' * 86}
+        return r.kickstart(**{**values, **changes})
+
+    def test_bios_boot_retains_stage2_and_rescue_without_direct_kernel_boot(self):
+        prefix = "search --no-floppy --set=root -l '" + r.LABEL + "'\n"
+        kernel = ' linux /images/pxeboot/vmlinuz inst.stage2=hd:LABEL=' + r.LABEL
+        original = 'set default="1"\nset timeout=60\n' + prefix + kernel + ' quiet\n' + kernel + ' inst.rescue quiet\n'
+        changed = r.boot_config(original)
+        self.assertIn('set default="0"\nset timeout=1', changed)
+        self.assertIn(kernel + ' quiet inst.ks=hd:LABEL=WORMHOLEKS:/ks.cfg console=ttyS0,115200n8', changed)
+        self.assertIn(kernel + ' inst.rescue quiet\n', changed)
+        with self.assertRaises(RunError):r.boot_config(changed)
+        with self.assertRaises(RunError):r.boot_config(original.replace(r.LABEL, 'WRONG-LABEL'))
+
+    def test_seed_preserves_final_identity_selinux_and_installed_only_host_key(self):
+        config = self.config()
+        self.assertIn('cdrom\n', config)
+        self.assertIn('selinux --enforcing', config)
+        self.assertIn('ignoredisk --only-use=vda', config)
+        self.assertIn('clearpart --all --initlabel --drives=vda', config)
+        self.assertIn('user --name=lab.service', config)
+        self.assertIn('PasswordAuthentication no', config)
+        self.assertNotIn('PRIVATE KEY', config)
+        self.assertNotIn('--gateway=', config)
+        self.assertIn('%post --interpreter=/bin/bash --erroronfail', config)
+        before, script = config.split("<<'READY'\n", 1)
+        script, after = script.split('\nREADY\n', 1)
+        self.assertNotIn('WORMHOLE_FINAL_HOST_KEY_BEGIN', before + after)
+        self.assertIn('test "$VERSION_ID" = 10.0', script)
+        self.assertIn('test "$(getenforce)" = Enforcing', script)
+        self.assertIn('WORMHOLE_FINAL_HOST_KEY_BEGIN', script)
+        self.assertIn('systemctl enable wormhole-ready.service', after)
+        for changes in ({'password_hash':'PLAINTEXT-NOT-ALLOWED'}, {'public_key':'ssh-ed25519 A; bad'}):
+            with self.assertRaises(RunError):self.config(**changes)
+
+    def test_reuse_rejects_other_os_source_changed_boot_and_changed_candidate(self):
+        manifest = {'capability':r.CAPABILITY, 'source':dict(r.RHEL), 'candidate_sha256':'a' * 64}
+        r.verify_reuse(manifest, 'a' * 64, b'current', b'current')
+        for change in ({'capability':'ubuntu-iso-installation-baseline'}, {'source':dict(i.UBUNTU)}):
+            with self.assertRaises(RunError):r.verify_reuse({**manifest, **change}, 'a' * 64, b'current', b'current')
+        with self.assertRaises(RunError):r.verify_reuse(manifest, 'a' * 64, b'current', b'stale')
+        with self.assertRaises(RunError):r.verify_reuse(manifest, 'b' * 64, b'current', b'current')
+
+    def test_invalid_media_is_refused_before_build_outputs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory);source = root/'wrong.iso';source.write_bytes(b'NOT-AN-ISO')
+            with self.assertRaises(RunError) as error:
+                r.build_rhel(source, root/'candidate.iso', root/'inputs', str(uuid4()),
+                    'ssh-ed25519 ' + 'A' * 68, '192.0.2.10/24', '52:54:00:11:22:33',
+                    password_hash='$6$synthetic$' + 'A' * 86)
+            self.assertEqual(error.exception.code, 'source_identity_mismatch')
+            self.assertFalse((root/'inputs').exists())
+            self.assertFalse((root/'candidate.iso').exists())
 
 
 @unittest.skipUnless(os.name == 'posix', 'Linux private storage/flock fixtures')

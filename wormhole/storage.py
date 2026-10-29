@@ -19,7 +19,7 @@ from .vm_inputs import sha256
 
 GIB = 1024**3
 ARTIFACT_BUDGET = 100 * GIB
-CANDIDATE_BUDGET = 32 * GIB
+CANDIDATE_BUDGET = 40 * GIB  # Existing Ubuntu evidence plus the 7.9 GiB RHEL DVD candidate.
 ROOT = CANONICAL_INFRASTRUCTURE_ROOT.parent
 SHARED = ROOT.parent.parent / 'jake-wormhole-vm'
 
@@ -372,7 +372,7 @@ class Store:
                 'candidate_budget_allocated_bytes':reserved,
                 'estimated_reclaim_allocated_bytes':sum(a['signature'][3] for a in actions),
                 'cache_budget_exceeded':reserved>CANDIDATE_BUDGET,
-                'cache_policy':'32 GiB verified reusable ISO cache; deduplicate identical bytes and evict source-proven stale installed inputs; pin unresolved and qualified runs; preserve evidence; refuse builds if protected retention exceeds budget'}
+                'cache_policy':'40 GiB verified reusable ISO cache; deduplicate identical bytes and evict source-proven stale installed inputs; pin unresolved and qualified runs; preserve evidence; refuse builds if protected retention exceeds budget'}
 
     def invalidated(self, manifest):
         """Evict by input mismatch, never by timestamps or a guessed filename."""

@@ -51,7 +51,8 @@ def recover(identifier, terraform):
             qemu=pwd.getpwnam('libvirt-qemu')
             tfdir=run/'terraform'
             expected_config=terraform_config(name,pool,candidate,seed,vm.NETWORK,
-                        '52:54:00:'+':'.join(identifier.replace('-','')[n:n+2] for n in (0,2,4)),qemu.pw_uid,qemu.pw_gid)
+                        '52:54:00:'+':'.join(identifier.replace('-','')[n:n+2] for n in (0,2,4)),qemu.pw_uid,qemu.pw_gid,
+                        disk_bytes=(32 if result.get('distribution')=='rhel10' else 64)*1024**3)
             if isolated:
                 from .ubuntu_sandbox import attach_filter
                 expected_config=attach_filter(expected_config,name+'-isolation')
@@ -99,7 +100,7 @@ def recover(identifier, terraform):
         try:
             from .ubuntu_runtime import report
             from .storage import lifecycle
-            report(run,result)
+            if result.get('distribution')!='rhel10':report(run,result)
             result['storage_cleanup']=lifecycle(lease,identifier)
             if result['storage_cleanup']['retention_budget_exceeded']:
                 result['storage_cleanup_error']='storage_retention_budget'
