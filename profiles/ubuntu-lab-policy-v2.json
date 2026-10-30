@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "ubuntu2204-stig-lab-v2",
+  "supersedes": "ubuntu2204-stig-lab-v1",
+  "lab_scope": {
+    "physical_token_required": false,
+    "physical_token_assurance": "unverified",
+    "government_identity_or_authorization_claimed": false,
+    "trust_review_authority": "Codex under explicit owner-delegated home-lab authority",
+    "trust_review_status": "pending-engineering-review",
+    "historical_results_requalified": false
+  },
+  "os": {"release": "22.04.5", "architecture": "amd64"},
+  "workload": "Disposable Linux VM with final SSH identity, password-authenticated sudo, Python and Ansible; no application payload",
+  "firmware": "bios",
+  "content": {
+    "distribution": "ComplianceAsCode",
+    "version": "0.1.82",
+    "upstream_asset_sha256": "765e84bdce7f9055f9b9c2dd0ee2b713d4255f8eec94eac6d35ea4973c28919c",
+    "datastream_sha256": "604dc3b43898849bf3fd0cbd31f730c4b2fa6b0a4f5ea0795db4b351201565af",
+    "upstream_datastream_sha256": "18a09c7dc5d05d8c10ca89f0514014da322d4f0430ca6f66b69e71b02fddb12a",
+    "local_check_corrections": ["pwent-vendor-grammar-1"],
+    "profile_id": "xccdf_org.ssgproject.content_profile_stig",
+    "benchmark_label": "Ubuntu 22.04 STIG V2R7",
+    "canonical_usg_documented_revision": "V2R8",
+    "equivalence_to_usg_established": false
+  },
+  "package_snapshot": "https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/",
+  "native_pam": {
+    "package": "libpam-pkcs11",
+    "version": "0.6.11-4ubuntu0.1+wormhole4",
+    "artifact_sha256": "80e6b0550d2fd86cf6cb34095953db008dafd2e32215b238fae0b4a32648ab3e",
+    "library_sha256": "fd224d645ae6a6e7f6407ea687974356e9ddd67ba65efa122a90f91d4a415bf8",
+    "canonical_signed_binary": false,
+    "source_files": {
+      "pam-pkcs11_0.6.11.orig.tar.gz": "44d717d285ad862cd63002e901b21fcbd808c65b063f71be1c2aece04dfa23ca",
+      "pam-pkcs11_0.6.11-4ubuntu0.1.debian.tar.xz": "9a3f5fe060c9549df3dea489608f0f50cffc07444bb70abe6211d4b79a6e10b7",
+      "pam-pkcs11_0.6.11-4ubuntu0.1.dsc": "208309a462f3d3042e137dc12227edaf3faa90cdcdeb46ca77915925697813ab"
+    }
+  },
+  "public_ca_bundle": {
+    "source": "https://dl.dod.cyber.mil/wp-content/uploads/pki-pke/zip/unclass-certificates_pkcs7_DoD.zip",
+    "archive_sha256": "32595adbe752df5823cedd2c6a4f206c07fcc3c1520fb831015204e9fbb75711",
+    "roots_pem_sha256": "2c83f56c998a2beda414ccc3eefae790079a38db5726bb20fab15f13c6b7242e",
+    "authorizing_official_approval_supplied": false
+  },
+  "tailoring": {"excluded_rules": [], "parameters": {"var_audispd_remote_server": "192.0.2.1", "remote_login_banner_text": "^Wormhole private home lab\\. Authorized lab use only\\. Activity is monitored\\.$"}, "owner_approved_exceptions": []},
+  "requirements": {
+    "all_selected_automated_rules_pass": true,
+    "scanner_errors_allowed": 0,
+    "all_upstream_rules_accounted": true,
+    "manual_evidence_and_accountable_dispositions": true,
+    "approved_fips_modules_and_operational_environment": true,
+    "benchmark_distribution_gap_resolved": true,
+    "independent_fresh_installations": 2,
+    "all_functional_checks_pass": true,
+    "native_xml_arf_html_required": true,
+    "evidence_identity_and_cleanup_verified": true
+  },
+  "functional_checks": [
+    "pam-repair-installed-identity",
+    "installed-os-identity", "installed-disk-boot", "finalization-complete", "required-reboot",
+    "trusted-final-ssh", "final-home-key-permissions", "password-required-sudo", "ansible-ping",
+    "native-package-inventory", "guest-apparmor-enforced", "audit-service", "guest-network-policy",
+    "assessment-content-identity", "scanner-native-results",
+    "encrypted-root", "encrypted-pbkdf2", "no-plaintext-swap", "no-installed-unlock-key",
+    "lab-time-synchronized", "lab-tls-trust", "lab-invalid-certificate-refused",
+    "management-plane-blocked", "lab-banner", "audit-event-probe",
+    "remote-syslog-received", "remote-audit-received", "encrypted-cold-start", "offline-encryption-proof",
+    "private-secret-lifecycle", "lab-client-revocation", "weekly-audit-offload", "audit-offload-readback", "lab-ocsp-status", "no-retained-install-secrets",
+    "pkcs11-pam-positive-and-negative", "pkcs11-mapper-config-parser",
+    "v2r8-ufw-effective-status", "v2r8-banner-effective-file", "official-public-dod-roots-staged"
+  ],
+  "tool_coverage": {"openscap": "required-alternative-real-audit", "usg": "preferred-when-authorized", "evaluate_stig": "unverified", "nessus": "unverified"},
+  "unresolved_requirements": [
+    "authorized-guest-procedure-for-usg-and-fips-updates",
+    "canonical-v2r8-versus-cac-v2r7-coverage-reconciliation",
+    "delegated-lab-trust-anchor-review"
+  ],
+  "production_iso_eligible": false
+}
