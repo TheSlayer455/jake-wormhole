@@ -1,0 +1,14 @@
+# Illustrative paths: adapt to the existing protected checkout/operator storage.
+# Never run arbitrary pull-request code or install this on a work host from CI.
+[Unit]
+Description=Wormhole completed-ISO intake reconciliation
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+WorkingDirectory=/opt/jake-wormhole
+ExecStart=/usr/bin/python3 -u -m wormhole intake scan /var/lib/jake-wormhole/incoming --submit --terraform /opt/wormhole-tools/terraform
+# Each request retains the controller's deadline. Do not cut a sequential
+# batch midway merely because multiple completed deliveries were discovered.
+TimeoutStartSec=infinity

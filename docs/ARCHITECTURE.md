@@ -1,5 +1,13 @@
 # Architecture
 
+`intake.py` registers completed directory deliveries and invokes the existing
+foreground VM controller. A request binds media, supported installation contract,
+acceptance/content/policy identities and an explicit requalification generation.
+Manual and periodic scan paths share registration/submission; a recorded run ID
+precedes dispatch. Protected copies use existing storage ownership/accounting;
+the first profile prepares only a fresh RHEL seed and never calls the ISO builder.
+See [directory intake](../handoff/solutions/directory-intake.md).
+
 The [measured lifecycle comparison](../handoff/solutions/lifecycle-comparison.md)
 retains Terraform for VM provisioning and exact-owned cleanup. The temporary
 native adapter is preserved at the tested experiment revision, not maintained as

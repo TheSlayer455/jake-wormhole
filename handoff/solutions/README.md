@@ -5,6 +5,7 @@ tracks pending installation, hardening, assessment and publication work.
 
 | Solution | Actual evidence | Boundary |
 | --- | --- | --- |
+| [Completed directory delivery](directory-intake.md) | Real manual delivered-ISO installation; ext4 timer completion/duplicate/restart/failure flow; unchanged bytes, fresh seeds, native audit and cleanup | RHEL 10 BIOS baseline only; private team/Ubuntu contracts and work controller routing unverified; no qualification |
 | [Lifecycle comparison and observable execution](lifecycle-comparison.md) | Same-candidate native/TF installations; matching packages/rules; real blocked-readiness and supervisor interruption/recovery on retained Terraform path | Keep Terraform; one sample each, no speed/reliability superiority; no work-environment diagnosis or qualification |
 | [RHEL 10.0 installation and readiness](rhel10-install-baseline.md) | Real failed marker-traversal case, corrected fresh BIOS install, final SSH/Ansible, 413 RPM records, all 948 native vendor-draft outcomes and cleanup | 32 GiB lab disk; no hardening, encryption, FIPS, released-DISA alignment or ISO qualification |
 | [Ubuntu PAM revocation and final acceptance pair](ubuntu-pam-crl.md) | Native crash/control-flow reproduction, two same-ISO encrypted installs with 40/40 checks each, matching inventories and 210 pass/one FIPS failure | Pro/USG/FIPS and delegated lab trust review pending; physical assurance unverified, hardware not required prospectively; no qualified publication |

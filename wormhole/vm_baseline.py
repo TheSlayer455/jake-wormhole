@@ -157,7 +157,7 @@ def preflight(source, *, distribution='ubuntu'):
     return observation
 
 
-def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, dependency_store=None, sandbox=False, distribution='ubuntu', scenario='healthy'):
+def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, dependency_store=None, sandbox=False, distribution='ubuntu', scenario='healthy', delivery=None, request_run=None):
     os.umask(0o077)
     revision, dirty = source_identity()
     require(not dirty and terraform is not None and sha256(terraform)==TF_SHA, 'unverified_execution_inputs')
@@ -165,10 +165,12 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
     require(ubuntu_mode in {None, 'stock-audit', 'hardened'}, 'ubuntu_mode_invalid')
     require(not sandbox or ubuntu_mode=='hardened','sandbox_requires_hardened_ubuntu')
     require(distribution in {'ubuntu','rhel10'} and (distribution=='ubuntu' or (ubuntu_mode is None and not sandbox)), 'vm_distribution_invalid')
+    require(delivery is None or (distribution=='rhel10' and reuse_run is None), 'delivery_profile_unsupported')
     disk_bytes=(32 if distribution=='rhel10' else 64)*1024**3
-    identifier = str(uuid4())
+    identifier = run_id(request_run) if request_run is not None else str(uuid4())
     name = 'wormhole-vm-' + identifier.replace('-', '')[:12]
-    run = workspace_path(ROOT / 'vm-runs' / identifier, create=True)
+    require(not (ROOT/'vm-runs'/identifier).exists(),'vm_run_already_exists')
+    run = ROOT / 'vm-runs' / identifier
     result = {'schema_version': '1.0', 'capability': 'real-iso-installation-baseline', 'run_id': identifier,
         'source_revision': revision, 'distribution':distribution, 'provisioner':'terraform','scenario':scenario,
         'outcome': 'running', 'started_at': now(), 'stages': [],
@@ -176,7 +178,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
         'supervisor': process_identity(os.getpid()),
         'lab_iso_qualified': False, 'production_iso_eligible': False, 'cleanup': 'pending'}
     if not ubuntu_mode:result['checks']={k:'pending' for k in controller_checks([],assessment=distribution=='rhel10')}
-    atomic_json(run / 'result.json', result)
+    if delivery is not None:result['delivery']=delivery
     deadline = time.monotonic() + 1800
     console = None
     helper = None
@@ -226,6 +228,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
     def virsh(*args):
         return subprocess.check_output(['virsh', '-c', 'qemu:///system', *args], stderr=subprocess.DEVNULL, timeout=10).decode()
     with VMLease(CANONICAL_INFRASTRUCTURE_ROOT, identifier, revision) as lease:
+        run=workspace_path(run,create=True)
         result['launch_acknowledged_at']=now();save()
         print(json.dumps({'event':'launch-acknowledged','run_id':identifier,'source_revision':revision,
                           'provisioner':'terraform','at':result['launch_acknowledged_at']}),flush=True)
@@ -239,12 +242,12 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                 incoming=Path(source).stat().st_size+16*1024**2
                 if dependency_store is not None:
                     incoming+=sum(f['bytes'] for f in read_json(Path(dependency_store)/'bundle/manifest.json')['files'])
-            # Source bytes already reside on disk; reserve extraction + two ISO
-            # outputs, the full guest disk, and a GiB for evidence/support data.
+            # Reserve retained candidate growth as well as physical run-copy,
+            # guest and evidence space. Intake never skips its copy reservation.
             atomic_json(run/'storage-admission.json', storage_admission(ROOT,
                 disk_bytes+1024**3 + (1 if distribution=='rhel10' else 3)*Path(source).stat().st_size,
                 managed_bytes=usage['total_allocated_bytes'],
-                candidate_bytes=result['storage_preflight_cleanup']['candidate_budget_allocated_bytes']+incoming))
+                candidate_bytes=usage['allocated_bytes']['candidates']+incoming))
             atomic_json(run / 'preflight.json', preflight(source,distribution=distribution))
             if sandbox:
                 from .ubuntu_sandbox import MEMORY
@@ -286,7 +289,8 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                         'verified-absent-inputs-retained', 'candidate_origin_unreconciled')
                 reuse = (Store().resolve(reuse_run), original_manifest)
                 result['candidate_origin_run'] = reuse_run
-            result.update(phase='candidate-build',last_progress_at=now());save()
+            preparation='candidate-intake' if delivery is not None else 'candidate-build'
+            result.update(phase=preparation,last_progress_at=now());save()
             if ubuntu_mode:
                 import secrets
                 from .ubuntu_inputs import build as build_assessed
@@ -315,10 +319,14 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                 password=secrets.token_urlsafe(32)+'aA1!'
                 (run/'sudo-password').write_text(password)
                 hashed=subprocess.run(['openssl','passwd','-6','-stdin'],input=password+'\n',capture_output=True,text=True,check=True,timeout=10).stdout.strip()
-                manifest=build_rhel(source,candidate,run/'inputs',identifier,public,ADDRESS+'/24',mac,password_hash=hashed,reuse=reuse)
+                if delivery is not None:
+                    from .rhel_inputs import prepare_delivered
+                    manifest=prepare_delivered(source,candidate,run/'inputs',identifier,public,ADDRESS+'/24',mac,password_hash=hashed,delivery=delivery)
+                else:
+                    manifest=build_rhel(source,candidate,run/'inputs',identifier,public,ADDRESS+'/24',mac,password_hash=hashed,reuse=reuse)
             else:
                 manifest = build_ubuntu(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac, reuse=reuse)
-            result['stages'].append({'stage': 'candidate-build','started_at':build_at,'finished_at':now(),
+            result['stages'].append({'stage': preparation,'started_at':build_at,'finished_at':now(),
                                     'elapsed_seconds': round(time.monotonic()-started, 3), 'returncode': 0})
             result['build'] = manifest;save()
             for path in (candidate, seed):

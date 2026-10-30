@@ -1,5 +1,22 @@
 # Current handoff
 
+## Current priority: directory-delivered ISO acceptance
+
+Use the [directory intake handoff](solutions/directory-intake.md), delivered by
+[PR 42](https://github.com/TheSlayer455/jake-wormhole/pull/42). Runtime-tested
+`0a6acb5754a943562a9e425288704cae928afa60` passed manual RHEL 10 intake in 247.755
+seconds and the monitored readiness-failure case in 236.396 seconds. Same ISO
+bytes, fresh seeds, existing Terraform/SSH/Ansible/native audit, complete results
+and cleanup; no builder/remaster or new execution framework. Timer duplicate/
+restart reconciliation did not allocate another run. Qualification remains false.
+
+Luna should establish the receiving team's delivery-completion and installation
+contract, then adapt this one intake function to its existing controller. Discover
+the private source/Forge build contract separately when source builds are needed.
+Do not substitute this lab's seed for team customizations. Ubuntu intake, private
+runner routing and actual scanner automation rights are not proven by this run.
+The test timer is stopped; canonical inputs and private evidence are retained.
+
 ## Latest compatibility repair
 
 [PR 41](https://github.com/TheSlayer455/jake-wormhole/pull/41) fixes the Ubuntu

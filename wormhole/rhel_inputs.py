@@ -5,6 +5,7 @@ run seed carries Kickstart, a public key and a password hash, never a private ke
 UEFI and Secure Boot are not claimed by this BIOS-only adapter.
 """
 import ipaddress
+import inspect
 from pathlib import Path
 import re
 import shutil
@@ -19,6 +20,16 @@ LABEL = 'RHEL-10-0-BaseOS-x86_64'
 BOOT_PATH = '/boot/grub2/grub.cfg'
 SEED_LABEL = 'WORMHOLEKS'
 CAPABILITY = 'rhel-iso-installation-baseline'
+
+
+def installation_contract():
+    from .media_store import fingerprint
+    return {'id':'wormhole-rhel10-bios-seed-v1', 'release':'10.0', 'architecture':'x86_64',
+        'firmware':'bios', 'seed_label':SEED_LABEL, 'final_user':'lab.service',
+        'seed_template_sha256':fingerprint(inspect.getsource(kickstart)),
+        'guest_memory_mib':8192, 'guest_vcpus':2, 'guest_disk_bytes':32*1024**3,
+        'host_trust':'installed-system-serial-host-key', 'sudo':'passwordless-baseline',
+        'qualification_policy':'installation-baseline-ineligible-v1'}
 
 
 def boot_config(text):
@@ -181,15 +192,52 @@ def build_rhel(source, destination, seed_dir, identifier, public_key, guest_addr
         shutil.copyfile(previous_iso, destination)
         if sha256(destination) != previous_manifest['candidate_sha256']:
             raise RunError('candidate_copy_mismatch', 'Reused RHEL bytes changed during copy.')
-    ks = seed_dir / 'ks.cfg';ks.write_text(config, encoding='utf-8');ks.chmod(0o600)
-    command(['xorriso', '-as', 'mkisofs', '-V', SEED_LABEL, '-J', '-r', '-o', str(seed), str(ks)])
-    manifest = {'schema_version': '1.0', 'capability': CAPABILITY, 'source': RHEL,
+    return finish_seed(destination, seed_dir, config, command, source=RHEL,
+        media_checksum_tool_sha256=(previous_manifest.get('media_checksum_tool_sha256') if reuse is not None else sha256(checksum_tool)),
+        candidate_reused=reuse is not None)
+
+
+def finish_seed(destination, seed_dir, config, command, **identity):
+    """Same declared seed for built and delivered media; never mutates the ISO."""
+    seed=destination.with_name('seed.iso')
+    ks=seed_dir/'ks.cfg';ks.write_text(config,encoding='utf-8');ks.chmod(0o600)
+    command(['xorriso','-as','mkisofs','-V',SEED_LABEL,'-J','-r','-o',str(seed),str(ks)])
+    manifest = {'schema_version': '1.0', 'capability': CAPABILITY, **identity,
         'candidate_sha256': sha256(destination), 'seed_sha256': sha256(seed),
         'installation_input_sha256': sha256(ks), 'seed_required': True,
         'firmware': 'bios', 'machine': 'pc-i440fx-8.2', 'guest_memory_mib': 8192,
         'guest_vcpus': 2, 'guest_disk_bytes': 32 * 1024**3, 'hardening_complete': False,
-        'media_checksum_tool_sha256': (previous_manifest.get('media_checksum_tool_sha256') if reuse is not None else sha256(checksum_tool)),
-        'candidate_reused': reuse is not None, 'real_assessment_complete': False,
+        'real_assessment_complete': False,
         'lab_iso_qualified': False, 'production_iso_eligible': False}
     atomic_json(seed_dir / 'build-manifest.json', manifest)
     return manifest
+
+
+def prepare_delivered(source, destination, seed_dir, identifier, public_key, guest_address, mac, *, password_hash, delivery):
+    """Read-only boot inspection, exact-byte copy and separate fresh seed. No builder."""
+    from .media_store import fingerprint
+    from .vm_inputs import sha256
+    source,destination,seed_dir=map(Path,(source,destination,seed_dir))
+    if delivery['contract_sha256']!=fingerprint(installation_contract()) or sha256(source)!=delivery['sha256']:
+        raise RunError('delivery_identity_changed','Delivered media or installation contract changed.')
+    config=kickstart(identifier,public_key,guest_address,mac,password_hash)
+    seed_dir.mkdir(mode=0o700)
+    def command(args):
+        with (seed_dir/'intake.log').open('ab') as log:
+            subprocess.run(args,stdout=log,stderr=log,timeout=120,check=True)
+    boot=seed_dir/'delivered-grub.cfg'
+    command(['xorriso','-osirrox','on','-indev',str(source),'-extract',BOOT_PATH,str(boot)])
+    text=boot.read_text()
+    entries=[line for line in text.splitlines() if re.match(r'\s*linux\s+/images/pxeboot/vmlinuz\s',line) and 'inst.rescue' not in line]
+    expected={'inst.ks':'inst.ks=hd:LABEL='+SEED_LABEL+':/ks.cfg',
+        'inst.stage2':'inst.stage2=hd:LABEL='+LABEL,'console':'console=ttyS0,115200n8'}
+    if not entries or re.findall(r'^set default=(.*)$',text,re.M)!=['"0"'] or any(
+            [token for token in line.split() if token.startswith(key+'=')]!=[token]
+            for line in entries for key,token in expected.items()):
+        raise RunError('unsupported_installation_contract','Delivered BIOS entries do not support the declared seed and console contract.')
+    shutil.copyfile(source,destination)
+    if sha256(destination)!=delivery['sha256']:
+        raise RunError('candidate_copy_mismatch','Delivered bytes changed during staging.')
+    return finish_seed(destination,seed_dir,config,command,
+        source={'kind':'delivered-iso','sha256':delivery['sha256'],'bytes':delivery['bytes']},
+        delivery=delivery, installation_contract=installation_contract(), candidate_reused=True)

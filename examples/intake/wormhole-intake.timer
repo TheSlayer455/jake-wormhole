@@ -1,0 +1,11 @@
+[Unit]
+Description=Reconcile completed ISO deliveries through the existing intake command
+
+[Timer]
+OnBootSec=1min
+OnUnitInactiveSec=1min
+AccuracySec=10s
+Unit=wormhole-intake.service
+
+[Install]
+WantedBy=timers.target

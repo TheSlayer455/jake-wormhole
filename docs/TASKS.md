@@ -1,6 +1,13 @@
 # Minx work index
 
-Current increment: `codex/WORM-001-ansible-execution`, [PR 41](https://github.com/TheSlayer455/jake-wormhole/pull/41).
+Current increment: `codex/WORM-001-directory-intake`, [PR 42](https://github.com/TheSlayer455/jake-wormhole/pull/42).
+Completed delivery registration, protected staging/reuse and shared manual/scan
+dispatch are verified at `0a6acb5`: real healthy intake, periodic completion,
+duplicate/restart and blocked-readiness failure with cleanup. See [handoff](../handoff/solutions/directory-intake.md).
+Seven focused tests and the 968-test suite passed with three explicit skips.
+Private Lightspeed integration, Ubuntu intake and qualification are not claimed.
+
+Previous increment: `codex/WORM-001-ansible-execution`, [PR 41](https://github.com/TheSlayer455/jake-wormhole/pull/41).
 Fixed the confirmed Ubuntu helper regression from shared readiness changes;
 one fresh encrypted VM at `e8fdaa6` passed 40/40 functional checks, real native
 assessment and cleanup. Qualification remains pending; see [state](STATE.md).

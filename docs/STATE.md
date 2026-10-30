@@ -1,5 +1,36 @@
 # Current engineering state
 
+## Completed ISO intake
+
+[PR 42](https://github.com/TheSlayer455/jake-wormhole/pull/42) adds one manual/scan
+intake path to the existing controller. Tested `0a6acb5754a943562a9e425288704cae928afa60`:
+a delivered RHEL 10 BIOS ISO passed fresh Terraform/KVM installation, all six
+controller checks, trusted SSH/Ansible, 413 RPM records and native assessment in
+247.755 seconds. The actual attached hash matches delivery; no builder/remaster
+ran. Only the contract's fresh seed was generated. Qualification remains false.
+
+A real ext4-backed periodic timer ignored an incomplete delivery, dispatched
+after completion, retained one supervisor across a duplicate scan/timer restart,
+then reconciled the same terminal failure without a duplicate run. The deliberate
+marker-access fault failed in 236.396 seconds: authentication passed, readiness
+failed and four dependents were blocked. Both attempts cleaned up. Native healthy
+results retain 172 pass/261 fail/56 not applicable/nine not checked/450 not selected.
+Same-name byte changes, new assessment context and explicit retry are focused
+filesystem proofs, not additional VM runs. See the [source-pinned handoff](../handoff/solutions/directory-intake.md).
+Final timer journal: five service invocations, one launch, four terminal outputs
+of the same failed request. The test timer is removed, both admission journals
+are finished and no domains remain. Exact-owned test-copy cleanup and existing
+run-media deduplication retained canonical inputs/evidence. Project storage is
+69.441 GiB/100 GiB; candidate cache 27.945 GiB/40 GiB; available space 115.630 GiB.
+Docker/K3s remain active. These measurements do not authorize a later allocation.
+
+Seven focused tests (157 added lines) cover distinct intake boundaries. Full
+Linux verification: 965 passed/three explicit skips (968 total), 85.514 seconds;
+[implementation CI passed](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40997798804).
+Independent code/evidence review found no remaining blocking findings. Required
+work-environment installation/scanner/release contracts remain unverified; an
+undiscovered source-build contract does not block validating a delivered ISO.
+
 ## Ubuntu helper compatibility after the readiness split
 
 [PR 41](https://github.com/TheSlayer455/jake-wormhole/pull/41) repairs two stale

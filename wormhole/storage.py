@@ -127,6 +127,8 @@ class Store:
                     parts = path.relative_to(base).parts
                     if any(n in {'releases','ubuntu-releases','iso-lab-releases'} for n in parts):
                         category = 'qualified_releases'
+                    elif 'intake' in parts and 'candidates' in parts:
+                        category = 'candidates'
                     elif base == self.shared:
                         category = 'candidates' if path.name == 'candidate.iso' else 'vm_disks' if 'disk' in parts else 'temporary_builds'
                     elif 'vm-runs' in parts and any(n in {'repository','boot','wormhole-identity','seed-layout-check'} for n in parts):
