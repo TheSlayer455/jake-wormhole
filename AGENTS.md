@@ -53,6 +53,12 @@ Keep qualification false and retain recovery for existing Terraform-owned runs.
 The real native comparison at `7b59975` matched installation/results but did not
 justify another maintained lifecycle. Terraform remains the normal path; retain
 the experiment as source-pinned evidence, not a second production controller.
+The subsequent research keeps approved build behavior, Terraform and existing
+Ansible contracts. Runner is optional: adopt only after an actual bounded trial
+removes maintained complexity and preserves strict trust/result accounting.
+Do not repeat the lifecycle comparison or expand RHEL hardening during this
+integration window. Private build contracts and scanner rights require inspection
+in their authorized environment; public examples cannot establish those facts.
 Prospective [Ubuntu lab policy v2](docs/UBUNTU-LAB-POLICY.md) removes physical-token
 hardware as a home-lab requirement and delegates trust-anchor review to Codex.
 Unverified physical assurance and original native/historical outcomes remain visible;

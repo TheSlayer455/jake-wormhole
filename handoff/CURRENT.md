@@ -1,5 +1,25 @@
 # Current handoff
 
+## Latest compatibility repair
+
+[PR 41](https://github.com/TheSlayer455/jake-wormhole/pull/41) fixes the Ubuntu
+helper's stale substitutions after the shared readiness split. Runtime-tested
+`e8fdaa62b831eef071daa6eedff3bd808a196e96` passed one fresh encrypted policy-v2
+installation: 40/40 functional checks, trusted SSH, password-required Ansible
+privilege escalation, native assessment and cleanup in 644.915 seconds. No builder, hardening,
+scanner or RHEL execution change. Source verification: 958 pass/three explicit
+skips; independent engineering-agent review found no blocking code findings.
+See [current evidence and storage headroom](../docs/STATE.md).
+
+Qualification remains pending: selected native results are 210 pass/one fail/
+14 not applicable/five manual, plus 409 upstream not selected. Pro entitlement
+is the owner input; actual USG/FIPS execution, benchmark reconciliation, delegated
+trust review and a second matching v2 installation remain engineering work.
+The earlier v1 pair retains its attribution. No qualified release is claimed.
+Use [the integration entry point](../docs/EXTERNAL-INTEGRATION.md) to adapt the
+proven lifecycle. Runner is an optional, unexecuted trial; do not add it around
+existing structured callbacks without demonstrating removed complexity.
+
 ## Current decision: retain Terraform, integrate observable execution
 
 Delivery: [PR 40](https://github.com/TheSlayer455/jake-wormhole/pull/40); use its

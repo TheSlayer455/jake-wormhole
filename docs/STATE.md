@@ -1,5 +1,45 @@
 # Current engineering state
 
+## Ubuntu helper compatibility after the readiness split
+
+[PR 41](https://github.com/TheSlayer455/jake-wormhole/pull/41) repairs two stale
+substitutions in the Ubuntu adapter after PR 40 changed shared readiness: private
+become-password creation was lost and the RHEL passwordless-sudo prerequisite
+remained. Tested implementation `e8fdaa62b831eef071daa6eedff3bd808a196e96` restores
+password-required Ansible access without changing the builder, hardening, scanner
+content or shared RHEL helper. Production +4/-2; one regression adds 29 test lines.
+It exercises generated helper dispatch and private password delivery; actual
+execution is separately established by the fresh encrypted Ubuntu VM below.
+
+One fresh BIOS/8 GiB/two-vCPU/64 GiB installation under prospective policy v2
+passed all 40 functional checks in 644.915 seconds. Real final SSH, Ansible,
+password-required sudo, native inventory, PAM probes, support services, wrong/
+missing unlock refusal and cold-start access passed. Build took 17.266 seconds;
+installation-to-host-key 477.383; offline inspection/cold-start 63.879; controller
+validation/assessment 55.515. Nested stage timings must not be summed twice.
+Native selected results: 210 pass, one fail, 14 not applicable, five manual;
+409 upstream rules remain not selected. Original upstream results remain 207
+pass/four fail. Assessment completed, but CLI exit 1 and both qualification flags
+stay false: entitlement/USG/FIPS, content reconciliation, delegated trust review
+and a matching second v2 installation remain outstanding. This compatibility
+test does not replace the historical v1 repeatability pair below.
+
+Cleanup verified no owned temporary resources; journals reconcile, the shared
+lock is available and Docker/K3s remain active. An earlier storage refusal was
+resolved by existing locked cleanup of four hash-bound, terminal, obsolete
+assessment ISOs and one identical reconstructed source copy: 10.115 GiB of actual
+allocated blocks reclaimed. Reports, reusable sources/candidates and unknown
+runs were preserved. This was scoped maintenance, not new cleanup code. Retained
+project storage is 69.337 GiB/100 GiB; another full cold build currently needs
+1.848 GiB additional admission headroom. No storage ceiling was weakened.
+
+Linux source suite: 958 pass, three explicit skips (961 total), 89.409 seconds.
+Three helper tests and independent engineering-agent review passed; implementation
+[CI passed](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40990828486).
+PR records distinguish tested, delivery and merge revisions. The
+[research integration guidance](EXTERNAL-INTEGRATION.md) keeps Terraform and
+existing structured Ansible paths; Runner remains optional and unexecuted.
+
 ## Lifecycle decision and current scope
 
 Delivery: [PR 40](https://github.com/TheSlayer455/jake-wormhole/pull/40). Its final
