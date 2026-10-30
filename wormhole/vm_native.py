@@ -57,19 +57,26 @@ def configuration(name, pool, installer, seed, network, mac, qemu_uid, qemu_gid,
         disk = node(devices, 'disk', type='file', device=device)
         node(disk, 'driver', name='qemu', type=fmt);node(disk, 'source', file=source);node(disk, 'target', dev=target, bus=bus)
         if device == 'cdrom':node(disk, 'readonly')
+        else:node(disk,'address',type='pci',domain='0x0000',bus='0x00',slot='0x04',function='0x0')
     for kind, model in [('usb', 'piix3-uhci'), ('pci', 'pci-root'), ('ide', None), ('virtio-serial', None)]:
         controller = node(devices, 'controller', type=kind, index=0)
         if model:controller.set('model', model)
+        if kind in {'usb','ide','virtio-serial'}:
+            node(controller,'address',type='pci',domain='0x0000',bus='0x00',
+                 slot='0x03' if kind=='virtio-serial' else '0x01',function={'usb':'0x2','ide':'0x1','virtio-serial':'0x0'}[kind])
     interface = node(devices, 'interface', type='network')
     node(interface, 'mac', address=mac);node(interface, 'source', network=name);node(interface, 'model', type='virtio')
     if filter_name:node(interface, 'filterref', filter=filter_name)
+    node(interface,'address',type='pci',domain='0x0000',bus='0x00',slot='0x02',function='0x0')
     serial = node(devices, 'serial', type='pty');target = node(serial, 'target', type='isa-serial', port=0)
     node(target, 'model', name='isa-serial')
     node(node(devices, 'console', type='pty'), 'target', type='serial', port=0)
     node(node(devices, 'channel', type='unix'), 'target', type='virtio', name='org.qemu.guest_agent.0')
     for kind in ('mouse', 'keyboard'):node(devices, 'input', type=kind, bus='ps2')
-    node(devices, 'audio', id=1, type='none');node(devices, 'memballoon', model='virtio')
-    node(node(devices, 'rng', model='virtio'), 'backend', '/dev/urandom', model='random')
+    node(devices, 'audio', id=1, type='none')
+    node(node(devices,'memballoon',model='virtio'),'address',type='pci',domain='0x0000',bus='0x00',slot='0x05',function='0x0')
+    rng=node(devices,'rng',model='virtio');node(rng,'backend','/dev/urandom',model='random')
+    node(rng,'address',type='pci',domain='0x0000',bus='0x00',slot='0x06',function='0x0')
     return {kind: ET.tostring(root, encoding='unicode')+'\n' for kind, root in roots.items()}
 
 
