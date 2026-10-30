@@ -15,8 +15,10 @@ from .ubuntu_manual import CODE as MANUAL_CODE
 
 # Reuse proven SSH/readiness dispatch; change credentials and append a real audit.
 HELPER_CODE = vm_baseline.HELPER_CODE.replace(
- "check='test -f", "password=p/'become';password.write_text(c.pop('become_password')+'\\n');password.chmod(0o600)\ncheck='test -f")
-HELPER_CODE = HELPER_CODE.replace(' && sudo -n true', '')
+ "deadline=time.monotonic()+c['seconds']", "password=p/'become';password.write_text(c.pop('become_password')+'\\n');password.chmod(0o600)\ndeadline=time.monotonic()+c['seconds']")
+# Ubuntu proves privileged access through Ansible with its private password file;
+# the later explicit sudo probe still refuses passwordless privilege escalation.
+HELPER_CODE = HELPER_CODE.replace('; sudo -n true || exit 44', '')
 HELPER_CODE = HELPER_CODE.replace("'--ssh-common-args='+common]", "'--ssh-common-args='+common,'--become-password-file',str(password)]")
 HELPER_CODE = HELPER_CODE.replace("'inventory',['-m'", "'inventory',['-b','-m'")
 HELPER_CODE = HELPER_CODE.replace("'ansible-readiness',['-m'", "'ansible-readiness',['-m'")
