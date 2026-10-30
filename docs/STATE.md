@@ -2,6 +2,9 @@
 
 ## Lifecycle decision and current scope
 
+Delivery: [PR 40](https://github.com/TheSlayer455/jake-wormhole/pull/40). Its final
+head/merge and CI records are separate from the runtime-tested sources below.
+
 Keep Terraform. The same RHEL ISO/guest/check contract passed native libvirt at
 `7b59975c81debc1832929f02aa87d64769a310b3` in 278.225 seconds versus the original
 Terraform control's 272.246 seconds. Packages and all 948 rule-level outcomes

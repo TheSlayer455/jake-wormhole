@@ -2,6 +2,9 @@
 
 ## Current decision: retain Terraform, integrate observable execution
 
+Delivery: [PR 40](https://github.com/TheSlayer455/jake-wormhole/pull/40); use its
+final head/merge and CI records without relabeling the tested sources below.
+
 Start with the [Luna lifecycle handoff](solutions/lifecycle-comparison.md).
 The same-candidate native experiment at `7b59975` passed but did not justify a
 second implementation: 278.225 seconds total versus Terraform's 272.246; lifecycle
