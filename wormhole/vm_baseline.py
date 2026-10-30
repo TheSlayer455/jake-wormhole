@@ -238,12 +238,12 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
             result['storage_preflight_cleanup'] = lifecycle(lease)
             usage = Store().status()
             incoming=0
-            if reuse_run is None and delivery is None:
+            if reuse_run is None:
                 incoming=Path(source).stat().st_size+16*1024**2
                 if dependency_store is not None:
                     incoming+=sum(f['bytes'] for f in read_json(Path(dependency_store)/'bundle/manifest.json')['files'])
-            # Retained intake/reused bytes are already counted. Their temporary
-            # run copy still reserves physical disk alongside the guest/evidence.
+            # Reserve retained candidate growth as well as physical run-copy,
+            # guest and evidence space. Intake never skips its copy reservation.
             atomic_json(run/'storage-admission.json', storage_admission(ROOT,
                 disk_bytes+1024**3 + (1 if distribution=='rhel10' else 3)*Path(source).stat().st_size,
                 managed_bytes=usage['total_allocated_bytes'],

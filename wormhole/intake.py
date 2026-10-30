@@ -61,12 +61,31 @@ def register(marker, *, generation='initial', scenario='healthy', store=None):
     existing=store.root/'intake/requests'/(key+'.json')
     if existing.exists():return read_json(existing) # Observe a known request even while its VM owns admission.
     with store.locked():
-        store.observe() # Same host lock/journals as builds and VM operations.
+        references=store.observe() # Same host lock/journals as builds and VM operations.
         root=workspace_path(store.root/'intake',create=True)
         candidates=workspace_path(root/'candidates',create=True)
         requests=workspace_path(root/'requests',create=True)
         staged=candidates/(delivery['sha256']+'.iso')
+        origin=None
         if not staged.exists():
+            # Existing protected, independently verified copies may be reused.
+            # The writable inbox itself is never aliased or cleanup-owned.
+            for previous in sorted(store.runs.glob('*/result.json')):
+                try:
+                    if read_json(previous).get('build',{}).get('candidate_sha256')!=delivery['sha256']:continue
+                    _,_,manifest=store.proof(previous.parent.name,references)
+                    candidate=store.resolve(previous.parent.name)
+                    store.checked(candidate,references)
+                    if manifest['candidate_sha256']==delivery['sha256'] and store.digest(candidate)==delivery['sha256']:
+                        origin=previous.parent.name;staged=candidate;break
+                except (RunError,OSError,KeyError,ValueError):continue
+        if origin is not None:
+            _path_chain(source)
+            with os.fdopen(os.open(source,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK),'rb') as incoming:
+                info=os.fstat(incoming.fileno())
+                require(stat.S_ISREG(info.st_mode) and info.st_size==delivery['bytes'] and
+                    stream_chunk(incoming,delivery['bytes'])==delivery['sha256'] and not incoming.read(1),'delivery_changed_or_corrupt')
+        elif not staged.exists():
             usage=store.status()
             admission(store.root,delivery['bytes'],managed_bytes=usage['total_allocated_bytes']+delivery['bytes'],
                 candidate_bytes=usage['allocated_bytes']['candidates']+delivery['bytes'])
@@ -89,14 +108,14 @@ def register(marker, *, generation='initial', scenario='healthy', store=None):
                 finally:os.close(directory)
             finally:
                 if temporary.exists():temporary.unlink() # Only this invocation's incomplete private copy.
-        _owned(staged)
+        if origin is None:_owned(staged)
         require(staged.stat().st_size==delivery['bytes'] and
             sha256(staged)==delivery['sha256'],'staged_delivery_changed')
         record=requests/(key+'.json')
         if record.exists():return read_json(record)
         value={'schema_version':'1.0','request_id':key,'run_id':str(uuid4()),'state':'registered',
             'created_at':now(),'delivery':delivery,'acceptance':context,'generation':generation,
-            'scenario':scenario,'lab_iso_qualified':False,'production_iso_eligible':False}
+            'scenario':scenario,'candidate_origin_run':origin,'lab_iso_qualified':False,'production_iso_eligible':False}
         atomic_json(record,value)
         return value
 
@@ -122,8 +141,10 @@ def submit(key, terraform, *, store=None):
             else:value['observation']='launch-outcome-unknown'
             return value
         require(value['acceptance']==acceptance_context(),'intake_acceptance_changed')
-        source=root/'candidates'/(value['delivery']['sha256']+'.iso')
-        _owned(source)
+        if value.get('candidate_origin_run'):
+            source=store.resolve(value['candidate_origin_run'])
+        else:
+            source=root/'candidates'/(value['delivery']['sha256']+'.iso');_owned(source)
         require(sha256(source)==value['delivery']['sha256'],'staged_delivery_changed')
         value.update(state='submitted',submitted_at=now());atomic_json(record,value)
         # No shared storage lock here: execute acquires the canonical VM lease.

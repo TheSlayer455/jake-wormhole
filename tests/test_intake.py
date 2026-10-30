@@ -66,6 +66,22 @@ class Intake(unittest.TestCase):
         self.assertEqual(list((self.root/'intake/candidates').glob('*')),[])
         self.assertFalse(self.store.runs.exists())
 
+    def test_existing_protected_candidate_reuses_verified_store_proof_not_inbox_links(self):
+        from test_storage import Cleanup
+        from wormhole import vm_baseline as vm
+        self.shared=self.store.shared;self.shared.mkdir(mode=0o700)
+        self.store.runs.mkdir(mode=0o700);self.store.live={};self.store.qemu_uid=os.geteuid
+        (self.store.infrastructure/'vm-history').mkdir(mode=0o700)
+        origin,candidate,_=Cleanup.fixture(self,content=self.iso.read_bytes())
+        candidate.chmod(0o640) # The existing QEMU read-only group contract.
+        self.complete();request=i.register(self.marker,store=self.store)
+        self.assertEqual(request['candidate_origin_run'],origin.name)
+        self.assertEqual(list((self.root/'intake/candidates').glob('*.iso')),[])
+        self.assertNotEqual(candidate.stat().st_ino,self.iso.stat().st_ino)
+        with patch.object(vm,'execute',side_effect=self.fake_execution) as execute:
+            i.submit(request['request_id'],'fixture',store=self.store)
+        self.assertEqual(execute.call_args.args[0],candidate)
+
     def test_real_admission_contention_does_not_create_a_phantom_running_attempt(self):
         from wormhole import vm_baseline as vm, admission
         self.complete();request=i.register(self.marker,store=self.store)
