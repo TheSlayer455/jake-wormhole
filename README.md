@@ -13,9 +13,21 @@ and fleet fault experiments, explicit initialization/configuration receipts and
 verified Ubuntu/UBI candidate reuse and contained initialization recovery after
 coordinator interruption. Actual Ubuntu/UBI, fault, reuse, mixed/twenty-target, recovery and private local publication execution is verified at the recorded sources. Production ISO eligibility remains false.
 
-Container reference automation remains the fast regression layer. The authorized [home real-ISO extension](handoff/ISO-FOUNDATION.md) now includes a verified [RHEL 10.0 installation baseline](handoff/solutions/rhel10-install-baseline.md): fresh KVM installation, trusted SSH/Ansible, 413 RPM records and all 948 native vendor-draft assessment outcomes. This is not hardened or qualified. Ubuntu retains two fresh installations of the same encrypted/hardened ISO with 40/40 checks each, including real SSH/Ansible, cold-start unlock, isolated logging/time/PKI services and cleanup. Actual Ubuntu OpenSCAP reports 210 pass, one FIPS failure, 14 not applicable, five not checked and 409 upstream not selected. Required USG/FIPS/vendor-content verification, physical-token assurance and accountable trust-root disposition keep Ubuntu qualification and successful qualified publication pending. See [current continuation](handoff/CURRENT.md) and [source-pinned PAM repair](handoff/solutions/ubuntu-pam-crl.md). The source repository is public by [Jake's October 24 decision](docs/decisions/0006-public-source.md); runtime inputs, credentials and raw evidence remain private.
+Container reference automation remains the fast regression layer. The authorized [home real-ISO extension](handoff/ISO-FOUNDATION.md) now includes a verified [RHEL 10.0 installation baseline](handoff/solutions/rhel10-install-baseline.md): fresh KVM installation, trusted SSH/Ansible, 413 RPM records and all 948 native vendor-draft assessment outcomes. This is not hardened or qualified. Ubuntu retains two fresh installations of the same encrypted/hardened ISO with 40/40 checks each, including real SSH/Ansible, cold-start unlock, isolated logging/time/PKI services and cleanup. Actual Ubuntu OpenSCAP reports 210 pass, one FIPS failure, 14 not applicable, five not checked and 409 upstream not selected. Required USG/FIPS/vendor-content verification and delegated lab trust review keep Ubuntu qualification and successful qualified publication pending. Physical-token hardware is not required by prospective lab policy v2; physical assurance remains unverified. See [current continuation](handoff/CURRENT.md) and [source-pinned PAM repair](handoff/solutions/ubuntu-pam-crl.md). The source repository is public by [Jake's October 24 decision](docs/decisions/0006-public-source.md); runtime inputs, credentials and raw evidence remain private.
 
 **Luna and external engineering agents: [start here](docs/EXTERNAL-INTEGRATION.md).** The short guide maps capabilities to source and tests, with explicit integration limits.
+
+The measured [lifecycle comparison](handoff/solutions/lifecycle-comparison.md)
+keeps Terraform. Native libvirt passed the same RHEL candidate and checks, but
+saved only about three seconds of lifecycle commands while adding another
+resource/recovery implementation. Use the existing foreground VM command, its
+durable launch acknowledgment and `python -m wormhole.vm_baseline --status RUN_UUID`.
+RHEL hardening, encryption and qualified publication are deferred.
+
+[Ubuntu lab policy v2](docs/UBUNTU-LAB-POLICY.md) prospectively removes physical-token
+hardware as a lab requirement and delegates trust-anchor review to Codex. Physical
+assurance remains unverified; legitimate Pro input and actual USG/FIPS execution
+remain required. Earlier results retain their original policy attribution.
 
 For the Build Jake ISO Pipeline chat, use the [single copy-and-paste handoff prompt](handoff/JAKE-ISO-PIPELINE-PROMPT.md).
 

@@ -1,5 +1,15 @@
 # Architecture
 
+The [measured lifecycle comparison](../handoff/solutions/lifecycle-comparison.md)
+retains Terraform for VM provisioning and exact-owned cleanup. The temporary
+native adapter is preserved at the tested experiment revision, not maintained as
+a second normal backend. The existing supervisor now acknowledges a durable run
+after admission, records observed installer/controller progress, and exposes
+read-only status. Process liveness is separate from progress and terminal outcome.
+A final-account SSH success cannot hide a failed installed-system marker check;
+that failure blocks the dependent catalog. Existing recovery reconciles a stopped
+supervisor, its recorded console process and Terraform-owned resources.
+
 The authorized home ISO profile is a separate, incomplete capability alongside
 the proven container backend. [ISO foundation](../handoff/ISO-FOUNDATION.md)
 records its actual evidence. `media_store.py` uses a version-2 streaming manifest;

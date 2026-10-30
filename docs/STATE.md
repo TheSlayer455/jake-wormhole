@@ -1,5 +1,45 @@
 # Current engineering state
 
+## Lifecycle decision and current scope
+
+Keep Terraform. The same RHEL ISO/guest/check contract passed native libvirt at
+`7b59975c81debc1832929f02aa87d64769a310b3` in 278.225 seconds versus the original
+Terraform control's 272.246 seconds. Packages and all 948 rule-level outcomes
+match. Native lifecycle commands took 2.377 seconds versus Terraform's 5.631;
+one sample each does not establish a reliability or performance advantage.
+The experimental adapter was removed from the normal source rather than adding
+another maintained lifecycle. The ISO builder is unchanged.
+
+Retained implementation `63a130a249111fc10c229a66922a51895b87e40e` adds durable
+launch acknowledgment, observed progress/read-only status and distinct readiness
+failure accounting. A real controlled marker-access failure preserved successful
+SSH, failed readiness and four blocked dependents; no Ansible/catalog started.
+It failed in 238.174 seconds overall, with the helper detecting the fault in
+0.672 seconds, and cleanup succeeded. Killing the recorded supervisor during
+another installation produced unknown state and refused admission. Existing
+recovery verified ownership, removed the resources and orphan console, preserved
+unknown outcome and all six blocked checks, then reconciled admission. No VM
+domains remain; Docker and K3s are active. Private evidence is retained under
+the existing budget (77.28 GiB allocated against 100 GiB at final audit).
+
+Linux source verification: 957 pass/three explicit skips (960 total), 84.318
+seconds; 17/17 controlled parity cases passed with fresh outputs. The skipped
+qemu-img test is not new runtime evidence; two skips are Windows-specific.
+[Implementation CI passed](https://github.com/TheSlayer455/jake-wormhole/actions/runs/40986252266).
+Independent engineering-agent review found no blocking final-code findings.
+See the [source-pinned Luna handoff](../handoff/solutions/lifecycle-comparison.md).
+RHEL hardening, encryption and qualified publication are deferred; both
+qualification flags remain false. This does not diagnose an uninspected work run.
+
+[Ubuntu lab policy v2](UBUNTU-LAB-POLICY.md) is prospective. Physical-token hardware
+is not required for home acceptance; physical assurance remains unverified.
+Trust-anchor review is delegated Codex engineering work, still pending actual
+review. The owner input is legitimate Pro entitlement through the protected
+provider; actual USG/FIPS execution and content reconciliation remain required.
+Earlier evidence below retains its original v1 policy and source attribution.
+
+## Previous RHEL baseline delivery
+
 RHEL delivery: [PR 39](https://github.com/TheSlayer455/jake-wormhole/pull/39).
 Its head/merge records are separate from the tested runtime revision below.
 

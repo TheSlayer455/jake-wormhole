@@ -1,5 +1,12 @@
 # Ubuntu installation hardening and post-reboot assessment
 
+Prospective policy correction: [lab policy v2](../../docs/UBUNTU-LAB-POLICY.md)
+does not require physical-token hardware and delegates trust-anchor review to
+Codex. Physical assurance remains unverified. Legitimate Pro entitlement remains
+the owner-supplied dependency; USG/FIPS execution and lab trust review remain
+engineering work. The v1 results and dependency statement below are historical,
+not a request for the owner to review 141 certificates or buy hardware.
+
 Current verified increment: [PAM revocation repair and final pair](ubuntu-pam-crl.md),
 tested at `3e1e00bc64d6d7c3fb4d3f2d846188626db8eace`. Two fresh encrypted installations
 of identical ISO bytes passed 40/40 checks in 651/638 seconds, with matching

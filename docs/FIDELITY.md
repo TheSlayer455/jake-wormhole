@@ -1,5 +1,18 @@
 # Fidelity and evidence limits
 
+The [lifecycle comparison](../handoff/solutions/lifecycle-comparison.md) used the
+same RHEL ISO bytes, declared guest profile, checks, inventory and assessment.
+Native libvirt and Terraform produced matching packages and rule-level outcomes.
+One observation per path (278.225 versus 272.246 seconds) establishes equivalence
+for this control case, not comparative reliability or a speedup. Terraform remains
+the simpler maintained choice. Neither result establishes the cause of missing
+launch/status evidence in another environment. RHEL hardening remains deferred.
+
+[Ubuntu policy v2](UBUNTU-LAB-POLICY.md) is prospective: physical hardware is not
+required for the home profile, physical assurance stays unverified, and Codex owns
+the pending lab trust review. Historical v1 outcomes remain unchanged. Pro/FIPS
+still require legitimate entitlement and observed execution.
+
 The verified container reference uses generated source and explicitly synthetic assessment policy. The newly authorized [real-ISO extension](../handoff/ISO-FOUNDATION.md) is incomplete and has separate evidence. Neither capability validates proprietary production infrastructure. The [historical matrix](acceptance-matrix.md) binds observations to original tested sources/evidence; it is not a final-source runtime rerun.
 
 The [RHEL 10.0 baseline](../handoff/solutions/rhel10-install-baseline.md) is a
