@@ -6,7 +6,6 @@ import pwd
 import signal
 import subprocess
 import time
-from uuid import uuid4
 import xml.etree.ElementTree as ET
 
 from . import vm_baseline as vm
@@ -16,19 +15,6 @@ from .vm_admission import VMLease, require
 from .vm_inputs import sha256, terraform_config
 
 
-def native_reconcile(run, configuration):
-    """Keep each recovery's fresh observations separate from prior operation logs."""
-    from . import vm_native
-    attempt=Path(run)/('recovery-'+uuid4().hex)
-    attempt.mkdir(mode=0o700)
-    atomic_json(attempt/'native-config.json',configuration)
-    def command(args,label,*,timeout=20):
-        with (attempt/(label+'.log')).open('wb') as log:
-            subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=timeout)
-    vm_native.destroy(attempt,configuration,command)
-    return attempt.name
-
-
 def recover(identifier, terraform=None):
     require(os.geteuid()==0,'runtime_owner_required')
     identifier=run_id(identifier)
@@ -36,8 +22,8 @@ def recover(identifier, terraform=None):
     result=read_json(run/'result.json')
     require(result['run_id']==identifier,'recovery_run_identity')
     provisioner=result.get('provisioner','terraform')
-    require(provisioner in {'terraform','native'},'recovery_provisioner_invalid')
-    require(provisioner=='native' or (terraform is not None and sha256(terraform)==vm.TF_SHA),'runtime_owner_or_tool_mismatch')
+    require(provisioner=='terraform','recovery_provisioner_invalid')
+    require(terraform is not None and sha256(terraform)==vm.TF_SHA,'runtime_owner_or_tool_mismatch')
     supervisor=result.get('supervisor')
     require(supervisor is not None,'supervisor_identity_missing')
     require(vm.process_identity(supervisor['pid'])!=supervisor,'supervisor_still_running')
@@ -67,17 +53,7 @@ def recover(identifier, terraform=None):
         networks=set(virsh('net-list','--all','--name').split())
         pools=set(virsh('pool-list','--all','--name').split())
         resources_present=name in domains or name in networks or name in pools or (pool/(name+'.qcow2')).exists()
-        if resources_present and provisioner=='native':
-            from . import vm_native
-            qemu=pwd.getpwnam('libvirt-qemu')
-            expected_config=vm_native.configuration(name,pool,candidate,seed,vm.NETWORK,
-                '52:54:00:'+':'.join(identifier.replace('-','')[n:n+2] for n in (0,2,4)),qemu.pw_uid,qemu.pw_gid,
-                disk_bytes=(32 if result.get('distribution')=='rhel10' else 64)*1024**3,
-                filter_name=name+'-isolation' if isolated else None)
-            require(sha256(run/'native-config.json')==result.get('native_configuration_sha256') and
-                    read_json(run/'native-config.json')==expected_config,'recovery_configuration_changed')
-            result['recovery_log_directory']=native_reconcile(run,expected_config)
-        elif resources_present:
+        if resources_present:
             qemu=pwd.getpwnam('libvirt-qemu')
             tfdir=run/'terraform'
             expected_config=terraform_config(name,pool,candidate,seed,vm.NETWORK,

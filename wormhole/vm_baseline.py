@@ -125,10 +125,10 @@ def create_qemu_directory(path, group):
     path.chmod(0o710)
 
 
-def preflight(source, *, distribution='ubuntu', provisioner='terraform'):
+def preflight(source, *, distribution='ubuntu'):
     require(os.geteuid() == 0, 'runtime_owner_required')
     required=['virsh','qemu-system-x86_64','qemu-img','xorriso','dnsmasq','script','ssh-keygen','docker']
-    if provisioner=='terraform':required.append('xsltproc')
+    required.append('xsltproc')
     require(all(shutil.which(x) for x in required),
             'missing_vm_tool')
     observation = collect_observations(CANONICAL_INFRASTRUCTURE_ROOT)
@@ -157,13 +157,11 @@ def preflight(source, *, distribution='ubuntu', provisioner='terraform'):
     return observation
 
 
-def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, dependency_store=None, sandbox=False, distribution='ubuntu', provisioner='terraform', scenario='healthy'):
+def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, dependency_store=None, sandbox=False, distribution='ubuntu', scenario='healthy'):
     os.umask(0o077)
     revision, dirty = source_identity()
-    require(provisioner in {'terraform','native'},'invalid_vm_provisioner')
-    require(not dirty and (provisioner=='native' or (terraform is not None and sha256(terraform)==TF_SHA)), 'unverified_execution_inputs')
+    require(not dirty and terraform is not None and sha256(terraform)==TF_SHA, 'unverified_execution_inputs')
     require(scenario in {'healthy','marker-inaccessible'} and (scenario=='healthy' or (distribution=='rhel10' and ubuntu_mode is None)), 'invalid_vm_scenario')
-    require(provisioner=='terraform' or (distribution=='rhel10' and ubuntu_mode is None), 'native_rhel_comparison_only')
     require(ubuntu_mode in {None, 'stock-audit', 'hardened'}, 'ubuntu_mode_invalid')
     require(not sandbox or ubuntu_mode=='hardened','sandbox_requires_hardened_ubuntu')
     require(distribution in {'ubuntu','rhel10'} and (distribution=='ubuntu' or (ubuntu_mode is None and not sandbox)), 'vm_distribution_invalid')
@@ -172,7 +170,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
     name = 'wormhole-vm-' + identifier.replace('-', '')[:12]
     run = workspace_path(ROOT / 'vm-runs' / identifier, create=True)
     result = {'schema_version': '1.0', 'capability': 'real-iso-installation-baseline', 'run_id': identifier,
-        'source_revision': revision, 'distribution':distribution, 'provisioner':provisioner,'scenario':scenario,
+        'source_revision': revision, 'distribution':distribution, 'provisioner':'terraform','scenario':scenario,
         'outcome': 'running', 'started_at': now(), 'stages': [],
         'phase': 'preflight', 'last_progress_at': now(), 'network_isolated':bool(ubuntu_mode or distribution=='rhel10'),
         'supervisor': process_identity(os.getpid()),
@@ -230,7 +228,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
     with VMLease(CANONICAL_INFRASTRUCTURE_ROOT, identifier, revision) as lease:
         result['launch_acknowledged_at']=now();save()
         print(json.dumps({'event':'launch-acknowledged','run_id':identifier,'source_revision':revision,
-                          'provisioner':provisioner,'at':result['launch_acknowledged_at']}),flush=True)
+                          'provisioner':'terraform','at':result['launch_acknowledged_at']}),flush=True)
         try:
             preflight_start=time.monotonic();preflight_at=now()
             from .storage import Store, lifecycle, admission as storage_admission
@@ -247,7 +245,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                 disk_bytes+1024**3 + (1 if distribution=='rhel10' else 3)*Path(source).stat().st_size,
                 managed_bytes=usage['total_allocated_bytes'],
                 candidate_bytes=result['storage_preflight_cleanup']['candidate_budget_allocated_bytes']+incoming))
-            atomic_json(run / 'preflight.json', preflight(source,distribution=distribution,provisioner=provisioner))
+            atomic_json(run / 'preflight.json', preflight(source,distribution=distribution))
             if sandbox:
                 from .ubuntu_sandbox import MEMORY
                 observation=read_json(run/'preflight.json')
@@ -325,36 +323,27 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
             result['build'] = manifest;save()
             for path in (candidate, seed):
                 os.chown(path, 0, group);path.chmod(0o640)
+            tfdir = run / 'terraform';tfdir.mkdir(mode=0o700)
+            shutil.copyfile(SOURCE_ROOT / 'provisioning/libvirt/.terraform.lock.hcl', tfdir / '.terraform.lock.hcl')
+            configuration=terraform_config(name, pool, candidate, seed, NETWORK, mac, qemu.pw_uid, group,disk_bytes=disk_bytes)
             if ubuntu_mode or distribution=='rhel10':
                 from .ubuntu_sandbox import network_filter,attach_filter
                 filter_name=name+'-isolation'
                 filter_file=run/'network-filter.xml';filter_file.write_text(network_filter(filter_name))
                 lease.intent('network_filter',filter_name)
                 command(['virsh','-c','qemu:///system','nwfilter-define',str(filter_file)],'network-filter-define')
-            if provisioner=='terraform':
-                tfdir=run/'terraform';tfdir.mkdir(mode=0o700)
-                shutil.copyfile(SOURCE_ROOT/'provisioning/libvirt/.terraform.lock.hcl',tfdir/'.terraform.lock.hcl')
-                configuration=terraform_config(name,pool,candidate,seed,NETWORK,mac,qemu.pw_uid,group,disk_bytes=disk_bytes)
-                if filter_name:configuration=attach_filter(configuration,filter_name)
-                atomic_json(tfdir/'main.tf.json',configuration)
-                result['terraform_configuration_sha256']=sha256(tfdir/'main.tf.json');save()
-                tf=[terraform,'-chdir='+str(tfdir)]
-                command([*tf,'init','-input=false','-lockfile=readonly'],'terraform-init')
-                command([*tf,'validate','-no-color'],'terraform-validate')
-                command([*tf,'plan','-input=false','-out=run.tfplan','-no-color'],'terraform-plan')
-            else:
-                from . import vm_native
-                configuration=vm_native.configuration(name,pool,candidate,seed,NETWORK,mac,qemu.pw_uid,group,
-                                                       disk_bytes=disk_bytes,filter_name=filter_name)
-                atomic_json(run/'native-config.json',configuration)
-                result['native_configuration_sha256']=sha256(run/'native-config.json');save()
+                configuration=attach_filter(configuration,filter_name)
+            atomic_json(tfdir / 'main.tf.json', configuration)
+            result['terraform_configuration_sha256'] = sha256(tfdir / 'main.tf.json');save()
+            tf = [terraform, '-chdir=' + str(tfdir)]
+            command([*tf, 'init', '-input=false', '-lockfile=readonly'], 'terraform-init')
+            command([*tf, 'validate', '-no-color'], 'terraform-validate')
+            command([*tf, 'plan', '-input=false', '-out=run.tfplan', '-no-color'], 'terraform-plan')
             require(sha256(candidate) == manifest['candidate_sha256'] and sha256(seed) == manifest['seed_sha256'], 'attached_media_changed')
             for kind, identity in [('domain', name), ('network', name), ('pool', name), ('disk', str(pool / (name + '.qcow2')))]:
                 lease.intent(kind, identity)
             unknown = True
-            if provisioner=='terraform':
-                command([*tf,'apply','-input=false','-no-color','run.tfplan'],'terraform-apply',timeout=180)
-            else:vm_native.create(run,configuration,command)
+            command([*tf, 'apply', '-input=false', '-no-color', 'run.tfplan'], 'terraform-apply', timeout=180)
             applied = True;unknown = False
             xml = virsh('dumpxml', name)
             (run / 'domain.xml').write_text(xml)
@@ -584,14 +573,13 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                     if support_process is not None:support_process.wait(timeout=10)
                     lease.reconciled('support_container',support)
                 if applied and not unknown:
-                    if provisioner=='terraform':
-                        state=json.loads((tfdir/'terraform.tfstate').read_text())
-                        require({(x['type'],x['name']) for x in state['resources']}=={
-                            ('libvirt_pool','run'),('libvirt_network','run'),('libvirt_domain','run'),('libvirt_volume','disk')},'terraform_ownership_mismatch')
-                        require(ET.fromstring(virsh('dumpxml',name)).findtext('description')=='jake-wormhole libvirt-iso '+name,'domain_ownership_mismatch')
-                        require(ET.fromstring(virsh('pool-dumpxml',name)).findtext('target/path')==str(pool),'pool_ownership_mismatch')
-                        command([*tf,'destroy','-auto-approve','-input=false','-no-color'],'terraform-cleanup',timeout=90)
-                    else:vm_native.destroy(run,configuration,command)
+                    state = json.loads((tfdir / 'terraform.tfstate').read_text())
+                    require({(x['type'], x['name']) for x in state['resources']} == {
+                        ('libvirt_pool', 'run'), ('libvirt_network', 'run'), ('libvirt_domain', 'run'), ('libvirt_volume', 'disk')}, 'terraform_ownership_mismatch')
+                    require(ET.fromstring(virsh('dumpxml', name)).findtext('description') == 'jake-wormhole libvirt-iso ' + name,
+                            'domain_ownership_mismatch')
+                    require(ET.fromstring(virsh('pool-dumpxml', name)).findtext('target/path') == str(pool), 'pool_ownership_mismatch')
+                    command([*tf, 'destroy', '-auto-approve', '-input=false', '-no-color'], 'terraform-cleanup', timeout=90)
                     for query in ('list', 'net-list', 'pool-list'):
                         require(name not in virsh(query, '--all', '--name').split(), 'vm_cleanup_incomplete')
                     require(not (pool / (name + '.qcow2')).exists(), 'disk_cleanup_incomplete')
@@ -636,8 +624,7 @@ def main():
     action.add_argument('--source')
     action.add_argument('--recover-run',help='Reconcile the exact stopped supervisor using its recorded ownership.')
     action.add_argument('--status',help='Observe an existing run without allocating or altering resources.')
-    parser.add_argument('--terraform',help='Pinned Terraform executable; required only for Terraform-owned execution/recovery.')
-    parser.add_argument('--provisioner',choices=['terraform','native'],default='terraform')
+    parser.add_argument('--terraform',help='Pinned Terraform executable; required for execution/recovery, not status.')
     parser.add_argument('--scenario',choices=['healthy','marker-inaccessible'],default='healthy')
     parser.add_argument('--distribution', choices=['ubuntu','rhel10'], default='ubuntu')
     parser.add_argument('--reuse-run', help='Exact reconciled baseline run whose unchanged ISO bytes may be reused; a new seed and acceptance are required.')
@@ -648,7 +635,7 @@ def main():
         from .ubuntu_recovery import recover
         value=recover(options.recover_run,options.terraform)
     else:value = execute(options.source,options.terraform,reuse_run=options.reuse_run,distribution=options.distribution,
-                       provisioner=options.provisioner,scenario=options.scenario)
+                       scenario=options.scenario)
     print(json.dumps(value, indent=2))
     return 0 if value['outcome'] == 'baseline-passed' and value['cleanup'] != 'unreconciled' else 1
 
