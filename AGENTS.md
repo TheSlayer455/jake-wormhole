@@ -59,6 +59,12 @@ removes maintained complexity and preserves strict trust/result accounting.
 Do not repeat the lifecycle comparison or expand RHEL hardening during this
 integration window. Private build contracts and scanner rights require inspection
 in their authorized environment; public examples cannot establish those facts.
+The next increment validates completed directory-delivered ISOs through the
+existing controller, without building/remastering. Start with the proven RHEL 10
+BIOS/separate-seed installation contract. A private source-build contract is not
+a prerequisite for intake; declared installation inputs and unchanged bytes are.
+Manual intake and periodic reconciliation must share dispatch/deduplication.
+Preserve explicit requalification, incomplete deliveries and unknown run evidence.
 Prospective [Ubuntu lab policy v2](docs/UBUNTU-LAB-POLICY.md) removes physical-token
 hardware as a home-lab requirement and delegates trust-anchor review to Codex.
 Unverified physical assurance and original native/historical outcomes remain visible;

@@ -1,6 +1,12 @@
 # Minx work index
 
-Current increment: `codex/WORM-001-ansible-execution`, [PR 41](https://github.com/TheSlayer455/jake-wormhole/pull/41).
+Current increment: `codex/WORM-001-directory-intake`. Add completed-delivery
+registration, independent protected staging and one shared manual/scan dispatch
+to existing RHEL 10 acceptance. Focused source checks pass; real manual intake
+and monitored failure execution are pending. Do not imply private Lightspeed
+integration, Ubuntu intake or qualification from this bounded increment.
+
+Previous increment: `codex/WORM-001-ansible-execution`, [PR 41](https://github.com/TheSlayer455/jake-wormhole/pull/41).
 Fixed the confirmed Ubuntu helper regression from shared readiness changes;
 one fresh encrypted VM at `e8fdaa6` passed 40/40 functional checks, real native
 assessment and cleanup. Qualification remains pending; see [state](STATE.md).
