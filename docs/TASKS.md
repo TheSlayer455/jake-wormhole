@@ -1,13 +1,27 @@
 # Minx work index
 
+Current increment: `codex/WORM-001-lifecycle-comparison`. The same-media native
+experiment passed; Terraform remains the smaller maintained solution. Real
+acknowledgment/progress, marker-readiness failure and supervisor interruption/
+exact-owned recovery are verified at `63a130a`. Deliver the [Luna integration
+handoff](../handoff/solutions/lifecycle-comparison.md); do not expand RHEL hardening,
+encryption or publication during this recovery window. Qualification stays false.
+
+[Ubuntu policy v2](UBUNTU-LAB-POLICY.md) removes physical hardware as a home-lab
+requirement and delegates trust-anchor review to Codex. That review remains an
+engineering task; legitimate Pro input remains external. Historical native
+results and Minx contracts are unchanged.
+
+## Previous increments
+
 RHEL increment: `codex/WORM-001-rhel10-baseline`, [PR 39](https://github.com/TheSlayer455/jake-wormhole/pull/39). The owner explicitly
 activated RHEL 10.0 using supplied official media. Preserve Ubuntu's completed
 engineering and unresolved qualification dependencies. The first RHEL installation
 exposed a completion-marker traversal defect; the corrected same-ISO fresh retry
 at `d39f7a0` passed final SSH/Ansible, RPM inventory, complete native vendor-draft
-audit and exact-owned cleanup. Next RHEL work is reproducible hardening, current
-benchmark mapping and eventual qualified publication; this baseline does not
-satisfy those requirements.
+audit and exact-owned cleanup. Reproducible hardening, current benchmark mapping
+and eventual qualified publication remain deferred requirements; this baseline
+does not satisfy them.
 See [current state](STATE.md) and [RHEL baseline](../handoff/solutions/rhel10-install-baseline.md).
 This increment does not claim hardening or reopen historical Minx contracts.
 

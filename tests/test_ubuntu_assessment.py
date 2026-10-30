@@ -10,6 +10,22 @@ from wormhole import ubuntu_assessment as a
 from wormhole.runs import RunError
 
 class Assessment(unittest.TestCase):
+    def test_prospective_lab_scope_preserves_native_controls_and_historical_policy(self):
+        previous=a.POLICY.with_name('ubuntu-lab-policy-v1.json')
+        self.assertEqual(a.digest(previous),'246d12d3537ad69c57d5aa40ac8c57796fc568b693fc8c31a68b1d7288dddcb4')
+        old=json.loads(previous.read_text());current=json.loads(a.POLICY.read_text())
+        self.assertEqual(current['supersedes'],old['policy_id'])
+        self.assertNotEqual(a.digest(a.POLICY),a.digest(previous))
+        self.assertFalse(current['lab_scope']['physical_token_required'])
+        self.assertEqual(current['lab_scope']['physical_token_assurance'],'unverified')
+        self.assertNotIn('physical-token-authentication-assurance',current['unresolved_requirements'])
+        self.assertIn('delegated-lab-trust-anchor-review',current['unresolved_requirements'])
+        self.assertIn('authorized-guest-procedure-for-usg-and-fips-updates',current['unresolved_requirements'])
+        self.assertFalse(current['lab_scope']['historical_results_requalified'])
+        self.assertFalse(current['production_iso_eligible'])
+        for key in ('content','tailoring','requirements','functional_checks'):
+            self.assertEqual(current[key],old[key])
+
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory()
         self.root=Path(self.tmp.name)

@@ -1,5 +1,18 @@
 # External integration: start here
 
+**Immediate Luna handoff: [keep Terraform and make execution observable](../handoff/solutions/lifecycle-comparison.md).**
+The same-candidate native experiment passed, but did not justify replacing the
+existing lifecycle. Adapt the acknowledged run identity, observed progress,
+separate final-account/readiness checks and exact stopped-run recovery. Verify
+one guest from the actual **ansible control node** against the **rhel kvm host**;
+keep the receiving pipeline's hardening, scanners, tests and release policy.
+This is an actionable home control case, not a diagnosis of an uninspected work run.
+
+The [prospective Ubuntu policy correction](UBUNTU-LAB-POLICY.md) removes the stale
+physical-hardware owner dependency and assigns lab trust review to Codex. Only
+legitimate Pro entitlement is currently identified as required owner input;
+actual FIPS/USG execution, content reconciliation and trust review remain work.
+
 RHEL 10.0 is newly active: [installation baseline and readiness defect](../handoff/solutions/rhel10-install-baseline.md).
 The first real install exposed inaccessible completion evidence despite working
 diagnostic SSH. The corrected fresh retry passed normal final SSH/Ansible, RPM

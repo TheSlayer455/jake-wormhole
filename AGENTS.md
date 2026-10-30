@@ -45,6 +45,18 @@ existing lifecycle/admission components. The initial measured RHEL profile uses
 8 GiB RAM, two vCPUs and a 32 GiB disk; Ubuntu retains its 64 GiB disk. RHEL 9
 and other versions remain outside this increment. Ubuntu's working installation
 and outstanding qualification requirements retain their existing evidence.
+The next authorized increment is a controlled Terraform/native-libvirt lifecycle
+comparison using unchanged RHEL builder/ISO inputs, observable execution, real
+readiness failure/interruption/recovery, and an actionable Luna handoff. Defer
+RHEL hardening, encryption and qualified publication until that decision is proven.
+Keep qualification false and retain recovery for existing Terraform-owned runs.
+The real native comparison at `7b59975` matched installation/results but did not
+justify another maintained lifecycle. Terraform remains the normal path; retain
+the experiment as source-pinned evidence, not a second production controller.
+Prospective [Ubuntu lab policy v2](docs/UBUNTU-LAB-POLICY.md) removes physical-token
+hardware as a home-lab requirement and delegates trust-anchor review to Codex.
+Unverified physical assurance and original native/historical outcomes remain visible;
+the delegation is not a production approval or an already completed trust review.
 Canonical USG/FIPS require authorized
 entitlement; never discover tokens in unrelated private state or invent access.
 Only an explicit owner-populated protected provider slot may supply enrollment.

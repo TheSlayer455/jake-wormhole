@@ -5,6 +5,7 @@ not the forthcoming hardened two-OS workflow. Unknown Terraform outcomes retain
 the journal and resources for inspection; there is no automatic takeover.
 """
 import argparse
+from datetime import datetime, timezone
 import fcntl
 import pwd
 import ipaddress
@@ -39,6 +40,27 @@ def process_identity(pid):
     except FileNotFoundError:
         return None
 
+
+def status(identifier):
+    """Read the existing durable record; process liveness never establishes progress."""
+    result=read_json(workspace_path(ROOT/'vm-runs'/run_id(identifier))/'result.json')
+    supervisor=result.get('supervisor')
+    alive=supervisor is not None and process_identity(supervisor['pid'])==supervisor
+    age=max(0,(datetime.now(timezone.utc)-datetime.fromisoformat(result['last_progress_at'].replace('Z','+00:00'))).total_seconds())
+    state=('running-with-recent-progress' if age<=60 else 'running-without-recent-progress') if alive else 'unknown-supervisor-stopped'
+    if result['outcome']!='running':state='terminal-'+result['outcome']
+    return {**{k:result[k] for k in ('run_id','source_revision','provisioner','phase','last_progress_at',
+            'launch_acknowledged_at','progress','controller_stage','checks','first_failure','outcome','cleanup') if k in result},
+            'execution_state':state,'supervisor_alive':alive,'progress_age_seconds':round(age,1)}
+
+
+def controller_checks(rows, *, assessment=False):
+    stages=['final-authentication','final-system-readiness','ansible-readiness','functional','inventory']
+    if assessment:stages.append('assessment-archive')
+    latest={r['stage']:r for r in rows if r.get('stage') in stages}
+    return {stage:('pass' if latest[stage].get('returncode')==0 else 'fail') if stage in latest else 'blocked'
+            for stage in stages}
+
 # Runs inside the existing nonroot, pinned helper; only outgoing guest SSH.
 # Secrets arrive through stdin and live in its private tmpfs, never argv/env/state.
 HELPER_CODE = r'''
@@ -52,20 +74,31 @@ opts=['-o','BatchMode=yes','-o','StrictHostKeyChecking=yes','-o','UserKnownHosts
 deadline=time.monotonic()+c['seconds']
 release='rhel' if c.get('distribution')=='rhel10' else 'ubuntu'
 version='10.0' if release=='rhel' else '22.04'
-check='test -f /var/lib/wormhole/installation-complete && test "$(id -un)" = lab.service && . /etc/os-release && test "$ID" = '+release+' && test "$VERSION_ID" = '+version+' && findmnt -n -o SOURCE / && sudo -n true'
-if release=='rhel':check+=' && test "$(getenforce)" = Enforcing'
+check='test "$(id -un)" = lab.service || exit 41; test -f /var/lib/wormhole/installation-complete || exit 42; . /etc/os-release; test "$ID" = '+release+' && test "$VERSION_ID" = '+version+' || exit 43; sudo -n true || exit 44; findmnt -n -o SOURCE /'
+if release=='rhel':check+='; test "$(getenforce)" = Enforcing || exit 45'
+if c.get('scenario')=='marker-inaccessible':
+ r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'sudo -n chmod 0700 /var/lib/wormhole'],capture_output=True,text=True,timeout=15)
+ print(json.dumps({'stage':'controlled-readiness-fault','returncode':r.returncode,'diagnostic_intervention':True}),flush=True)
+ if r.returncode:sys.exit(1)
 ready=False
+category='ssh-unavailable'
 while time.monotonic()<deadline:
  try:
   r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],check],capture_output=True,text=True,timeout=min(12,max(1,deadline-time.monotonic())))
   if r.returncode==0 and r.stdout.strip().startswith('/dev/'):
    ready=True;break
-  print(json.dumps({'stage':'final-authentication','returncode':r.returncode,'ready':False}),flush=True)
+  if r.returncode in {41,42,43,44,45}:
+   category={41:'final-identity-mismatch',42:'completion-marker-inaccessible',43:'installed-os-mismatch',44:'privilege-escalation-failed',45:'selinux-not-enforcing'}[r.returncode]
+   print(json.dumps({'stage':'final-authentication','returncode':0}),flush=True)
+   print(json.dumps({'stage':'final-system-readiness','returncode':r.returncode,'category':category}),flush=True)
+   break
+  print(json.dumps({'stage':'final-authentication','returncode':r.returncode or 1,'ready':False}),flush=True)
  except subprocess.TimeoutExpired:pass
  time.sleep(min(3,max(0,deadline-time.monotonic())))
 if not ready:
- print(json.dumps({'final_authentication':False,'ansible_ready':False,'catalog_started':False,'outcome':'readiness-failed'}));sys.exit(1)
+ print(json.dumps({'final_authentication':category!='ssh-unavailable','ansible_ready':False,'catalog_started':False,'outcome':'readiness-failed','category':category}));sys.exit(1)
 print(json.dumps({'stage':'final-authentication','returncode':0,'ready':True}),flush=True)
+print(json.dumps({'stage':'final-system-readiness','returncode':0}),flush=True)
 env=dict(os.environ,HOME='/tmp',ANSIBLE_HOME='/tmp/.ansible',ANSIBLE_HOST_KEY_CHECKING='True',ANSIBLE_LOCAL_TEMP='/tmp/ansible')
 common='-o StrictHostKeyChecking=yes -o UserKnownHostsFile='+str(known)+' -o IdentitiesOnly=yes'
 base=['/opt/wormhole/venv/bin/ansible','all','-i',c['address']+',','-u','lab.service','--private-key',str(key),
@@ -94,7 +127,9 @@ def create_qemu_directory(path, group):
 
 def preflight(source, *, distribution='ubuntu'):
     require(os.geteuid() == 0, 'runtime_owner_required')
-    require(all(shutil.which(x) for x in ('virsh', 'qemu-system-x86_64', 'xorriso', 'dnsmasq', 'xsltproc', 'script', 'ssh-keygen', 'docker')),
+    required=['virsh','qemu-system-x86_64','qemu-img','xorriso','dnsmasq','script','ssh-keygen','docker']
+    required.append('xsltproc')
+    require(all(shutil.which(x) for x in required),
             'missing_vm_tool')
     observation = collect_observations(CANONICAL_INFRASTRUCTURE_ROOT)
     require(observation['memory_available_bytes'] >= 13 * 1024**3, 'vm_memory_headroom')
@@ -122,10 +157,11 @@ def preflight(source, *, distribution='ubuntu'):
     return observation
 
 
-def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_store=None, sandbox=False, distribution='ubuntu'):
+def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, dependency_store=None, sandbox=False, distribution='ubuntu', scenario='healthy'):
     os.umask(0o077)
     revision, dirty = source_identity()
-    require(not dirty and sha256(terraform) == TF_SHA, 'unverified_execution_inputs')
+    require(not dirty and terraform is not None and sha256(terraform)==TF_SHA, 'unverified_execution_inputs')
+    require(scenario in {'healthy','marker-inaccessible'} and (scenario=='healthy' or (distribution=='rhel10' and ubuntu_mode is None)), 'invalid_vm_scenario')
     require(ubuntu_mode in {None, 'stock-audit', 'hardened'}, 'ubuntu_mode_invalid')
     require(not sandbox or ubuntu_mode=='hardened','sandbox_requires_hardened_ubuntu')
     require(distribution in {'ubuntu','rhel10'} and (distribution=='ubuntu' or (ubuntu_mode is None and not sandbox)), 'vm_distribution_invalid')
@@ -134,10 +170,12 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
     name = 'wormhole-vm-' + identifier.replace('-', '')[:12]
     run = workspace_path(ROOT / 'vm-runs' / identifier, create=True)
     result = {'schema_version': '1.0', 'capability': 'real-iso-installation-baseline', 'run_id': identifier,
-        'source_revision': revision, 'distribution':distribution, 'outcome': 'running', 'started_at': now(), 'stages': [],
+        'source_revision': revision, 'distribution':distribution, 'provisioner':'terraform','scenario':scenario,
+        'outcome': 'running', 'started_at': now(), 'stages': [],
         'phase': 'preflight', 'last_progress_at': now(), 'network_isolated':bool(ubuntu_mode or distribution=='rhel10'),
         'supervisor': process_identity(os.getpid()),
         'lab_iso_qualified': False, 'production_iso_eligible': False, 'cleanup': 'pending'}
+    if not ubuntu_mode:result['checks']={k:'pending' for k in controller_checks([],assessment=distribution=='rhel10')}
     atomic_json(run / 'result.json', result)
     deadline = time.monotonic() + 1800
     console = None
@@ -150,7 +188,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
     unknown = False
     def save():
         atomic_json(run / 'result.json', result)
-    def command(args, label, *, timeout=120, data=None, check=True):
+    def command(args, label, *, timeout=120, data=None, check=True, observe=None):
         remaining = deadline - time.monotonic()
         require(remaining > 0, 'vm_absolute_deadline')
         started = time.monotonic()
@@ -162,7 +200,15 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             result['active_command'] = process_identity(process.pid)
             save()
             try:
-                process.communicate(data, timeout=min(timeout, remaining))
+                end=time.monotonic()+min(timeout,remaining)
+                while True:
+                    try:
+                        process.communicate(data,timeout=max(.01,min(3,end-time.monotonic())))
+                        break
+                    except subprocess.TimeoutExpired:
+                        data=None
+                        if observe is not None:observe()
+                        if time.monotonic()>=end:raise
             except subprocess.TimeoutExpired:
                 os.killpg(process.pid, signal.SIGTERM)
                 try:process.wait(timeout=3)
@@ -180,6 +226,9 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
     def virsh(*args):
         return subprocess.check_output(['virsh', '-c', 'qemu:///system', *args], stderr=subprocess.DEVNULL, timeout=10).decode()
     with VMLease(CANONICAL_INFRASTRUCTURE_ROOT, identifier, revision) as lease:
+        result['launch_acknowledged_at']=now();save()
+        print(json.dumps({'event':'launch-acknowledged','run_id':identifier,'source_revision':revision,
+                          'provisioner':'terraform','at':result['launch_acknowledged_at']}),flush=True)
         try:
             preflight_start=time.monotonic();preflight_at=now()
             from .storage import Store, lifecycle, admission as storage_admission
@@ -312,6 +361,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             require(cds == {str(candidate), str(seed)}, 'attached_media_mismatch')
             require(sha256(candidate) == manifest['candidate_sha256'] and sha256(seed) == manifest['seed_sha256'], 'attached_media_changed')
             network_xml = ET.fromstring(virsh('net-dumpxml', name))
+            (run/'network.xml').write_text(ET.tostring(network_xml,encoding='unicode'))
             require(network_xml.find('forward') is None and network_xml.find('ip/dhcp') is None,
                     'unexpected_network_forwarding')
             if sandbox:
@@ -330,6 +380,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 'virsh -c qemu:///system console ' + name + ' --force', '/dev/null'],
                 stdin=subprocess.PIPE, stdout=console_log, stderr=subprocess.STDOUT, start_new_session=True)
             console_log.close()
+            result['console_process']=process_identity(console.pid);save()
             host_key = None
             installation_start = time.monotonic()
             observed_phases = []
@@ -337,6 +388,12 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 path = run / 'console.log'
                 require(path.stat().st_size <= 16 * 1024**2, 'installer_diagnostic_limit')
                 text = path.read_text(errors='replace')
+                packages=re.findall(r'Installing [^\r\n]+\((\d+)/(\d+)\)',text)
+                if packages:
+                    completed,total=map(int,packages[-1])
+                    progress={'stage':'package-installation','completed':completed,'expected':total}
+                    if result.get('progress')!=progress:
+                        result.update(progress=progress,last_progress_at=now());save()
                 if unlock is not None:
                     unlock.check_capture(path)
                     if unlock.observe(text,console.stdin):
@@ -396,6 +453,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                     console=subprocess.Popen(['script','--quiet','--return','--flush','--echo','never','--command',
                         'virsh -c qemu:///system console '+name+' --force','/dev/null'],stdin=subprocess.PIPE,
                         stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
+                result['console_process']=process_identity(console.pid);save()
                 cold_by=min(deadline-180,time.monotonic()+180)
                 ready=False
                 while time.monotonic()<cold_by:
@@ -428,7 +486,7 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             command(args, 'controller-create')
             unknown = False
             payload_data = {'address': ADDRESS, 'host_key': host_key, 'private_key': (run / 'ssh-key').read_text(),
-                            'distribution':distribution,
+                            'distribution':distribution,'scenario':scenario,
                             'seconds': max(1, min(900 if ubuntu_mode else 300, int(deadline-time.monotonic()-180)))}
             if ubuntu_mode:payload_data['become_password'] = password
             if sandbox:payload_data['inspection_secrets']=[(run/'unlock-secret').read_text().strip(),password,(run/'boot-password').read_text().strip()]
@@ -436,16 +494,41 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
                 payload_data['pkcs11_probe']={name:(run/'support-private'/name).read_text() for name in
                     ('token.crt','token.key','token-revoked.crt','token-revoked.key','active.crt','active.key')}
             payload = json.dumps(payload_data).encode()
-            command(['docker', 'start', '-ai', helper], 'ssh-ansible-inventory', timeout=max(1, deadline-time.monotonic()-180), data=payload)
+            controller_seen=set()
+            def observe_controller():
+                # Existing small stage records; archive bytes are not progress events.
+                with (run/'ssh-ansible-inventory.log').open() as log:
+                    for line in log:
+                        if len(line)>65536 or not line.startswith('{') or not line.endswith('\n'):continue
+                        try:item=json.loads(line)
+                        except ValueError:continue
+                        stage=item.get('stage')
+                        event=(stage,item.get('returncode'))
+                        if stage and event not in controller_seen:
+                            controller_seen.add(event)
+                            result.update(controller_stage=stage,last_progress_at=now());save()
+            controller_rc=command(['docker','start','-ai',helper],'ssh-ansible-inventory',
+                timeout=max(1,deadline-time.monotonic()-180),data=payload,check=False,observe=observe_controller)
             rows = [json.loads(line) for line in (run / 'ssh-ansible-inventory.log').read_text().splitlines() if line.startswith('{')]
             terminal = rows[-1] if rows else {}
+            if not ubuntu_mode:
+                result.update(checks=controller_checks(rows,assessment=distribution=='rhel10'),
+                    final_authentication=any(x.get('stage')=='final-authentication' and x.get('returncode')==0 for x in rows),
+                    ansible_ready=any(x.get('stage')=='ansible-readiness' and x.get('returncode')==0 for x in rows),
+                    catalog_started=any(x.get('stage') in {'functional','inventory','assessment-archive'} for x in rows))
+                if controller_rc:result['first_failure']=terminal.get('category','controller-failed')
+                save()
+            require(controller_rc==0,terminal.get('category','ssh-ansible-inventory_failed'))
             require(terminal.get('outcome') == ('assessment-evidence-collected' if ubuntu_mode else 'baseline-passed') and terminal.get('final_authentication') is True and
                     terminal.get('ansible_ready') is True and {x.get('stage') for x in rows if x.get('returncode') == 0} >=
                     {'final-authentication', 'ansible-readiness', 'functional', 'inventory'}, 'controller_results_incomplete')
             result.update(outcome='baseline-passed', installed=True, final_authentication=True, ansible_ready=True)
             if distribution=='rhel10':
                 from .rhel_assessment import collect
-                assessment=collect(run,result,rows)
+                try:assessment=collect(run,result,rows)
+                except Exception:
+                    result['checks']['assessment-archive']='fail'
+                    raise
                 result['assessment']={key:assessment[key] for key in ('capability','content_sha256','native_counts',
                     'coverage_complete','scanner_execution_completed','limitation')}
             if ubuntu_mode:
@@ -460,6 +543,8 @@ def execute(source, terraform, *, reuse_run=None, ubuntu_mode=None, dependency_s
             if getattr(error,'code',None)=='vm_command_unknown':unknown=True
             result.update(outcome='unknown' if unknown else 'failed', failure_phase=result['phase'],
                           error_category=getattr(error, 'code', type(error).__name__))
+            result.setdefault('first_failure',result['error_category'])
+            if 'checks' in result:result['checks']={k:'blocked' if v=='pending' else v for k,v in result['checks'].items()}
         finally:
             if console is not None:
                 try:os.killpg(console.pid, signal.SIGTERM)
@@ -538,14 +623,19 @@ def main():
     action=parser.add_mutually_exclusive_group(required=True)
     action.add_argument('--source')
     action.add_argument('--recover-run',help='Reconcile the exact stopped supervisor using its recorded ownership.')
-    parser.add_argument('--terraform', required=True)
+    action.add_argument('--status',help='Observe an existing run without allocating or altering resources.')
+    parser.add_argument('--terraform',help='Pinned Terraform executable; required for execution/recovery, not status.')
+    parser.add_argument('--scenario',choices=['healthy','marker-inaccessible'],default='healthy')
     parser.add_argument('--distribution', choices=['ubuntu','rhel10'], default='ubuntu')
     parser.add_argument('--reuse-run', help='Exact reconciled baseline run whose unchanged ISO bytes may be reused; a new seed and acceptance are required.')
     options = parser.parse_args()
+    if options.status:
+        print(json.dumps(status(options.status),indent=2));return 0
     if options.recover_run:
         from .ubuntu_recovery import recover
         value=recover(options.recover_run,options.terraform)
-    else:value = execute(options.source, options.terraform, reuse_run=options.reuse_run,distribution=options.distribution)
+    else:value = execute(options.source,options.terraform,reuse_run=options.reuse_run,distribution=options.distribution,
+                       scenario=options.scenario)
     print(json.dumps(value, indent=2))
     return 0 if value['outcome'] == 'baseline-passed' and value['cleanup'] != 'unreconciled' else 1
 

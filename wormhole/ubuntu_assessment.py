@@ -9,7 +9,7 @@ from .runs import RunError, SOURCE_ROOT
 
 X = '{http://checklists.nist.gov/xccdf/1.2}'
 NATIVE = {'pass', 'fail', 'error', 'unknown', 'notchecked', 'notapplicable', 'notselected', 'informational', 'fixed'}
-POLICY = SOURCE_ROOT / 'profiles/ubuntu-lab-policy-v1.json'
+POLICY = SOURCE_ROOT / 'profiles/ubuntu-lab-policy-v2.json'
 
 
 def digest(path):

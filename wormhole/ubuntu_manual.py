@@ -50,8 +50,9 @@ objective={
  'auditd_audispd_configure_sufficiently_large_partition':{'observed_satisfied':free>=max(8*1024**3,required),'available_bytes':free,'observed_audit_bytes':audit_bytes,'estimated_seven_days_with_double_margin':required,'assumption':'bounded disposable lab workload; observed-rate extrapolation is not a production retention guarantee'},
  'only_allow_dod_certs':{'observed_satisfied':False,'official_public_roots_present':bool(expected) and expected<=set(anchors),
     'system_trust_root_count':len(anchors),'authorizing_official_approval_supplied':False,
-    'reason':'Official public DoD roots establish presence, not AO approval of every installed trust anchor or possession of a government client credential'}
+    'accountable_lab_review_supplied':False,'review_authority':'owner-delegated Codex home-lab review',
+    'reason':'Delegated engineering review must reconcile every installed trust anchor with its source and lab purpose; public-root presence alone is insufficient. Government identity and physical-token assurance remain unverified limitations, not required lab inputs.'}
 }
-print(json.dumps({'schema_version':'1.0','facts':facts,'disposition':'pending-accountable-review',
+print(json.dumps({'schema_version':'1.0','facts':facts,'disposition':'pending-delegated-lab-review',
  'objective_results':objective,'native_notchecked_statuses_preserved':True,'exception_approved':False}))
 '''

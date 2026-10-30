@@ -3,7 +3,9 @@ import json
 import os
 from pathlib import Path
 import pwd
+import signal
 import subprocess
+import time
 import xml.etree.ElementTree as ET
 
 from . import vm_baseline as vm
@@ -13,12 +15,15 @@ from .vm_admission import VMLease, require
 from .vm_inputs import sha256, terraform_config
 
 
-def recover(identifier, terraform):
-    require(os.geteuid()==0 and sha256(terraform)==vm.TF_SHA,'runtime_owner_or_tool_mismatch')
+def recover(identifier, terraform=None):
+    require(os.geteuid()==0,'runtime_owner_required')
     identifier=run_id(identifier)
     run=workspace_path(vm.ROOT/'vm-runs'/identifier)
     result=read_json(run/'result.json')
     require(result['run_id']==identifier,'recovery_run_identity')
+    provisioner=result.get('provisioner','terraform')
+    require(provisioner=='terraform','recovery_provisioner_invalid')
+    require(terraform is not None and sha256(terraform)==vm.TF_SHA,'runtime_owner_or_tool_mismatch')
     supervisor=result.get('supervisor')
     require(supervisor is not None,'supervisor_identity_missing')
     require(vm.process_identity(supervisor['pid'])!=supervisor,'supervisor_still_running')
@@ -47,7 +52,8 @@ def recover(identifier, terraform):
         domains=set(virsh('list','--all','--name').split())
         networks=set(virsh('net-list','--all','--name').split())
         pools=set(virsh('pool-list','--all','--name').split())
-        if name in domains or name in networks or name in pools or (pool/(name+'.qcow2')).exists():
+        resources_present=name in domains or name in networks or name in pools or (pool/(name+'.qcow2')).exists()
+        if resources_present:
             qemu=pwd.getpwnam('libvirt-qemu')
             tfdir=run/'terraform'
             expected_config=terraform_config(name,pool,candidate,seed,vm.NETWORK,
@@ -83,6 +89,13 @@ def recover(identifier, terraform):
         for query in ('list','net-list','pool-list'):
             require(name not in virsh(query,'--all','--name').split(),'recovery_cleanup_incomplete')
         require(not (pool/(name+'.qcow2')).exists(),'recovery_disk_remains')
+        console=result.get('console_process')
+        if console and vm.process_identity(console['pid'])==console:
+            require(os.getpgid(console['pid'])==console['pid'],'console_process_group_mismatch')
+            os.killpg(console['pid'],signal.SIGTERM)
+            end=time.monotonic()+5
+            while vm.process_identity(console['pid'])==console and time.monotonic()<end:time.sleep(.1)
+            if vm.process_identity(console['pid'])==console:os.killpg(console['pid'],signal.SIGKILL)
         if isolated:
             from .ubuntu_sandbox import remove_filter
             remove_filter(run,name+'-isolation')
@@ -94,6 +107,8 @@ def recover(identifier, terraform):
         result['recovery']={'state':'stopped-and-cleaned','at':now(),'original_outcome':result['outcome']}
         if result['outcome']=='running':
             result.update(outcome='unknown',error_category='supervisor_interrupted_without_terminal_result')
+            result.setdefault('first_failure',result['error_category'])
+            if 'checks' in result:result['checks']={k:'blocked' if v=='pending' else v for k,v in result['checks'].items()}
         result['cleanup']='verified-absent-inputs-retained'
         result.setdefault('finished_at',now())
         atomic_json(run/'result.json',result)

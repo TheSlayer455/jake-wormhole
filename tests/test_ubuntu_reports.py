@@ -107,3 +107,23 @@ class Reports(unittest.TestCase):
                 unchanged,_=inputs.input_identity(root,'stock-audit')
             self.assertNotEqual(original,installed)
             self.assertEqual(original,unchanged)
+
+    def test_previous_policy_candidate_is_refused_before_media_construction(self):
+        import hashlib
+        from wormhole.runs import RunError
+        with tempfile.TemporaryDirectory() as value:
+            root=Path(value);(root/'bundle').mkdir();(root/'bundle/manifest.json').write_text('{}')
+            current,contract=inputs.input_identity(root,'stock-audit')
+            files=contract['files']
+            files.pop('profiles/ubuntu-lab-policy-v2.json')
+            files['profiles/ubuntu-lab-policy-v1.json']=inputs.sha256(POLICY.with_name('ubuntu-lab-policy-v1.json'))
+            old=hashlib.sha256(json.dumps(contract,sort_keys=True).encode()).hexdigest()
+            self.assertNotEqual(old,current)
+            with patch.object(inputs,'prepare'),patch.object(inputs,'build_ubuntu') as media:
+                with self.assertRaises(RunError) as refused:
+                    inputs.build(root/'stock.iso',root/'candidate.iso',root/'seed','synthetic','synthetic',
+                        '192.0.2.10/24','52:54:00:11:22:33',store=root,mode='stock-audit',password_hash='synthetic',
+                        reuse=(root/'old.iso',{'mode':'stock-audit','installed_input_fingerprint':old}))
+                self.assertEqual(refused.exception.code,'stale_candidate')
+                media.assert_not_called()
+            self.assertFalse((root/'candidate.iso').exists())

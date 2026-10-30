@@ -1,5 +1,45 @@
 # Current handoff
 
+## Current decision: retain Terraform, integrate observable execution
+
+Delivery: [PR 40](https://github.com/TheSlayer455/jake-wormhole/pull/40); use its
+final head/merge and CI records without relabeling the tested sources below.
+
+Start with the [Luna lifecycle handoff](solutions/lifecycle-comparison.md).
+The same-candidate native experiment at `7b59975` passed but did not justify a
+second implementation: 278.225 seconds total versus Terraform's 272.246; lifecycle
+commands saved 3.254 seconds. Same guest contract, 413 package versions and all
+948 rule outcomes match. These are single observations, not a benchmark claim.
+The native adapter remains in pinned history; normal execution stays Terraform.
+
+Tested retained code: `63a130a249111fc10c229a66922a51895b87e40e`. Launch acknowledgment
+follows durable admission; status distinguishes observed progress from liveness.
+The actual controlled readiness failure kept SSH passing, blocked all four
+dependents and never started Ansible/catalog. An actual supervisor interruption
+reported unknown, refused overlapping admission, then recovered exact-owned
+Terraform resources and its orphan console without changing unknown to success.
+Both runs cleaned up; journals reconcile, no domains remain, Docker/K3s are active.
+Full source suite: 957 pass/three explicit skips; parity 17/17 and implementation
+CI passed. Independent engineering-agent review found no blocking findings.
+
+Next integration: adapt the existing foreground execution/receipt, meaningful
+progress and separate final-system readiness checks on the **ansible control
+node**, then prove one guest and interruption recovery on the **rhel kvm host**.
+Keep actual hardening/scanners/release policy. Do not replace Terraform or infer
+the cause of missing work-run launch/status evidence from this home experiment.
+RHEL hardening, encryption and qualified publication are deliberately deferred.
+
+Current Ubuntu decisions are in [policy v2](../docs/UBUNTU-LAB-POLICY.md): no home
+physical-token hardware requirement, physical assurance unverified, trust-anchor
+review delegated to Codex and pending engineering. Legitimate Pro entitlement
+remains the owner input; actual USG/FIPS execution and required content evidence
+remain outstanding. No new Ubuntu qualification or historical reclassification.
+
+## Historical checkpoints
+
+The following source-bound results and dependency lists describe their original
+checkpoints. Current scope and owner responsibilities are stated above.
+
 RHEL delivery: [PR 39](https://github.com/TheSlayer455/jake-wormhole/pull/39);
 use its head/merge records for delivery attribution, not a new runtime claim.
 

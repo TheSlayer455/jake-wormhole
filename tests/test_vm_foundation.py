@@ -272,3 +272,35 @@ class VMJournal(unittest.TestCase):
         for change in ({'backend': 'docker'}, {'production_iso_eligible': True}, {'state': 'finished'}):
             with self.assertRaises(RunError):
                 v.validate_record({**value, **change})
+
+
+@unittest.skipUnless(os.name=='posix','Linux supervisor process observations')
+class VMExecution(unittest.TestCase):
+    def test_status_distinguishes_liveness_progress_and_lost_supervisor(self):
+        import subprocess,sys
+        from wormhole import vm_baseline as vm
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);identifier=str(uuid4());run=root/'vm-runs'/identifier;run.mkdir(parents=True,mode=0o700)
+            value={'run_id':identifier,'source_revision':'a'*40,'outcome':'running','phase':'installing',
+                   'cleanup':'pending','last_progress_at':'2020-01-01T00:00:00Z',
+                   'supervisor':vm.process_identity(os.getpid())}
+            atomic_json(run/'result.json',value)
+            with patch.object(vm,'ROOT',root):
+                self.assertEqual(vm.status(identifier)['execution_state'],'running-without-recent-progress')
+                child=subprocess.Popen([sys.executable,'-c','import time;time.sleep(10)'])
+                try:value['supervisor']=vm.process_identity(child.pid)
+                finally:child.terminate();child.wait(timeout=5)
+                atomic_json(run/'result.json',value)
+                observed=vm.status(identifier)
+                self.assertEqual(observed['execution_state'],'unknown-supervisor-stopped')
+                self.assertEqual(observed['outcome'],'running')
+                self.assertEqual(json.loads((run/'result.json').read_text()),value)
+
+    def test_real_authentication_cannot_hide_failed_readiness_or_missing_dependents(self):
+        from wormhole.vm_baseline import controller_checks,HELPER_CODE
+        compile(HELPER_CODE,'<existing-vm-helper>','exec')
+        rows=[{'stage':'final-authentication','returncode':0},
+              {'stage':'final-system-readiness','returncode':42}]
+        checks=controller_checks(rows,assessment=True)
+        self.assertEqual(checks,{'final-authentication':'pass','final-system-readiness':'fail',
+            'ansible-readiness':'blocked','functional':'blocked','inventory':'blocked','assessment-archive':'blocked'})

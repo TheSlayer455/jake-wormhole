@@ -15,7 +15,7 @@ from .ubuntu_assessment import POLICY, inventory, require
 def input_identity(store, mode, *, sandbox=False):
     # Execution/reporting changes deliberately do not alter installed bytes.
     paths = ['wormhole/vm_inputs.py', 'wormhole/ubuntu_inputs.py', 'ubuntu/guest/finalize.sh',
-             'ubuntu/guest/audit.sh', 'ubuntu/guest/observe.py', 'profiles/ubuntu-lab-policy-v1.json','wormhole/ubuntu_tailoring.py']
+             'ubuntu/guest/audit.sh', 'ubuntu/guest/observe.py', 'profiles/ubuntu-lab-policy-v2.json','wormhole/ubuntu_tailoring.py']
     if mode == 'hardened':
         paths += ['wormhole/ubuntu_hardening.py', 'ubuntu/remediation-plan-v1.json', 'ubuntu/guest/remediate.py']
     if sandbox:

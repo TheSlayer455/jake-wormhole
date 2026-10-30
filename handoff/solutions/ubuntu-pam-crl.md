@@ -1,5 +1,11 @@
 # Ubuntu PAM CRL crash and automation output
 
+[Prospective lab policy v2](../../docs/UBUNTU-LAB-POLICY.md) removes physical-token
+hardware from home acceptance and assigns trust-anchor review to Codex. The
+historical results below retain v1 attribution and unverified physical-assurance
+limits. Legitimate Pro input, actual USG/FIPS execution and required evidence
+remain outstanding; no prior result is retroactively qualified.
+
 Delivery and merge identity: [PR 37](https://github.com/TheSlayer455/jake-wormhole/pull/37).
 The runtime source is pinned below; later documentation does not relabel it.
 

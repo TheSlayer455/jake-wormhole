@@ -22,6 +22,7 @@ RHEL_AUDIT_CODE = r'''
 import base64,hashlib
 remaining=deadline-time.monotonic()
 if remaining<=35:raise RuntimeError('assessment_deadline')
+print(json.dumps({'stage':'assessment-started'}),flush=True)
 audit=r"""set -euo pipefail
 umask 077
 out=/var/lib/wormhole/assessment
