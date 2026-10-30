@@ -8,6 +8,38 @@ one guest from the actual **ansible control node** against the **rhel kvm host**
 keep the receiving pipeline's hardening, scanners, tests and release policy.
 This is an actionable home control case, not a diagnosis of an uninspected work run.
 
+## Apply the research to existing code
+
+Keep approved build behavior, Terraform and Ansible. Resolve the receiving team's
+actual source/media/engine/dependency contract before introducing a manifest;
+verify installed scanner support and licensed automation separately. Neither fact
+can be established from this public reference. GitLab/RKE2 integration here is
+illustrative, not evidence of execution in a private runner.
+
+Wormhole's container readiness already uses Ansible tree results; validation and
+inventory use structured callbacks with complete-result checks. The VM helper
+has three ad-hoc calls, not a substantial terminal-output parser to delete.
+Runner therefore remains an optional replacement experiment, not a new dependency
+or an additional layer around those callbacks. An actual trial must retain strict
+host trust, the frozen result grid and four outcomes: healthy, unreachable, failed
+requirement and cancelled. No Runner runtime result is claimed here.
+
+For a trial, inspect [Runner 2.4.3 configuration](https://github.com/ansible/ansible-runner/blob/2.4.3/src/ansible_runner/config/_base.py)
+and [execution](https://github.com/ansible/ansible-runner/blob/2.4.3/src/ansible_runner/runner.py),
+not only its high-level API: explicitly enable host-key checking, bound pexpect
+and job timeouts, retain command/environment artifacts privately, and verify
+remote state after cancellation. Runner process success cannot replace required
+event/result coverage or a qualification decision.
+
+Existing lost-controller admission/recovery and partial-publication tests remain
+useful evidence. There is no mutable current-release pointer to race today.
+Exact-revision queued builds and new component-to-test mapping are separate,
+unimplemented integration increments; source-drift refusal is not proof that a
+request for A builds A after main advances. Do not add a scheduler, pointer or
+plugin framework merely to create another test case.
+
+## Current implementation evidence
+
 The [prospective Ubuntu policy correction](UBUNTU-LAB-POLICY.md) removes the stale
 physical-hardware owner dependency and assigns lab trust review to Codex. Only
 legitimate Pro entitlement is currently identified as required owner input;
