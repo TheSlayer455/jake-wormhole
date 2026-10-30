@@ -105,6 +105,9 @@ Check the actual inbox filesystem with `findmnt -T /private/inbox`. The example
 paths to adapt privately. They are examples, not installed services. A timer does
 not start a second copy of its already-active service; the shared runtime lease
 also coordinates manual invocations and other backends.
+The example has no timeout for the whole sequential batch; every VM retains its
+existing absolute execution deadline. A short service-wide timeout must not kill
+a later valid request simply because an earlier request consumed its allowance.
 [systemd.path](https://www.freedesktop.org/software/systemd/man/latest/systemd.path.html)
 uses inotify and cannot reliably detect changes made by another machine on remote
 NFS. A local path event may shorten latency, but it must invoke the same scan.

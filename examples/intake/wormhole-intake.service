@@ -9,4 +9,6 @@ User=root
 UMask=0077
 WorkingDirectory=/opt/jake-wormhole
 ExecStart=/usr/bin/python3 -u -m wormhole intake scan /var/lib/jake-wormhole/incoming --submit --terraform /opt/wormhole-tools/terraform
-TimeoutStartSec=35min
+# Each request retains the controller's deadline. Do not cut a sequential
+# batch midway merely because multiple completed deliveries were discovered.
+TimeoutStartSec=infinity
