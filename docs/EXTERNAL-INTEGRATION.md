@@ -1,6 +1,11 @@
 # External integration: start here
 
-**Immediate Luna handoff: [keep Terraform and make execution observable](../handoff/solutions/lifecycle-comparison.md).**
+**Immediate Luna handoff: [completed-directory intake into existing acceptance](../handoff/solutions/directory-intake.md).**
+Validate team-delivered ISO bytes using their declared installation contract;
+the private build/Forge contract is needed for later source builds, not this
+intake path. Completion, immutable identity, required tests, scanner rights and
+release policy still need authoritative definitions in the receiving environment.
+Keep [Terraform and observable execution](../handoff/solutions/lifecycle-comparison.md).
 The same-candidate native experiment passed, but did not justify replacing the
 existing lifecycle. Adapt the acknowledged run identity, observed progress,
 separate final-account/readiness checks and exact stopped-run recovery. Verify
@@ -11,7 +16,7 @@ This is an actionable home control case, not a diagnosis of an uninspected work 
 ## Apply the research to existing code
 
 Keep approved build behavior, Terraform and Ansible. Resolve the receiving team's
-actual source/media/engine/dependency contract before introducing a manifest;
+actual source/media/engine/dependency contract before automating source builds;
 verify installed scanner support and licensed automation separately. Neither fact
 can be established from this public reference. GitLab/RKE2 integration here is
 illustrative, not evidence of execution in a private runner.

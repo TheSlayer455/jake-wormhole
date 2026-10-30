@@ -17,6 +17,14 @@ Container reference automation remains the fast regression layer. The authorized
 
 **Luna and external engineering agents: [start here](docs/EXTERNAL-INTEGRATION.md).** The short guide maps capabilities to source and tests, with explicit integration limits.
 
+Completed ISO delivery can enter the existing RHEL 10 BIOS acceptance path with
+`python -m wormhole intake register /private/inbox/release.ready.json`, then
+`python -m wormhole intake submit REQUEST_SHA256 --terraform /private/tools/terraform`. Periodic
+`python -m wormhole intake scan /private/inbox --submit --terraform /private/tools/terraform` uses
+the same dispatch. See the [installation contract, completion marker and runtime
+evidence](handoff/solutions/directory-intake.md). This path does not call the ISO
+builder or remaster delivered bytes; it remains an unqualified lab baseline.
+
 The measured [lifecycle comparison](handoff/solutions/lifecycle-comparison.md)
 keeps Terraform. Native libvirt passed the same RHEL candidate and checks, but
 saved only about three seconds of lifecycle commands while adding another
