@@ -6,6 +6,7 @@ import pwd
 import signal
 import subprocess
 import time
+from uuid import uuid4
 import xml.etree.ElementTree as ET
 
 from . import vm_baseline as vm
@@ -13,6 +14,19 @@ from .admission import CANONICAL_INFRASTRUCTURE_ROOT
 from .runs import atomic_json, read_json, run_id, workspace_path, now
 from .vm_admission import VMLease, require
 from .vm_inputs import sha256, terraform_config
+
+
+def native_reconcile(run, configuration):
+    """Keep each recovery's fresh observations separate from prior operation logs."""
+    from . import vm_native
+    attempt=Path(run)/('recovery-'+uuid4().hex)
+    attempt.mkdir(mode=0o700)
+    atomic_json(attempt/'native-config.json',configuration)
+    def command(args,label,*,timeout=20):
+        with (attempt/(label+'.log')).open('wb') as log:
+            subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=timeout)
+    vm_native.destroy(attempt,configuration,command)
+    return attempt.name
 
 
 def recover(identifier, terraform=None):
@@ -62,10 +76,7 @@ def recover(identifier, terraform=None):
                 filter_name=name+'-isolation' if isolated else None)
             require(sha256(run/'native-config.json')==result.get('native_configuration_sha256') and
                     read_json(run/'native-config.json')==expected_config,'recovery_configuration_changed')
-            def command(args,label,*,timeout=20):
-                with (run/('recovery-'+label+'.log')).open('ab') as log:
-                    subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=timeout)
-            vm_native.destroy(run,expected_config,command)
+            result['recovery_log_directory']=native_reconcile(run,expected_config)
         elif resources_present:
             qemu=pwd.getpwnam('libvirt-qemu')
             tfdir=run/'terraform'

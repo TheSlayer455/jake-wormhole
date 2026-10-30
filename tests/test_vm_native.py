@@ -1,8 +1,10 @@
 """Native XML and bounded command-boundary fixtures; not real VM acceptance."""
 from copy import deepcopy
+import os
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 from uuid import uuid4
 import xml.etree.ElementTree as ET
 
@@ -39,6 +41,20 @@ class NativeVM(unittest.TestCase):
         self.assertEqual(int(volume.findtext('capacity')), 32*1024**3)
         self.assertEqual(volume.findtext('target/permissions/mode'), '0600')
         self.assertEqual(volume.findtext('target/permissions/owner'), '107')
+
+    @unittest.skipUnless(os.name=='posix','Linux recovery owner context')
+    def test_recovery_reads_new_observations_and_preserves_previous_logs(self):
+        from wormhole.ubuntu_recovery import native_reconcile
+        with tempfile.TemporaryDirectory() as directory:
+            run=Path(directory);old=run/'native-inspect-domain-all.log';old.write_text('historical observation')
+            def observed_absent(args,**kwargs):
+                self.assertIn(args[3],{'list','net-list','pool-list'})
+                kwargs['stdout'].write(b'')
+            with patch('wormhole.ubuntu_recovery.subprocess.run',side_effect=observed_absent):
+                attempt=run/native_reconcile(run,self.config())
+            self.assertEqual((attempt/'native-inspect-domain-all.log').read_text(),'')
+            self.assertEqual(old.read_text(),'historical observation')
+            self.assertTrue((attempt/'native-verify-pool-list.log').is_file())
 
     def command(self, run, observed, active, mutations, fail=None):
         def execute(args, label, *, timeout):
