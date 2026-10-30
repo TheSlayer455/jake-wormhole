@@ -40,6 +40,12 @@ plugin framework merely to create another test case.
 
 ## Current implementation evidence
 
+The [Ubuntu helper correction](https://github.com/TheSlayer455/jake-wormhole/blob/e8fdaa62b831eef071daa6eedff3bd808a196e96/wormhole/ubuntu_runtime.py)
+and [generated-helper regression](https://github.com/TheSlayer455/jake-wormhole/blob/e8fdaa62b831eef071daa6eedff3bd808a196e96/tests/test_ubuntu_helper.py)
+restore password-required Ansible access after the readiness split. One fresh
+encrypted Ubuntu installation passed 40/40 functional checks with real assessment
+and cleanup; qualification remains pending. See [current evidence](STATE.md).
+
 The [prospective Ubuntu policy correction](UBUNTU-LAB-POLICY.md) removes the stale
 physical-hardware owner dependency and assigns lab trust review to Codex. Only
 legitimate Pro entitlement is currently identified as required owner input;

@@ -1,6 +1,15 @@
 # Minx work index
 
-Current increment: `codex/WORM-001-lifecycle-comparison`. The same-media native
+Current increment: `codex/WORM-001-ansible-execution`, [PR 41](https://github.com/TheSlayer455/jake-wormhole/pull/41).
+Fixed the confirmed Ubuntu helper regression from shared readiness changes;
+one fresh encrypted VM at `e8fdaa6` passed 40/40 functional checks, real native
+assessment and cleanup. Qualification remains pending; see [state](STATE.md).
+No Runner dependency was added: existing structured Ansible paths remain, with
+an optional bounded trial described in [integration guidance](EXTERNAL-INTEGRATION.md).
+Private build-contract discovery and scanner entitlement/support cannot be
+established by this public repository. No work-environment execution is claimed.
+
+Completed lifecycle increment: `codex/WORM-001-lifecycle-comparison`. The same-media native
 experiment passed; Terraform remains the smaller maintained solution. Real
 acknowledgment/progress, marker-readiness failure and supervisor interruption/
 exact-owned recovery are verified at `63a130a`. Deliver the [Luna integration
