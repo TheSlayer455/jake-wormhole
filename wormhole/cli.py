@@ -28,7 +28,10 @@ def parser():
     commands = root.add_subparsers(dest="command", required=True)
     commands.add_parser("doctor", help="Read local source/tool presence without provisioning or network calls.")
     storage = commands.add_parser('storage', help='Allocated storage status, read-only preview, or manifest-verified transient cleanup.')
-    storage.add_argument('operation', choices=('status','preview','clean'))
+    storage.add_argument('operation', choices=('status','preview','clean','archive-preview','archive-list',
+        'archive-export','archive-commit','archive-import','archive-failed','archive-sync','archive-verify','restore'))
+    storage.add_argument('digest',nargs='?')
+    storage.add_argument('--config',help='Private workstation archive configuration; never contains secret values.')
     from .intake import add_parser
     add_parser(commands)
     media_split=commands.add_parser('media-split',help='Stream an operator-supplied ISO into a private local artifact store; no qualification.')
@@ -102,8 +105,16 @@ def main(arguments=None):
         if options.command == "doctor":
             value, status = doctor(), 0
         elif options.command == 'storage':
-            from .storage import operate
-            value = operate(options.operation)
+            if options.operation in {'archive-sync','archive-verify','restore'}:
+                from .archive_client import run as archive_run
+                value=archive_run({'archive-sync':'sync','archive-verify':'verify','restore':'restore'}[options.operation],options.config,options.digest)
+            elif options.operation.startswith('archive-'):
+                from .storage_archive import operate
+                value=operate(options.operation,options.digest)
+                if value is None:return 0
+            else:
+                from .storage import operate
+                value = operate(options.operation)
             status = 1 if value.get('cache_budget_exceeded') or value.get('retention_budget_exceeded') or value.get('over_artifact_budget') else 0
         elif options.command == 'intake':
             from .intake import operate

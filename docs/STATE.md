@@ -1,5 +1,33 @@
 # Current engineering state
 
+## Encrypted workstation retention
+
+Implementation at `b881127` adds selective age archival and explicit restore using
+the existing storage cleanup/ownership contracts. A real 6 MiB SSH pull, stored
+decrypt/hash verification, source reclamation and exact-byte restore passed.
+The 2,136,473,600-byte historical Ubuntu ISO completed archive/reclaim in 76.997
+seconds and exact-byte restore in 64.319 seconds. Existing-ciphertext revalidation
+reclaimed the restored copy without reupload. Real unavailable transport,
+interrupted transfer/retry and corrupted-ciphertext refusal passed at `61f91d9`.
+A limited 30-minute/sign-in task is installed; `33f2ea0` removes redundant global
+catalog rescans per verified cleanup and passed another real 6 MiB round trip.
+Scheduled reconciliation completed all 194 objects: 18,033,375,417 plaintext bytes
+verified in encrypted workstation storage, zero pending/failed objects. A later
+scheduled pass returned success with zero transfers. The retained footprint fell
+from 74,568,384,512 to 68,149,280,768 allocated bytes (69.447 to 63.469 GiB;
+5.978 GiB net reduction, including the disposable probe). Candidate storage is
+21.976 GiB; filesystem availability is 152.298 GiB. No domains remain, both
+admission journals are finished, and Docker/K3s remain active. Main delivery is
+tracked in [PR 43](https://github.com/TheSlayer455/jake-wormhole/pull/43).
+Budgets and protected local evidence remain unchanged. See [storage](STORAGE.md).
+Full source verification ran 978 tests: 966 passed and 12 skipped. All twelve
+then passed in their applicable environments: nine root-only fixtures, two
+Windows-only cases and one actual qemu-img check. Ten archive tests add 210 lines:
+distinct ownership/alias/locking/restore boundaries and real age corruption,
+interruption, capacity and destination checks justify crossing the 200-line
+guideline. No new test framework. Independent code review verified the alias,
+historical ownership-pin and cleanup-scope fixes.
+
 ## Completed ISO intake
 
 [PR 42](https://github.com/TheSlayer455/jake-wormhole/pull/42) adds one manual/scan

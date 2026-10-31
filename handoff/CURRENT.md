@@ -1,6 +1,24 @@
 # Current handoff
 
-## Current priority: directory-delivered ISO acceptance
+## Current priority: two-OS runtime and assessment proof
+
+At `b881127`, selective archival reuses strict SSH, age and existing storage cleanup.
+A real 6 MiB probe and historical Ubuntu ISO archive/delete/restore passed; real
+interrupted transfer and corrupt-ciphertext rejection passed at `61f91d9`. The
+limited Windows schedule completed 194 objects after the reviewed `33f2ea0`
+cleanup optimization; its later no-op pass succeeded. Net allocated storage fell
+5.978 GiB, with no active domains and Docker/K3s active. [PR 43](https://github.com/TheSlayer455/jake-wormhole/pull/43)
+tracks delivery without relabeling old installation evidence. Use [storage commands and
+retention rules](../docs/STORAGE.md); restore missing candidate bytes before admission.
+Only fresh verified commits permit reclamation. Required assessment copies remain
+local, and this increment changes neither budgets nor qualification eligibility.
+
+The owner now requests fresh RHEL 10 and Ubuntu 22.04 end-to-end runs, observed
+SVD generation and actual Evaluate-STIG. Reuse current candidates and the existing
+controller. Inspect the authorized scanner package and its supported invocation
+before integration; OpenSCAP evidence cannot establish Evaluate-STIG execution.
+
+## Previous delivery: directory-delivered ISO acceptance
 
 Use the [directory intake handoff](solutions/directory-intake.md), delivered by
 [PR 42](https://github.com/TheSlayer455/jake-wormhole/pull/42). Runtime-tested

@@ -63,3 +63,87 @@ actual files and durable aliases again.
 Keep receipts and operational paths private. `tests/test_storage.py` exercises
 corruption, active refusal, links, sparse accounting, stale/pinned candidates and
 interrupted cleanup. These source fixtures do not establish ISO qualification.
+
+## Encrypted workstation archive
+
+Use `python3 -m wormhole storage archive-preview` as the established runtime owner
+to inspect eligible objects without transferring them. On the workstation, run
+the same checkout in Linux/WSL with age installed and the existing strict SSH route:
+
+```sh
+python3 -m wormhole storage archive-sync --config /home/operator/.config/wormhole/archive.json
+python3 -m wormhole storage archive-sync SHA256 --config /home/operator/.config/wormhole/archive.json
+python3 -m wormhole storage archive-verify --config /home/operator/.config/wormhole/archive.json
+python3 -m wormhole storage restore SHA256 --config /home/operator/.config/wormhole/archive.json
+```
+
+Replace `SHA256` with the complete object digest. Default sync processes pending
+objects and eligible local copies restored since archival. Existing ciphertext is
+reread rather than uploaded again; an explicit digest also requests revalidation.
+Verification also accepts a digest. Restore requires one digest and refuses an
+existing destination; it does not overwrite retained runtime files. Restore before
+admission when a candidate is needed: admission/alias resolution never downloads
+data while holding the shared lock. Candidate aliases can use any verified
+restored copy of their recorded bytes.
+
+The private workstation JSON has this shape (replace all example values):
+
+```json
+{
+  "archive_id": "00000000-0000-4000-8000-000000000001",
+  "root": "/mnt/c/PrivateArchive/Wormhole",
+  "identity": "/home/operator/.config/wormhole/archive.agekey",
+  "recipient": "age1REPLACE_WITH_PUBLIC_RECIPIENT",
+  "ssh": ["ssh", "-i", "/home/operator/.ssh/lab", "operator@lab-hypervisor.invalid"],
+  "command": "sudo -n env PYTHONPATH=/srv/wormhole python3 -m wormhole storage",
+  "reserve_bytes": 10737418240,
+  "timeout_seconds": 900
+}
+```
+
+Provision config and identity as owner-only Linux files (0600), outside the
+archive. Pre-enroll the SSH host identity; the client requires batch authentication
+and strict host-key checking. Provision the Windows archive ACL for the owning
+user and SYSTEM only. Its `owner.json` must contain `schema_version: "1.0"` and
+the matching `archive_id`; changed/missing ownership or symlink paths are refused.
+The runtime owner's private infrastructure `archive-config.json` contains
+`schema_version`, the same `archive_id`, and `keep_local_digests` for current inputs.
+Neither configuration contains private key material or other embedded secrets.
+
+Eligible terminal-run candidates and console/Terraform apply/cleanup logs may be
+reclaimed after verified archival. Native assessment XML/HTML copies are archived
+but retained locally. Source ISOs, current-input pins, keys, Terraform state,
+journals, unresolved runs and qualified artifacts stay outside reclamation.
+Existing key/seed expiry remains unchanged. The 100/40 GiB budgets are unchanged.
+
+The workstation pulls plaintext through SSH directly into age; only encrypted
+objects and nonsecret receipts are stored in its archive. It decrypts the stored
+ciphertext and checks the original size/hash before committing. That fresh commit
+alone authorizes existing ownership-safe cleanup under a new shared lock. Old
+receipts, queued work or an offline workstation never authorize deletion. Partial
+files are ineligible; corrupt verification refuses restore and reports failure.
+No Windows inbound listener is required. A separate 30-minute/sign-in Task Scheduler
+task is installed using a limited interactive account, IgnoreNew and no wake request.
+It runs the same `archive-sync` command, with a bounded pass; the runtime queues
+work while the PC is off and preserves local copies until a later verified pass.
+This encryption does not establish
+BitLocker protection or a private-key recovery/backup policy.
+
+Actual strict-SSH/NTFS proof at `b881127`: a 6 MiB probe and a 2,136,473,600-byte
+historical Ubuntu ISO were encrypted, read back, reclaimed locally, restored and
+verified byte-for-byte. The ISO archive/reclaim took 76.997 seconds; restore took
+64.319 seconds and restored mode 0640. Revalidating existing ciphertext and
+reclaiming the restored copy took 53.377 seconds, without another upload.
+At `61f91d9`, a real unavailable SSH endpoint, interrupted 256 MiB transfer,
+retained partial/retry and damaged disposable ciphertext exercised failure paths.
+None authorized unverified deletion. The scheduled pass exposed unnecessary
+whole-catalog preview/queue work per object; `33f2ea0` restricts fresh-commit
+cleanup to those verified objects using the same deletion engine. Its real
+6 MiB restore/reclaim passed. Bounded scheduled passes completed all 194 objects
+(18,033,375,417 original bytes; 18,037,815,785 encrypted bytes). A later scheduled
+pass completed with zero transfers. Managed allocated storage fell from 69.447
+to 63.469 GiB, a 5.978 GiB net reduction; the current inputs, protected journals,
+native assessments and unresolved evidence remain local. Candidate storage is
+21.976 GiB. This is archive retention and verified recovery, not an independently
+established backup/key-recovery policy. No new VM installation was needed to prove
+this storage-only increment.

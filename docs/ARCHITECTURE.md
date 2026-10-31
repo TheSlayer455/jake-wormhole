@@ -1,5 +1,12 @@
 # Architecture
 
+`storage_archive.py` extends existing storage receipts and cleanup with selective
+off-host retention. The WSL `archive_client.py` pulls over strict SSH, encrypts with
+age and verifies decrypted stored bytes before committing. Only that fresh commit
+can reclaim eligible sources. Explicit restore precedes admission; archived aliases
+do not trigger network access under the host lock. No inbound workstation service
+or new scheduler engine is introduced. See [storage](STORAGE.md).
+
 `intake.py` registers completed directory deliveries and invokes the existing
 foreground VM controller. A request binds media, supported installation contract,
 acceptance/content/policy identities and an explicit requalification generation.

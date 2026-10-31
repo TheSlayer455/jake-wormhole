@@ -118,9 +118,12 @@ class Cleanup(unittest.TestCase):
         file=self.root/'sparse';file.touch();file.chmod(0o600)
         with file.open('r+b') as stream:stream.truncate(2*s.GIB)
         os.link(file,self.root/'hardlink')
+        media=self.root.parent/'media';media.mkdir(mode=0o700)
+        source=media/'source.iso';source.write_bytes(b'owned source');source.chmod(0o600)
         status=self.store.status()
         self.assertLess(status['total_allocated_bytes'],s.GIB)
         self.assertEqual(sum(status['allocated_bytes'].values()),status['total_allocated_bytes'])
+        self.assertEqual(status['allocated_bytes']['source_media'],source.stat().st_blocks*512)
 
     def test_alias_cycle_and_changed_canonical_are_refused(self):
         first,candidate,_=self.fixture();second,duplicate,_=self.fixture()
