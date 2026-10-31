@@ -76,6 +76,11 @@ class ArchiveClient(unittest.TestCase):
 
     def test_owner_lock_offline_and_deadline_refuse_without_ack(self):
         client=a.Client(self.config)
+        config=a.read_json(self.config); original=dict(config)
+        config['reserve_bytes']=a.shutil.disk_usage(self.root).free+1;a.durable(self.config,config)
+        with self.assertRaises(a.ArchiveError) as capacity:self.call('sync')
+        self.assertEqual(capacity.exception.code,'archive_capacity');self.assertFalse((self.base/'commit').exists())
+        a.durable(self.config,original)
         with a.lock(self.root/'archive.lock'):
             with self.assertRaises(a.ArchiveError): self.call('sync')
         (self.base/'offline').touch()

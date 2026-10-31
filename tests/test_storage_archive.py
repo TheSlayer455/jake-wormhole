@@ -56,6 +56,10 @@ class Archive(unittest.TestCase):
 
     def test_pending_offline_and_wrong_destination_cannot_authorize_cleanup(self):
         _,path,digest=self.queued()
+        _,different,_=self.fixture.fixture(content=b'different bytes with the same candidate filename')
+        with self.store.locked():a.queue(self.store,[])
+        self.assertNotEqual(digest,sha256(different))
+        self.assertEqual(len(list(a.directory(self.store).glob('*.json'))),2)
         with self.store.locked():self.store.clean_held()
         self.assertTrue(path.exists());self.assertEqual(a.status(self.store)['verified_archived_bytes'],0)
         with self.assertRaises(RunError):a.commit(self.store,digest,{**self.receipt(digest),'archive_id':str(uuid4())})
