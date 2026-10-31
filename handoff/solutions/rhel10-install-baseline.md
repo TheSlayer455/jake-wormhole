@@ -1,5 +1,32 @@
 # RHEL 10.0 ISO baseline and final readiness
 
+## Installed SVD follow-up
+
+At `77e6e1611d478fcc1a713d40e66907a80c3207c5`, a fresh installation of the
+unchanged candidate passed all six controller checks and cleanup in 308.123
+seconds. `installed-svd.json` and `installed-svd.txt` retain all 413 RPM rows,
+their complete versions/architectures and the observed running kernel. Readback
+matched every original Ansible inventory row. RPM virtual key headers are a
+separate field (zero observed in this run), with parallel installed versions
+preserved. The existing Ansible command produces structured host JSON through
+`--tree`; there is no second package query or terminal-text parser.
+
+Implementation: [native receipt and SVD rendering](https://github.com/TheSlayer455/jake-wormhole/blob/77e6e1611d478fcc1a713d40e66907a80c3207c5/wormhole/rhel_assessment.py),
+[existing controller](https://github.com/TheSlayer455/jake-wormhole/blob/77e6e1611d478fcc1a713d40e66907a80c3207c5/wormhole/vm_baseline.py),
+and [two focused regressions](https://github.com/TheSlayer455/jake-wormhole/blob/77e6e1611d478fcc1a713d40e66907a80c3207c5/tests/test_vm_foundation.py).
+Use the existing invocation below; missing/failed/empty/duplicate inventory
+cannot produce a successful SVD. Native OpenSCAP still records 172 pass, 261 fail,
+56 not applicable, nine not checked and 450 not selected. This is a completed
+baseline run, not hardening qualification or Evaluate-STIG execution.
+
+For Luna: retain the receiving controller's structured result and source/run/
+candidate binding, render complete native versions once, and fail when required
+inventory is absent. Verify from the real **ansible control node** against the
+**rhel kvm host** guest path. Keep the existing ownership/recovery mechanism and
+private raw evidence. Home execution does not prove work compatibility.
+
+## Original baseline
+
 The owner activated RHEL 10.0 after supplying official x86_64 DVD media. This is
 a separate home baseline; Ubuntu's verified hardening and unresolved qualification
 dependencies remain unchanged. The corrected fresh retry completed real

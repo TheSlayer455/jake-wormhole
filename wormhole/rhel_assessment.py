@@ -39,12 +39,13 @@ timeout --signal=TERM --kill-after=5 @SECONDS@ oscap xccdf eval \
 status=$?
 set -e
 python3 - "$status" <<'PY'
-import hashlib,json,pathlib,socket,sys
+import hashlib,json,pathlib,socket,sys,platform
 p=pathlib.Path('/var/lib/wormhole/assessment')
 receipt={'run_id':pathlib.Path('/var/lib/wormhole/run-id').read_text().strip(),
  'content_sha256':hashlib.sha256((p/'datastream.xml').read_bytes()).hexdigest(),
  'profile_id':'@PROFILE@','target':socket.gethostname(),
  'boot_id':pathlib.Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
+ 'kernel':platform.release(),
  'scanner_exit':int(sys.argv[1])}
 (p/'receipt.json').write_text(json.dumps(receipt)+'\n')
 PY
@@ -128,8 +129,48 @@ def collect(run, result, rows):
             (out / 'scanner-version.txt').stat().st_size > 0, 'assessment_native_files_inconsistent')
     summary.update(run_id=result['run_id'], boot_id=receipt['boot_id'],
                    native_hashes={name: hashlib.sha256((out / name).read_bytes()).hexdigest() for name in sorted(FILES)})
+    write_svd(run, result, rows, receipt)
     atomic_json(Path(run) / 'assessment.json', summary)
     (Path(run) / 'assessment.txt').write_text('RHEL 10 DVD vendor-STIG baseline (draft 0.1.76)\n'
         + '\n'.join(f'{key}: {value}' for key, value in sorted(summary['native_counts'].items()))
         + '\nAll 948 rules accounted for. Lab and production qualification: false.\n' + summary['limitation'] + '\n')
     return summary
+
+
+def write_svd(run, result, rows, receipt):
+    """Render the actual Ansible RPM result; never scrape its decorated stdout."""
+    records=[r for r in rows if r.get('stage')=='inventory']
+    require(len(records)==1 and records[0].get('returncode')==0,'svd_inventory_missing')
+    response=records[0].get('response',{})
+    require(response.get('rc')==0 and not response.get('failed') and not response.get('unreachable'),
+            'svd_inventory_failed')
+    lines=response.get('stdout_lines')
+    require(type(lines) is list and 0<len(lines)<=10000,'svd_inventory_incomplete')
+    packages=[];keys=[];seen=set()
+    for line in lines:
+        require(type(line) is str and len(line)<=4096,'svd_rpm_row_invalid')
+        fields=line.split('|')
+        require(len(fields)==5 and all(fields) and fields[1].isdigit(),'svd_rpm_row_invalid')
+        identity=tuple(fields)
+        require(identity not in seen,'svd_rpm_duplicate');seen.add(identity)
+        row=dict(zip(('name','epoch','version','release','architecture'),fields))
+        if row['name']=='gpg-pubkey':
+            row['architecture']=None if row['architecture']=='(none)' else row['architecture'];keys.append(row)
+        else:packages.append(row)
+    require(bool(packages) and type(receipt.get('kernel')) is str and bool(receipt['kernel']),
+            'svd_inventory_incomplete')
+    value={'schema_version':'1.0','kind':'observed-installed-software','run_id':result['run_id'],
+        'source_revision':result['source_revision'],'candidate_sha256':result['build']['candidate_sha256'],
+        'boot_id':receipt['boot_id'],'kernel':receipt['kernel'],'package_manager':'rpm',
+        'packages':sorted(packages,key=lambda p:tuple(p.values())),
+        'rpm_key_headers':sorted(keys,key=lambda p:(p['version'],p['release'])),
+        'inventory_complete':True,'collector':'ansible-command-rpm-query',
+        'production_iso_eligible':False}
+    atomic_json(Path(run)/'installed-svd.json',value)
+    text=['Observed installed RHEL software','Candidate: '+value['candidate_sha256'],
+          'Kernel: '+value['kernel'],'RPM packages (name epoch version release architecture):']
+    text += [' '.join(p.values()) for p in value['packages']]
+    text += ['','RPM virtual key headers (not application packages):']
+    text += [' '.join(str(v) for v in p.values()) for p in value['rpm_key_headers']]
+    (Path(run)/'installed-svd.txt').write_text('\n'.join(text)+'\n')
+    return value

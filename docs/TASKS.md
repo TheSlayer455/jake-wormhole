@@ -1,12 +1,19 @@
 # Minx work index
 
-Active increment: `codex/WORM-001-archive-tier`. Extend existing storage receipts,
+Active increment: `codex/WORM-001-two-os-svd`, [PR 44](https://github.com/TheSlayer455/jake-wormhole/pull/44).
+At `77e6e16`, real RHEL 10 and encrypted Ubuntu 22.04 runs passed their functional
+contracts, SVD readback, actual OpenSCAP coverage and cleanup. RHEL's existing
+structured inventory now produces readable/JSON SVDs. Evaluate-STIG remains
+unexecuted pending an authorized package and supported invocation documentation.
+See [current results](STATE.md); no qualification or scanner substitution claimed.
+
+Completed increment: `codex/WORM-001-archive-tier`. Existing storage receipts,
 cleanup and CLI now support encrypted workstation retention, explicit restore and
 offline preservation. Real 6 MiB and historical Ubuntu ISO archive/delete/restore,
 interruption/retry and corruption rejection passed. Scheduled reconciliation
 completed 194 objects, then repeated without duplicate transfers; the measured
 net allocated reduction is 5.978 GiB. [PR 43](https://github.com/TheSlayer455/jake-wormhole/pull/43)
-tracks main delivery. See [storage](STORAGE.md).
+merged at `6a78d39` with passing post-merge CI/readback. See [storage](STORAGE.md).
 No installer changes or new VM acceptance are required for storage-only changes.
 
 Current increment: `codex/WORM-001-directory-intake`, [PR 42](https://github.com/TheSlayer455/jake-wormhole/pull/42).

@@ -86,6 +86,12 @@ admission when a candidate is needed: admission/alias resolution never downloads
 data while holding the shared lock. Candidate aliases can use any verified
 restored copy of their recorded bytes.
 
+Historical comparisons also need their original identity evidence. Restore the
+archived console digest before comparing a run whose console was reclaimed;
+otherwise independence remains unproven. A real restored Ubuntu console enabled
+the original comparison to verify distinct seed/boot/host identities and matching
+packages/findings. Keep the derived comparison private with its original run records.
+
 The private workstation JSON has this shape (replace all example values):
 
 ```json

@@ -183,6 +183,39 @@ class RHELAssessment(unittest.TestCase):
                 self.assertFalse((Path(directory)/'escaped').exists())
 
 
+class RHELSVD(unittest.TestCase):
+    def fixture(self):
+        result={'run_id':str(uuid4()),'source_revision':'b'*40,'build':{'candidate_sha256':'a'*64}}
+        receipt={'boot_id':str(uuid4()),'kernel':'6.12.0-lab'}
+        rows=[{'stage':'inventory','returncode':0,'output':'decorated text is not parsed',
+               'response':{'rc':0,'stdout_lines':['kernel|0|6.12.0|1.el10|x86_64',
+                   'kernel|0|6.12.0|2.el10|x86_64','example|2|1.0|3.el10|noarch',
+                   'gpg-pubkey|0|abcdef|1234|(none)']}}]
+        return result,receipt,rows
+
+    def test_native_versions_parallel_kernels_and_key_headers_render_from_one_capture(self):
+        result,receipt,rows=self.fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory);value=ra.write_svd(path,result,rows,receipt)
+            self.assertEqual(len(value['packages']),3)
+            self.assertEqual(value['packages'][0]['epoch'],'2')
+            self.assertIsNone(value['rpm_key_headers'][0]['architecture'])
+            self.assertEqual(json.loads((path/'installed-svd.json').read_text()),value)
+            self.assertIn('example 2 1.0 3.el10 noarch',(path/'installed-svd.txt').read_text())
+            self.assertEqual(value['candidate_sha256'],result['build']['candidate_sha256'])
+
+    def test_failed_empty_or_duplicate_inventory_never_writes_a_passing_svd(self):
+        for fault in ('failed','empty','duplicate','missing'):
+            result,receipt,rows=self.fixture()
+            if fault=='failed':rows[0]['response']['rc']=1
+            elif fault=='empty':rows[0]['response']['stdout_lines']=[]
+            elif fault=='duplicate':rows[0]['response']['stdout_lines']*=2
+            else:rows[0].pop('response')
+            with tempfile.TemporaryDirectory() as directory:
+                with self.assertRaises(RunError):ra.write_svd(Path(directory),result,rows,receipt)
+                self.assertFalse((Path(directory)/'installed-svd.json').exists())
+
+
 @unittest.skipUnless(os.name == 'posix', 'Linux private storage/flock fixtures')
 class SharedAdmission(unittest.TestCase):
     def setUp(self):

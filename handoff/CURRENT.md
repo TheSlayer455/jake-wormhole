@@ -2,6 +2,15 @@
 
 ## Current priority: two-OS runtime and assessment proof
 
+Fresh execution is verified at `77e6e16`: RHEL 10 passed six controller checks
+with a 413-package SVD in 308.123 seconds; encrypted Ubuntu 22.04 passed 40/40
+checks with 638 packages, three Snaps and two payloads in 649.973 seconds.
+Both used existing ISO bytes, real SSH/Ansible/native OpenSCAP and verified cleanup.
+See [counts and qualification boundaries](../docs/STATE.md) and [PR 44](https://github.com/TheSlayer455/jake-wormhole/pull/44).
+Evaluate-STIG needs an authorized release package and its documentation before
+supported invocation can be implemented and executed. Ubuntu Pro is a separate
+owner input; benchmark reconciliation and delegated trust review remain engineering.
+
 At `b881127`, selective archival reuses strict SSH, age and existing storage cleanup.
 A real 6 MiB probe and historical Ubuntu ISO archive/delete/restore passed; real
 interrupted transfer and corrupt-ciphertext rejection passed at `61f91d9`. The
@@ -13,10 +22,9 @@ retention rules](../docs/STORAGE.md); restore missing candidate bytes before adm
 Only fresh verified commits permit reclamation. Required assessment copies remain
 local, and this increment changes neither budgets nor qualification eligibility.
 
-The owner now requests fresh RHEL 10 and Ubuntu 22.04 end-to-end runs, observed
-SVD generation and actual Evaluate-STIG. Reuse current candidates and the existing
-controller. Inspect the authorized scanner package and its supported invocation
-before integration; OpenSCAP evidence cannot establish Evaluate-STIG execution.
+Storage is delivered on main at `6a78d39`, with passing post-merge CI/readback.
+Historical identity comparisons may require restoring the archived console first;
+that exact recovery was exercised successfully for the new Ubuntu comparison.
 
 ## Previous delivery: directory-delivered ISO acceptance
 
