@@ -490,13 +490,18 @@ class Store:
         """Caller already holds the SAME admission lock; never a nested flock."""
         self.check_lock(lease)
         references=self.observe(lease=lease)
-        plan=self.preview(references,current=current)
+        before=self.status()
         from .storage_archive import cleanup_actions, queue
         if archive_verified:
-            archival=cleanup_actions(self,references,archive_verified)
-            paths={a['path'] for a in archival}
-            plan['actions']=[a for a in plan['actions'] if a['path'] not in paths]+archival
-        before=self.status()
+            # Fresh remote verification scopes this cleanup to those objects.
+            # Do not rehash/requeue the complete historical catalog for every
+            # small receipt. Ownership, unlink and operation receipts stay here.
+            actions=cleanup_actions(self,references,archive_verified)
+            reserved=before['allocated_bytes']['candidates']-sum(a['signature'][3] for a in actions
+                if a['archive_kind']=='candidate')
+            plan={'actions':actions,'blocked':[],'unique_candidate_allocated_bytes':None,
+                  'candidate_budget_allocated_bytes':reserved,'cache_budget_exceeded':reserved>CANDIDATE_BUDGET}
+        else:plan=self.preview(references,current=current)
         # Durable intent before unlink; interruption preserves source proofs and aliases.
         operations=self.infrastructure/'storage-operations'
         workspace_path(operations,create=True)
@@ -532,7 +537,8 @@ class Store:
         atomic_json(operation,receipt)
         atomic_json(self.infrastructure/'storage-hashes.json',{
             p:v for p,v in self.hashes.items() if Path(p).name=='candidate.iso' and Path(p).exists()})
-        receipt['archive_queue']=queue(self,self.observe(lease=lease),current=current)
+        if not archive_verified:
+            receipt['archive_queue']=queue(self,self.observe(lease=lease),current=current)
         atomic_json(operation,receipt)
         return receipt
 
