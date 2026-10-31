@@ -7,6 +7,8 @@ with a 413-package SVD in 308.123 seconds; encrypted Ubuntu 22.04 passed 40/40
 checks with 638 packages, three Snaps and two payloads in 649.973 seconds.
 Both used existing ISO bytes, real SSH/Ansible/native OpenSCAP and verified cleanup.
 See [counts and qualification boundaries](../docs/STATE.md) and [PR 44](https://github.com/TheSlayer455/jake-wormhole/pull/44).
+Delivery merged at `1a8d412`; post-merge CI and original SVD replay/readback passed.
+Fresh installation evidence stays attributed to `77e6e16`.
 Evaluate-STIG needs an authorized release package and its documentation before
 supported invocation can be implemented and executed. Ubuntu Pro is a separate
 owner input; benchmark reconciliation and delegated trust review remain engineering.
@@ -25,6 +27,11 @@ local, and this increment changes neither budgets nor qualification eligibility.
 Storage is delivered on main at `6a78d39`, with passing post-merge CI/readback.
 Historical identity comparisons may require restoring the archived console first;
 that exact recovery was exercised successfully for the new Ubuntu comparison.
+The SVD/manifest selection follow-up at `f2a3d5c` completed 298 real encrypted
+objects with zero pending/failed and additional readback of all six fresh SVD/
+manifest files. Local originals remain intact. [PR 45](https://github.com/TheSlayer455/jake-wormhole/pull/45)
+adds only eight production lines/removes three; full CI and independent review
+passed. See storage for measured timing and current resource state.
 
 ## Previous delivery: directory-delivered ISO acceptance
 
@@ -54,10 +61,12 @@ scanner or RHEL execution change. Source verification: 958 pass/three explicit
 skips; independent engineering-agent review found no blocking code findings.
 See [current evidence and storage headroom](../docs/STATE.md).
 
-Qualification remains pending: selected native results are 210 pass/one fail/
+At that checkpoint, qualification remained pending: selected native results were 210 pass/one fail/
 14 not applicable/five manual, plus 409 upstream not selected. Pro entitlement
 is the owner input; actual USG/FIPS execution, benchmark reconciliation, delegated
-trust review and a second matching v2 installation remain engineering work.
+trust review and a second matching v2 installation remained engineering work.
+The fresh run above now supplies that second matching installation; it does not
+resolve the entitlement, assessment-content or trust-review requirements.
 The earlier v1 pair retains its attribution. No qualified release is claimed.
 Use [the integration entry point](../docs/EXTERNAL-INTEGRATION.md) to adapt the
 proven lifecycle. Runner is an optional, unexecuted trial; do not add it around

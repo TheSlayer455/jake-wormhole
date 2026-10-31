@@ -59,7 +59,8 @@ class Archive(unittest.TestCase):
         _,different,_=self.fixture.fixture(content=b'different bytes with the same candidate filename')
         with self.store.locked():a.queue(self.store,[])
         self.assertNotEqual(digest,sha256(different))
-        self.assertEqual(len(list(a.directory(self.store).glob('*.json'))),2)
+        self.assertEqual(sum(any(s['kind']=='candidate' for s in read_json(p)['sources'])
+            for p in a.directory(self.store).glob('*.json')),2)
         with self.store.locked():self.store.clean_held()
         self.assertTrue(path.exists());self.assertEqual(a.status(self.store)['verified_archived_bytes'],0)
         with self.assertRaises(RunError):a.commit(self.store,digest,{**self.receipt(digest),'archive_id':str(uuid4())})
@@ -89,6 +90,18 @@ class Archive(unittest.TestCase):
         self.assertEqual(path.read_bytes(),b'changed source')
         value=a.record(self.store,digest);atomic_json(a.directory(self.store)/(digest+'.json'),{**value,'state':'failed'})
         with self.assertRaises(RunError):a.cleanup_actions(self.store,[],{digest})
+
+    def test_svd_and_manifest_archive_keeps_required_local_evidence(self):
+        run,_,_=self.queued()
+        svd=run/'installed-svd.json';atomic_json(svd,{'native_inventory':'fixture'})
+        with self.store.locked():a.queue(self.store,[])
+        for path in (svd,run/'inputs/build-manifest.json'):
+            digest=sha256(path);value=a.record(self.store,digest)
+            self.assertTrue(all(s['kind']=='evidence' and not s['reclaim'] for s in value['sources']))
+            with patch.object(self.store,'clean_held',side_effect=AssertionError('retained-only evidence needs no cleanup')):
+                result=a.commit(self.store,digest,self.receipt(digest))
+            self.assertEqual(result['cleanup']['unlinked_allocated_bytes'],0)
+            self.assertEqual(sha256(path),digest)
 
     def test_truncated_or_corrupt_restore_never_exposes_partial_plaintext(self):
         _,path,digest=self.queued();original=path.read_bytes()

@@ -20,6 +20,8 @@ from .vm_inputs import sha256
 SHA = re.compile(r'[a-f0-9]{64}')
 DIAGNOSTICS = ('console.log', 'terraform-apply.log', 'terraform-cleanup.log')
 ASSESSMENTS = ('assessment/arf.xml', 'assessment/xccdf.xml', 'assessment/report.html')
+EVIDENCE = ('inputs/build-manifest.json', 'installed-svd.json', 'installed-svd.txt',
+            'build-svd/svd.json', 'build-svd/svd.txt')
 
 
 def directory(store):
@@ -79,7 +81,7 @@ def source_path(store, source):
     if kind == 'probe':
         require(name == 'artifact.bin')
         return store.root/'archive-probes'/identifier/name
-    require(kind in {'diagnostic', 'assessment'} and name in DIAGNOSTICS+ASSESSMENTS)
+    require(kind in {'diagnostic', 'assessment', 'evidence'} and name in DIAGNOSTICS+ASSESSMENTS+EVIDENCE)
     return store.runs/identifier/name
 
 
@@ -124,9 +126,9 @@ def preview(store, references, *, current=None):
             if candidate.exists():
                 require(store.digest(candidate) == manifest['candidate_sha256'])
                 add(candidate, run.name, 'candidate', candidate.name, True)
-            for name in DIAGNOSTICS+ASSESSMENTS:
+            for name in DIAGNOSTICS+ASSESSMENTS+EVIDENCE:
                 path = run/name
-                if path.is_file():add(path, run.name, 'assessment' if name in ASSESSMENTS else 'diagnostic',
+                if path.is_file():add(path, run.name, 'evidence' if name in EVIDENCE else 'assessment' if name in ASSESSMENTS else 'diagnostic',
                                       name, name in DIAGNOSTICS)
         except (RunError, OSError, ValueError, KeyError) as error:
             blocked.append({'run_id': run.name, 'reason': getattr(error,'code',type(error).__name__)})
@@ -243,6 +245,9 @@ def commit(store,digest,payload):
             if source_path(store,source).exists():prove_source(store,value,source,references)
         value.update(state='committed',receipt=payload,verified_at=now())
         atomic_json(directory(store)/(digest+'.json'),value)
+        if not any(source['reclaim'] for source in value['sources']):
+            return {'sha256':digest,'state':'committed','cleanup':{'state':'retained-local',
+                'actions':0,'unlinked_allocated_bytes':0,'retention_budget_exceeded':None}}
         # Ordinary post-run clean never authorizes archival deletion from an old
         # receipt. Only this fresh destination readback enables these actions.
         cleanup=store.clean_held(archive_verified={digest})

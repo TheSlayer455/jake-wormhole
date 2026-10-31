@@ -117,8 +117,9 @@ The runtime owner's private infrastructure `archive-config.json` contains
 Neither configuration contains private key material or other embedded secrets.
 
 Eligible terminal-run candidates and console/Terraform apply/cleanup logs may be
-reclaimed after verified archival. Native assessment XML/HTML copies are archived
-but retained locally. Source ISOs, current-input pins, keys, Terraform state,
+reclaimed after verified archival. Native assessment XML/HTML, installed/build
+SVD JSON/text and the input build-manifest are archived but retained locally.
+Mutable run-status records are excluded. Source ISOs, current-input pins, keys, Terraform state,
 journals, unresolved runs and qualified artifacts stay outside reclamation.
 Existing key/seed expiry remains unchanged. The 100/40 GiB budgets are unchanged.
 
@@ -128,6 +129,8 @@ ciphertext and checks the original size/hash before committing. That fresh commi
 alone authorizes existing ownership-safe cleanup under a new shared lock. Old
 receipts, queued work or an offline workstation never authorize deletion. Partial
 files are ineligible; corrupt verification refuses restore and reports failure.
+Retained-only objects still verify ownership, source and destination bytes and
+persist their receipt; they skip the unnecessary deletion/accounting scan.
 No Windows inbound listener is required. A separate 30-minute/sign-in Task Scheduler
 task is installed using a limited interactive account, IgnoreNew and no wake request.
 It runs the same `archive-sync` command, with a bounded pass; the runtime queues
@@ -153,3 +156,13 @@ native assessments and unresolved evidence remain local. Candidate storage is
 21.976 GiB. This is archive retention and verified recovery, not an independently
 established backup/key-recovery policy. No new VM installation was needed to prove
 this storage-only increment.
+
+The retained-SVD follow-up at `f2a3d5c` completed 298 total objects with no pending
+or failed receipt (18,117,038,420 original bytes). Six further encrypted readbacks
+covered both fresh OS installed SVDs and build manifests; their local originals
+are retained unchanged. Skipping deletion scans for retained-only commits reduced
+median completion spacing from 10.912 seconds (10 intervals) to 3.153 seconds
+(79 intervals) in this one small-object backlog. This measures commit overhead,
+not large-ISO network speed. The 92 newly selected objects reclaimed no local bytes.
+After the fresh OS evidence, managed storage is 63.654 GiB and available space
+152.113 GiB; no domains remain and unrelated Docker/K3s services remain active.
