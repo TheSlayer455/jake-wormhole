@@ -18,7 +18,7 @@ from .storage import Store, admission, require, signature
 from .vm_inputs import sha256
 
 SHA = re.compile(r'[a-f0-9]{64}')
-DIAGNOSTICS = ('serial.log', 'terraform-apply.log', 'terraform-destroy.log')
+DIAGNOSTICS = ('console.log', 'terraform-apply.log', 'terraform-cleanup.log')
 ASSESSMENTS = ('assessment/arf.xml', 'assessment/xccdf.xml', 'assessment/report.html')
 
 
@@ -83,7 +83,7 @@ def source_path(store, source):
     return store.runs/identifier/name
 
 
-def protected(store):
+def protected(store,references=None):
     """Unknown historical attempts pin their shared bytes even after teardown."""
     pins = set(configuration(store)['keep_local_digests'])
     for run in store.runs.iterdir():
@@ -91,6 +91,9 @@ def protected(store):
             value = read_json(run/'result.json')
             if value.get('outcome') in {'unknown', 'running'} or value.get('lab_iso_qualified'):
                 pins.add(value.get('build', {}).get('candidate_sha256'))
+            if references is not None:
+                try:store.proof(run.name,references)
+                except (RunError,OSError,KeyError,ValueError):pins.add(value.get('build',{}).get('candidate_sha256'))
         except (RunError, OSError, ValueError):
             try:pins.add(read_json(run/'inputs/build-manifest.json')['candidate_sha256'])
             except (RunError, OSError, ValueError):pass
@@ -191,7 +194,7 @@ def prove_source(store, value, source, references):
 
 
 def cleanup_actions(store, references, verified):
-    actions=[];pins=protected(store)
+    actions=[];pins=protected(store,references)
     for digest in verified:
         value=record(store,digest)
         require(value['state']=='committed' and value['receipt']['verified'] is True)

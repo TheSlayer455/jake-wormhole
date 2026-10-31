@@ -74,6 +74,10 @@ class Archive(unittest.TestCase):
         atomic_json(run/'result.json',value)
         atomic_json(self.store.infrastructure/'archive-config.json',{**self.config,'keep_local_digests':[digest]})
         a.commit(self.store,digest,self.receipt(digest));self.assertTrue(path.exists())
+        atomic_json(self.store.infrastructure/'archive-config.json',self.config)
+        alias,_,_=self.fixture.fixture()
+        (self.store.infrastructure/'vm-history'/(alias.name+'.json')).unlink()
+        a.commit(self.store,digest,self.receipt(digest));self.assertTrue(path.exists())
 
     def test_changed_source_and_failed_destination_receipt_retain_local_data(self):
         _,path,digest=self.queued();path.write_bytes(b'changed source')
