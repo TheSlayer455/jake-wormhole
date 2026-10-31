@@ -306,7 +306,10 @@ def operate(operation,digest=None):
             refs=store.observe()
             if operation=='archive-preview':return preview(store,refs)
             queue(store,refs)
+            pins=protected(store,refs)
             return {'archive_id':configuration(store)['archive_id'],
-                    'objects':[{key:value[key] for key in ('sha256','bytes','state')}
+                    'objects':[{**{key:value[key] for key in ('sha256','bytes','state')},
+                        'needs_sync':value['state']!='committed' or (value['sha256'] not in pins and any(
+                            s['reclaim'] and source_path(store,s).exists() for s in value['sources']))}
                         for p in directory(store).glob('*.json') for value in [record(store,p.stem)]]}
     finally:signal.alarm(0);signal.signal(signal.SIGALRM,previous)

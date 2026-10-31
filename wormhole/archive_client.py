@@ -196,7 +196,7 @@ class Client:
         listing = self.request("archive-list")
         require(listing.get("archive_id") == self.archive_id and isinstance(listing.get("objects"), list))
         objects = [item for item in listing["objects"] if item.get("sha256") == digest] if digest else [
-            item for item in listing["objects"] if item.get("state") != "committed"]
+            item for item in listing["objects"] if item.get("needs_sync",item.get("state") != "committed")]
         require(digest is None or bool(objects), "archive_missing", "The requested object is not available remotely.")
         results = []
         for item in objects:
