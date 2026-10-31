@@ -7,6 +7,8 @@ import stat
 import subprocess
 import socket
 import ssl
+import time
+import re
 
 
 def command(*args):
@@ -24,13 +26,27 @@ def file_sha256(path):
     return digest.hexdigest()
 
 
-def trust_inventory(bundle='/etc/ssl/certs/ca-certificates.crt'):
+def trust_inventory(bundle='/etc/ssl/certs/ca-certificates.crt', expected=None, *, at_time=None):
     # get_ca_certs lists already-loaded roots, not the lazy capath inventory.
     # Enumerate the actual installed bundle explicitly, without changing trust.
     context=ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     context.load_verify_locations(cafile=str(bundle))
+    # The installed OpenSSL default uses the hashed directory (lazy capath),
+    # so an extra hash entry must not escape the explicit bundle review.
+    hashed=[p for p in Path(bundle).parent.iterdir() if re.fullmatch(r'[0-9a-fA-F]{8}\.\d+',p.name)]
+    for path in hashed:
+        context.load_verify_locations(cafile=str(path))
     certificates=context.get_ca_certs(binary_form=True)
-    return {'fingerprints':sorted({hashlib.sha256(der).hexdigest() for der in certificates}),
+    details=context.get_ca_certs()
+    fingerprints=sorted({hashlib.sha256(der).hexdigest() for der in certificates})
+    instant=time.time() if at_time is None else at_time
+    invalid=[{'subject':cert['subject'],'not_before':cert['notBefore'],'not_after':cert['notAfter']}
+             for cert in details if not ssl.cert_time_to_seconds(cert['notBefore']) <= instant <= ssl.cert_time_to_seconds(cert['notAfter'])]
+    return {'fingerprints':fingerprints,
+            'expected_roots_match':bool(expected) and fingerprints==sorted(set(expected)) if expected is not None else None,
+            'currently_valid':bool(certificates) and not invalid,
+            'invalid_dates':invalid,
+            'hashed_certificates_examined':len(hashed),
             'bundle_sha256':file_sha256(Path(bundle)),
             'default_verify_paths':ssl.get_default_verify_paths()._asdict(),
             'default_loaded_count':len(ssl.create_default_context().get_ca_certs()),
@@ -97,9 +113,11 @@ def observe():
         status=command('ufw','status')
         checks['v2r8-ufw-effective-status']=status.returncode==0 and status.stdout.splitlines()[0]=='Status: active'
         checks['v2r8-banner-effective-file']=checks['lab-banner'] and Path('/etc/issue.net').read_text().strip()=='Wormhole private home lab. Authorized lab use only. Activity is monitored.'
-        trust=trust_inventory();anchors=set(trust['fingerprints'])
-        source=json.loads(Path('/usr/local/lib/wormhole/dod-ca-source.json').read_text())
-        checks['official-public-dod-roots-staged']=bool(source['roots']) and {r['sha256'] for r in source['roots']}<=anchors
+        source=Path('/usr/local/lib/wormhole/dod-public-roots.pem')
+        expected=set(trust_inventory(source)['fingerprints'])
+        trust=trust_inventory(expected=expected)
+        checks['official-public-dod-roots-staged']=len(expected)==4 and trust['expected_roots_match'] and trust['currently_valid'] and \
+            file_sha256(source)==policy['public_ca_bundle']['roots_pem_sha256']
         command('logger','-t','wormhole-acceptance',(root/'run-id').read_text().strip())
         checks['audit-event-probe']=command('auditctl','-m','wormhole acceptance '+(root/'run-id').read_text().strip()).returncode==0
         valid=command('openssl','verify','-CAfile','/etc/wormhole-lab-ca.crt','-CRLfile','/etc/pam_pkcs11/crls/lab-ca.crl',

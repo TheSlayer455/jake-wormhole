@@ -14,7 +14,12 @@ if hashlib.sha256(source.read_bytes()).hexdigest()!=policy['public_ca_bundle']['
 target=Path('/usr/local/share/ca-certificates/wormhole-public-dod');target.mkdir(mode=0o755)
 for index,pem in enumerate(re.findall(r'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----',source.read_text(),re.S)):
     (target/(str(index)+'.crt')).write_text(pem+'\n')
-subprocess.run(['update-ca-certificates'],check=True,timeout=20)
+# This offline workload needs no inherited public Web PKI. Keep the pinned DoD
+# roots in the global store; the lab service/PAM CA stays explicitly scoped.
+configuration=Path('/etc/ca-certificates.conf')
+configuration.write_text('\n'.join(line if not line.strip() or line.lstrip().startswith(('#','!'))
+    else '!'+line.strip() for line in configuration.read_text().splitlines())+'\n')
+subprocess.run(['update-ca-certificates','--fresh'],check=True,timeout=20)
 PY
 printf '%s\n' 'Wormhole private home lab. Authorized lab use only. Activity is monitored.' > /etc/issue.net
 printf '%s\n' 'Banner /etc/issue.net' > /etc/ssh/sshd_config.d/05-wormhole-banner.conf

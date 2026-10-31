@@ -100,6 +100,53 @@ class Sandbox(unittest.TestCase):
                         self.assertEqual(json.loads(ns_ack),{'run_id':'fixture-run','archive_saved':'fixture-transfer'})
                         self.assertIn('fixture-transfer',(private/'syslog.jsonl').read_text())
             finally:server.shutdown();server.server_close();thread.join(timeout=3)
+
+    @unittest.skipUnless(os.name=='posix' and shutil.which('openssl') and shutil.which('update-ca-certificates'),
+                         'real Linux certificate tools required')
+    def test_guest_native_trust_deselection_preserves_scoped_ca_and_rejects_unknown_or_expired_roots(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);(root/'scoped').mkdir();private=certificates(root/'scoped')
+            payload=root/'payload';payload.mkdir()
+            vendor=root/'vendor';vendor.mkdir()
+            local=root/'local';local.mkdir()
+            certs=root/'certs';certs.mkdir()
+            hooks=root/'hooks';hooks.mkdir()
+            source=payload/'dod-public-roots.pem'
+            subprocess.run(['openssl','req','-new','-newkey','rsa:2048','-x509','-nodes','-days','2',
+                '-subj','/CN=approved-fixture-root','-keyout',str(root/'approved.key'),'-out',str(source)],
+                check=True,capture_output=True,timeout=10)
+            (payload/'policy.json').write_text(json.dumps({'public_ca_bundle':{
+                'roots_pem_sha256':hashlib.sha256(source.read_bytes()).hexdigest()}}))
+            shutil.copyfile(private/'ca.crt',vendor/'unused.crt')
+            config=root/'ca-certificates.conf';config.write_text('# retained comment\nunused.crt\n!already-disabled.crt\n')
+            repository=Path(__file__).resolve().parents[1]
+            block=(repository/'ubuntu/guest/sandbox.sh').read_text().split("python3 - <<'PY'\n",1)[1].split('\nPY\n',1)[0]
+            for original,replacement in [('/usr/local/lib/wormhole',payload),
+                    ('/usr/local/share/ca-certificates/wormhole-public-dod',local/'approved'),('/etc/ca-certificates.conf',config)]:
+                block=block.replace(repr(original),repr(str(replacement)))
+            real_run=subprocess.run
+            def private_update(args,**kwargs):
+                self.assertEqual(args,['update-ca-certificates','--fresh'])
+                return real_run(args+['--certsconf',str(config),'--certsdir',str(vendor),
+                    '--localcertsdir',str(local),'--etccertsdir',str(certs),'--hooksdir',str(hooks)],capture_output=True,**kwargs)
+            with patch.object(subprocess,'run',side_effect=private_update):exec(compile(block,'guest-trust-fixture','exec'),{})
+            self.assertEqual(config.read_text(),'# retained comment\n!unused.crt\n!already-disabled.crt\n')
+            spec=importlib.util.spec_from_file_location('trust_closure_fixture',repository/'ubuntu/guest/observe.py')
+            observer=importlib.util.module_from_spec(spec);spec.loader.exec_module(observer)
+            expected={hashlib.sha256(ssl.PEM_cert_to_DER_cert(source.read_text())).hexdigest()}
+            bundle=certs/'ca-certificates.crt';observed=observer.trust_inventory(bundle,expected)
+            self.assertTrue(observed['expected_roots_match']);self.assertTrue(observed['currently_valid'])
+            self.assertFalse(observer.trust_inventory(bundle,expected,at_time=__import__('time').time()+3*86400)['currently_valid'])
+            self.assertEqual(real_run(['openssl','verify','-CAfile',str(private/'ca.crt'),str(private/'active.crt')],capture_output=True).returncode,0)
+            self.assertNotEqual(real_run(['openssl','verify','-CAfile',str(bundle),str(private/'active.crt')],capture_output=True).returncode,0)
+            bundle.write_bytes(bundle.read_bytes()+(private/'ca.crt').read_bytes())
+            self.assertFalse(observer.trust_inventory(bundle,expected)['expected_roots_match'])
+            bundle.write_bytes(source.read_bytes())
+            foreign_hash=real_run(['openssl','x509','-hash','-noout','-in',str(private/'ca.crt')],
+                                 capture_output=True,text=True,check=True).stdout.strip()
+            (certs/(foreign_hash+'.0')).symlink_to(private/'ca.crt')
+            self.assertFalse(observer.trust_inventory(bundle,expected)['expected_roots_match'])
+
     def test_libvirt_canonical_xml_is_equivalent_but_changed_policy_is_not(self):
         original=network_filter('wormhole-test')
         actual=original.replace('0x0800','ipv4')
