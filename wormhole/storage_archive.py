@@ -245,6 +245,9 @@ def commit(store,digest,payload):
             if source_path(store,source).exists():prove_source(store,value,source,references)
         value.update(state='committed',receipt=payload,verified_at=now())
         atomic_json(directory(store)/(digest+'.json'),value)
+        if not any(source['reclaim'] for source in value['sources']):
+            return {'sha256':digest,'state':'committed','cleanup':{'state':'retained-local',
+                'actions':0,'unlinked_allocated_bytes':0,'retention_budget_exceeded':None}}
         # Ordinary post-run clean never authorizes archival deletion from an old
         # receipt. Only this fresh destination readback enables these actions.
         cleanup=store.clean_held(archive_verified={digest})

@@ -98,7 +98,8 @@ class Archive(unittest.TestCase):
         for path in (svd,run/'inputs/build-manifest.json'):
             digest=sha256(path);value=a.record(self.store,digest)
             self.assertTrue(all(s['kind']=='evidence' and not s['reclaim'] for s in value['sources']))
-            result=a.commit(self.store,digest,self.receipt(digest))
+            with patch.object(self.store,'clean_held',side_effect=AssertionError('retained-only evidence needs no cleanup')):
+                result=a.commit(self.store,digest,self.receipt(digest))
             self.assertEqual(result['cleanup']['unlinked_allocated_bytes'],0)
             self.assertEqual(sha256(path),digest)
 
