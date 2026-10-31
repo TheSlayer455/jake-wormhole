@@ -131,7 +131,7 @@ class Store:
                         category = 'candidates'
                     elif base == self.shared:
                         category = 'candidates' if path.name == 'candidate.iso' else 'vm_disks' if 'disk' in parts else 'temporary_builds'
-                    elif 'iso-preflight' in parts and path.suffix=='.iso':
+                    elif path.suffix=='.iso' and ('iso-preflight' in parts or path.parent==self.root.parent/'media'):
                         category = 'source_media'
                     elif 'vm-runs' in parts and any(n in {'repository','boot','wormhole-identity','seed-layout-check'} for n in parts):
                         category = 'temporary_builds'
