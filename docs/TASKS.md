@@ -1,6 +1,15 @@
 # Minx work index
 
-Active increment: `codex/WORM-001-two-os-svd`, [PR 44](https://github.com/TheSlayer455/jake-wormhole/pull/44).
+Current increment: `codex/WORM-001-archive-svd-evidence`, [PR 45](https://github.com/TheSlayer455/jake-wormhole/pull/45).
+Extend the existing encrypted archive selection to immutable SVDs/build manifests,
+retain their local originals and avoid deletion scans for retained-only objects.
+No new transport, receipt, cleanup engine or installer change.
+At `f2a3d5c`, 298 real workstation objects are committed, zero pending/failed;
+both fresh OS SVDs/manifests passed additional decrypt/readback with local originals
+unchanged. Focused storage 28/28; CI 969 pass/12 skips; independent code review.
+
+Completed increment: `codex/WORM-001-two-os-svd`, [PR 44](https://github.com/TheSlayer455/jake-wormhole/pull/44),
+merged at `1a8d412` with passing post-merge CI and SVD/archive readback.
 At `77e6e16`, real RHEL 10 and encrypted Ubuntu 22.04 runs passed their functional
 contracts, SVD readback, actual OpenSCAP coverage and cleanup. RHEL's existing
 structured inventory now produces readable/JSON SVDs. Evaluate-STIG remains
@@ -16,7 +25,7 @@ net allocated reduction is 5.978 GiB. [PR 43](https://github.com/TheSlayer455/ja
 merged at `6a78d39` with passing post-merge CI/readback. See [storage](STORAGE.md).
 No installer changes or new VM acceptance are required for storage-only changes.
 
-Current increment: `codex/WORM-001-directory-intake`, [PR 42](https://github.com/TheSlayer455/jake-wormhole/pull/42).
+Completed increment: `codex/WORM-001-directory-intake`, [PR 42](https://github.com/TheSlayer455/jake-wormhole/pull/42).
 Completed delivery registration, protected staging/reuse and shared manual/scan
 dispatch are verified at `0a6acb5`: real healthy intake, periodic completion,
 duplicate/restart and blocked-readiness failure with cleanup. See [handoff](../handoff/solutions/directory-intake.md).

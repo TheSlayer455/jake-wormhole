@@ -30,7 +30,8 @@ of failed, missing, empty or duplicate inventory. Full suite: 968 passed and 12
 explicit platform/tool skips (980 total, 105.467 s); all 20 foundation checks passed
 as the runtime owner, plus Ubuntu helper 3/3 and reports 8/8. Independent
 engineering-agent review found no blocking issue. [PR 44](https://github.com/TheSlayer455/jake-wormhole/pull/44)
-tracks delivery.
+merged at `1a8d412`; post-merge CI, original RHEL SVD replay/readback and encrypted
+archive readback passed. Original runtime attribution remains `77e6e16`.
 
 Evaluate-STIG is not executed: no authorized release package/documentation was
 found in the inspected tool stores, and the official release endpoint was
@@ -39,6 +40,21 @@ invocation. OpenSCAP is not a substitute claim. Legitimate Ubuntu Pro/actual
 USG-FIPS, vendor-content reconciliation and delegated trust review remain required.
 
 ## Encrypted workstation retention
+
+Follow-up at `f2a3d5c` adds retained-only SVD/build-manifest selection to the existing
+archive. Real reconciliation completed 298 objects (18,117,038,420 original bytes),
+zero pending/failed. Six additional decrypted readbacks verified the fresh two-OS
+SVD JSON/text and build manifests; all six local originals remain unchanged.
+The 92 newly selected objects required no local deletion. Retained-only commits
+now avoid redundant deletion scans: median completion spacing fell from 10.912 s
+(10 intervals) to 3.153 s (79 intervals) on this backlog, not an ISO throughput claim.
+Production +8/-3, tests +14/-1: one regression proves retained SVD/manifest commit
+preserves bytes and skips cleanup. All 28 focused storage tests passed; full CI
+ran 981 tests, 969 passed/12 explicit skips, plus controlled parity. Independent
+engineering-agent review found no blocking issue. [PR 45](https://github.com/TheSlayer455/jake-wormhole/pull/45)
+tracks delivery. Current managed storage is 63.654 GiB, candidate cache 21.976 GiB,
+filesystem availability 152.113 GiB. Both journals are finished, no VM domains
+remain and Docker/K3s are active. No installation contract changed or VM reran.
 
 Implementation at `b881127` adds selective age archival and explicit restore using
 the existing storage cleanup/ownership contracts. A real 6 MiB SSH pull, stored
