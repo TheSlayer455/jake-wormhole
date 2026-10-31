@@ -174,6 +174,10 @@ def status(store):
         'verified_archived_bytes':sum(v['bytes'] for v in values if v['state']=='committed'),
         'pending_bytes':sum(v['bytes'] for v in values if v['state']!='committed'),
         'failures':sum(v['state']=='failed' for v in values),
+        'last_destination_verified_at':max((v.get('verified_at','') for v in values),default=None),
+        'potential_reclaimable_bytes':sum(s['signature'][3] for v in values for s in v['sources']
+            if s['reclaim'] and source_path(store,s).exists()),
+        'reclamation_requires_fresh_destination_readback':True,
         'objects':len(values),'live_destination_free_bytes':None,
         'journal_states':{name:read_json(store.infrastructure/name)['state'] for name in
             ('admission.json','vm-admission.json') if (store.infrastructure/name).exists()}}
@@ -294,6 +298,7 @@ def operate(operation,digest=None):
     def timeout(*_):raise RunError('archive_deadline','Bounded archive operation expired; original evidence retained.')
     previous=signal.signal(signal.SIGALRM,timeout);signal.alarm(900)
     try:
+        require(configuration(store) is not None,'archive_not_configured')
         if operation=='archive-export':export(store,digest);return None
         if operation=='archive-import':return restore(store,digest)
         if operation=='archive-commit':return commit(store,digest,json.loads(sys.stdin.buffer.read(16385)))

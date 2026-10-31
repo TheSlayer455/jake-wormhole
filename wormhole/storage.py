@@ -108,7 +108,7 @@ class Store:
 
     def status(self):
         totals = {key: 0 for key in ('candidates', 'temporary_builds', 'vm_disks',
-                  'retained_evidence', 'qualified_releases', 'protected_other')}
+                  'retained_evidence', 'qualified_releases', 'source_media', 'protected_other')}
         seen = set()
         # Fixed project roots only. Do not follow links or cross filesystem mounts.
         for base in (self.root.parent, self.shared):
@@ -131,6 +131,8 @@ class Store:
                         category = 'candidates'
                     elif base == self.shared:
                         category = 'candidates' if path.name == 'candidate.iso' else 'vm_disks' if 'disk' in parts else 'temporary_builds'
+                    elif 'iso-preflight' in parts and path.suffix=='.iso':
+                        category = 'source_media'
                     elif 'vm-runs' in parts and any(n in {'repository','boot','wormhole-identity','seed-layout-check'} for n in parts):
                         category = 'temporary_builds'
                     elif any(n in {'vm-runs','runs','scanner-builds','iso-preflight'} for n in parts):
