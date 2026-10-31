@@ -32,6 +32,17 @@ regressions pass and the actual runtime outcome is proven.
 
 ## Authorized scope
 
+Active real-ISO development is permanently limited to RHEL 10 and Ubuntu 22.04.
+No additional real OS profiles or enterprise fleet are authorized. Preserve
+historical evidence and the existing Ubuntu/UBI container regression layer.
+The October 31 storage assignment authorizes an encrypted workstation archive
+tier through existing private connectivity, verified restore and exact-owned
+reclamation through the existing storage engine. Keep active VM disks, state,
+seeds, credentials, journals and current required inputs on the Linux runtime.
+Offline archival must preserve local data and all existing admission budgets.
+Do not add a storage service or alter unrelated backup jobs. Normal verified PR
+merges are authorized subject to actual repository protections.
+
 The owner authorizes automatic manifest-bound transient cleanup and storage
 budget enforcement under the existing shared admission lock. Preserve reusable
 current ISO bytes, qualification evidence, releases and unresolved recovery state;

@@ -280,7 +280,8 @@ class Store:
                     groups.setdefault(manifest['candidate_sha256'],[]).append((run,manifest,candidate))
                 else:
                     # A missing unaccounted candidate cannot authorize staging removal.
-                    self.resolve(run.name)
+                    from .storage_archive import archived
+                    if not archived(self,run.name,manifest['candidate_sha256']):self.resolve(run.name)
             except (RunError,OSError,KeyError,ValueError) as error:
                 # Only new builds have an intent written BEFORE construction.
                 # Legacy unknown partial files stay protected for manual recovery.
@@ -466,6 +467,11 @@ class Store:
                 require(self.digest(candidate)==digest,'storage_candidate_changed')
                 return candidate
             run=self.runs/identifier
+            from .storage_archive import archived, restored_candidate
+            restored=restored_candidate(self,digest)
+            if restored is not None:return restored
+            if archived(self,identifier,digest):
+                raise RunError('archive_restore_required','Candidate is archived; explicitly restore its digest before admission.')
             receipt=run/'storage-candidate.json'
             if receipt.exists():
                 record=read_json(receipt)
@@ -478,11 +484,16 @@ class Store:
                 identifier=run_id(record['identical_copy_retained_in_run'])
         raise RunError('storage_candidate_alias_invalid','Candidate retention alias is cyclic or incomplete.')
 
-    def clean_held(self, *, lease=None, current=None):
+    def clean_held(self, *, lease=None, current=None, archive_verified=()):
         """Caller already holds the SAME admission lock; never a nested flock."""
         self.check_lock(lease)
         references=self.observe(lease=lease)
         plan=self.preview(references,current=current)
+        from .storage_archive import cleanup_actions, queue
+        if archive_verified:
+            archival=cleanup_actions(self,references,archive_verified)
+            paths={a['path'] for a in archival}
+            plan['actions']=[a for a in plan['actions'] if a['path'] not in paths]+archival
         before=self.status()
         # Durable intent before unlink; interruption preserves source proofs and aliases.
         operations=self.infrastructure/'storage-operations'
@@ -519,11 +530,20 @@ class Store:
         atomic_json(operation,receipt)
         atomic_json(self.infrastructure/'storage-hashes.json',{
             p:v for p,v in self.hashes.items() if Path(p).name=='candidate.iso' and Path(p).exists()})
+        receipt['archive_queue']=queue(self,self.observe(lease=lease),current=current)
+        atomic_json(operation,receipt)
         return receipt
 
     def unlink(self, action, references):
         path=Path(action['path'])
         require(self.checked(path,references)==action['signature'],'storage_file_changed')
+        if action['reason']=='verified-offhost-archive':
+            from .storage_archive import record
+            value=record(self,action['sha256'])
+            require(value['state']=='committed','archive_not_verified')
+            require(self.digest(path)==action['sha256'],'storage_file_changed')
+            atomic_json(self.infrastructure/'storage-archive'/(action['sha256']+'.json'),
+                {**value,'local_cleanup_at':now()})
         if action['reason']=='identical-candidate':
             canonical=self.shared/action['canonical_run']/'candidate.iso'
             self.checked(canonical,references)
@@ -549,7 +569,9 @@ def operate(command):
     require(os.geteuid()==0,'runtime_owner_required')
     store=Store()
     with store.locked():
-        if command=='status': return store.status()
+        if command=='status':
+            from .storage_archive import status
+            return {**store.status(),'archive':status(store)}
         if command=='preview': return store.preview(store.observe())
         return store.clean_held()
 

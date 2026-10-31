@@ -1,5 +1,11 @@
 # Minx work index
 
+Active increment: `codex/WORM-001-archive-tier`. Extend existing storage receipts,
+cleanup and CLI for encrypted workstation retention, explicit restore, offline
+preservation and actual archive/delete/restore proof. Real ISO scope is RHEL 10
+and Ubuntu 22.04 only. No installer changes or new VM acceptance are required
+for storage-only changes. Runtime proof and delivery are pending.
+
 Current increment: `codex/WORM-001-directory-intake`, [PR 42](https://github.com/TheSlayer455/jake-wormhole/pull/42).
 Completed delivery registration, protected staging/reuse and shared manual/scan
 dispatch are verified at `0a6acb5`: real healthy intake, periodic completion,
