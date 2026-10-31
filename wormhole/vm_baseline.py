@@ -108,8 +108,12 @@ for label,args in [('ansible-readiness',['-m','ping']),('functional',['-b','-m',
                    ('inventory',['-m','command','-a',inventory])]:
  remaining=deadline-time.monotonic()
  if remaining<=0:sys.exit(1)
+ if label=='inventory':args+=['--tree','/tmp/vm-inventory']
  r=subprocess.run(base+args,env=env,capture_output=True,text=True,timeout=min(90,remaining))
- print(json.dumps({'stage':label,'returncode':r.returncode,'output':r.stdout,'diagnostic':r.stderr}),flush=True)
+ record={'stage':label,'returncode':r.returncode,'output':r.stdout,'diagnostic':r.stderr}
+ if label=='inventory' and r.returncode==0:
+  record['response']=json.loads((pathlib.Path('/tmp/vm-inventory')/c['address']).read_text())
+ print(json.dumps(record),flush=True)
  if r.returncode:sys.exit(1)
 print(json.dumps({'final_authentication':True,'ansible_ready':True,'catalog_started':True,'outcome':'baseline-passed',
                   'lab_iso_qualified':False,'production_iso_eligible':False}),flush=True)
