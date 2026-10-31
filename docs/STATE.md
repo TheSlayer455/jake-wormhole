@@ -1,5 +1,14 @@
 # Current engineering state
 
+## Encrypted workstation retention in progress
+
+Implementation at `b881127` adds selective age archival and explicit restore using
+the existing storage cleanup/ownership contracts. A real 6 MiB SSH pull, stored
+decrypt/hash verification, source reclamation and exact-byte restore passed.
+The roughly 2 GiB historical Ubuntu transfer is underway; its completion,
+scheduled execution, final integration verification and delivery remain pending.
+Budgets and protected local evidence remain unchanged. See [storage](STORAGE.md).
+
 ## Completed ISO intake
 
 [PR 42](https://github.com/TheSlayer455/jake-wormhole/pull/42) adds one manual/scan

@@ -1,6 +1,16 @@
 # Current handoff
 
-## Current priority: directory-delivered ISO acceptance
+## Current priority: verify encrypted workstation retention
+
+At `b881127`, selective archival reuses strict SSH, age and existing storage cleanup.
+A real 6 MiB workstation archive/delete/restore passed; the historical Ubuntu ISO
+transfer and Windows schedule remain unverified. Finish those observations and
+delivery without relabeling old installation evidence. Use [storage commands and
+retention rules](../docs/STORAGE.md); restore missing candidate bytes before admission.
+Only fresh verified commits permit reclamation. Required assessment copies remain
+local, and this increment changes neither budgets nor qualification eligibility.
+
+## Previous delivery: directory-delivered ISO acceptance
 
 Use the [directory intake handoff](solutions/directory-intake.md), delivered by
 [PR 42](https://github.com/TheSlayer455/jake-wormhole/pull/42). Runtime-tested

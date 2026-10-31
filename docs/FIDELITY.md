@@ -1,5 +1,12 @@
 # Fidelity and evidence limits
 
+The archive increment has a real 6 MiB strict-SSH workstation encryption,
+verified reclamation and selective restore proof. A historical Ubuntu ISO transfer
+and scheduled Windows execution remain pending; the small probe is not ISO-scale
+proof. age protects stored bytes, with its identity private in Linux/WSL and an
+owner/SYSTEM-only Windows archive ACL. This proves neither BitLocker coverage nor
+key-loss recovery. Archive retention changes no installation or qualification claim.
+
 The [lifecycle comparison](../handoff/solutions/lifecycle-comparison.md) used the
 same RHEL ISO bytes, declared guest profile, checks, inventory and assessment.
 Native libvirt and Terraform produced matching packages and rule-level outcomes.

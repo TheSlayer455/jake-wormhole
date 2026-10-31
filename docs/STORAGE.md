@@ -63,3 +63,65 @@ actual files and durable aliases again.
 Keep receipts and operational paths private. `tests/test_storage.py` exercises
 corruption, active refusal, links, sparse accounting, stale/pinned candidates and
 interrupted cleanup. These source fixtures do not establish ISO qualification.
+
+## Encrypted workstation archive
+
+Use `python3 -m wormhole storage archive-preview` as the established runtime owner
+to inspect eligible objects without transferring them. On the workstation, run
+the same checkout in Linux/WSL with age installed and the existing strict SSH route:
+
+```sh
+python3 -m wormhole storage archive-sync --config /home/operator/.config/wormhole/archive.json
+python3 -m wormhole storage archive-sync SHA256 --config /home/operator/.config/wormhole/archive.json
+python3 -m wormhole storage archive-verify --config /home/operator/.config/wormhole/archive.json
+python3 -m wormhole storage restore SHA256 --config /home/operator/.config/wormhole/archive.json
+```
+
+Replace `SHA256` with the complete object digest. Default sync processes objects
+not already committed; an explicit digest rereads a destination before recommitting.
+Verification also accepts a digest. Restore requires one digest and refuses an
+existing destination; it does not overwrite retained runtime files. Restore before
+admission when a candidate is needed: admission/alias resolution never downloads
+data while holding the shared lock. Candidate aliases can use any verified
+restored copy of their recorded bytes.
+
+The private workstation JSON has this shape (replace all example values):
+
+```json
+{
+  "archive_id": "00000000-0000-4000-8000-000000000001",
+  "root": "/mnt/c/PrivateArchive/Wormhole",
+  "identity": "/home/operator/.config/wormhole/archive.agekey",
+  "recipient": "age1REPLACE_WITH_PUBLIC_RECIPIENT",
+  "ssh": ["ssh", "-i", "/home/operator/.ssh/lab", "operator@lab-hypervisor.invalid"],
+  "command": "sudo -n env PYTHONPATH=/srv/wormhole python3 -m wormhole storage",
+  "reserve_bytes": 10737418240,
+  "timeout_seconds": 900
+}
+```
+
+Provision config and identity as owner-only Linux files (0600), outside the
+archive. Pre-enroll the SSH host identity; the client requires batch authentication
+and strict host-key checking. Provision the Windows archive ACL for the owning
+user and SYSTEM only. Its `owner.json` must contain `schema_version: "1.0"` and
+the matching `archive_id`; changed/missing ownership or symlink paths are refused.
+The runtime owner's private infrastructure `archive-config.json` contains
+`schema_version`, the same `archive_id`, and `keep_local_digests` for current inputs.
+Neither configuration contains private key material or other embedded secrets.
+
+Eligible terminal-run candidates and console/Terraform apply/cleanup logs may be
+reclaimed after verified archival. Native assessment XML/HTML copies are archived
+but retained locally. Source ISOs, current-input pins, keys, Terraform state,
+journals, unresolved runs and qualified artifacts stay outside reclamation.
+Existing key/seed expiry remains unchanged. The 100/40 GiB budgets are unchanged.
+
+The workstation pulls plaintext through SSH directly into age; only encrypted
+objects and nonsecret receipts are stored in its archive. It decrypts the stored
+ciphertext and checks the original size/hash before committing. That fresh commit
+alone authorizes existing ownership-safe cleanup under a new shared lock. Old
+receipts, queued work or an offline workstation never authorize deletion. Partial
+files are ineligible; corrupt verification refuses restore and reports failure.
+No Windows inbound listener is required. A 30-minute/sign-in Task Scheduler task
+is planned, using a limited interactive account, IgnoreNew and no wake request;
+scheduled execution is not yet verified. This encryption does not establish
+BitLocker protection or a private-key recovery/backup policy.

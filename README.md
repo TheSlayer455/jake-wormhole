@@ -1,9 +1,11 @@
 # Jake Wormhole
 
 Use `python -m wormhole storage status`, `storage preview` and `storage clean`
-through the established private runtime owner. VM completion/recovery automatically
-cleans verified intermediates under the shared lock; current candidates and
-evidence remain protected. See [storage lifecycle and budgets](docs/STORAGE.md).
+through the established private runtime owner. VM completion/recovery cleans
+verified intermediates under the shared lock. `storage archive-preview` inspects
+selective encrypted workstation retention; WSL `archive-sync`, `archive-verify`
+and explicit `restore` use verified age readback before reclamation. Current-input
+pins and required local evidence stay protected. See [commands and budgets](docs/STORAGE.md).
 
 Verified container reference runtime: [acceptance checkpoint](handoff/RUNTIME-ACCEPTANCE.md) and [delivery PR 28](https://github.com/TheSlayer455/jake-wormhole/pull/28).
 Use `python -m wormhole progress RUN_UUID` for readable atomic readiness snapshots;
