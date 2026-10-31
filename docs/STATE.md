@@ -1,5 +1,43 @@
 # Current engineering state
 
+## Fresh two-OS execution and SVD proof
+
+Runtime-tested `77e6e1611d478fcc1a713d40e66907a80c3207c5` passed sequential fresh
+Terraform/KVM runs using existing candidate bytes and fresh private seeds.
+RHEL 10 passed all six controller checks, trusted SSH/Ansible, JSON/text SVDs
+containing 413 RPM rows, native assessment and cleanup in 308.123 seconds.
+Its 948 native outcomes remain 172 pass/261 fail/56 not applicable/nine not checked/
+450 not selected: an unhardened baseline, not qualification.
+
+Ubuntu 22.04 passed 40/40 functional checks, 166 installation-time hardening
+operations, encrypted reboot/cold-start, final SSH, password-required Ansible,
+native assessment and cleanup in 649.973 seconds. Installed SVDs contain 638
+packages, three Snaps and two payloads; build SVDs separately describe six media
+layers and 166 offline input packages. Both OS SVDs matched every original native
+inventory row on readback. Ubuntu retains 210 pass/one fail/14 not applicable/
+five not checked/409 not selected. No qualified release or production eligibility.
+
+The prior Ubuntu policy-v2 run and this run match ISO, installation contract,
+packages, Snaps, payloads and findings with distinct seed/host/boot identities.
+The prior console was restored byte-for-byte from the encrypted archive before
+that comparison. Missing local identity evidence cannot prove independence.
+Actual publication was refused with `lab_policy_dependencies_pending`.
+
+The confirmed gap was RHEL inventory retained only in controller output. Existing
+Ansible host JSON now feeds its SVD without a second package query. Production
++47/-2; tests +33/-0. Two regressions cover native versions/key headers and refusal
+of failed, missing, empty or duplicate inventory. Full suite: 968 passed and 12
+explicit platform/tool skips (980 total, 105.467 s); all 20 foundation checks passed
+as the runtime owner, plus Ubuntu helper 3/3 and reports 8/8. Independent
+engineering-agent review found no blocking issue. [PR 44](https://github.com/TheSlayer455/jake-wormhole/pull/44)
+tracks delivery.
+
+Evaluate-STIG is not executed: no authorized release package/documentation was
+found in the inspected tool stores, and the official release endpoint was
+unreachable. Supply an authorized package/location, then verify its supported
+invocation. OpenSCAP is not a substitute claim. Legitimate Ubuntu Pro/actual
+USG-FIPS, vendor-content reconciliation and delegated trust review remain required.
+
 ## Encrypted workstation retention
 
 Implementation at `b881127` adds selective age archival and explicit restore using
@@ -17,8 +55,8 @@ scheduled pass returned success with zero transfers. The retained footprint fell
 from 74,568,384,512 to 68,149,280,768 allocated bytes (69.447 to 63.469 GiB;
 5.978 GiB net reduction, including the disposable probe). Candidate storage is
 21.976 GiB; filesystem availability is 152.298 GiB. No domains remain, both
-admission journals are finished, and Docker/K3s remain active. Main delivery is
-tracked in [PR 43](https://github.com/TheSlayer455/jake-wormhole/pull/43).
+admission journals are finished, and Docker/K3s remain active. [PR 43](https://github.com/TheSlayer455/jake-wormhole/pull/43)
+merged at `6a78d39`; post-merge CI and encrypted archive readback passed.
 Budgets and protected local evidence remain unchanged. See [storage](STORAGE.md).
 Full source verification ran 978 tests: 966 passed and 12 skipped. All twelve
 then passed in their applicable environments: nine root-only fixtures, two

@@ -1,5 +1,17 @@
 # Observed Software Version Description
 
+The real-VM paths generate `installed-svd.json` and `installed-svd.txt` from actual
+guest observations. Ubuntu also retains build-time media/offline-input SVDs;
+those are distinct from installed DPKG, Snap and payload versions. RHEL uses the
+existing Ansible RPM command's structured host result, preserving full native
+versions, architectures, parallel versions and separate virtual key headers.
+Both bind the installed record to the tested candidate and run. See the
+[RHEL runtime proof](../handoff/solutions/rhel10-install-baseline.md) and
+[Ubuntu evidence](../handoff/solutions/ubuntu-install-hardening.md). SVD completion
+does not imply assessment acceptance or production ISO qualification.
+
+## Original container-reference contract
+
 WORM-015 adds a separate observed-record contract. Legacy fixture `svd-v1`
 artifacts and their existing verifier are unchanged. Structural validity and
 readable rendering do not establish that a collector ran or authorize a release.
