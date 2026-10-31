@@ -1,9 +1,10 @@
 # Fidelity and evidence limits
 
-The archive increment has a real 6 MiB strict-SSH workstation encryption,
-verified reclamation and selective restore proof. A historical Ubuntu ISO transfer
-and scheduled Windows execution remain pending; the small probe is not ISO-scale
-proof. age protects stored bytes, with its identity private in Linux/WSL and an
+The archive increment has real strict-SSH workstation encryption, verified
+reclamation and selective restore proofs for a 6 MiB probe and a completed
+2,136,473,600-byte Ubuntu ISO. A real 256 MiB interrupted transfer and damaged
+stored-ciphertext rejection were also exercised. No new installation is claimed
+for storage-only changes. age protects bytes, with its identity private in Linux/WSL and an
 owner/SYSTEM-only Windows archive ACL. This proves neither BitLocker coverage nor
 key-loss recovery. Archive retention changes no installation or qualification claim.
 

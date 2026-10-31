@@ -2,8 +2,11 @@
 
 Active increment: `codex/WORM-001-archive-tier`. Extend existing storage receipts,
 cleanup and CLI now support encrypted workstation retention, explicit restore and
-offline preservation. Real 6 MiB SSH archive/delete/restore passed; historical ISO
-transfer, scheduled execution and final delivery remain pending. See [storage](STORAGE.md).
+offline preservation. Real 6 MiB and historical Ubuntu ISO archive/delete/restore,
+interruption/retry and corruption rejection passed. Scheduled reconciliation
+completed 194 objects, then repeated without duplicate transfers; the measured
+net allocated reduction is 5.978 GiB. [PR 43](https://github.com/TheSlayer455/jake-wormhole/pull/43)
+tracks main delivery. See [storage](STORAGE.md).
 No installer changes or new VM acceptance are required for storage-only changes.
 
 Current increment: `codex/WORM-001-directory-intake`, [PR 42](https://github.com/TheSlayer455/jake-wormhole/pull/42).

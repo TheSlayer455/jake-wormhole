@@ -77,8 +77,9 @@ python3 -m wormhole storage archive-verify --config /home/operator/.config/wormh
 python3 -m wormhole storage restore SHA256 --config /home/operator/.config/wormhole/archive.json
 ```
 
-Replace `SHA256` with the complete object digest. Default sync processes objects
-not already committed; an explicit digest rereads a destination before recommitting.
+Replace `SHA256` with the complete object digest. Default sync processes pending
+objects and eligible local copies restored since archival. Existing ciphertext is
+reread rather than uploaded again; an explicit digest also requests revalidation.
 Verification also accepts a digest. Restore requires one digest and refuses an
 existing destination; it does not overwrite retained runtime files. Restore before
 admission when a candidate is needed: admission/alias resolution never downloads
@@ -121,7 +122,28 @@ ciphertext and checks the original size/hash before committing. That fresh commi
 alone authorizes existing ownership-safe cleanup under a new shared lock. Old
 receipts, queued work or an offline workstation never authorize deletion. Partial
 files are ineligible; corrupt verification refuses restore and reports failure.
-No Windows inbound listener is required. A 30-minute/sign-in Task Scheduler task
-is planned, using a limited interactive account, IgnoreNew and no wake request;
-scheduled execution is not yet verified. This encryption does not establish
+No Windows inbound listener is required. A separate 30-minute/sign-in Task Scheduler
+task is installed using a limited interactive account, IgnoreNew and no wake request.
+It runs the same `archive-sync` command, with a bounded pass; the runtime queues
+work while the PC is off and preserves local copies until a later verified pass.
+This encryption does not establish
 BitLocker protection or a private-key recovery/backup policy.
+
+Actual strict-SSH/NTFS proof at `b881127`: a 6 MiB probe and a 2,136,473,600-byte
+historical Ubuntu ISO were encrypted, read back, reclaimed locally, restored and
+verified byte-for-byte. The ISO archive/reclaim took 76.997 seconds; restore took
+64.319 seconds and restored mode 0640. Revalidating existing ciphertext and
+reclaiming the restored copy took 53.377 seconds, without another upload.
+At `61f91d9`, a real unavailable SSH endpoint, interrupted 256 MiB transfer,
+retained partial/retry and damaged disposable ciphertext exercised failure paths.
+None authorized unverified deletion. The scheduled pass exposed unnecessary
+whole-catalog preview/queue work per object; `33f2ea0` restricts fresh-commit
+cleanup to those verified objects using the same deletion engine. Its real
+6 MiB restore/reclaim passed. Bounded scheduled passes completed all 194 objects
+(18,033,375,417 original bytes; 18,037,815,785 encrypted bytes). A later scheduled
+pass completed with zero transfers. Managed allocated storage fell from 69.447
+to 63.469 GiB, a 5.978 GiB net reduction; the current inputs, protected journals,
+native assessments and unresolved evidence remain local. Candidate storage is
+21.976 GiB. This is archive retention and verified recovery, not an independently
+established backup/key-recovery policy. No new VM installation was needed to prove
+this storage-only increment.
