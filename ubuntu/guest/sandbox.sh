@@ -50,8 +50,9 @@ fi
 if command -v postconf >/dev/null; then
   # Keep local cron/audit mail delivery, with no guest network SMTP ingress.
   postconf -e 'inet_interfaces = loopback-only'
-  postfix stop
-  postfix start
+  # The packaged default-instance unit waits for process teardown before start;
+  # bare postfix stop only requests asynchronous shutdown.
+  systemctl restart postfix@-.service
 fi
 openssl rehash /etc/pam_pkcs11/cacerts /etc/pam_pkcs11/crls
 test -f /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so
