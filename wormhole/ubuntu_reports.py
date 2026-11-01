@@ -8,6 +8,18 @@ from .runs import atomic_json
 from .ubuntu_assessment import POLICY, inventory, digest
 
 
+def benchmark_review(run, result, functional_results):
+    from .ubuntu_coverage import reviewed_v2r8
+    path=Path(run)/'benchmark-reconciliation.json'
+    findings=Path(run)/'assessment/findings.json'
+    if not path.is_file() or not findings.is_file():return False
+    try:
+        value=json.loads(path.read_text())
+        return (value.get('run_id')==result['run_id'] and value.get('findings_sha256')==digest(findings)
+                and reviewed_v2r8(value,functional_results))
+    except (ValueError,KeyError,TypeError):return False
+
+
 def generate(run, result, *, findings=None, observations=None, controller_records=()):
     run = Path(run)
     policy = json.loads(POLICY.read_text())
@@ -22,7 +34,6 @@ def generate(run, result, *, findings=None, observations=None, controller_record
               'rules':[{'rule_id':r['rule_id'],'selected':r['selected'],'native_status':r['native_status']} for r in rule_rows]}
     from .ubuntu_coverage import summarize
     coverage['profile_mapping']=summarize(rule_rows)
-    (run/'assessment-coverage.json').write_text(json.dumps(coverage,indent=2))
     rows = []
     observed = (observations or {}).get('checks', {})
     stages = {r.get('stage'): r for r in controller_records}
@@ -54,7 +65,16 @@ def generate(run, result, *, findings=None, observations=None, controller_record
         rows.append({'id': key, 'status': 'pass' if value is True else 'fail' if value is False else 'blocked',
                      'evidence': 'installed-observations' if key in observed else 'controller/native-assessment',
                      'reason': '' if value is True else result.get('error_category', 'required observation absent or failed')})
-    reasons = list(policy['unresolved_requirements'])
+    resolved=[]
+    trust=manual.get('objective_results',{}).get('only_allow_dod_certs',{})
+    if trust.get('observed_satisfied') is True and trust.get('accountable_lab_review_supplied') is True:
+        resolved.append('delegated-lab-trust-anchor-review')
+    coverage['manual_v2r8_review_complete']=benchmark_review(run,result,rows)
+    if coverage['manual_v2r8_review_complete']:
+        resolved.append('canonical-v2r8-versus-cac-v2r7-coverage-reconciliation')
+        coverage['profile_mapping']['revision_mapping']='Official V2R7-to-V2R8 manual changes reviewed with run-bound supplemental checks; USG execution/equivalence not claimed.'
+    atomic_json(run/'assessment-coverage.json',coverage)
+    reasons = [reason for reason in policy['unresolved_requirements'] if reason not in resolved]
     if any(r['status'] != 'pass' for r in rows):reasons.append('functional-results-incomplete-or-failed')
     if not findings:reasons.append('native-assessment-unavailable')
     else:
@@ -71,7 +91,7 @@ def generate(run, result, *, findings=None, observations=None, controller_record
               'functional_results': rows, 'functional_counts': dict(Counter(r['status'] for r in rows)),
               'assessment': {k:v for k,v in (findings or {}).items() if k not in {'rules','target'}},
               'stages': result.get('stages', []), 'qualification_reasons': reasons,
-              'manual_evidence':manual,
+              'manual_evidence':manual,'resolved_requirements':resolved,
               'lab_status': 'LAB QUALIFICATION PENDING', 'lab_iso_qualified': False, 'production_iso_eligible': False}
     atomic_json(run / 'qualification.json', report)
     atomic_json(run/'encryption-evidence.json',{'offline':result.get('offline_encryption'),
@@ -87,6 +107,7 @@ def generate(run, result, *, findings=None, observations=None, controller_record
             'Selected totals: ' + json.dumps(report['assessment'].get('selected_native_counts', {}), sort_keys=True),
             'Cleanup: ' + result['cleanup'], '', 'Required functional checks:']
     text += [r['id'] + ': ' + r['status'] for r in rows]
+    text += ['', 'Requirements resolved by this run:'] + resolved
     text += ['', 'Qualification unresolved:'] + reasons
     text += ['', 'Encryption and support evidence:',
              'Cold start: '+str(result.get('cold_start_verified','not observed')),

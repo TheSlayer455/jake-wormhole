@@ -1,6 +1,18 @@
 # Minx work index
 
-Current increment: `codex/WORM-001-archive-svd-evidence`, [PR 45](https://github.com/TheSlayer455/jake-wormhole/pull/45).
+Current increment: `codex/WORM-001-evaluate-stig-closure`, [PR 46](https://github.com/TheSlayer455/jake-wormhole/pull/46).
+Official Evaluate-STIG distribution is authentication/network blocked; no package
+or supported Linux invocation has been obtained. Non-Pro work closes guest trust
+and the frozen manual benchmark delta. First fresh Ubuntu installation at `2a0fc82`
+passed 40/40; `134e1e1` corrects the observed oversized terminal storage record.
+A subsequent real failure verified blocked validation/cleanup and exposed an
+asynchronous Postfix restart race. `a705e2b` uses the packaged instance restart;
+two fresh rebuilt-candidate installations passed 40/40 each with matching software,
+findings and independent identities. Pending publication was refused. Source CI:
+974 pass/12 explicit skips, plus parity. Keep Pro/FIPS and actual Evaluate-STIG separate and
+unverified; neither a source test nor OpenSCAP supplies those capabilities.
+
+Completed increment: `codex/WORM-001-archive-svd-evidence`, [PR 45](https://github.com/TheSlayer455/jake-wormhole/pull/45), merged at `aa777a5` with passing main CI.
 Extend the existing encrypted archive selection to immutable SVDs/build manifests,
 retain their local originals and avoid deletion scans for retained-only objects.
 No new transport, receipt, cleanup engine or installer change.

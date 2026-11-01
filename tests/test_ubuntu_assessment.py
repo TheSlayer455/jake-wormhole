@@ -1,4 +1,5 @@
 """Synthetic parser negatives; live scans are recorded separately."""
+from copy import deepcopy
 import json
 from pathlib import Path
 import tempfile
@@ -140,6 +141,8 @@ class Assessment(unittest.TestCase):
             for key,text in checks.items():
                 rule=ET.SubElement(root,a.X+'Rule',id=key,severity='high')
                 ET.SubElement(rule,a.X+'version').text=key
+                ET.SubElement(rule,a.X+'title').text='Synthetic title '+release
+                ET.SubElement(rule,a.X+'description').text='Synthetic description '+release
                 check=ET.SubElement(rule,a.X+'check')
                 ET.SubElement(check,a.X+'check-content').text=text
             ET.ElementTree(root).write(path)
@@ -152,6 +155,50 @@ class Assessment(unittest.TestCase):
         self.assertFalse(report['scanner_logic_equivalence_established'])
         self.assertEqual(report['unmapped_controls'],['UBTU-22-123457'])
         self.assertEqual(report['changed_controls'][0]['changed_fields'],['check'])
+        self.assertEqual(report['text_changed_controls'],[{'control':'UBTU-22-123456',
+            'changed_fields':['title','description']}])
+
+    def revision_review_fixture(self):
+        from wormhole import ubuntu_coverage as coverage
+        # Synthetic mapping shape only: these rows do not establish live coverage.
+        identifiers=[f'UBTU-22-{number:06}' for number in range(181)]+list(coverage.V2R8_CHANGES)
+        controls={key:[{'rule_id':'synthetic-'+key,'upstream_selected':True,'native_status':'pass'}]
+                  for key in identifiers}
+        value={'baseline':{'sha256':coverage.V2R7_SHA},'target':{'sha256':coverage.V2R8_SHA},
+            'target_controls':188,'manual_revision_mapping_complete':True,'added_controls':[],
+            'removed_controls':[],'unmapped_controls':[],'text_changed_controls':[],
+            'controls':controls,'changed_controls':[{'control':key,'changed_fields':fields,
+                'mapped_rules':controls[key]} for key,fields in coverage.V2R8_CHANGES.items()]}
+        probes=[{'id':key,'status':'pass'} for key in coverage.V2R8_PROBES.values()]
+        return value,probes
+
+    def test_v2r8_review_requires_exact_official_content_and_complete_revision_mapping(self):
+        from wormhole.ubuntu_coverage import reviewed_v2r8
+        value,probes=self.revision_review_fixture()
+        self.assertTrue(reviewed_v2r8(value,probes))
+        wrong=deepcopy(value);wrong['target']['sha256']='0'*64
+        self.assertFalse(reviewed_v2r8(wrong,probes))
+        missing=deepcopy(value);missing['controls'].pop('UBTU-22-000000')
+        self.assertFalse(reviewed_v2r8(missing,probes))
+        changed=deepcopy(value);changed['changed_controls'][0]['changed_fields']=['check','fix']
+        self.assertFalse(reviewed_v2r8(changed,probes))
+        value['text_changed_controls']=[{'control':'UBTU-22-000000','changed_fields':['description']}]
+        self.assertFalse(reviewed_v2r8(value,probes))
+
+    def test_v2r8_review_requires_new_check_proofs_and_native_fix_only_results(self):
+        from wormhole.ubuntu_coverage import reviewed_v2r8
+        value,probes=self.revision_review_fixture()
+        self.assertFalse(reviewed_v2r8(value,probes[:1]))
+        self.assertFalse(reviewed_v2r8(value,probes+[probes[0]]))
+        failed=deepcopy(probes);failed[0]['status']='fail'
+        self.assertFalse(reviewed_v2r8(value,failed))
+        row=value['controls']['UBTU-22-232080'][0]
+        row['native_status']='notapplicable'
+        self.assertTrue(reviewed_v2r8(value,probes))
+        row['native_status']='fail'
+        self.assertFalse(reviewed_v2r8(value,probes))
+        row.update(native_status='notselected',upstream_selected=False)
+        self.assertFalse(reviewed_v2r8(value,probes))
 
     def test_secret_identity_is_not_in_installer_command_arguments(self):
         from wormhole.ubuntu_inputs import seed_config,grub_password_hash

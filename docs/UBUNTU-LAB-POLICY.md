@@ -13,6 +13,32 @@ and bound to the actual installation; the presence of public DoD roots alone is
 insufficient. No further owner review of the 141-entry inventory is requested.
 This delegated lab review does not claim government authorization.
 
+The inherited 137 public roots exactly match the pinned stock ISO. Four were
+expired at review, and the declared offline workload needs none of them. The
+guest-only correction deselects those roots with Ubuntu's native
+[update-ca-certificates](https://manpages.ubuntu.com/manpages/jammy/man8/update-ca-certificates.8.html)
+and keeps only the four date-valid roots from the pinned official public DoD
+bundle. Lab service/PAM trust stays explicitly scoped. Acceptance checks both
+the bundle and hashed trust directory; native manual statuses remain unchanged.
+This is an accountable home-lab disposition, not government authorization.
+
+The frozen coverage target remains the manual revision documented by Canonical
+for [Ubuntu 22.04 USG](https://documentation.ubuntu.com/security/compliance/usg/):
+V2R8. Official DISA [V2R7](https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_CAN_Ubuntu_22-04_LTS_V2R7_STIG.zip)
+and [V2R8](https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_CAN_Ubuntu_22-04_LTS_V2R8_STIG.zip)
+contain 188 controls. Seven check/fix records differ; only the effective UFW and
+SSH-banner check procedures changed. Closure requires exact pinned manual hashes,
+complete mapping and the actual supplemental probes/native results for that run.
+This does not establish USG scanner equivalence. The newer official
+[manual V2R10](https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_CAN_Ubuntu_22-04_LTS_V2R10_STIG.zip)
+has 191 controls, including three additions, and separate text/logic changes;
+it remains visible as a newer, unqualified target rather than silently replacing
+the frozen policy. Manual and SCAP release numbers are not interchangeable.
+
+Run reports list evidence-resolved requirements separately from the original
+policy declaration. They cannot resolve Pro/USG/FIPS from trust or identifier
+mapping, and pending policy still refuses publication.
+
 Legitimate Pro entitlement, actual USG/FIPS execution, supported cryptographic
 modules, benchmark reconciliation and other required evidence remain mandatory.
 The external owner input is a legitimate entitlement supplied through the existing

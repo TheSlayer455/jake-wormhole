@@ -69,6 +69,32 @@ class Cleanup(unittest.TestCase):
     def clean(self,references=()):
         with self.store.locked(),patch.object(self.store,'observe',return_value=references):return self.store.clean_held()
 
+    def test_lifecycle_keeps_large_receipts_external_to_the_bounded_run_record(self):
+        from wormhole.runs import MAX_JSON_BYTES
+        from wormhole import storage_archive
+        self.fixture()
+        source={'run_id':str(uuid4()),'kind':'assessment','name':'assessment/xccdf.xml',
+                'signature':[1,2,4096,4096,0,0,0,0,1,0o100600],'reclaim':False}
+        history={'objects':[{'sha256':f'{i:064x}','bytes':4096,'state':'pending','sources':[source]} for i in range(250)]}
+        with self.store.locked(),patch.object(s,'Store',return_value=self.store),\
+                patch.object(self.store,'observe',return_value=[]),patch.object(storage_archive,'queue',return_value=history):
+            preflight=s.lifecycle(None);final=s.lifecycle(None)
+        full=[read_json(self.store.infrastructure/value['receipt']) for value in (preflight,final)]
+        for summary,receipt in zip((preflight,final),full):
+            self.assertEqual(receipt['operation_id'],summary['operation_id'])
+            self.assertEqual(receipt['archive_queue'],history)
+            self.assertLess((self.store.infrastructure/summary['receipt']).stat().st_size,MAX_JSON_BYTES)
+            for key in ('unlinked_allocated_bytes','retention_budget_exceeded','cache_budget_exceeded'):
+                self.assertEqual(summary[key],receipt[key])
+        with self.assertRaises(RunError) as error:
+            atomic_json(self.root/'old-result.json',{'storage_preflight_cleanup':full[0],'storage_cleanup':full[1]})
+        self.assertEqual(error.exception.code,'record_too_large')
+        result={'storage_preflight_cleanup':preflight,'storage_cleanup':final}
+        atomic_json(self.root/'compact-result.json',result)
+        self.assertEqual(read_json(self.root/'compact-result.json'),result)
+        self.assertGreater(preflight['unlinked_allocated_bytes'],0)
+        self.assertEqual(final['unlinked_allocated_bytes'],0)
+
     def test_failed_and_successful_evidence_and_releases_survive_duplicate_cleanup(self):
         first, candidate, package=self.fixture(outcome='assessment-complete')
         second, duplicate, package2=self.fixture()

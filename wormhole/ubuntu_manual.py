@@ -37,10 +37,14 @@ uptime=float(Path('/proc/uptime').read_text().split()[0])
 required=int(max(1024,audit_bytes/max(1,uptime))*7*86400*2)
 free=shutil.disk_usage('/var/log/audit').free
 import runpy
-trust=runpy.run_path('/usr/local/lib/wormhole/observe.py')['trust_inventory']()
+source=Path('/usr/local/lib/wormhole/dod-public-roots.pem')
+inventory=runpy.run_path('/usr/local/lib/wormhole/observe.py')['trust_inventory']
+expected=set(inventory(source)['fingerprints'])
+trust=inventory(expected=expected)
 anchors=trust['fingerprints']
-source=Path('/usr/local/lib/wormhole/dod-ca-source.json')
-expected={r['sha256'] for r in json.loads(source.read_text())['roots']} if source.exists() else set()
+policy=json.loads(Path('/usr/local/lib/wormhole/policy.json').read_text())
+reviewed=len(expected)==4 and trust['expected_roots_match'] and trust['currently_valid'] and \
+ hashlib.sha256(source.read_bytes()).hexdigest()==policy['public_ca_bundle']['roots_pem_sha256']
 facts['system-trust-root-fingerprints']=anchors
 facts['system-trust-inventory']=trust
 objective={
@@ -48,11 +52,12 @@ objective={
  'ensure_sudo_group_restricted':{'observed_satisfied':set(members)<={'','lab.service'} and {x['name'] for x in facts['interactive-accounts']}=={'lab.service'},'assumption':'one declared final lab operator'},
  'ufw_only_required_services':{'observed_satisfied':bool(external) and all(x.endswith(':22') for x in external),'external_listeners':external,'assumption':'only SSH is a guest ingress service; mandatory NIC filter independently restricts peers'},
  'auditd_audispd_configure_sufficiently_large_partition':{'observed_satisfied':free>=max(8*1024**3,required),'available_bytes':free,'observed_audit_bytes':audit_bytes,'estimated_seven_days_with_double_margin':required,'assumption':'bounded disposable lab workload; observed-rate extrapolation is not a production retention guarantee'},
- 'only_allow_dod_certs':{'observed_satisfied':False,'official_public_roots_present':bool(expected) and expected<=set(anchors),
+ 'only_allow_dod_certs':{'observed_satisfied':reviewed,'official_public_roots_present':bool(expected) and expected<=set(anchors),
     'system_trust_root_count':len(anchors),'authorizing_official_approval_supplied':False,
-    'accountable_lab_review_supplied':False,'review_authority':'owner-delegated Codex home-lab review',
-    'reason':'Delegated engineering review must reconcile every installed trust anchor with its source and lab purpose; public-root presence alone is insufficient. Government identity and physical-token assurance remain unverified limitations, not required lab inputs.'}
+    'accountable_lab_review_supplied':reviewed,'review_authority':'owner-delegated Codex home-lab review',
+    'government_identity_or_authorization_claimed':False,
+    'reason':'Lab review requires exactly the four date-valid roots from the pinned official public DoD source; unused inherited public roots are disabled. Lab service and PAM trust remain separately scoped. Government identity and physical-token assurance remain unverified.'}
 }
-print(json.dumps({'schema_version':'1.0','facts':facts,'disposition':'pending-delegated-lab-review',
+print(json.dumps({'schema_version':'1.0','facts':facts,'disposition':'lab-trust-verified' if reviewed else 'pending-delegated-lab-review',
  'objective_results':objective,'native_notchecked_statuses_preserved':True,'exception_approved':False}))
 '''

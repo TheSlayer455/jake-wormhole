@@ -11,6 +11,19 @@ from wormhole.ubuntu_assessment import POLICY
 
 
 class Reports(unittest.TestCase):
+    def test_benchmark_review_rejects_cross_run_and_changed_findings(self):
+        from wormhole.vm_inputs import sha256
+        with tempfile.TemporaryDirectory() as value:
+            root=Path(value);(root/'assessment').mkdir()
+            findings=root/'assessment/findings.json';findings.write_text('{}')
+            record={'run_id':'current','findings_sha256':sha256(findings)}
+            path=root/'benchmark-reconciliation.json';path.write_text(json.dumps(record))
+            with patch('wormhole.ubuntu_coverage.reviewed_v2r8',return_value=True):
+                self.assertTrue(reports.benchmark_review(root,{'run_id':'current'},[]))
+                self.assertFalse(reports.benchmark_review(root,{'run_id':'different'},[]))
+                findings.write_text('{"changed":true}')
+                self.assertFalse(reports.benchmark_review(root,{'run_id':'current'},[]))
+
     def test_reproduction_package_exports_only_safe_fields(self):
         from wormhole.ubuntu_reproduction import sanitized
         value=sanitized({'source_revision':'a'*40,'error_category':'finalization_failed',
@@ -89,6 +102,12 @@ class Reports(unittest.TestCase):
                           'all_selected_automated_clean':True,'rules':[]})
             self.assertFalse(report['lab_iso_qualified'])
             self.assertEqual(report['functional_counts'],{'pass':len(policy['functional_checks'])})
+            self.assertIn('authorized-guest-procedure-for-usg-and-fips-updates',report['qualification_reasons'])
+            manual={'objective_results':{'only_allow_dod_certs':{
+                'observed_satisfied':True,'accountable_lab_review_supplied':True}}}
+            report=reports.generate(Path(value),result,controller_records=[{
+                'stage':'manual-observations','returncode':0,'output':json.dumps(manual)}])
+            self.assertIn('delegated-lab-trust-anchor-review',report['resolved_requirements'])
             self.assertIn('authorized-guest-procedure-for-usg-and-fips-updates',report['qualification_reasons'])
 
     def test_controller_change_reuses_inputs_but_installed_change_invalidates(self):

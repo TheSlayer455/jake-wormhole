@@ -1,5 +1,72 @@
 # Current engineering state
 
+## Ubuntu non-Pro closure and official Evaluate-STIG access
+
+[PR 46](https://github.com/TheSlayer455/jake-wormhole/pull/46) closes the delegated
+lab trust review and the frozen official V2R7-to-V2R8 manual benchmark comparison.
+Final runtime revision `a705e2be45979b0df8f4ac7178b43c95c4eb09d4` passed two fresh
+empty-disk encrypted installations of identical ISO bytes. Each passed 40/40
+functional checks, five objective manual observations, final SSH/Ansible, real
+assessment, SVD and exact-owned cleanup. Separate seed/host/boot identities and
+identical packages, Snaps, payloads, kernel, findings and installation contract
+were verified through the normal comparison. Both commands finished automatically
+without reporting/storage errors and returned nonzero for pending qualification.
+Normal publication refused `lab_policy_dependencies_pending`; no release directory
+was created. No active VM remains; unrelated Docker/K3s services remain active.
+
+Full CLI times were 665.923/669.224 seconds, including 26.433/27.704 seconds of
+post-run storage/reporting. VM-through-teardown times were 639.490/641.520 seconds.
+The first measured installation-to-host-key stage was 465.360 seconds, offline
+encryption/cold-start 63.324 seconds and SSH/Ansible/inventory/assessment 55.944
+seconds. These are two observations, not a causal speedup claim.
+
+Production +139/-23 across existing guest trust, coverage/manual/report/runtime/
+release and storage components; tests +139/-0. Five new regressions cover actual
+certificate stores, pinned manual deltas/newer text changes, cross-run/findings
+binding and oversized duplicated receipts. The service race is verified through
+real installs, not a mocked command assertion. Full source CI at `a705e2b` passed
+974 tests with 12 explicit skips (986 total), plus controlled parity; focused
+storage passed 29/29. Independent engineering-agent review found no blocker.
+The PR records delivered/merged revisions and final CI separately from runtime.
+
+The first fresh encrypted installation at `2a0fc82` passed 40/40 functional checks,
+all five objective manual observations, native assessment, SVD and exact-owned
+cleanup. Its 638 packages, three Snaps and two payloads remain attributable to
+that actual installation. The four reviewed global roots are valid and match
+their pinned official source; the separate lab CA remains scoped to lab services.
+
+The first controller then hit `record_too_large`: embedding both complete storage
+receipts exceeded the existing 256 KiB run-record limit. Original stderr and
+receipts remain private. Existing coverage/report commands recovered derived
+reports from unchanged native evidence. `134e1e1` fixes the owning storage return
+value: compact counts and a durable receipt reference, with full history retained.
+It changes no installed inputs or record-size limits. Its next real run saved a
+complete 13 KiB terminal failure record and referenced full receipts correctly.
+
+That repeat exposed an independent guest race: direct `postfix stop` returned
+before shutdown completed, and immediate start failed. The retained remote
+receiver establishes the stop/already-running/not-running sequence. All 40
+dependent checks were blocked, the full catalog never started and cleanup passed.
+`a705e2b` replaces the pair with the pinned package's actual default-instance
+systemd restart, preserving failures and loopback-only mail delivery. This changes
+installed inputs; the two final installations above verify the rebuilt candidate.
+
+Native Ubuntu outcomes remain 210 pass/one FIPS fail/14 not applicable/five not
+checked/409 not selected. All 188 frozen manual controls map; seven check/fix
+changes are reviewed using actual supplemental probes and native results. The
+409 upstream-unselected rules carry no Ubuntu STIG identifiers. The newer DISA
+manual V2R10 has 191 controls and remains a distinct, unqualified target. This is
+not USG execution or scanner equivalence. See [policy and sources](UBUNTU-LAB-POLICY.md).
+
+Evaluate-STIG remains unexecuted. The NAVSEA SPORK route timed out; strict-TLS
+Intelink access reached CAC/PIV/federated authentication. No package, current Linux
+support matrix or permitted lab execution contract was obtained. See the
+[Navy-hosted routes inspected and exact access boundary](EXTERNAL-INTEGRATION.md).
+The owner must supply an authorized package with its documentation privately.
+For Ubuntu qualification, the separate owner input is legitimate Pro entitlement;
+actual USG/FIPS enrollment, modules, reboot and assessment remain engineering work.
+No physical-token purchase or further owner review of trust roots is requested.
+
 ## Fresh two-OS execution and SVD proof
 
 Runtime-tested `77e6e1611d478fcc1a713d40e66907a80c3207c5` passed sequential fresh
@@ -37,7 +104,8 @@ Evaluate-STIG is not executed: no authorized release package/documentation was
 found in the inspected tool stores, and the official release endpoint was
 unreachable. Supply an authorized package/location, then verify its supported
 invocation. OpenSCAP is not a substitute claim. Legitimate Ubuntu Pro/actual
-USG-FIPS, vendor-content reconciliation and delegated trust review remain required.
+USG-FIPS remains required. Trust/manual-revision closure is recorded in the newer
+increment above; these earlier installation results retain their original meaning.
 
 ## Encrypted workstation retention
 

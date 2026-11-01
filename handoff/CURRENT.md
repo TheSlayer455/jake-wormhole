@@ -1,5 +1,30 @@
 # Current handoff
 
+## Current increment: non-Pro Ubuntu closure
+
+Use [PR 46](https://github.com/TheSlayer455/jake-wormhole/pull/46) and the
+[Ubuntu solution](solutions/ubuntu-install-hardening.md). `2a0fc82` produced a
+fresh encrypted 40/40 installation with all five objective manual observations.
+The terminal storage receipt overflow is fixed at `134e1e1`; full receipts remain
+durable and run records now reference them. A subsequent real guest failure saved
+the correct blocked/cleanup result and identified a Postfix stop/start race.
+`a705e2b` uses the packaged instance restart. Its two fresh same-ISO installations
+passed 40/40 checks and all five objective manual observations each, with complete
+native assessment, matching inventories/findings and independent seed/host/boot
+identities. CLI times: 665.923/669.224 seconds. Automatic reporting/storage cleanup
+passed; normal pending publication was refused and no VM remains. Source CI:
+974 passed/12 explicit skips plus parity. The PR records delivered/merged revisions
+and final CI; original runtime evidence stays pinned to `a705e2b`. Original
+failure evidence and runtime attribution remain intact; no ISO bytes changed for
+the storage-only correction; the later service fix does require a rebuilt ISO.
+See [current counts and limitations](../docs/STATE.md).
+
+Official Evaluate-STIG distribution requires authorized access/package/docs that
+this session has not obtained. Do not use a mirror or claim PowerShell/OpenSCAP
+proves that tool. Legitimate Pro entitlement is the remaining owner input for
+Ubuntu qualification; actual USG/FIPS execution follows. Physical hardware and
+another owner certificate review are not required by the declared lab profile.
+
 ## Current priority: two-OS runtime and assessment proof
 
 Fresh execution is verified at `77e6e16`: RHEL 10 passed six controller checks
@@ -11,7 +36,7 @@ Delivery merged at `1a8d412`; post-merge CI and original SVD replay/readback pas
 Fresh installation evidence stays attributed to `77e6e16`.
 Evaluate-STIG needs an authorized release package and its documentation before
 supported invocation can be implemented and executed. Ubuntu Pro is a separate
-owner input; benchmark reconciliation and delegated trust review remain engineering.
+owner input; the newer increment above records benchmark and trust closure.
 
 At `b881127`, selective archival reuses strict SSH, age and existing storage cleanup.
 A real 6 MiB probe and historical Ubuntu ISO archive/delete/restore passed; real

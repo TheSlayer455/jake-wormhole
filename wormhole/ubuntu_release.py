@@ -49,6 +49,8 @@ def eligible(current, previous, *, candidate, dependency_store):
         objectives=json.loads(manual['output']).get('objective_results',{})
         require(set(objectives)==MANUAL_RULES and all(x.get('observed_satisfied') is True for x in objectives.values()),'release_manual_requirements_pending')
         require(all(status in {'pass','notapplicable','notchecked'} for status in findings['manual_native_outcomes'].values()),'release_manual_native_failure')
+        from .ubuntu_reports import benchmark_review
+        require(benchmark_review(path,result,report['functional_results']),'release_benchmark_review_missing')
     delta=compare(previous,current)
     require(delta['equivalent_fresh_installations'],'release_repeatability_unproven')
     result=read_json(Path(current)/'result.json')

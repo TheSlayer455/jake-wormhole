@@ -507,7 +507,7 @@ class Store:
         workspace_path(operations,create=True)
         from uuid import uuid4
         operation=operations/(str(uuid4())+'.json')
-        receipt={'schema_version':'1.0','state':'prepared','at':now(),'actions':plan['actions'],
+        receipt={'schema_version':'1.0','operation_id':operation.stem,'state':'prepared','at':now(),'actions':plan['actions'],
                  'before':before,'blocked':plan['blocked']}
         # Bounded batches retain durable intent without thousands of fsyncs.
         atomic_json(operation,{**receipt,'actions':len(plan['actions'])})
@@ -586,4 +586,9 @@ def operate(command):
 
 def lifecycle(lease, identifier=None):
     store=Store()
-    return store.clean_held(lease=lease,current=identifier)
+    receipt=store.clean_held(lease=lease,current=identifier)
+    # Runs embed preflight and final cleanup. Detailed history stays in the
+    # existing durable operation record, relative to canonical infrastructure.
+    return {**{key:receipt[key] for key in ('schema_version','operation_id','state','at','actions',
+        'unlinked_allocated_bytes','filesystem_available_delta_bytes','cache_budget_exceeded','retention_budget_exceeded')},
+        'receipt':'storage-operations/'+receipt['operation_id']+'.json'}

@@ -242,6 +242,8 @@ def main():
     run.add_argument('--store',required=True);run.add_argument('--mode',choices=['stock-audit','hardened'],default='stock-audit')
     run.add_argument('--reuse-run',help='Verified immutable ISO from this reconciled run; new disk, identity and assessment are mandatory.')
     run.add_argument('--sandbox',action='store_true',help='Use the encrypted Ubuntu sandbox installation contract.')
+    run.add_argument('--baseline-manual',help='Official frozen manual XCCDF for benchmark comparison.')
+    run.add_argument('--target-manual',help='Official target manual XCCDF; paired with --baseline-manual.')
     options=p.parse_args()
     if options.command=='coverage':
         from .ubuntu_coverage import reconcile
@@ -250,6 +252,7 @@ def main():
         require(0<findings.stat().st_size<=16*1024**2,'assessment_size')
         rows=json.loads(findings.read_text())['rules']
         value=reconcile(rows,options.baseline_manual,options.target_manual)
+        value.update(run_id=options.run_id,findings_sha256=sha256(findings))
         atomic_json(run/'benchmark-reconciliation.json',value)
         print(json.dumps({k:v for k,v in value.items() if k!='controls'},indent=2));return 0
     if options.command=='verify-release':
@@ -290,7 +293,24 @@ def main():
     if options.command=='prepare':
         from .ubuntu_inputs import prepare
         value=prepare(options.store);print(json.dumps({'packages':len(value['packages']),'snapshot':value['snapshot']}));return 0
+    require(bool(options.baseline_manual)==bool(options.target_manual),'manual_benchmark_pair_required')
+    if options.baseline_manual:
+        from .ubuntu_coverage import reconcile
+        # Read/validate both inputs before allocating a VM; freeze their bytes for
+        # the post-run comparison, without modifying the candidate ISO.
+        baseline,target=Path(options.baseline_manual),Path(options.target_manual)
+        reconcile([],baseline,target)
+        manual_hashes=(sha256(baseline),sha256(target))
     value=vm_baseline.execute(options.source,options.terraform,ubuntu_mode=options.mode,dependency_store=options.store,reuse_run=options.reuse_run,sandbox=options.sandbox)
+    if options.baseline_manual:
+        require(manual_hashes==(sha256(baseline),sha256(target)),'manual_benchmark_changed')
+        folder=vm_baseline.ROOT/'vm-runs'/run_id(value['run_id'])
+        findings=folder/'assessment/findings.json'
+        if findings.exists():
+            reconciliation=reconcile(json.loads(findings.read_text())['rules'],baseline,target)
+            reconciliation.update(run_id=value['run_id'],findings_sha256=sha256(findings))
+            atomic_json(folder/'benchmark-reconciliation.json',reconciliation)
+            report(folder,value)
     print(json.dumps(value,indent=2))
     return 0 if value.get('lab_iso_qualified') is True else 1
 
