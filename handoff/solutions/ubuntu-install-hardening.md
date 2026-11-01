@@ -3,15 +3,75 @@
 Prospective policy correction: [lab policy v2](../../docs/UBUNTU-LAB-POLICY.md)
 does not require physical-token hardware and delegates trust-anchor review to
 Codex. Physical assurance remains unverified. Legitimate Pro entitlement remains
-the owner-supplied dependency; USG/FIPS execution and lab trust review remain
+the owner-supplied Ubuntu qualification dependency; USG/FIPS execution remains
 engineering work. The v1 results and dependency statement below are historical,
 not a request for the owner to review 141 certificates or buy hardware.
 
-Current verified increment: [PAM revocation repair and final pair](ubuntu-pam-crl.md),
+## Current trust and benchmark closure
+
+The final pair at
+[`a705e2b`](https://github.com/TheSlayer455/jake-wormhole/tree/a705e2be45979b0df8f4ac7178b43c95c4eb09d4)
+passed 40/40 functional checks and all five objective manual observations per
+fresh encrypted installation. Same ISO/contract, distinct seed/host/boot identities,
+matching 638 packages/three Snaps/two payloads, native findings and cleanup were
+verified. Full CLI times were 665.923/669.224 seconds. Both automatic terminal
+paths completed without report/storage errors; nonzero qualification status and
+normal publication refusal preserve the remaining FIPS dependency. Native totals
+remain 210 pass/one FIPS fail/14 not applicable/five not checked/409 not selected.
+No qualified release or production eligibility is claimed.
+
+The fresh encrypted installation at
+[`2a0fc82`](https://github.com/TheSlayer455/jake-wormhole/tree/2a0fc82f0dc79100d395d7a924bdec30583394d9)
+passed 40/40 functional checks and all five objective manual observations. The
+inherited public trust set matched stock media but included four expired roots;
+the declared offline workload required none. The installation now uses native
+CA deselection and verifies exactly four valid, pinned official roots in both
+the trust bundle and hashed directory. Lab service/PAM trust remains separate.
+This is owner-delegated home-lab review, not government or physical-token assurance.
+
+The official V2R7/V2R8 comparison maps all 188 controls and verifies the seven
+changed check/fix records against the run's actual supplemental checks/native
+results. Five native manual outcomes remain `notchecked`; objective evidence is
+retained separately. V2R10 and actual USG execution remain distinct and unproven.
+See [frozen policy and authoritative sources](../../docs/UBUNTU-LAB-POLICY.md).
+
+Implementation: [guest trust](https://github.com/TheSlayer455/jake-wormhole/blob/a705e2be45979b0df8f4ac7178b43c95c4eb09d4/ubuntu/guest/sandbox.sh),
+[observation](https://github.com/TheSlayer455/jake-wormhole/blob/a705e2be45979b0df8f4ac7178b43c95c4eb09d4/ubuntu/guest/observe.py),
+[manual comparison](https://github.com/TheSlayer455/jake-wormhole/blob/a705e2be45979b0df8f4ac7178b43c95c4eb09d4/wormhole/ubuntu_coverage.py).
+Run `PYTHONPATH=tests:. python3 -m unittest test_ubuntu_sandbox test_ubuntu_assessment test_ubuntu_reports test_storage`
+for the focused examples. The existing `ubuntu_runtime run` accepts paired
+`--baseline-manual` and `--target-manual` files, freezes their hashes before
+allocation and binds the resulting comparison to that run's native findings.
+Use the exact normal runtime command below with those optional inputs. Candidate
+reuse still requires unchanged installed inputs; controller/report changes do
+not remaster the ISO.
+
+Pinned regressions cover [real certificate-store handling](https://github.com/TheSlayer455/jake-wormhole/blob/a705e2be45979b0df8f4ac7178b43c95c4eb09d4/tests/test_ubuntu_sandbox.py),
+[manual coverage](https://github.com/TheSlayer455/jake-wormhole/blob/a705e2be45979b0df8f4ac7178b43c95c4eb09d4/tests/test_ubuntu_assessment.py),
+[run/findings attribution](https://github.com/TheSlayer455/jake-wormhole/blob/a705e2be45979b0df8f4ac7178b43c95c4eb09d4/tests/test_ubuntu_reports.py)
+and [bounded storage receipts](https://github.com/TheSlayer455/jake-wormhole/blob/a705e2be45979b0df8f4ac7178b43c95c4eb09d4/tests/test_storage.py).
+
+The first controller's post-cleanup receipt overflow is preserved as a failure.
+Existing coverage/report entry points recovered derived evidence. The small
+[storage correction](https://github.com/TheSlayer455/jake-wormhole/blob/a705e2be45979b0df8f4ac7178b43c95c4eb09d4/wormhole/storage.py)
+retains full durable receipts and embeds only summaries/references in run records.
+The following repeat preserved a real finalization failure with all 40 dependent
+checks blocked and verified cleanup. Remote logging established a direct Postfix
+stop/start race. [The correction](https://github.com/TheSlayer455/jake-wormhole/blob/a705e2be45979b0df8f4ac7178b43c95c4eb09d4/ubuntu/guest/sandbox.sh)
+uses the pinned package's default-instance systemd restart; no custom wait or
+ignored exit status. The final pair above verifies the rebuilt candidate. For Luna, inspect the existing **ansible control node**
+implementation; adapt only the relevant trust or receipt behavior, preserve the
+**rhel kvm host** security policy, and verify in the actual runner context. Extra,
+expired or untrusted roots must fail observation; missing benchmark evidence or
+FIPS must keep qualification pending. Preserve original receipts on recovery.
+
+## Earlier PAM repair
+
+[PAM revocation repair and final pair](ubuntu-pam-crl.md),
 tested at `3e1e00bc64d6d7c3fb4d3f2d846188626db8eace`. Two fresh encrypted installations
 of identical ISO bytes passed 40/40 checks in 651/638 seconds, with matching
 inventories and 210 pass/one FIPS fail/14 not applicable/five native manual/409
-unselected outcomes. Actual pending publication is refused. Owner inputs remain:
+unselected outcomes. Actual pending publication was refused. The then-recorded inputs were:
 legitimate Pro entitlement for USG/FIPS and vendor-content verification, real
 physical-token assurance, and accountable review of 141 installed trust anchors.
 The private provider procedure below remains applicable. No qualified Ubuntu ISO

@@ -45,6 +45,22 @@ plugin framework merely to create another test case.
 
 ## Current implementation evidence
 
+Evaluate-STIG distribution was investigated on October 31, 2026.
+[NAVSEA confirms the tool's origin](https://www.navsea.navy.mil/Media/News/Article-View/Article/1946720/nswc-crane-employee-develops-software-tool-to-increase-cybersecurity-cost-avoid/),
+but that announcement is not a current support matrix. The Navy-hosted
+[SPORK release route](https://spork.navsea.navy.mil/nswc-crane-division/evaluate-stig/-/releases)
+timed out from both lab endpoints. The alternate
+[NAVSEA-RMF Intelink route](https://intelshare.intelink.gov/sites/NAVSEA-RMF), reached
+with strict TLS using the pinned official DoD roots, redirected to an authentication
+page offering CAC/PIV or approved federated accounts. No authentication option or
+terms were accepted; the behind-login contents were not inspected. No publicly
+accessible official release package or current Linux support matrix was verified.
+An authorized owner must obtain a package permitted for this lab
+and provide its private path with the included documentation. Do not substitute
+an unofficial mirror or equate PowerShell availability with Evaluate-STIG support.
+Actual Evaluate-STIG execution on both OS profiles remains unverified; OpenSCAP
+and their existing fresh installation/SVD evidence remain separate capabilities.
+
 The [Ubuntu helper correction](https://github.com/TheSlayer455/jake-wormhole/blob/e8fdaa62b831eef071daa6eedff3bd808a196e96/wormhole/ubuntu_runtime.py)
 and [generated-helper regression](https://github.com/TheSlayer455/jake-wormhole/blob/e8fdaa62b831eef071daa6eedff3bd808a196e96/tests/test_ubuntu_helper.py)
 restore password-required Ansible access after the readiness split. One fresh
@@ -52,9 +68,11 @@ encrypted Ubuntu installation passed 40/40 functional checks with real assessmen
 and cleanup; qualification remains pending. See [current evidence](STATE.md).
 
 The [prospective Ubuntu policy correction](UBUNTU-LAB-POLICY.md) removes the stale
-physical-hardware owner dependency and assigns lab trust review to Codex. Only
-legitimate Pro entitlement is currently identified as required owner input;
-actual FIPS/USG execution, content reconciliation and trust review remain work.
+physical-hardware owner dependency and assigns lab trust review to Codex. For
+Ubuntu qualification, legitimate Pro entitlement is the required owner input;
+actual FIPS/USG execution remains work. The [final Ubuntu pair](../handoff/solutions/ubuntu-install-hardening.md)
+at `a705e2b` passed 40/40 checks each and closed delegated trust/frozen manual
+revision review with actual evidence. The newer manual V2R10 remains distinct.
 
 RHEL 10.0 is newly active: [installation baseline and readiness defect](../handoff/solutions/rhel10-install-baseline.md).
 The first real install exposed inaccessible completion evidence despite working
@@ -62,7 +80,7 @@ diagnostic SSH. The corrected fresh retry passed normal final SSH/Ansible, RPM
 inventory and complete native vendor-draft audit. It remains an unqualified
 installation baseline with security findings, not a hardened release.
 
-Current Ubuntu result: [source-pinned PAM solution](../handoff/solutions/ubuntu-pam-crl.md).
+Earlier Ubuntu result: [source-pinned PAM solution](../handoff/solutions/ubuntu-pam-crl.md).
 Two fresh encrypted installations passed 40/40 checks each with matching native
 results and inventories. The repaired OpenSSL/CRL path and quiet PAM conversation
 are proven; qualification remains pending the exact external inputs listed there.

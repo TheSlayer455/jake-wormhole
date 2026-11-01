@@ -15,7 +15,21 @@ and fleet fault experiments, explicit initialization/configuration receipts and
 verified Ubuntu/UBI candidate reuse and contained initialization recovery after
 coordinator interruption. Actual Ubuntu/UBI, fault, reuse, mixed/twenty-target, recovery and private local publication execution is verified at the recorded sources. Production ISO eligibility remains false.
 
-Container reference automation remains the fast regression layer. The authorized [home real-ISO extension](handoff/ISO-FOUNDATION.md) now includes a verified [RHEL 10.0 installation baseline](handoff/solutions/rhel10-install-baseline.md): fresh KVM installation, trusted SSH/Ansible, 413 RPM records and all 948 native vendor-draft assessment outcomes. This is not hardened or qualified. Ubuntu retains two fresh installations of the same encrypted/hardened ISO with 40/40 checks each, including real SSH/Ansible, cold-start unlock, isolated logging/time/PKI services and cleanup. Actual Ubuntu OpenSCAP reports 210 pass, one FIPS failure, 14 not applicable, five not checked and 409 upstream not selected. Required USG/FIPS/vendor-content verification and delegated lab trust review keep Ubuntu qualification and successful qualified publication pending. Physical-token hardware is not required by prospective lab policy v2; physical assurance remains unverified. See [current continuation](handoff/CURRENT.md) and [source-pinned PAM repair](handoff/solutions/ubuntu-pam-crl.md). The source repository is public by [Jake's October 24 decision](docs/decisions/0006-public-source.md); runtime inputs, credentials and raw evidence remain private.
+Active real-ISO scope is RHEL 10 and Ubuntu 22.04; containers remain the fast
+regression layer. The [RHEL baseline](handoff/solutions/rhel10-install-baseline.md)
+proves fresh KVM installation, trusted SSH/Ansible, a 413-package SVD and all 948
+native assessment outcomes. Its 261 findings prevent qualification.
+The [Ubuntu sandbox](handoff/solutions/ubuntu-install-hardening.md) exercises
+encrypted installation, 40 functional checks, isolated logging/time/PKI services,
+real OpenSCAP and cleanup. Current native outcomes are 210 pass/one FIPS fail/
+14 not applicable/five not checked/409 not selected. Delegated lab trust and the
+frozen V2R8 manual comparison have evidence; actual USG/FIPS remains unverified.
+No physical-token purchase or further owner certificate review is required.
+Evaluate-STIG still needs an authorized official package and supported invocation;
+OpenSCAP is not evidence that it ran. See [current continuation](handoff/CURRENT.md).
+No lab-qualified ISO or production eligibility is claimed. The repository is
+[public](docs/decisions/0006-public-source.md); credentials, licensed media and raw
+runtime evidence remain private.
 
 **Luna and external engineering agents: [start here](docs/EXTERNAL-INTEGRATION.md).** The short guide maps capabilities to source and tests, with explicit integration limits.
 
