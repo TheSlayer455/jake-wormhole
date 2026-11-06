@@ -2,6 +2,7 @@
 
 This baseline check is not a pipeline run or a comprehensive secret scanner.
 """
+import ipaddress
 import json
 from pathlib import Path
 import re
@@ -10,17 +11,68 @@ import sys
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
+PORTABLE = {
+    'handoff/LIGHTSPEED-CROSS-REFERENCE.md',
+    'handoff/WORMHOLE-SANITIZED-REFERENCE.md',
+}
 REQUIRED = {
     'AGENTS.md', 'README.md', 'docs/STATE.md', 'docs/TASKS.md',
     'docs/ARCHITECTURE.md', 'docs/FIDELITY.md', 'docs/DISCOVERY.md',
     'docs/REPOSITORY.md', 'docs/decisions/0001-container-reference.md',
     'handoff/CURRENT.md', 'handoff/reviews/README.md', 'prompts/CONTINUE.md',
     'prompts/REVIEW.md', 'scripts/verify_repository.py', '.github/workflows/verify.yml',
-}
+} | PORTABLE
 PRIVATE_KEY = re.compile(rb'-----BEGIN (?:OPENSSH |RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----')
 TOKEN = re.compile(rb'\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{60,})\b')
 PRIVATE_ENDPOINT = re.compile(rb'https?://[^\s/()]+\.ts\.net(?=[:/\s)]|$)', re.I)
 LINK = re.compile(r'(?<!!)\[[^\]]+\]\((<[^>]+>|[^\s)]+)(?:\s+"[^"]*")?\)')
+URL = re.compile(r'(?:[a-z][a-z0-9+.-]*://|mailto:|(?<!:)//)[^\s<>`"\x27)]+', re.I)
+PUBLIC_REFERENCE = re.compile(
+    r'https://github\.com/TheSlayer455/jake-wormhole(?:/(?:'
+    r'blob/[0-9a-f]{40}/[A-Za-z0-9_./-]+(?:#L\d+(?:-L\d+)?)?|'
+    r'commit/[0-9a-f]{40}|pull/\d+|actions/runs/\d+))?')
+ADDRESS = re.compile(r'(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w.])|'
+                     r'(?<![\w:])(?:[0-9a-f]*:){2,}[0-9a-f:.]*(?:%[\w.-]+)?', re.I)
+PORTABLE_PATTERNS = {
+    'private material': re.compile(r'-----BEGIN (?:[A-Z ]*PRIVATE KEY|CERTIFICATE)-----|'
+                                   r'\bSHA256:[A-Za-z0-9+/]{20,}|\bssh-(?:rsa|ed25519)\s+AAAA'),
+    'credential assignment': re.compile(
+        r'''\b(?:password|passwd|token|secret|api[_-]?key|access[_-]?key|private[_-]?key|authorization)\b["\x27]?\s*[:=]\s*\S+''', re.I),
+    'private path': re.compile(r'(?:[A-Z]:[\\/]|\\\\[^\s]+|~[/\\]|'
+                               r'(?<![\w/])/(?:home|Users|root|srv|mnt|private|run|var)/)', re.I),
+    'internal name': re.compile(r'\b[\w-]+(?:\.[\w-]+)*\.(?:com|net|org|io|gov|edu|local|lan|internal|corp|home)\b|'
+                                r'\b(?:hostname|ansible_host|remote_user|ansible_user)\s*[:=]\s*\S+|'
+                                r'\b[\w.-]+@[\w.-]+', re.I),
+}
+
+
+def portable_errors(name, text):
+    """Heuristics for the two allowlisted handoffs, not a release/DLP guarantee.
+
+    Authors must select safe facts and independently review prose before sharing.
+    Diagnostics deliberately omit matched contents, including possible secrets.
+    """
+    errors = []
+    for number, line in enumerate(text.splitlines(), 1):
+        categories = set()
+        urls = list(URL.finditer(line))
+        if any(not PUBLIC_REFERENCE.fullmatch(match.group().rstrip('.,;')) for match in urls):
+            categories.add('nonallowlisted or unpinned URL')
+        # Approved public source references contain paths that are not runtime paths.
+        prose = URL.sub('', line)
+        for category, pattern in PORTABLE_PATTERNS.items():
+            if pattern.search(prose):
+                categories.add(category)
+        if PRIVATE_KEY.search(line.encode()) or TOKEN.search(line.encode()):
+            categories.add('private material')
+        for match in ADDRESS.finditer(prose):
+            try:
+                ipaddress.ip_address(match.group().split('%', 1)[0])
+            except ValueError:
+                continue
+            categories.add('literal address')
+        errors.extend(f'Portable handoff {name}:{number}: {category}' for category in sorted(categories))
+    return errors
 
 
 def git(*args):
@@ -55,6 +107,8 @@ def verify():
             errors.append('Baseline source-size bound exceeded: ' + name)
             continue
         raw = target.read_bytes()
+        if name in PORTABLE:
+            errors.extend(portable_errors(name, raw.decode('utf-8')))
         if PRIVATE_KEY.search(raw) or TOKEN.search(raw):
             errors.append('Possible private key or known token format in: ' + name)
         if PRIVATE_ENDPOINT.search(raw):
@@ -75,6 +129,7 @@ def verify():
         'working_tree_clean': not bool(git('status', '--porcelain')),
         'local_link_targets_checked': links, 'source_bytes': total, 'errors': errors,
         'runtime_pipeline_tested': False, 'comprehensive_secret_scan': False,
+        'portable_handoffs_checked': sorted(PORTABLE & tracked),
     }
 
 
