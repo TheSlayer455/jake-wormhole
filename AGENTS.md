@@ -32,6 +32,17 @@ regressions pass and the actual runtime outcome is proven.
 
 ## Authorized scope
 
+The official [Lightspeed comparison prompt](handoff/LIGHTSPEED-CROSS-REFERENCE.md)
+and [sanitized reference](handoff/WORMHOLE-SANITIZED-REFERENCE.md) are milestone
+deliverables. Reconcile changed capabilities with original attributable evidence,
+record source/runtime revisions and evidence dates, and preserve unresolved limits.
+Construct portable prose from the reference's safe-fact allowlist; never ingest
+private work source or raw logs. Run the existing repository verifier and obtain
+independent engineering review of the exact portable diff before sharing. Record
+the actual review in the PR; pattern checks are not comprehensive disclosure review.
+If a milestone changes no evidence, record that instead of inventing a new runtime
+claim. Do not rerun installations for a handoff-only change.
+
 Active real-ISO development is permanently limited to RHEL 10 and Ubuntu 22.04.
 No additional real OS profiles or enterprise fleet are authorized. Preserve
 historical evidence and the existing Ubuntu/UBI container regression layer.

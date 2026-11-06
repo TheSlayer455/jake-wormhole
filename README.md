@@ -33,6 +33,12 @@ runtime evidence remain private.
 
 **Luna and external engineering agents: [start here](docs/EXTERNAL-INTEGRATION.md).** The short guide maps capabilities to source and tests, with explicit integration limits.
 
+For a current Lightspeed failure, copy the official
+[cross-reference prompt](handoff/LIGHTSPEED-CROSS-REFERENCE.md) into the authorized
+work session with its [sanitized evidence reference](handoff/WORMHOLE-SANITIZED-REFERENCE.md).
+It compares the first failed lifecycle boundary without exporting private code or
+assuming the lab installation proves a proprietary image works.
+
 Completed ISO delivery can enter the existing RHEL 10 BIOS acceptance path with
 `python -m wormhole intake register /private/inbox/release.ready.json`, then
 `python -m wormhole intake submit REQUEST_SHA256 --terraform /private/tools/terraform`. Periodic

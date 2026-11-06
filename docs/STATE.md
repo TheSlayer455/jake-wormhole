@@ -1,5 +1,19 @@
 # Current engineering state
 
+## Portable cross-reference deliverable
+
+The [Luna comparison prompt](../handoff/LIGHTSPEED-CROSS-REFERENCE.md) and
+[sanitized reference](../handoff/WORMHOLE-SANITIZED-REFERENCE.md) are maintained
+milestone deliverables. They compare equivalent lifecycle contracts, preserve
+actual evidence categories and prohibit private-source export. Original OS
+records were reread without runtime mutation; no new installation is claimed.
+Selected-pattern sanitization runs in the existing repository/CI verifier;
+independent review remains necessary because heuristics cannot certify disclosure.
+[PR 47](https://github.com/TheSlayer455/jake-wormhole/pull/47) records final delivery
+and CI. Production +56/-1, tests +79/-0; three focused cases cover allowed public
+references, network/reference refusal and private configuration/material refusal.
+Independent engineering-agent review found no remaining blocking findings.
+
 ## Ubuntu non-Pro closure and official Evaluate-STIG access
 
 [PR 46](https://github.com/TheSlayer455/jake-wormhole/pull/46) closes the delegated
