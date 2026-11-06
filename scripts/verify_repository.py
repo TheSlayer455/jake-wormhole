@@ -37,7 +37,7 @@ PORTABLE_PATTERNS = {
     'private material': re.compile(r'-----BEGIN (?:[A-Z ]*PRIVATE KEY|CERTIFICATE)-----|'
                                    r'\bSHA256:[A-Za-z0-9+/]{20,}|\bssh-(?:rsa|ed25519)\s+AAAA'),
     'credential assignment': re.compile(
-        r'''\b(?:password|passwd|token|secret|api[_-]?key|access[_-]?key|private[_-]?key|authorization)\b["\x27]?\s*[:=]\s*\S+''', re.I),
+        r'''\b(?:[\w-]+[_-])?(?:password|passwd|token|secret|api[_-]?key|access[_-]?key|private[_-]?key|authorization)(?:[_-][\w-]+)?\b["\x27]?\s*[:=]\s*\S+''', re.I),
     'private path': re.compile(r'(?:[A-Z]:[\\/]|\\\\[^\s]+|~[/\\]|'
                                r'(?<![\w/])/(?:home|Users|root|srv|mnt|private|run|var)/)', re.I),
     'internal name': re.compile(r'\b[\w-]+(?:\.[\w-]+)*\.(?:com|net|org|io|gov|edu|local|lan|internal|corp|home)\b|'

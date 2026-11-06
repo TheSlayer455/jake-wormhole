@@ -54,6 +54,9 @@ class PortableHandoff(unittest.TestCase):
     def test_secret_configuration_key_material_and_private_paths_are_refused(self):
         fixtures = [
             ('password: not-a-credential', 'credential assignment'),
+            ('ansible_password: not-a-credential', 'credential assignment'),
+            ('ansible_become_password: not-a-credential', 'credential assignment'),
+            ('UBUNTU_PRO_TOKEN=not-a-credential', 'credential assignment'),
             ('"api_key" = "not-a-credential"', 'credential assignment'),
             ('ansible_host: hidden-node', 'internal name'),
             ('-----BEGIN ' + 'PRIVATE KEY-----', 'private material'),

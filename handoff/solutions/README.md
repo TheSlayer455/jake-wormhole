@@ -1,5 +1,9 @@
 # Proven solution index
 
+For cross-system diagnosis, use the official [Luna prompt](../LIGHTSPEED-CROSS-REFERENCE.md)
+and [sanitized capability reference](../WORMHOLE-SANITIZED-REFERENCE.md). They link
+these experiments to pinned source and separate runtime proof from pending work.
+
 Only completed experiments appear here. The [ISO extension checkpoint](../ISO-FOUNDATION.md)
 tracks pending installation, hardening, assessment and publication work.
 

@@ -1,6 +1,13 @@
 # Minx work index
 
-Current increment: `codex/WORM-001-evaluate-stig-closure`, [PR 46](https://github.com/TheSlayer455/jake-wormhole/pull/46).
+Current increment: `codex/WORM-001-lightspeed-cross-reference`. Deliver the
+[copy-ready comparison prompt](../handoff/LIGHTSPEED-CROSS-REFERENCE.md),
+[sanitized verified reference](../handoff/WORMHOLE-SANITIZED-REFERENCE.md) and small
+existing-verifier extension. Reconcile original evidence, obtain independent
+engineering review, run source/CI checks and record the reviewable delivery.
+No runtime implementation, installation inputs or qualification policy changes.
+
+Completed increment: `codex/WORM-001-evaluate-stig-closure`, [PR 46](https://github.com/TheSlayer455/jake-wormhole/pull/46), merged at `56ca6fd` with passing main CI.
 Official Evaluate-STIG distribution is authentication/network blocked; no package
 or supported Linux invocation has been obtained. Non-Pro work closes guest trust
 and the frozen manual benchmark delta. First fresh Ubuntu installation at `2a0fc82`

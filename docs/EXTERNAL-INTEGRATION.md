@@ -1,5 +1,14 @@
 # External integration: start here
 
+**Official comparison deliverable:** use the copy-ready
+[Lightspeed cross-reference prompt](../handoff/LIGHTSPEED-CROSS-REFERENCE.md) and
+[verified sanitized reference](../handoff/WORMHOLE-SANITIZED-REFERENCE.md) from the
+same public revision. Luna inspects private sources only inside its authorized
+environment and returns newly written, sanitized findings. Reconcile the reference
+after meaningful evidence changes, with the existing source hygiene check and
+independent review. It distinguishes tested installation, source fixtures and
+pending qualification; it does not authorize copying operational examples wholesale.
+
 **Immediate Luna handoff: [completed-directory intake into existing acceptance](../handoff/solutions/directory-intake.md).**
 Validate team-delivered ISO bytes using their declared installation contract;
 the private build/Forge contract is needed for later source builds, not this

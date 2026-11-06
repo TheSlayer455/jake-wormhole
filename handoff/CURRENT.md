@@ -1,6 +1,17 @@
 # Current handoff
 
-## Current increment: non-Pro Ubuntu closure
+## Current increment: portable Lightspeed cross-reference
+
+The official [copy-ready Luna prompt](LIGHTSPEED-CROSS-REFERENCE.md) consumes the
+[sanitized evidence reference](WORMHOLE-SANITIZED-REFERENCE.md). It requires a
+failure-first matrix, original ISO contract preservation and a safe report, with
+no proprietary source transfer. The reference was reconciled against current
+main, pinned implementation/checkpoints and read-only original OS records; no new
+installation or scanner capability is claimed. The existing repository verifier
+checks both portable files. Maintain them after meaningful evidence changes and
+record independent review and final delivery/CI in the PR.
+
+## Previous increment: non-Pro Ubuntu closure
 
 Use [PR 46](https://github.com/TheSlayer455/jake-wormhole/pull/46) and the
 [Ubuntu solution](solutions/ubuntu-install-hardening.md). `2a0fc82` produced a
