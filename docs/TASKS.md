@@ -1,6 +1,6 @@
 # Minx work index
 
-Current increment: `codex/WORM-001-lightspeed-cross-reference`. Deliver the
+Current increment: `codex/WORM-001-lightspeed-cross-reference`, [PR 47](https://github.com/TheSlayer455/jake-wormhole/pull/47). Deliver the
 [copy-ready comparison prompt](../handoff/LIGHTSPEED-CROSS-REFERENCE.md),
 [sanitized verified reference](../handoff/WORMHOLE-SANITIZED-REFERENCE.md) and small
 existing-verifier extension. Reconcile original evidence, obtain independent

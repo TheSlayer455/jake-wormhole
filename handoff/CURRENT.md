@@ -9,7 +9,10 @@ no proprietary source transfer. The reference was reconciled against current
 main, pinned implementation/checkpoints and read-only original OS records; no new
 installation or scanner capability is claimed. The existing repository verifier
 checks both portable files. Maintain them after meaningful evidence changes and
-record independent review and final delivery/CI in the PR.
+use [PR 47](https://github.com/TheSlayer455/jake-wormhole/pull/47) for tested,
+delivered/merged revisions and final CI. Independent engineering-agent review of
+`089670b`'s content found no blocking issues or obvious confidential information;
+the three focused tests passed. This is not human approval or a runtime rerun.
 
 ## Previous increment: non-Pro Ubuntu closure
 
