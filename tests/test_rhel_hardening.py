@@ -63,7 +63,7 @@ class HardenedInputs(unittest.TestCase):
             result = subprocess.run(['bash', '-n'], input=script, text=True, capture_output=True)
             self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('0|2)', h.FINALIZE)
-        self.assertIn('*) exit "$result"', h.FINALIZE)
+        self.assertIn('exit "$result"', h.FINALIZE)
         self.assertNotIn('WORMHOLE_FINAL_HOST_KEY_BEGIN', h.FINALIZE)
         self.assertIn('installation-boot-id)" !=', h.READY)
         self.assertIn('ssh_host_rsa_key.pub', h.READY)
@@ -84,6 +84,19 @@ class HardenedInputs(unittest.TestCase):
                         {'candidate_sha256': 'c' * 64}, {'installed_input_fingerprint': 'c' * 64}):
             with self.assertRaises(RunError): h.verify_reuse({**manifest, **changes}, 'a' * 64, 'b' * 64)
         self.assertNotIn('lab_iso_qualified', h.installation_contract())
+
+    @unittest.skipUnless(shutil.which('bash'), 'Actual Bash ERR semantics required')
+    def test_native_findings_do_not_emit_installer_failure_but_scanner_error_does(self):
+        block=h.FINALIZE.split('if timeout ',1)[1].split('test -s ',1)[0].replace('/dev/ttyS0','/dev/stdout')
+        for code in (0,2,3):
+            script="set -euo pipefail\ntrap 'echo INSTALLER_FAILED' ERR\ntimeout(){ return "+str(code)+"; }\nif timeout "+block+"\necho CONTINUE\n"
+            result=subprocess.run(['bash'],input=script,text=True,capture_output=True)
+            if code in (0,2):
+                self.assertEqual(result.returncode,0,result.stderr)
+                self.assertEqual(result.stdout,'CONTINUE\n')
+            else:
+                self.assertEqual(result.returncode,3)
+                self.assertEqual(result.stdout,'WORMHOLE_INSTALLATION_FAILED\n')
 
     def test_wrong_content_is_rejected_before_any_build_output(self):
         with tempfile.TemporaryDirectory() as directory:

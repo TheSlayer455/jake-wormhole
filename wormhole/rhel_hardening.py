@@ -121,15 +121,19 @@ cd /usr/local/share/wormhole
 sha256sum --check content.sha256
 install -d -m 0700 /var/lib/wormhole/install-assessment
 printf '%s\n' WORMHOLE_HARDENING_STARTED > /dev/ttyS0
-set +e
-timeout --signal=TERM --kill-after=15 900 oscap xccdf eval --remediate \
+if timeout --signal=TERM --kill-after=15 900 oscap xccdf eval --remediate \
     --profile xccdf_org.ssgproject.content_profile_stig \
     --results /var/lib/wormhole/install-assessment/remediation-xccdf.xml \
     --results-arf /var/lib/wormhole/install-assessment/remediation-arf.xml \
-    --report /var/lib/wormhole/install-assessment/remediation.html ssg-rhel10-ds.xml
-result=$?
-set -e
-case "$result" in 0|2) ;; *) exit "$result" ;; esac
+    --report /var/lib/wormhole/install-assessment/remediation.html ssg-rhel10-ds.xml; then
+    result=0
+else
+    result=$?
+fi
+case "$result" in
+    0|2) ;;
+    *) printf '%s\n' WORMHOLE_INSTALLATION_FAILED > /dev/ttyS0; exit "$result" ;;
+esac
 test -s /var/lib/wormhole/install-assessment/remediation-xccdf.xml
 printf '%s\n' "$result" > /var/lib/wormhole/remediation-exit
 # Complete the declared final-account contract after profile remediation. This
