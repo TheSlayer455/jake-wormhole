@@ -13,11 +13,12 @@ import subprocess
 
 from . import rhel_inputs as baseline
 from .media_store import fingerprint, require
-from .runs import atomic_json, run_id
+from .runs import SOURCE_ROOT, run_id
 from .ubuntu_encryption import EARLY
 from .vm_inputs import sha256
 
 CAPABILITY = 'rhel-hardened-assessment-candidate-iso'
+POLICY = SOURCE_ROOT / 'profiles/rhel10-lab-policy-v1.json'
 CONTENT_SHA256 = '3a22f1f747ef7b895268b2da838f680b6a7ea421c5132d6ac4141d858afc60c6'
 PROFILE = 'xccdf_org.ssgproject.content_profile_stig'
 CONTENT = {'release': '0.1.82', 'benchmark': 'RHEL 10 STIG V1R2',
@@ -237,6 +238,7 @@ def installation_contract():
         'host_trust': 'installed-system-serial-rsa-host-key', 'disk': 'luks2-pbkdf2-lvm',
         'guest_memory_mib': 8192, 'guest_vcpus': 2, 'guest_disk_bytes': 32 * 1024**3,
         'content': dict(CONTENT), 'recipe_sha256': sha256(__file__),
+        'policy_sha256': sha256(POLICY),
         'console_receiver_sha256': fingerprint(EARLY),
         'services': {'ca': 'run-seed-scoped', 'logging': 'existing-sandbox-tls',
                      'audit': 'existing-sandbox-ascii', 'time': 'lab-host-clock'},
@@ -375,6 +377,7 @@ def build(source, destination, seed_dir, identifier, public_key, guest_address, 
     certificate = seed_dir / 'sandbox-ca.crt'; shutil.copyfile(ca_file, certificate)
     result = baseline.finish_seed(destination, seed_dir, config, command, seed_files=(certificate,), capability=CAPABILITY,
         source=dict(baseline.RHEL), installation_contract=contract, installed_input_fingerprint=identity,
+        policy_sha256=contract['policy_sha256'],
         sandbox_ca_sha256=sha256(certificate),
         mode='hardened', assessment_content=dict(CONTENT), candidate_reused=reuse is not None,
         media_checksum_tool_sha256=(manifest.get('media_checksum_tool_sha256') if reuse is not None else sha256(checksum_tool)))

@@ -46,8 +46,11 @@
     "evaluate_stig": "requested-unverified",
     "nessus": "unverified"
   },
-  "unresolved_requirements": [
+  "external_work_equivalence_pending": [
     "approved-evaluate-stig-package-and-supported-rhel10-execution",
+    "authorized-nessus-execution"
+  ],
+  "unresolved_requirements": [
     "cryptographic-module-and-operational-environment-verification",
     "rule-level-manual-evidence"
   ],
