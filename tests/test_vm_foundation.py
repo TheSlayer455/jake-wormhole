@@ -403,10 +403,15 @@ class VMExecution(unittest.TestCase):
                 self.assertEqual(json.loads((run/'result.json').read_text()),value)
 
     def test_real_authentication_cannot_hide_failed_readiness_or_missing_dependents(self):
-        from wormhole.vm_baseline import controller_checks,HELPER_CODE
+        from wormhole.vm_baseline import controller_checks,controller_failure,HELPER_CODE
         compile(HELPER_CODE,'<existing-vm-helper>','exec')
         rows=[{'stage':'final-authentication','returncode':0},
               {'stage':'final-system-readiness','returncode':42}]
         checks=controller_checks(rows,assessment=True)
         self.assertEqual(checks,{'final-authentication':'pass','final-system-readiness':'fail',
             'ansible-readiness':'blocked','functional':'blocked','inventory':'blocked','assessment-archive':'blocked'})
+        self.assertEqual(controller_failure(rows),'final-system-readiness-failed')
+        successful={'outcome':'baseline-passed','final_authentication':True}
+        self.assertEqual(controller_failure([successful]),'controller-failed')
+        self.assertEqual(controller_failure([successful,{'stage':'hardened-functional','returncode':1},
+            {'stage':'assessment-archive','returncode':1}]),'hardened-functional-failed')

@@ -61,6 +61,15 @@ def controller_checks(rows, *, assessment=False):
     return {stage:('pass' if latest[stage].get('returncode')==0 else 'fail') if stage in latest else 'blocked'
             for stage in stages}
 
+
+def controller_failure(rows):
+    """Keep the first failed operation, excluding temporary SSH observations."""
+    for row in rows:
+        if row.get('stage') and row.get('stage')!='final-authentication' and row.get('returncode') not in (None,0):
+            return row.get('category',row.get('error_category',row['stage']+'-failed'))
+    terminal=rows[-1] if rows else {}
+    return terminal.get('category',terminal.get('error_category','controller-failed'))
+
 # Runs inside the existing nonroot, pinned helper; only outgoing guest SSH.
 # Secrets arrive through stdin and live in its private tmpfs, never argv/env/state.
 HELPER_CODE = r'''
@@ -517,6 +526,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                 from .ubuntu_runtime import HELPER_CODE as helper_code
             elif distribution=='rhel10':
                 from .rhel_assessment import RHEL_AUDIT_CODE, HARDENED_AUDIT_CODE
+                helper_code=helper_code[:helper_code.rfind("print(json.dumps({'final_authentication':True")]
                 helper_code+=HARDENED_AUDIT_CODE if hardened_rhel else RHEL_AUDIT_CODE
             args = ['docker', 'create', '-i', '--name', name + '-controller', '--label', 'application=jake-wormhole',
                 '--label', 'vm-run=' + identifier, '--network', 'host', '--read-only', '--cap-drop', 'ALL',
@@ -566,13 +576,14 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                     observed=[row.get('checks',{}) for row in rows if row.get('stage')=='hardened-functional']
                     values=observed[0] if len(observed)==1 else {}
                     result['hardened_checks']={key:'pass' if values.get(key) is True else 'fail' if values.get(key) is False else 'blocked' for key in HARDENED_CHECKS}
-                if controller_rc:result['first_failure']=terminal.get('category',terminal.get('outcome','controller-failed'))
+                if controller_rc:result['first_failure']=controller_failure(rows)
                 save()
             if hardened_rhel and any(row.get('stage')=='assessment-archive' and row.get('returncode')==0 for row in rows):
                 from .rhel_assessment import collect
                 assessment=collect(run,result,rows)
                 result['assessment']={key:assessment[key] for key in ('capability','content_sha256','native_counts',
                     'coverage_complete','scanner_execution_completed','limitation')};save()
+                require(assessment['all_functional_checks_pass'],'hardened-functional-failed')
             require(controller_rc==0,result.get('first_failure','ssh-ansible-inventory_failed'))
             require(terminal.get('outcome') == ('assessment-evidence-collected' if ubuntu_mode or hardened_rhel else 'baseline-passed') and terminal.get('final_authentication') is True and
                     terminal.get('ansible_ready') is True and {x.get('stage') for x in rows if x.get('returncode') == 0} >=
