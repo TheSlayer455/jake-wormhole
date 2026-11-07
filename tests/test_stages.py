@@ -2,6 +2,7 @@ import copy
 import os
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 import time
 import unittest
@@ -50,6 +51,11 @@ class StageTests(unittest.TestCase):
         self.assertEqual(len(result["log"]), LOG_LIMIT)
         self.assertTrue(result["log_truncated"])
         self.assertIsNotNone(result["error"])
+        separated = (sys.executable, "-I", "-c", "import sys; sys.stdout.write('listing'); sys.stderr.write('x'*2000000)")
+        result = _run_process(separated, cwd=self.temporary.name, timeout=5, log_limit=32, stderr=subprocess.DEVNULL)
+        self.assertEqual(result["status"], "pass")
+        self.assertEqual(result["log"], b"listing")
+        self.assertFalse(result["log_truncated"])
 
     @unittest.skipUnless(os.name == "posix", "Arbitrary diagnostic adapters are unsupported on Windows")
     def test_timeout_terminates_actual_child_and_propagates_primary_failure(self):

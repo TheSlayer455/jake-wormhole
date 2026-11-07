@@ -60,7 +60,7 @@ def configure(value):
 
 class ConsoleUnlock:
     """Only write to the already-owned console, after a recognized secret prompt."""
-    def __init__(self, secret_file, *, probes=False):
+    def __init__(self, secret_file, *, probes=False, systemd=False):
         self.secret_file=Path(secret_file)
         self.installer_sent=False
         self.boot_prompts=0
@@ -68,10 +68,12 @@ class ConsoleUnlock:
         self.probes=probes
         self.wait_started=None
         self.wrong_sent=False
+        self.systemd=systemd
 
     def observe(self,text,stream):
         installer=re.search(r'(?:^|\n)WORMHOLE_INSTALL_UNLOCK_REQUEST\r?(?:\n|$)',text) is not None and not self.installer_sent
-        prompts=len(re.findall(r'Please unlock disk [^\r\n:]+:',text))
+        prompt=r'Please enter passphrase for disk [^\r\n]+?:' if self.systemd else r'Please unlock disk [^\r\n:]+:'
+        prompts=len(re.findall(prompt,text))
         if not installer and prompts<=self.boot_prompts:return False
         if not self.secret_file.is_file():raise RunError('unlock_material_missing','Supply the run-owned private console unlock material.')
         info=self.secret_file.stat()
@@ -86,7 +88,9 @@ class ConsoleUnlock:
             self.events.append({'kind':'missing-material-wait-and-wrong-secret-probe','wait_seconds':10,'prompt_number':prompts})
             return True
         if self.wrong_sent and not any(e['kind']=='wrong-secret-refused' for e in self.events):
-            if 'No key available' not in text and 'cryptsetup: ERROR' not in text:raise RunError('wrong_unlock_not_confirmed','Expected a real rejected unlock before proceeding.')
+            rejected=('Failed to activate with specified passphrase. (Passphrase incorrect?)' in text or
+                      'Failed to activate. (Key incorrect?)' in text) if self.systemd else ('No key available' in text or 'cryptsetup: ERROR' in text)
+            if not rejected:raise RunError('wrong_unlock_not_confirmed','Expected a real rejected unlock before proceeding.')
             self.events.append({'kind':'wrong-secret-refused','prompt_number':prompts})
         stream.write(secret+b'\n');stream.flush()
         self.installer_sent |= installer
@@ -100,7 +104,7 @@ class ConsoleUnlock:
             raise RunError('unlock_secret_capture','Secret entered a restricted diagnostic; withhold export and investigate.')
 
 
-def offline_inspect(disk,run,secret_file):
+def offline_inspect(disk,run,secret_file,*,swap='disabled'):
     """Non-destructive logical reads of ONE already stopped owned qcow2 disk."""
     run=Path(run)
     def read_sectors(output,skip,count):read_region(disk,output,skip,count)
@@ -122,7 +126,7 @@ def offline_inspect(disk,run,secret_file):
     header.unlink();gpt.unlink()
     return {'powered_off_logical_read':True,'luks_magic_verified':True,'correct_key_accepted':True,
             'wrong_key_refused':True,'missing_key_refused':True,'disk_modified':False,'clear_surfaces':['BIOS boot metadata','/boot'],
-            'protected_surfaces':['root filesystem including home, logs and installed configuration'],'swap':'disabled'}
+            'protected_surfaces':['root filesystem including home, logs and installed configuration'],'swap':swap}
 
 
 def read_region(disk,output,skip,count):

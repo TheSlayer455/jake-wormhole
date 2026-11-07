@@ -197,11 +197,12 @@ def build_rhel(source, destination, seed_dir, identifier, public_key, guest_addr
         candidate_reused=reuse is not None)
 
 
-def finish_seed(destination, seed_dir, config, command, **identity):
+def finish_seed(destination, seed_dir, config, command, *, seed_files=(), **identity):
     """Same declared seed for built and delivered media; never mutates the ISO."""
     seed=destination.with_name('seed.iso')
     ks=seed_dir/'ks.cfg';ks.write_text(config,encoding='utf-8');ks.chmod(0o600)
-    command(['xorriso','-as','mkisofs','-V',SEED_LABEL,'-J','-r','-o',str(seed),str(ks)])
+    command(['xorriso','-as','mkisofs','-V',SEED_LABEL,'-J','-r','-o',str(seed),str(ks),
+             *(str(path) for path in seed_files)])
     manifest = {'schema_version': '1.0', 'capability': CAPABILITY, **identity,
         'candidate_sha256': sha256(destination), 'seed_sha256': sha256(seed),
         'installation_input_sha256': sha256(ks), 'seed_required': True,

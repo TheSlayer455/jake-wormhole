@@ -15,6 +15,7 @@ from unittest.mock import patch
 class Helper(unittest.TestCase):
     def test_password_required_helper_reaches_ansible_with_private_become_input(self):
         from wormhole.ubuntu_runtime import HELPER_CODE
+        from wormhole.vm_baseline import HELPER_CODE as RHEL_HELPER
         calls=[];password='synthetic-password'
         def run(args,**kwargs):
             calls.append(args)
@@ -30,17 +31,20 @@ class Helper(unittest.TestCase):
             self.assertNotIn(password,' '.join(args))
             if '-b' in args:raise SystemExit(0) # Stop after the actual generated dispatch boundary.
             return subprocess.CompletedProcess(args,0,'fixture ping','')
-        with tempfile.TemporaryDirectory() as value:
-            code=HELPER_CODE.replace("pathlib.Path('/tmp/vm-credentials')","pathlib.Path("+repr(str(Path(value)/'credentials'))+")")
-            stdin=io.StringIO(json.dumps({'address':'192.0.2.10','host_key':'fixture-public-host-key',
-                'private_key':'synthetic-key-fixture','become_password':password,'seconds':90}))
-            output=io.StringIO()
-            with patch('subprocess.run',side_effect=run),patch.object(sys,'stdin',stdin),contextlib.redirect_stdout(output):
-                with self.assertRaises(SystemExit) as stopped:
-                    exec(compile(code,'synthetic-helper','exec'),{'__name__':'__main__'})
-            self.assertEqual(stopped.exception.code,0)
-            self.assertEqual(sum('-b' in args for args in calls),1)
-            self.assertNotIn(password,output.getvalue())
+        for hardened_rhel, helper in ((False,HELPER_CODE),(True,RHEL_HELPER)):
+            with self.subTest(hardened_rhel=hardened_rhel),tempfile.TemporaryDirectory() as value:
+                calls.clear()
+                code=helper.replace("pathlib.Path('/tmp/vm-credentials')","pathlib.Path("+repr(str(Path(value)/'credentials'))+")")
+                stdin=io.StringIO(json.dumps({'address':'192.0.2.10','host_key':'fixture-public-host-key',
+                    'private_key':'synthetic-key-fixture','become_password':password,'seconds':90,
+                    'distribution':'rhel10' if hardened_rhel else 'ubuntu','rhel_hardened':hardened_rhel}))
+                output=io.StringIO()
+                with patch('subprocess.run',side_effect=run),patch.object(sys,'stdin',stdin),contextlib.redirect_stdout(output):
+                    with self.assertRaises(SystemExit) as stopped:
+                        exec(compile(code,'synthetic-helper','exec'),{'__name__':'__main__'})
+                self.assertEqual(stopped.exception.code,0)
+                self.assertEqual(sum('-b' in args for args in calls),1)
+                self.assertNotIn(password,output.getvalue())
 
     def test_non_json_privileged_output_still_generates_a_failed_complete_grid(self):
         from wormhole.ubuntu_runtime import report

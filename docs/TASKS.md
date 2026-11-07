@@ -1,5 +1,11 @@
 # Minx work index
 
+Current assignment: `codex/WORM-001-two-os-completion`. Follow the single
+[completion checklist](STATE.md), preserving PRs 43-47. RHEL hardening is now
+authorized; Ubuntu vendor work depends only on the explicit owner-populated
+provider. One implementation/runtime owner coordinates isolated source worktrees.
+Do not add another controller, backend, scheduler or archive system.
+
 Current increment: `codex/WORM-001-lightspeed-cross-reference`, [PR 47](https://github.com/TheSlayer455/jake-wormhole/pull/47). Deliver the
 [copy-ready comparison prompt](../handoff/LIGHTSPEED-CROSS-REFERENCE.md),
 [sanitized verified reference](../handoff/WORMHOLE-SANITIZED-REFERENCE.md) and small

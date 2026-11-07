@@ -52,7 +52,8 @@ keeps Terraform. Native libvirt passed the same RHEL candidate and checks, but
 saved only about three seconds of lifecycle commands while adding another
 resource/recovery implementation. Use the existing foreground VM command, its
 durable launch acknowledgment and `python -m wormhole.vm_baseline --status RUN_UUID`.
-RHEL hardening, encryption and qualified publication are deferred.
+RHEL hardening, encryption and eligible lab publication are now authorized by the
+[two-OS completion checklist](docs/STATE.md); the baseline remains a control.
 
 [Ubuntu lab policy v2](docs/UBUNTU-LAB-POLICY.md) prospectively removes physical-token
 hardware as a lab requirement and delegates trust-anchor review to Codex. Physical

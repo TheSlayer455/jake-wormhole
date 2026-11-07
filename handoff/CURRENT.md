@@ -1,6 +1,35 @@
 # Current handoff
 
-## Current increment: portable Lightspeed cross-reference
+## Current increment: fixed two-OS completion
+
+[PR 48](https://github.com/TheSlayer455/jake-wormhole/pull/48) is a draft runtime
+increment. The single completion checklist is in [STATE](../docs/STATE.md).
+Ubuntu unchanged-media intake now uses its existing declared private seed,
+password-required sudo and sandbox; its real installation proof is pending.
+RHEL hardening selects pinned ComplianceAsCode 0.1.82/V1R2 separately from the
+historical DVD draft baseline. The actual DVD's Kickstart parser accepts the
+generated storage/configuration, installer Python exists, and requested packages
+are present. This does not establish a hardened installation.
+
+The first fresh RHEL trial at `e592643` stopped when the installer terminal
+multiplexer echoed unlock input into the restricted console. No validation ran;
+owned resources were removed. The next fresh trial at `39b2825` used documented
+`inst.notmux`, received the secret without capturing it, created encrypted storage,
+and installed 449 packages. It then failed in the installer-context payload copy:
+that environment lacks the `install` executable. `6f75a46` uses its available
+mkdir/cp/chmod tools; another fresh run is required. Preserve both original failed
+records. No private capture may be exported. The private operational checkpoint
+holds actual attempts, paths and continuation commands.
+
+Shared controller review also corrected an intermediate success record masking a
+later failure and required the complete hardened functional/native-evidence grid.
+Source/fixture tests and CI passed through `39b2825`; later changes need their own
+verification. Pro is still absent from the configured provider. Evaluate-STIG and
+Nessus remain unverified. Neither successful qualified publication nor final
+two-OS repeatability is claimed. Continue runtime work; do not restart architecture
+or the already-proven archive/trust/handoff work.
+
+## Previous increment: portable Lightspeed cross-reference
 
 The official [copy-ready Luna prompt](LIGHTSPEED-CROSS-REFERENCE.md) consumes the
 [sanitized evidence reference](WORMHOLE-SANITIZED-REFERENCE.md). It requires a

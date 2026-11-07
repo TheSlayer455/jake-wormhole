@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from wormhole import intake as i, rhel_inputs as r
+from wormhole import intake as i, rhel_inputs as r, ubuntu_intake as u
 from wormhole.media_store import fingerprint
 from wormhole.runs import RunError, atomic_json, read_json
 from wormhole.storage import Store
@@ -31,6 +31,160 @@ class Intake(unittest.TestCase):
         value={'schema_version':'1.0','iso':self.iso.name,'bytes':self.iso.stat().st_size,
             'sha256':sha256(self.iso),'contract_sha256':fingerprint(r.installation_contract())}
         atomic_json(self.marker,value);return value
+
+    def complete_ubuntu(self):
+        dependencies=self.base/'dependencies';(dependencies/'bundle').mkdir(parents=True)
+        atomic_json(dependencies/'bundle/manifest.json',{'files':[]})
+        identity,inputs=u.input_identity(dependencies,'hardened',sandbox=True)
+        build={'capability':'ubuntu-assessment-candidate-iso','source':u.UBUNTU,
+            'mode':'hardened','sandbox':True,'candidate_sha256':sha256(self.iso),
+            'installed_input_fingerprint':identity,'installed_inputs':inputs,
+            'policy_sha256':sha256(u.POLICY),'dependency_manifest_sha256':sha256(dependencies/'bundle/manifest.json')}
+        sidecar=self.inbox/'build.json';atomic_json(sidecar,build)
+        marker={'schema_version':'2.0','iso':self.iso.name,'bytes':self.iso.stat().st_size,
+            'sha256':sha256(self.iso),'contract_sha256':fingerprint(u.installation_contract()),
+            'build_manifest':sidecar.name,'build_manifest_sha256':sha256(sidecar)}
+        atomic_json(self.marker,marker)
+        return dependencies,{**marker,'build':build}
+
+    def test_ubuntu_bound_sidecar_uses_same_dispatch_and_preserves_password_required_contract(self):
+        from wormhole import vm_baseline as vm
+        dependencies,delivery=self.complete_ubuntu();request=i.register(self.marker,store=self.store)
+        self.assertEqual(request['delivery'],delivery)
+        record=self.root/'intake/requests'/(request['request_id']+'.json')
+        with self.assertRaises(RunError) as missing:i.submit(request['request_id'],'fixture',store=self.store)
+        self.assertEqual(missing.exception.code,'ubuntu_intake_store_required')
+        self.assertEqual(read_json(record)['state'],'registered')
+        with patch.object(i,'sha256',side_effect=lambda p:'b'*64 if p.name=='ubuntu_runtime.py' else sha256(p)):
+            with self.assertRaises(RunError) as changed:
+                i.submit(request['request_id'],'fixture',store=self.store,dependency_store=dependencies)
+            self.assertEqual(changed.exception.code,'intake_acceptance_changed')
+            self.assertNotEqual(i.register(self.marker,store=self.store)['request_id'],request['request_id'])
+        def execute(source,terraform,**arguments):
+            self.assertEqual(arguments['distribution'],'ubuntu');self.assertEqual(arguments['ubuntu_mode'],'hardened')
+            self.assertTrue(arguments['sandbox']);self.assertEqual(arguments['dependency_store'],dependencies)
+            self.assertEqual(sha256(source),delivery['sha256'])
+            return {'run_id':arguments['request_run'],'delivery':delivery,'outcome':'assessment-complete',
+                'cleanup':'verified-absent-inputs-retained','checks':{'fixture':'pass'}}
+        with patch.object(vm,'execute',side_effect=execute) as dispatch:
+            results=i.scan(self.inbox,execute=True,terraform='fixture',store=self.store,dependency_store=dependencies)
+            self.assertEqual(results[0]['outcome'],'assessment-complete')
+            self.assertFalse(results[0]['lab_iso_qualified'])
+            i.scan(self.inbox,execute=True,terraform='fixture',store=self.store,dependency_store=dependencies)
+            self.assertEqual(dispatch.call_count,1)
+        (self.inbox/'build.json').write_text('{}')
+        with self.assertRaises(RunError) as changed:i.completed_delivery(self.marker)
+        self.assertEqual(changed.exception.code,'delivery_build_manifest_mismatch')
+
+    def test_ubuntu_stale_inputs_and_oversized_or_unbound_sidecars_refuse_before_dispatch(self):
+        dependencies,delivery=self.complete_ubuntu()
+        with self.assertRaises(RunError) as unsupported:
+            i.register(self.marker,store=self.store,scenario='marker-inaccessible')
+        self.assertEqual(unsupported.exception.code,'intake_request_invalid')
+        self.assertFalse((self.root/'intake').exists())
+        request=i.register(self.marker,store=self.store)
+        atomic_json(dependencies/'bundle/manifest.json',{'files':[],'changed_installed_input':True})
+        with self.assertRaises(RunError) as changed:
+            i.submit(request['request_id'],'fixture',store=self.store,dependency_store=dependencies)
+        self.assertEqual(changed.exception.code,'stale_candidate')
+        self.assertFalse((self.store.runs/request['run_id']).exists())
+        (self.inbox/'build.json').write_bytes(b' '*65537)
+        with self.assertRaises(RunError) as bounded:i.completed_delivery(self.marker)
+        self.assertEqual(bounded.exception.code,'delivery_manifest_bound')
+        legacy={k:v for k,v in delivery.items() if k not in {'build','build_manifest','build_manifest_sha256'}}
+        atomic_json(self.marker,{**legacy,'schema_version':'1.0'})
+        with self.assertRaises(RunError):i.completed_delivery(self.marker)
+
+    def test_ubuntu_unchanged_media_fresh_private_seed_and_actual_payload_refusals(self):
+        from uuid import uuid4
+        from wormhole import ubuntu_inputs, ubuntu_hardening
+        dependencies,delivery=self.complete_ubuntu();payload=b'fixture installed input\n'
+        import hashlib
+        files={'finalize.sh':(len(payload),hashlib.sha256(payload).hexdigest())}
+        boot='linux /casper/vmlinuz autoinstall console=ttyS0,115200n8 ---\n'
+        extra=False;corrupt=False;overflow=False;linked=False;calls=[]
+        def listing(args,**kwargs):
+            self.assertEqual(kwargs['stderr'],u.subprocess.DEVNULL)
+            names=(['/wormhole/finalize.sh'] if linked else []) if args.count('-not')==2 else ['/wormhole/finalize.sh']+(['/wormhole/extra'] if extra else [])
+            return {'status':'pass','log_truncated':overflow,'log':''.join(repr(p)+'\n' for p in names).encode()}
+        def command(args,**kwargs):
+            calls.append(args)
+            if '-extract_cut' in args:
+                for at,token in enumerate(args):
+                    if token!='-extract_cut':continue
+                    source=args[at+1];target=Path(args[at+4]);count=int(args[at+3])
+                    if source.startswith('/boot/'):raw=boot.encode()
+                    elif source.startswith('/wormhole/'):raw=payload+(b'bad' if corrupt else b'')
+                    else:raw=(target.parent.parent/'wormhole-identity'/target.name).read_bytes()
+                    target.write_bytes(raw[:count])
+            else:
+                self.assertEqual(args[:3],['xorriso','-as','mkisofs'])
+                identity=Path(args[-1].split('=',1)[1])
+                Path(args[args.index('-o')+1]).write_bytes(b''.join(p.read_bytes() for p in sorted(identity.iterdir())))
+        def prepare():
+            identifier=str(uuid4());target=self.base/identifier;target.mkdir(mode=0o700)
+            support=target/'support-private';support.mkdir(mode=0o700)
+            for name in ('ca.crt','ca.crl','active.crt','revoked.crt'):(support/name).write_text('synthetic public certificate')
+            result=u.prepare_delivered(self.iso,target/'candidate.iso',target/'inputs',identifier,
+                'ssh-rsa '+'A'*400,'192.0.2.10/24','52:54:00:11:22:33',store=dependencies,
+                password_hash='$6$synthetic$'+'A'*86,
+                boot_hash='grub.pbkdf2.sha512.100000.'+'A'*128+'.'+'B'*128,delivery=delivery)
+            config=(target/'inputs/user-data').read_text()
+            self.assertIn('lab.service ALL=(ALL) ALL',config);self.assertNotIn('NOPASSWD',config)
+            self.assertNotIn('$6$synthetic',config)
+            self.assertEqual((target/'inputs/wormhole-identity/password').stat().st_mode & 0o777,0o600)
+            self.assertNotIn('build',result['delivery'])
+            return result
+        with patch.object(u,'expected_payload',return_value=files),patch.object(u.subprocess,'run',side_effect=command),\
+             patch.object(u,'_run_process',side_effect=listing),\
+             patch.object(ubuntu_inputs,'build',side_effect=AssertionError('no builder')),\
+             patch.object(ubuntu_hardening,'generate',side_effect=AssertionError('no remediation generator')):
+            first=prepare();second=prepare()
+            self.assertEqual(first['candidate_sha256'],delivery['sha256'])
+            self.assertEqual(first['candidate_sha256'],second['candidate_sha256'])
+            self.assertNotEqual(first['seed_sha256'],second['seed_sha256'])
+            self.assertFalse(any('-outdev' in c or '-map' in c for c in calls))
+            corrupt=True
+            with self.assertRaises(RunError) as changed:prepare()
+            self.assertEqual(changed.exception.code,'delivered_payload_mismatch')
+            corrupt=False;extra=True
+            with self.assertRaises(RunError) as undeclared:prepare()
+            self.assertEqual(undeclared.exception.code,'delivered_payload_mismatch')
+            extra=False;linked=True
+            with self.assertRaises(RunError):prepare()
+            linked=False;overflow=True
+            with self.assertRaises(RunError) as oversized:prepare()
+            self.assertEqual(oversized.exception.code,'ubuntu_intake_payload_bound')
+            overflow=False;boot=boot.replace('autoinstall','autoinstall ds=nocloud-net;s=https://example.invalid/')
+            with self.assertRaises(RunError) as injected:prepare()
+            self.assertEqual(injected.exception.code,'unsupported_installation_contract')
+
+    def test_ubuntu_expected_payload_hashes_pinned_files_without_creating_remediation(self):
+        from wormhole import ubuntu_tailoring
+        import hashlib
+        source=self.base/'source';guest=source/'ubuntu/guest';guest.mkdir(parents=True)
+        names={'finalize.sh','audit.sh','observe.py','remediate.py','encryption-late.sh','sandbox.sh',
+            'entitlement.py','audit-offload.py','secret-audit.py','pkcs11-probe.py'}
+        for name in names:(guest/name).write_text('fixture '+name)
+        dependencies=self.base/'dependencies';bundle=dependencies/'bundle';bundle.mkdir(parents=True)
+        package='repository/auditd_1%3a3.0.7-1ubuntu0.1~22.04_amd64.deb'
+        atomic_json(bundle/'manifest.json',{'files':[{'path':package,'bytes':4,'sha256':'a'*64}]})
+        raw="# BEGIN fix (1 / 1) for 'xccdf_org.ssgproject.content_rule_sample'\necho fixture\n# END fix for 'xccdf_org.ssgproject.content_rule_sample'"
+        upstream=dependencies/'ubuntu2204-script-stig.sh';upstream.write_text(raw)
+        atomic_json(source/'ubuntu/remediation-plan-v1.json',{'upstream_script_sha256':sha256(upstream),
+            'remediation_rules':['sample']})
+        before=set(self.base.rglob('*'))
+        with patch.object(u,'SOURCE_ROOT',source),patch.object(ubuntu_tailoring,'document',return_value=None):
+            result=u.expected_payload(dependencies)
+            self.assertEqual(set(result),names | {package,'manifest.json','policy.json',
+                'remediation/sample.sh','remediation-plan.json','offline-apt.conf','install-contract.json',
+                'wormhole-finalize.service'})
+            block=b'\necho fixture\n'
+            self.assertEqual(result['remediation/sample.sh'],(len(block),hashlib.sha256(block).hexdigest()))
+            self.assertEqual(before,set(self.base.rglob('*')))
+            upstream.write_text(raw+'changed')
+            with self.assertRaises(RunError) as stale:u.expected_payload(dependencies)
+            self.assertEqual(stale.exception.code,'remediation_content_mismatch')
 
     def fake_execution(self,source,terraform,**kwargs):
         self.assertEqual(sha256(source),kwargs['delivery']['sha256'])

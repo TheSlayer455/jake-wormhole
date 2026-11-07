@@ -61,6 +61,21 @@ class Encryption(unittest.TestCase):
             with self.assertRaises(RunError):unlock.check_capture(log)
 
     @unittest.skipIf(os.name=='nt','POSIX owner permissions required')
+    def test_systemd_prompt_requires_real_rejection_before_retry(self):
+        with tempfile.TemporaryDirectory() as directory:
+            key=Path(directory)/'unlock';key.write_text('A'*64);key.chmod(0o600)
+            unlock=ConsoleUnlock(key,probes=True,systemd=True);stream=io.BytesIO()
+            prompt='Please enter passphrase for disk lab (luks-test):'
+            with patch('time.monotonic',return_value=1):self.assertFalse(unlock.observe(prompt,stream))
+            with patch('time.monotonic',return_value=12):self.assertTrue(unlock.observe(prompt,stream))
+            self.assertNotIn(b'A'*64,stream.getvalue())
+            with self.assertRaises(RunError):unlock.observe(prompt+'\n'+prompt,stream)
+            rejected=prompt+'\nFailed to activate with specified passphrase. (Passphrase incorrect?)\n'+prompt
+            self.assertTrue(unlock.observe(rejected,stream))
+            self.assertFalse(unlock.observe(rejected,stream))
+            self.assertEqual(unlock.events[-2]['kind'],'wrong-secret-refused')
+
+    @unittest.skipIf(os.name=='nt','POSIX owner permissions required')
     def test_broad_secret_permissions_are_refused(self):
         with tempfile.TemporaryDirectory() as directory:
             key=Path(directory)/'unlock';key.write_text('A'*64);key.chmod(0o644)

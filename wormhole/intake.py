@@ -21,7 +21,17 @@ def require(value, code):
     if not value:raise RunError(code,'Intake refused; preserve the delivery and original run evidence.')
 
 
-def acceptance_context():
+def acceptance_context(distribution='rhel10'):
+    if distribution=='ubuntu':
+        from .ubuntu_assessment import POLICY
+        files=('vm_baseline.py','ubuntu_intake.py','ubuntu_assessment.py','ubuntu_svd.py',
+            'ubuntu_runtime.py','ubuntu_manual.py','ubuntu_reports.py','ubuntu_coverage.py',
+            'ubuntu_sandbox.py','ubuntu_encryption.py','ubuntu_recovery.py',
+            'ubuntu_release.py','ubuntu_catalog.py','vm_admission.py','stages.py','intake.py')
+        policy=json.loads(POLICY.read_text())
+        return {'implementation_sha256':fingerprint({n:sha256(SOURCE_ROOT/'wormhole'/n) for n in files}),
+            'assessment_content_sha256':policy['content']['datastream_sha256'],
+            'assessment_profile':policy['content']['profile_id'],'qualification_policy':sha256(POLICY)}
     from .rhel_assessment import CONTENT_SHA, PROFILE
     files=('vm_baseline.py','vm_inputs.py','rhel_inputs.py','rhel_assessment.py','vm_admission.py','intake.py')
     return {'implementation_sha256':fingerprint({n:sha256(SOURCE_ROOT/'wormhole'/n) for n in files}),
@@ -29,22 +39,48 @@ def acceptance_context():
         'qualification_policy':'installation-baseline-ineligible-v1'}
 
 
-def completed_delivery(marker):
-    from .rhel_inputs import installation_contract
-    marker=Path(marker).absolute();_path_chain(marker)
-    require(marker.name.endswith('.ready.json'),'delivery_completion_marker_required')
-    with os.fdopen(os.open(marker,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK),'rb') as stream:
+def read_manifest(path, limit):
+    _path_chain(path)
+    with os.fdopen(os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK),'rb') as stream:
         require(stat.S_ISREG(os.fstat(stream.fileno()).st_mode),'delivery_manifest_invalid')
-        raw=stream.read(16385)
-    require(len(raw)<=16384,'delivery_manifest_bound')
+        raw=stream.read(limit+1)
+    require(len(raw)<=limit,'delivery_manifest_bound')
     try:value=json.loads(raw,object_pairs_hook=_no_duplicates)
     except (ValueError,UnicodeError):raise RunError('delivery_manifest_invalid','Expected a completed JSON delivery manifest.') from None
-    require(type(value) is dict and set(value)=={'schema_version','iso','bytes','sha256','contract_sha256'},'delivery_manifest_invalid')
-    require(value['schema_version']=='1.0' and type(value['iso']) is str and
+    require(type(value) is dict,'delivery_manifest_invalid')
+    return value,raw
+
+
+def distribution(delivery):
+    from .rhel_inputs import installation_contract as rhel
+    from .ubuntu_intake import installation_contract as ubuntu
+    if delivery['contract_sha256']==fingerprint(rhel()):return 'rhel10'
+    require(delivery['contract_sha256']==fingerprint(ubuntu()),'unsupported_installation_contract')
+    return 'ubuntu'
+
+
+def completed_delivery(marker):
+    import hashlib
+    marker=Path(marker).absolute()
+    require(marker.name.endswith('.ready.json'),'delivery_completion_marker_required')
+    value,_=read_manifest(marker,16384)
+    fields={'schema_version','iso','bytes','sha256','contract_sha256'}
+    require(type(value.get('schema_version')) is str and value['schema_version'] in {'1.0','2.0'} and
+        set(value)==fields | ({'build_manifest','build_manifest_sha256'} if value['schema_version']=='2.0' else set()),
+        'delivery_manifest_invalid')
+    require(type(value['iso']) is str and
         re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,180}\.iso',value['iso']) and
         type(value['bytes']) is int and 32774<=value['bytes']<=MAX_BYTES and
         type(value['sha256']) is str and SHA.fullmatch(value['sha256']),'delivery_manifest_invalid')
-    require(value['contract_sha256']==fingerprint(installation_contract()),'unsupported_installation_contract')
+    target=distribution(value)
+    require((target=='ubuntu')==(value['schema_version']=='2.0'),'delivery_manifest_invalid')
+    if target=='ubuntu':
+        name=value['build_manifest']
+        require(type(name) is str and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,180}\.json',name),
+            'delivery_manifest_invalid')
+        build,raw=read_manifest(marker.parent/name,65536)
+        require(hashlib.sha256(raw).hexdigest()==value['build_manifest_sha256'],'delivery_build_manifest_mismatch')
+        value['build']=build
     return marker.parent/value['iso'],value
 
 
@@ -53,7 +89,9 @@ def register(marker, *, generation='initial', scenario='healthy', store=None):
     require(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,63}',generation) and
         scenario in {'healthy','marker-inaccessible'},'intake_request_invalid')
     source,delivery=completed_delivery(marker)
-    context=acceptance_context()
+    target=distribution(delivery)
+    require(target=='rhel10' or scenario=='healthy','intake_request_invalid')
+    context=acceptance_context(target)
     key=fingerprint({'sha256':delivery['sha256'],'bytes':delivery['bytes'],
         'contract_sha256':delivery['contract_sha256'],'acceptance':context,
         'generation':generation,'scenario':scenario})
@@ -120,7 +158,7 @@ def register(marker, *, generation='initial', scenario='healthy', store=None):
         return value
 
 
-def submit(key, terraform, *, store=None):
+def submit(key, terraform, *, store=None, dependency_store=None):
     """Persist dispatch intent first. Repeated submissions observe the same run."""
     from . import vm_baseline
     require(type(key) is str and SHA.fullmatch(key),'intake_request_invalid')
@@ -140,7 +178,13 @@ def submit(key, terraform, *, store=None):
                 else:value['observation']=vm_baseline.status(value['run_id'])
             else:value['observation']='launch-outcome-unknown'
             return value
-        require(value['acceptance']==acceptance_context(),'intake_acceptance_changed')
+        target=distribution(value['delivery'])
+        require(value['acceptance']==acceptance_context(target),'intake_acceptance_changed')
+        arguments={}
+        if target=='ubuntu':
+            from .ubuntu_intake import validate_manifest
+            validate_manifest(value['delivery'],dependency_store)
+            arguments={'ubuntu_mode':'hardened','sandbox':True,'dependency_store':dependency_store}
         if value.get('candidate_origin_run'):
             source=store.resolve(value['candidate_origin_run'])
         else:
@@ -149,8 +193,8 @@ def submit(key, terraform, *, store=None):
         value.update(state='submitted',submitted_at=now());atomic_json(record,value)
         # No shared storage lock here: execute acquires the canonical VM lease.
         try:
-            result=vm_baseline.execute(source,terraform,distribution='rhel10',delivery=value['delivery'],
-                request_run=value['run_id'],scenario=value['scenario'])
+            result=vm_baseline.execute(source,terraform,distribution=target,delivery=value['delivery'],
+                request_run=value['run_id'],scenario=value['scenario'],**arguments)
         except RunError as error:
             if error.code in {'unverified_execution_inputs','media_store_busy','unreconciled_vm_run','unreconciled_container_run'} and not (store.runs/value['run_id']).exists():
                 # These checks precede admission; no launch occurred. A later scan
@@ -165,7 +209,7 @@ def submit(key, terraform, *, store=None):
         return value
 
 
-def scan(directory, *, execute=False, terraform=None, generation='initial', scenario='healthy', store=None):
+def scan(directory, *, execute=False, terraform=None, generation='initial', scenario='healthy', store=None, dependency_store=None):
     """Bounded reconciliation pass, also used by a timer/producer notification."""
     directory=Path(directory).absolute();_path_chain(directory)
     require(directory.is_dir(),'intake_directory_unavailable')
@@ -173,7 +217,7 @@ def scan(directory, *, execute=False, terraform=None, generation='initial', scen
     for marker in sorted(directory.glob('*.ready.json')):
         try:
             value=register(marker,generation=generation,scenario=scenario,store=store)
-            if execute:value=submit(value['request_id'],terraform,store=store)
+            if execute:value=submit(value['request_id'],terraform,store=store,dependency_store=dependency_store)
             results.append(value)
         except (RunError,OSError) as error:
             results.append({'delivery':marker.name,'state':'refused','error_category':getattr(error,'code',type(error).__name__)})
@@ -185,6 +229,8 @@ def add_parser(commands):
     p.add_argument('operation',choices=['contract','register','submit','scan'])
     p.add_argument('input',nargs='?',help='Completion manifest, request hash, or inbox directory.')
     p.add_argument('--terraform',help='Existing pinned Terraform executable for submission.')
+    p.add_argument('--distribution',choices=['rhel10','ubuntu'],default='rhel10',help='Installation contract to display; deliveries bind their own contract.')
+    p.add_argument('--store',help='Existing pinned Ubuntu offline dependency store; intake does not prepare or update it.')
     p.add_argument('--submit',action='store_true',help='Submit registered requests during this reconciliation scan.')
     p.add_argument('--generation',default='initial',help='Explicit new requalification generation; repeats deduplicate.')
     p.add_argument('--scenario',choices=['healthy','marker-inaccessible'],default='healthy')
@@ -193,14 +239,16 @@ def add_parser(commands):
 def operate(options):
     os.umask(0o077)
     if options.operation=='contract':
-        from .rhel_inputs import installation_contract
+        if options.distribution=='ubuntu':from .ubuntu_intake import installation_contract
+        else:from .rhel_inputs import installation_contract
         contract=installation_contract()
         return {'contract':contract,'contract_sha256':fingerprint(contract)},0
     require(options.input is not None,'intake_input_required')
     require(not (options.operation=='submit' or options.submit) or options.terraform is not None,'intake_terraform_required')
     if options.operation=='register':value=register(options.input,generation=options.generation,scenario=options.scenario)
-    elif options.operation=='submit':value=submit(options.input,options.terraform)
-    else:value=scan(options.input,execute=options.submit,terraform=options.terraform,generation=options.generation,scenario=options.scenario)
+    elif options.operation=='submit':value=submit(options.input,options.terraform,dependency_store=options.store)
+    else:value=scan(options.input,execute=options.submit,terraform=options.terraform,generation=options.generation,
+        scenario=options.scenario,dependency_store=options.store)
     rows=value if isinstance(value,list) else [value]
     return value,0 if all(r['state']=='registered' or (r['state']=='completed' and
         r.get('outcome')=='baseline-passed' and r.get('cleanup')=='verified-absent-inputs-retained') for r in rows) else 1

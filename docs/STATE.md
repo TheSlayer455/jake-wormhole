@@ -1,5 +1,37 @@
 # Current engineering state
 
+## Fixed two-OS completion checklist
+
+Resumed from `3a4b909` under the November 7 completion assignment. Preserve the
+historical evidence below. PASS means the stated boundary has proof, not that a
+downstream release is qualified. Current runtime inspection found both journals
+finished, no VM, 64.000 GiB managed storage and 136.472 GiB filesystem availability.
+The archive has 330 verified objects, zero pending bytes and zero recorded failures;
+live workstation readback remains a separate check. The explicit Pro slot is empty.
+
+| Required boundary | Status at resumption | Next proof or external dependency |
+| --- | --- | --- |
+| Scope, existing container layer, two real OS baselines | PASS | Keep RHEL 10.0/Ubuntu 22.04.5, Terraform and existing admission |
+| Ubuntu encrypted engineering lifecycle | PASS | Preserve final pair at a705e2b; add unchanged-media intake |
+| Ubuntu Pro/FIPS/USG | BLOCKED | Owner supplies legitimate entitlement through protected provider; actual integration/execution remains work |
+| RHEL hardened/encrypted engineering lifecycle | FAIL at current trial | Pinned 0.1.82/V1R2; real encrypted storage/package installation reached; installer payload-copy correction requires fresh execution |
+| Final matching installation pairs | PARTIAL | Existing Ubuntu pair is historical; prove changed final inputs independently per OS |
+| Completed-media intake | PARTIAL | RHEL baseline proven; Ubuntu adapter source-tested, real execution remains |
+| Failure/recovery | PASS for existing paths | Exercise changed boundary without relabeling unknown historical outcomes |
+| Lab qualification and eligible exact-byte publication | BLOCKED | Required technical/policy evidence, then real positive publisher/readback |
+| Archive/restore and automatic cleanup | PASS historically | Reconcile new evidence and measure current retention/reclamation |
+| Work-integration readiness | PASS for PR 47 reference | Update reviewed sanitized facts after new runtime milestones; no work compatibility claim |
+| Evaluate-STIG / Nessus work-equivalence | BLOCKED | Authorized supported tool package/interface absent; neither is a new Ubuntu lab-gate requirement |
+| Final delivery | NOT EXECUTED | Focused/runtime/full source/parity/CI, independent review, verified main |
+
+Engineering lifecycle verification, lab-qualified publication and work-integration
+readiness are separate outcomes. No overall completion or production eligibility
+is claimed. Physical-token hardware and another owner trust review are not chores.
+The current [continuation](../handoff/CURRENT.md) and draft
+[PR 48](https://github.com/TheSlayer455/jake-wormhole/pull/48) preserve exact failed
+runtime attribution and the next correction. Later findings are not comparisons
+against the older RHEL draft profile: content and selected coverage have changed.
+
 ## Portable cross-reference deliverable
 
 The [Luna comparison prompt](../handoff/LIGHTSPEED-CROSS-REFERENCE.md) and
