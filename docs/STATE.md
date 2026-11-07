@@ -14,9 +14,9 @@ live workstation readback remains a separate check. The explicit Pro slot is emp
 | Scope, existing container layer, two real OS baselines | PASS | Keep RHEL 10.0/Ubuntu 22.04.5, Terraform and existing admission |
 | Ubuntu encrypted engineering lifecycle | PASS | Preserve final pair at a705e2b; add unchanged-media intake |
 | Ubuntu Pro/FIPS/USG | BLOCKED | Owner supplies legitimate entitlement through protected provider; actual integration/execution remains work |
-| RHEL hardened/encrypted engineering lifecycle | NOT EXECUTED | Pin supported content, incorporate installation hardening, verify real final access/assessment |
+| RHEL hardened/encrypted engineering lifecycle | FAIL at current trial | Pinned 0.1.82/V1R2; real encrypted storage/package installation reached; installer payload-copy correction requires fresh execution |
 | Final matching installation pairs | PARTIAL | Existing Ubuntu pair is historical; prove changed final inputs independently per OS |
-| Completed-media intake | PARTIAL | RHEL baseline proven; Ubuntu adapter and real execution remain |
+| Completed-media intake | PARTIAL | RHEL baseline proven; Ubuntu adapter source-tested, real execution remains |
 | Failure/recovery | PASS for existing paths | Exercise changed boundary without relabeling unknown historical outcomes |
 | Lab qualification and eligible exact-byte publication | BLOCKED | Required technical/policy evidence, then real positive publisher/readback |
 | Archive/restore and automatic cleanup | PASS historically | Reconcile new evidence and measure current retention/reclamation |
@@ -27,6 +27,10 @@ live workstation readback remains a separate check. The explicit Pro slot is emp
 Engineering lifecycle verification, lab-qualified publication and work-integration
 readiness are separate outcomes. No overall completion or production eligibility
 is claimed. Physical-token hardware and another owner trust review are not chores.
+The current [continuation](../handoff/CURRENT.md) and draft
+[PR 48](https://github.com/TheSlayer455/jake-wormhole/pull/48) preserve exact failed
+runtime attribution and the next correction. Later findings are not comparisons
+against the older RHEL draft profile: content and selected coverage have changed.
 
 ## Portable cross-reference deliverable
 
