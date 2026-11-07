@@ -55,6 +55,11 @@ class Intake(unittest.TestCase):
         with self.assertRaises(RunError) as missing:i.submit(request['request_id'],'fixture',store=self.store)
         self.assertEqual(missing.exception.code,'ubuntu_intake_store_required')
         self.assertEqual(read_json(record)['state'],'registered')
+        with patch.object(i,'sha256',side_effect=lambda p:'b'*64 if p.name=='ubuntu_runtime.py' else sha256(p)):
+            with self.assertRaises(RunError) as changed:
+                i.submit(request['request_id'],'fixture',store=self.store,dependency_store=dependencies)
+            self.assertEqual(changed.exception.code,'intake_acceptance_changed')
+            self.assertNotEqual(i.register(self.marker,store=self.store)['request_id'],request['request_id'])
         def execute(source,terraform,**arguments):
             self.assertEqual(arguments['distribution'],'ubuntu');self.assertEqual(arguments['ubuntu_mode'],'hardened')
             self.assertTrue(arguments['sandbox']);self.assertEqual(arguments['dependency_store'],dependencies)
@@ -92,13 +97,14 @@ class Intake(unittest.TestCase):
         import hashlib
         files={'finalize.sh':(len(payload),hashlib.sha256(payload).hexdigest())}
         boot='linux /casper/vmlinuz autoinstall console=ttyS0,115200n8 ---\n'
-        extra=False;corrupt=False;calls=[]
+        extra=False;corrupt=False;overflow=False;linked=False;calls=[]
+        def listing(args,**kwargs):
+            self.assertEqual(kwargs['stderr'],u.subprocess.DEVNULL)
+            names=(['/wormhole/finalize.sh'] if linked else []) if args.count('-not')==2 else ['/wormhole/finalize.sh']+(['/wormhole/extra'] if extra else [])
+            return {'status':'pass','log_truncated':overflow,'log':''.join(repr(p)+'\n' for p in names).encode()}
         def command(args,**kwargs):
             calls.append(args)
-            if '-find' in args:
-                names=[] if args.count('-not')==2 else ['/wormhole/finalize.sh']+(['/wormhole/extra'] if extra else [])
-                kwargs['stdout'].write(''.join(repr(p)+'\n' for p in names).encode())
-            elif '-extract_cut' in args:
+            if '-extract_cut' in args:
                 for at,token in enumerate(args):
                     if token!='-extract_cut':continue
                     source=args[at+1];target=Path(args[at+4]);count=int(args[at+3])
@@ -125,6 +131,7 @@ class Intake(unittest.TestCase):
             self.assertNotIn('build',result['delivery'])
             return result
         with patch.object(u,'expected_payload',return_value=files),patch.object(u.subprocess,'run',side_effect=command),\
+             patch.object(u,'_run_process',side_effect=listing),\
              patch.object(ubuntu_inputs,'build',side_effect=AssertionError('no builder')),\
              patch.object(ubuntu_hardening,'generate',side_effect=AssertionError('no remediation generator')):
             first=prepare();second=prepare()
@@ -138,7 +145,12 @@ class Intake(unittest.TestCase):
             corrupt=False;extra=True
             with self.assertRaises(RunError) as undeclared:prepare()
             self.assertEqual(undeclared.exception.code,'delivered_payload_mismatch')
-            extra=False;boot=boot.replace('autoinstall','autoinstall ds=nocloud-net;s=https://example.invalid/')
+            extra=False;linked=True
+            with self.assertRaises(RunError):prepare()
+            linked=False;overflow=True
+            with self.assertRaises(RunError) as oversized:prepare()
+            self.assertEqual(oversized.exception.code,'ubuntu_intake_payload_bound')
+            overflow=False;boot=boot.replace('autoinstall','autoinstall ds=nocloud-net;s=https://example.invalid/')
             with self.assertRaises(RunError) as injected:prepare()
             self.assertEqual(injected.exception.code,'unsupported_installation_contract')
 

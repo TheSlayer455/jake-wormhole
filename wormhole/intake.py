@@ -25,7 +25,9 @@ def acceptance_context(distribution='rhel10'):
     if distribution=='ubuntu':
         from .ubuntu_assessment import POLICY
         files=('vm_baseline.py','ubuntu_intake.py','ubuntu_assessment.py','ubuntu_svd.py',
-            'ubuntu_release.py','ubuntu_catalog.py','vm_admission.py','intake.py')
+            'ubuntu_runtime.py','ubuntu_manual.py','ubuntu_reports.py','ubuntu_coverage.py',
+            'ubuntu_sandbox.py','ubuntu_encryption.py','ubuntu_recovery.py',
+            'ubuntu_release.py','ubuntu_catalog.py','vm_admission.py','stages.py','intake.py')
         policy=json.loads(POLICY.read_text())
         return {'implementation_sha256':fingerprint({n:sha256(SOURCE_ROOT/'wormhole'/n) for n in files}),
             'assessment_content_sha256':policy['content']['datastream_sha256'],

@@ -14,6 +14,7 @@ import subprocess
 
 from .media_store import SHA, fingerprint
 from .runs import SOURCE_ROOT, atomic_json, read_json
+from .stages import _run_process
 from .ubuntu_assessment import POLICY, require
 from .ubuntu_inputs import input_identity, seed_config
 from .vm_inputs import UBUNTU, sha256
@@ -100,11 +101,9 @@ def prepare_delivered(source,destination,seed_dir,identifier,public_key,address,
     require(boot_hash is not None,'boot_credential_missing')
     config=seed_config(identifier,public_key,address,mac,password_hash,boot_hash,sandbox=True)
     seed_dir.mkdir(mode=0o700)
-    def command(args, output=None):
+    def command(args):
         with (seed_dir/'intake.log').open('ab') as log:
-            if output is None:subprocess.run(args,stdout=log,stderr=log,timeout=180,check=True)
-            else:
-                with output.open('xb') as stream:subprocess.run(args,stdout=stream,stderr=log,timeout=180,check=True)
+            subprocess.run(args,stdout=log,stderr=log,timeout=180,check=True)
     boot=seed_dir/'boot';boot.mkdir(mode=0o700)
     for name in ('grub.cfg','loopback.cfg'):
         target=boot/name
@@ -118,9 +117,11 @@ def prepare_delivered(source,destination,seed_dir,identifier,public_key,address,
     files=expected_payload(store)
     for name,extra in (('files',[]),('nonregular',['-not','-type','f'])):
         listing=seed_dir/('payload-'+name)
-        command(['xorriso','-indev',str(source),'-find','/wormhole','-not','-type','d',*extra,'-exec','echo','--'],listing)
-        require(listing.stat().st_size<=65536,'ubuntu_intake_payload_bound')
-        paths=shlex.split(listing.read_text())
+        result=_run_process(['xorriso','-indev',str(source),'-find','/wormhole','-not','-type','d',*extra,'-exec','echo','--'],
+            cwd=seed_dir,timeout=180,stderr=subprocess.DEVNULL)
+        listing.write_bytes(result['log'])
+        require(result['status']=='pass' and not result['log_truncated'],'ubuntu_intake_payload_bound')
+        paths=shlex.split(result['log'].decode())
         expected={'/wormhole/'+p for p in files} if name=='files' else set()
         require(len(paths)==len(expected) and set(paths)==expected,'delivered_payload_mismatch')
     extract_files(source,payload,files,command,prefix='/wormhole')
