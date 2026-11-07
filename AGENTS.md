@@ -32,6 +32,16 @@ regressions pass and the actual runtime outcome is proven.
 
 ## Authorized scope
 
+The November 7 two-OS completion assignment supersedes the earlier temporary
+RHEL hardening deferral below. Finish RHEL 10 installation-produced hardening,
+encryption, functional/assessment evidence and eligible lab publication alongside
+Ubuntu 22.04. Terraform stays; no Runner or replacement controller. Preserve the
+baseline, completed archive/restore, delegated Ubuntu trust review and portable
+handoffs. Use the single completion checklist in docs/STATE.md. Engineering
+lifecycle proof, lab qualification/publication and work-integration readiness are
+separate outcomes. Pro must come only from the explicit owner-file provider;
+do not create accounts, purchase subscriptions or accept terms for the owner.
+
 The official [Lightspeed comparison prompt](handoff/LIGHTSPEED-CROSS-REFERENCE.md)
 and [sanitized reference](handoff/WORMHOLE-SANITIZED-REFERENCE.md) are milestone
 deliverables. Reconcile changed capabilities with original attributable evidence,
@@ -78,8 +88,8 @@ the experiment as source-pinned evidence, not a second production controller.
 The subsequent research keeps approved build behavior, Terraform and existing
 Ansible contracts. Runner is optional: adopt only after an actual bounded trial
 removes maintained complexity and preserves strict trust/result accounting.
-Do not repeat the lifecycle comparison or expand RHEL hardening during this
-integration window. Private build contracts and scanner rights require inspection
+That integration window deferred RHEL hardening; the current completion assignment
+now authorizes it. Do not repeat the settled lifecycle comparison. Private build contracts and scanner rights require inspection
 in their authorized environment; public examples cannot establish those facts.
 The next increment validates completed directory-delivered ISOs through the
 existing controller, without building/remastering. Start with the proven RHEL 10
@@ -90,7 +100,7 @@ Preserve explicit requalification, incomplete deliveries and unknown run evidenc
 Prospective [Ubuntu lab policy v2](docs/UBUNTU-LAB-POLICY.md) removes physical-token
 hardware as a home-lab requirement and delegates trust-anchor review to Codex.
 Unverified physical assurance and original native/historical outcomes remain visible;
-the delegation is not a production approval or an already completed trust review.
+the delegated lab review was completed in PR 46, not a production approval.
 Canonical USG/FIPS require authorized
 entitlement; never discover tokens in unrelated private state or invent access.
 Only an explicit owner-populated protected provider slot may supply enrollment.

@@ -72,10 +72,13 @@ known=p/'known_hosts';known.write_text(c['address']+' '+c['host_key']+'\n');know
 opts=['-o','BatchMode=yes','-o','StrictHostKeyChecking=yes','-o','UserKnownHostsFile='+str(known),
       '-o','IdentitiesOnly=yes','-o','ConnectTimeout=5','-o','ConnectionAttempts=1','-i',str(key)]
 deadline=time.monotonic()+c['seconds']
+if c.get('rhel_hardened'):
+ password=p/'become';password.write_text(c['become_password']+'\n');password.chmod(0o600)
 release='rhel' if c.get('distribution')=='rhel10' else 'ubuntu'
 version='10.0' if release=='rhel' else '22.04'
 check='test "$(id -un)" = lab.service || exit 41; test -f /var/lib/wormhole/installation-complete || exit 42; . /etc/os-release; test "$ID" = '+release+' && test "$VERSION_ID" = '+version+' || exit 43; sudo -n true || exit 44; findmnt -n -o SOURCE /'
 if release=='rhel':check+='; test "$(getenforce)" = Enforcing || exit 45'
+if c.get('rhel_hardened'):check=check.replace('; sudo -n true || exit 44','')
 if c.get('scenario')=='marker-inaccessible':
  r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'sudo -n chmod 0700 /var/lib/wormhole'],capture_output=True,text=True,timeout=15)
  print(json.dumps({'stage':'controlled-readiness-fault','returncode':r.returncode,'diagnostic_intervention':True}),flush=True)
@@ -103,6 +106,9 @@ env=dict(os.environ,HOME='/tmp',ANSIBLE_HOME='/tmp/.ansible',ANSIBLE_HOST_KEY_CH
 common='-o StrictHostKeyChecking=yes -o UserKnownHostsFile='+str(known)+' -o IdentitiesOnly=yes'
 base=['/opt/wormhole/venv/bin/ansible','all','-i',c['address']+',','-u','lab.service','--private-key',str(key),
       '-e','ansible_python_interpreter=/usr/bin/python3','--ssh-common-args='+common]
+if c.get('rhel_hardened'):
+ base+=['--become-password-file',str(password)]
+ env['ANSIBLE_PIPELINING']='True'
 inventory="rpm -qa --qf '%{NAME}|%{EPOCHNUM}|%{VERSION}|%{RELEASE}|%{ARCH}\\n'" if release=='rhel' else "dpkg-query -W -f='${Package}=${Version}\\n'"
 for label,args in [('ansible-readiness',['-m','ping']),('functional',['-b','-m','command','-a','/usr/bin/id -u']),
                    ('inventory',['-m','command','-a',inventory])]:
@@ -161,7 +167,7 @@ def preflight(source, *, distribution='ubuntu'):
     return observation
 
 
-def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, dependency_store=None, sandbox=False, distribution='ubuntu', scenario='healthy', delivery=None, request_run=None):
+def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, dependency_store=None, sandbox=False, distribution='ubuntu', scenario='healthy', delivery=None, request_run=None, rhel_content=None):
     os.umask(0o077)
     revision, dirty = source_identity()
     require(not dirty and terraform is not None and sha256(terraform)==TF_SHA, 'unverified_execution_inputs')
@@ -169,7 +175,10 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
     require(ubuntu_mode in {None, 'stock-audit', 'hardened'}, 'ubuntu_mode_invalid')
     require(not sandbox or ubuntu_mode=='hardened','sandbox_requires_hardened_ubuntu')
     require(distribution in {'ubuntu','rhel10'} and (distribution=='ubuntu' or (ubuntu_mode is None and not sandbox)), 'vm_distribution_invalid')
-    require(delivery is None or (distribution=='rhel10' and reuse_run is None), 'delivery_profile_unsupported')
+    hardened_rhel=rhel_content is not None
+    require(not hardened_rhel or (distribution=='rhel10' and scenario=='healthy' and delivery is None), 'rhel_hardening_profile_invalid')
+    require(delivery is None or (reuse_run is None and (distribution=='rhel10' or (ubuntu_mode=='hardened' and sandbox))), 'delivery_profile_unsupported')
+    encrypted=sandbox or hardened_rhel
     disk_bytes=(32 if distribution=='rhel10' else 64)*1024**3
     identifier = run_id(request_run) if request_run is not None else str(uuid4())
     name = 'wormhole-vm-' + identifier.replace('-', '')[:12]
@@ -182,6 +191,10 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
         'supervisor': process_identity(os.getpid()),
         'lab_iso_qualified': False, 'production_iso_eligible': False, 'cleanup': 'pending'}
     if not ubuntu_mode:result['checks']={k:'pending' for k in controller_checks([],assessment=distribution=='rhel10')}
+    if hardened_rhel:
+        from .rhel_assessment import HARDENED_CHECKS
+        result['hardened_checks']=dict.fromkeys(HARDENED_CHECKS,'pending')
+        result['lab_status']='LAB QUALIFICATION PENDING'
     if delivery is not None:result['delivery']=delivery
     deadline = time.monotonic() + 1800
     console = None
@@ -253,12 +266,12 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                 managed_bytes=usage['total_allocated_bytes'],
                 candidate_bytes=usage['allocated_bytes']['candidates']+incoming))
             atomic_json(run / 'preflight.json', preflight(source,distribution=distribution))
-            if sandbox:
+            if encrypted:
                 from .ubuntu_sandbox import MEMORY
                 observation=read_json(run/'preflight.json')
                 require(observation['memory_available_bytes']>=13*1024**3+MEMORY,'sandbox_memory_headroom')
                 require(observation['cpu_count']-observation['load1']>=3.5,'sandbox_cpu_headroom')
-                require(observation['runtime_disk_free_bytes']>=80*1024**3+3*Path(source).stat().st_size+32*1024**2,'sandbox_disk_headroom')
+                require(observation['runtime_disk_free_bytes']>=(disk_bytes+16*1024**3)+(1 if hardened_rhel else 3)*Path(source).stat().st_size+32*1024**2,'sandbox_disk_headroom')
                 result['support_budget']={'memory_bytes':MEMORY,'cpus':.5,'disk_evidence_limit_bytes':32*1024**2}
             result['stages'].append({'stage':'preflight','started_at':preflight_at,'finished_at':now(),
                                     'elapsed_seconds':round(time.monotonic()-preflight_start,3),'returncode':0});save()
@@ -274,7 +287,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
             create_qemu_directory(share, group)
             pool = share / 'disk'
             candidate, seed = share / 'candidate.iso', share / 'seed.iso'
-            key_args = ['-t', 'rsa', '-b', '3072'] if ubuntu_mode else ['-t', 'ed25519']
+            key_args = ['-t', 'rsa', '-b', '3072'] if ubuntu_mode or hardened_rhel else ['-t', 'ed25519']
             command(['ssh-keygen', '-q', *key_args, '-N', '', '-C', 'wormhole-lab', '-f', run / 'ssh-key'], 'key-generation')
             public = (run / 'ssh-key.pub').read_text().strip()
             mac = '52:54:00:' + ':'.join(identifier.replace('-', '')[n:n+2] for n in (0, 2, 4))
@@ -315,15 +328,35 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                     unlock_file=run/'unlock-secret'
                     unlock_file.write_text(secrets.token_urlsafe(48));unlock_file.chmod(0o600)
                     unlock=ConsoleUnlock(unlock_file,probes=True)
-                manifest = build_assessed(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac,
-                    store=dependency_store, mode=ubuntu_mode, password_hash=hashed, boot_hash=boot_hash,reuse=reuse,sandbox=sandbox)
+                if delivery is not None:
+                    from .ubuntu_intake import prepare_delivered
+                    manifest=prepare_delivered(source,candidate,run/'inputs',identifier,public,ADDRESS+'/24',mac,
+                        store=dependency_store,password_hash=hashed,boot_hash=boot_hash,delivery=delivery)
+                else:
+                    manifest = build_assessed(source, candidate, run / 'inputs', identifier, public, ADDRESS + '/24', mac,
+                        store=dependency_store, mode=ubuntu_mode, password_hash=hashed, boot_hash=boot_hash,reuse=reuse,sandbox=sandbox)
             elif distribution=='rhel10':
                 import secrets
                 from .rhel_inputs import build_rhel
                 password=secrets.token_urlsafe(32)+'aA1!'
                 (run/'sudo-password').write_text(password)
                 hashed=subprocess.run(['openssl','passwd','-6','-stdin'],input=password+'\n',capture_output=True,text=True,check=True,timeout=10).stdout.strip()
-                if delivery is not None:
+                if hardened_rhel:
+                    from .rhel_hardening import build
+                    from .ubuntu_inputs import grub_password_hash
+                    from .ubuntu_encryption import ConsoleUnlock
+                    from .ubuntu_sandbox import certificates
+                    certificates(run)
+                    boot_password=secrets.token_urlsafe(32)+'bB2!'
+                    (run/'boot-password').write_text(boot_password)
+                    boot_hash=grub_password_hash(boot_password,secrets.token_bytes(64))
+                    unlock_file=run/'unlock-secret'
+                    unlock_file.write_text(secrets.token_urlsafe(48));unlock_file.chmod(0o600)
+                    unlock=ConsoleUnlock(unlock_file,probes=True,systemd=True)
+                    manifest=build(source,candidate,run/'inputs',identifier,public,ADDRESS+'/24',mac,
+                        content=rhel_content,password_hash=hashed,boot_hash=boot_hash,
+                        ca_file=run/'support-private/ca.crt',reuse=reuse)
+                elif delivery is not None:
                     from .rhel_inputs import prepare_delivered
                     manifest=prepare_delivered(source,candidate,run/'inputs',identifier,public,ADDRESS+'/24',mac,password_hash=hashed,delivery=delivery)
                 else:
@@ -376,7 +409,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
             (run/'network.xml').write_text(ET.tostring(network_xml,encoding='unicode'))
             require(network_xml.find('forward') is None and network_xml.find('ip/dhcp') is None,
                     'unexpected_network_forwarding')
-            if sandbox:
+            if encrypted:
                 from .ubuntu_sandbox import start,health
                 support=name+'-services'
                 support,support_process=start(run,name,identifier,HELPER,lease,command)
@@ -435,7 +468,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                     require('Enter username:' not in after_reboot and 'Enter password:' not in after_reboot,
                             'bootloader_unattended_boot_blocked')
                     require(time.monotonic()-phase_start < 180,'required_reboot_progress_deadline')
-                host_type = 'ssh-rsa' if ubuntu_mode else 'ssh-ed25519'
+                host_type = 'ssh-rsa' if ubuntu_mode or hardened_rhel else 'ssh-ed25519'
                 found = re.search(r'WORMHOLE_FINAL_HOST_KEY_BEGIN\s+(' + host_type + r' [A-Za-z0-9+/=]+)[^\n]*\s+WORMHOLE_FINAL_HOST_KEY_END', text)
                 if found:
                     if observed_phases:
@@ -445,7 +478,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                 time.sleep(3)
             require(host_key is not None, 'installation_deadline')
             result['stages'].append({'stage': 'installation-to-host-key', 'elapsed_seconds': round(time.monotonic()-installation_start, 3), 'returncode': 0});save()
-            if sandbox:
+            if encrypted:
                 # Graceful power-off followed by logical, read-only qemu-img
                 # inspection. No host block mapping, mount or disk mutation.
                 cold_started=time.monotonic()
@@ -458,7 +491,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                 try:console.wait(timeout=5)
                 except subprocess.TimeoutExpired:os.killpg(console.pid,signal.SIGKILL);console.wait(timeout=5)
                 from .ubuntu_encryption import offline_inspect
-                result['offline_encryption']=offline_inspect(pool/(name+'.qcow2'),run,run/'unlock-secret');save()
+                result['offline_encryption']=offline_inspect(pool/(name+'.qcow2'),run,run/'unlock-secret',swap='encrypted-lvm' if hardened_rhel else 'disabled');save()
                 offset=(run/'console.log').stat().st_size
                 command(['virsh','-c','qemu:///system','start',name],'encrypted-cold-start',timeout=10)
                 with (run/'console.log').open('ab') as log:
@@ -483,8 +516,8 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
             if ubuntu_mode:
                 from .ubuntu_runtime import HELPER_CODE as helper_code
             elif distribution=='rhel10':
-                from .rhel_assessment import RHEL_AUDIT_CODE
-                helper_code+=RHEL_AUDIT_CODE
+                from .rhel_assessment import RHEL_AUDIT_CODE, HARDENED_AUDIT_CODE
+                helper_code+=HARDENED_AUDIT_CODE if hardened_rhel else RHEL_AUDIT_CODE
             args = ['docker', 'create', '-i', '--name', name + '-controller', '--label', 'application=jake-wormhole',
                 '--label', 'vm-run=' + identifier, '--network', 'host', '--read-only', '--cap-drop', 'ALL',
                 '--security-opt', 'no-new-privileges:true', '--user', '10001:10001', '--memory', '512m',
@@ -499,8 +532,9 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
             unknown = False
             payload_data = {'address': ADDRESS, 'host_key': host_key, 'private_key': (run / 'ssh-key').read_text(),
                             'distribution':distribution,'scenario':scenario,
-                            'seconds': max(1, min(900 if ubuntu_mode else 300, int(deadline-time.monotonic()-180)))}
-            if ubuntu_mode:payload_data['become_password'] = password
+                            'rhel_hardened':hardened_rhel,
+                            'seconds': max(1, min(900 if ubuntu_mode or hardened_rhel else 300, int(deadline-time.monotonic()-180)))}
+            if ubuntu_mode or hardened_rhel:payload_data['become_password'] = password
             if sandbox:payload_data['inspection_secrets']=[(run/'unlock-secret').read_text().strip(),password,(run/'boot-password').read_text().strip()]
             if sandbox:
                 payload_data['pkcs11_probe']={name:(run/'support-private'/name).read_text() for name in
@@ -528,14 +562,23 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                     final_authentication=any(x.get('stage')=='final-authentication' and x.get('returncode')==0 for x in rows),
                     ansible_ready=any(x.get('stage')=='ansible-readiness' and x.get('returncode')==0 for x in rows),
                     catalog_started=any(x.get('stage') in {'functional','inventory','assessment-archive'} for x in rows))
-                if controller_rc:result['first_failure']=terminal.get('category','controller-failed')
+                if hardened_rhel:
+                    observed=[row.get('checks',{}) for row in rows if row.get('stage')=='hardened-functional']
+                    values=observed[0] if len(observed)==1 else {}
+                    result['hardened_checks']={key:'pass' if values.get(key) is True else 'fail' if values.get(key) is False else 'blocked' for key in HARDENED_CHECKS}
+                if controller_rc:result['first_failure']=terminal.get('category',terminal.get('outcome','controller-failed'))
                 save()
-            require(controller_rc==0,terminal.get('category','ssh-ansible-inventory_failed'))
-            require(terminal.get('outcome') == ('assessment-evidence-collected' if ubuntu_mode else 'baseline-passed') and terminal.get('final_authentication') is True and
+            if hardened_rhel and any(row.get('stage')=='assessment-archive' and row.get('returncode')==0 for row in rows):
+                from .rhel_assessment import collect
+                assessment=collect(run,result,rows)
+                result['assessment']={key:assessment[key] for key in ('capability','content_sha256','native_counts',
+                    'coverage_complete','scanner_execution_completed','limitation')};save()
+            require(controller_rc==0,result.get('first_failure','ssh-ansible-inventory_failed'))
+            require(terminal.get('outcome') == ('assessment-evidence-collected' if ubuntu_mode or hardened_rhel else 'baseline-passed') and terminal.get('final_authentication') is True and
                     terminal.get('ansible_ready') is True and {x.get('stage') for x in rows if x.get('returncode') == 0} >=
                     {'final-authentication', 'ansible-readiness', 'functional', 'inventory'}, 'controller_results_incomplete')
             result.update(outcome='baseline-passed', installed=True, final_authentication=True, ansible_ready=True)
-            if distribution=='rhel10':
+            if distribution=='rhel10' and not hardened_rhel:
                 from .rhel_assessment import collect
                 try:assessment=collect(run,result,rows)
                 except Exception:
@@ -557,6 +600,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                           error_category=getattr(error, 'code', type(error).__name__))
             result.setdefault('first_failure',result['error_category'])
             if 'checks' in result:result['checks']={k:'blocked' if v=='pending' else v for k,v in result['checks'].items()}
+            if 'hardened_checks' in result:result['hardened_checks']={k:'blocked' if v=='pending' else v for k,v in result['hardened_checks'].items()}
         finally:
             if console is not None:
                 try:os.killpg(console.pid, signal.SIGTERM)
@@ -640,6 +684,7 @@ def main():
     parser.add_argument('--scenario',choices=['healthy','marker-inaccessible'],default='healthy')
     parser.add_argument('--distribution', choices=['ubuntu','rhel10'], default='ubuntu')
     parser.add_argument('--reuse-run', help='Exact reconciled baseline run whose unchanged ISO bytes may be reused; a new seed and acceptance are required.')
+    parser.add_argument('--rhel-content', help='Pinned RHEL hardening datastream; selects the encrypted installation profile.')
     options = parser.parse_args()
     if options.status:
         print(json.dumps(status(options.status),indent=2));return 0
@@ -647,7 +692,7 @@ def main():
         from .ubuntu_recovery import recover
         value=recover(options.recover_run,options.terraform)
     else:value = execute(options.source,options.terraform,reuse_run=options.reuse_run,distribution=options.distribution,
-                       scenario=options.scenario)
+                       scenario=options.scenario,rhel_content=options.rhel_content)
     print(json.dumps(value, indent=2))
     return 0 if value['outcome'] == 'baseline-passed' and value['cleanup'] != 'unreconciled' else 1
 
