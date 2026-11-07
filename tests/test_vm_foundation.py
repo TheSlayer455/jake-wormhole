@@ -139,6 +139,79 @@ class RHELInputs(unittest.TestCase):
 
 
 class RHELAssessment(unittest.TestCase):
+    def test_hardened_collector_binds_content_reboot_complete_findings_and_original_inventory(self):
+        import base64,hashlib,io,tarfile
+        from wormhole import rhel_hardening as h
+        result,receipt,inventory=RHELSVD().fixture();target='vm-'+result['run_id'][:8]
+        content=('<Benchmark xmlns="'+ra.X[1:-1]+'"><version>0.1.82</version><Profile id="'+ra.PROFILE+'">'
+            '<title>DISA STIG for Red Hat Enterprise Linux 10</title>'
+            '<description>Checks align to Red Hat Enterprise Linux 10 V1R2.</description></Profile>'
+            '<Rule id="one"/><Rule id="two"/></Benchmark>').encode()
+        pinned={**h.CONTENT,'sha256':hashlib.sha256(content).hexdigest(),'rules':2,'selected_rules':2}
+        native=('<Benchmark xmlns="'+ra.X[1:-1]+'"><TestResult><profile idref="'+ra.PROFILE+'"/>'
+            '<target>'+target+'</target><rule-result idref="one"><result>pass</result></rule-result>'
+            '<rule-result idref="two"><result>fail</result></rule-result></TestResult></Benchmark>').encode()
+        receipt.update(run_id=result['run_id'],target=target,content_sha256=pinned['sha256'],profile_id=ra.PROFILE,
+            scanner_exit=2,remediation_during_assessment=False,installation_boot_id=str(uuid4()))
+        result['build'].update(capability=h.CAPABILITY,assessment_content=pinned)
+        files={name:b'synthetic output' for name in ra.FILES}
+        files.update({'datastream.xml':content,'xccdf.xml':native,'arf.xml':native,'receipt.json':json.dumps(receipt).encode()})
+        archive=io.BytesIO()
+        with tarfile.open(fileobj=archive,mode='w:gz') as tar:
+            for name,raw in files.items():
+                member=tarfile.TarInfo(name);member.size=len(raw);tar.addfile(member,io.BytesIO(raw))
+        payload=archive.getvalue();checks=dict.fromkeys(ra.HARDENED_CHECKS,True);checks['audit-service']=False
+        rows=inventory+[{'stage':'hardened-functional','returncode':1,'checks':checks},
+            {'stage':'assessment-archive','returncode':0,'sha256':hashlib.sha256(payload).hexdigest(),
+             'archive_base64':base64.b64encode(payload).decode()}]
+        with patch.object(h,'CONTENT',pinned),tempfile.TemporaryDirectory() as directory:
+            summary=ra.collect(Path(directory),result,rows)
+            self.assertEqual(summary['native_counts'],{'pass':1,'fail':1})
+            self.assertEqual(summary['content_version'],'0.1.82');self.assertEqual(summary['benchmark'],'RHEL 10 STIG V1R2')
+            self.assertEqual(summary['functional_counts'],{'pass':9,'fail':1})
+            self.assertFalse(summary['all_functional_checks_pass']);self.assertFalse(summary['lab_iso_qualified'])
+            self.assertEqual(json.loads((Path(directory)/'installed-svd.json').read_text())['packages'][0]['epoch'],'2')
+            self.assertIn('All 2 rules accounted for',(Path(directory)/'assessment.txt').read_text())
+        for changed in ({'assessment_content':{**pinned,'release':'other'}},{'capability':r.CAPABILITY}):
+            with patch.object(h,'CONTENT',pinned),tempfile.TemporaryDirectory() as directory,self.assertRaises(RunError) as error:
+                ra.collect(Path(directory),{**result,'build':{**result['build'],**changed}},rows)
+            self.assertEqual(error.exception.code,'assessment_content_contract')
+        with patch.object(h,'CONTENT',pinned):
+            self.assertEqual(ra.read_results(content,native,expected_target=target,scanner_exit=2,hardened=True,
+                expected_hash='a'*64)['content_sha256'],pinned['sha256'])
+            with self.assertRaises(RunError):ra.read_results(content+b'changed',native,expected_target=target,scanner_exit=2,hardened=True)
+            with self.assertRaises(RunError):ra.read_results(content,native.replace(b'>fail<',b'>notselected<'),expected_target=target,scanner_exit=2,hardened=True)
+        changed=content.replace(b'0.1.82',b'0.1.83')
+        with patch.object(h,'CONTENT',{**pinned,'sha256':hashlib.sha256(changed).hexdigest()}),self.assertRaises(RunError) as metadata:
+            ra.read_results(changed,native,expected_target=target,scanner_exit=2,hardened=True)
+        self.assertEqual(metadata.exception.code,'assessment_content_metadata')
+
+    def test_hardened_helper_preserves_failed_checks_collects_scan_and_never_puts_password_in_argv(self):
+        import contextlib,io,subprocess,sys,time
+        from types import SimpleNamespace
+        compile(ra.HARDENED_AUDIT_CODE,'<hardened-helper>','exec')
+        compile(ra.HARDENED_PROBE,'<read-only-guest-probe>','exec')
+        self.assertNotIn('--remediate',ra.HARDENED_AUDIT_CODE)
+        self.assertIn('/usr/share/xml/scap/ssg/content/',ra.RHEL_AUDIT_CODE)
+        self.assertNotIn('become_password',ra.RHEL_AUDIT_CODE)
+        secret='SYNTHETIC-NOT-A-CREDENTIAL';calls=[]
+        checks={name:True for name in ra.HARDENED_CHECKS if name!='password-required-sudo'};checks['audit-service']=False
+        def run(args,**kwargs):
+            calls.append((args,kwargs));self.assertNotIn(secret,json.dumps(args))
+            if len(calls)==1:return SimpleNamespace(returncode=1,stdout=b'',stderr=b'')
+            self.assertEqual(kwargs['input'],(secret+'\n').encode())
+            return SimpleNamespace(returncode=0,stdout=json.dumps({'checks':checks}).encode() if len(calls)==2 else b'synthetic archive',stderr=b'')
+        output=io.StringIO()
+        with patch.object(subprocess,'run',side_effect=run),contextlib.redirect_stdout(output),self.assertRaises(SystemExit) as stopped:
+            exec(ra.HARDENED_AUDIT_CODE,{'c':{'address':'192.0.2.10','become_password':secret},'opts':[],
+                'deadline':time.monotonic()+300,'json':json,'subprocess':subprocess,'sys':sys,'time':time})
+        self.assertEqual(stopped.exception.code,1);self.assertNotIn(secret,output.getvalue())
+        rows=[json.loads(line) for line in output.getvalue().splitlines()]
+        self.assertEqual(set(rows[0]['checks']),set(ra.HARDENED_CHECKS));self.assertEqual(rows[0]['returncode'],1)
+        self.assertTrue(any(row.get('stage')=='assessment-archive' for row in rows))
+        self.assertEqual(rows[-1]['outcome'],'hardened-functional-failed')
+        self.assertEqual(len(calls),3)
+
     def test_native_coverage_preserves_findings_and_rejects_missing_or_wrong_identity(self):
         import hashlib
         content = ('<Benchmark xmlns="' + ra.X[1:-1] + '"><Profile id="' + ra.PROFILE + '"/>'
