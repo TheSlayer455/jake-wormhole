@@ -266,7 +266,8 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
             incoming=0
             if reuse_run is None:
                 incoming=Path(source).stat().st_size+16*1024**2
-                if dependency_store is not None:
+                # A delivered candidate already contains the offline bundle.
+                if dependency_store is not None and delivery is None:
                     incoming+=sum(f['bytes'] for f in read_json(Path(dependency_store)/'bundle/manifest.json')['files'])
             # Reserve retained candidate growth as well as physical run-copy,
             # guest and evidence space. Intake never skips its copy reservation.
