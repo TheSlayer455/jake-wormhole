@@ -161,7 +161,10 @@ class RHELAssessment(unittest.TestCase):
             for name,raw in files.items():
                 member=tarfile.TarInfo(name);member.size=len(raw);tar.addfile(member,io.BytesIO(raw))
         payload=archive.getvalue();checks=dict.fromkeys(ra.HARDENED_CHECKS,True);checks['audit-service']=False
-        rows=inventory+[{'stage':'hardened-functional','returncode':1,'checks':checks},
+        crypto={'openssl_providers':{'status':'observed','returncode':0,'stdout':'synthetic provider version',
+            'stderr':'','truncated':False,'error':None},'virtualization':{'status':'error','returncode':1,
+            'stdout':'none\n','stderr':'','truncated':False,'error':None}}
+        rows=inventory+[{'stage':'hardened-functional','returncode':1,'checks':checks,'crypto_runtime':crypto},
             {'stage':'assessment-archive','returncode':0,'sha256':hashlib.sha256(payload).hexdigest(),
              'archive_base64':base64.b64encode(payload).decode()}]
         with patch.object(h,'CONTENT',pinned),tempfile.TemporaryDirectory() as directory:
@@ -170,6 +173,8 @@ class RHELAssessment(unittest.TestCase):
             self.assertEqual(summary['content_version'],'0.1.82');self.assertEqual(summary['benchmark'],'RHEL 10 STIG V1R2')
             self.assertEqual(summary['functional_counts'],{'pass':9,'fail':1})
             self.assertFalse(summary['all_functional_checks_pass']);self.assertFalse(summary['lab_iso_qualified'])
+            self.assertEqual(summary['crypto_runtime'],{**crypto,'kernel_release':{'status':'missing'}})
+            self.assertIn('synthetic provider version',(Path(directory)/'assessment.txt').read_text())
             self.assertEqual(json.loads((Path(directory)/'installed-svd.json').read_text())['packages'][0]['epoch'],'2')
             self.assertIn('All 2 rules accounted for',(Path(directory)/'assessment.txt').read_text())
         for changed in ({'assessment_content':{**pinned,'release':'other'}},{'capability':r.CAPABILITY}):
@@ -195,12 +200,14 @@ class RHELAssessment(unittest.TestCase):
         self.assertIn('/usr/share/xml/scap/ssg/content/',ra.RHEL_AUDIT_CODE)
         self.assertNotIn('become_password',ra.RHEL_AUDIT_CODE)
         secret='SYNTHETIC-NOT-A-CREDENTIAL';calls=[]
+        crypto={'kernel_release':{'status':'observed','returncode':0,'stdout':'synthetic-kernel',
+            'stderr':'','truncated':False,'error':None}}
         checks={name:True for name in ra.HARDENED_CHECKS if name!='password-required-sudo'};checks['audit-service']=False
         def run(args,**kwargs):
             calls.append((args,kwargs));self.assertNotIn(secret,json.dumps(args))
             if len(calls)==1:return SimpleNamespace(returncode=1,stdout=b'',stderr=b'')
             self.assertEqual(kwargs['input'],(secret+'\n').encode())
-            return SimpleNamespace(returncode=0,stdout=json.dumps({'checks':checks}).encode() if len(calls)==2 else b'synthetic archive',stderr=b'')
+            return SimpleNamespace(returncode=0,stdout=json.dumps({'checks':checks,'crypto_runtime':crypto}).encode() if len(calls)==2 else b'synthetic archive',stderr=b'')
         output=io.StringIO()
         with patch.object(subprocess,'run',side_effect=run),contextlib.redirect_stdout(output),self.assertRaises(SystemExit) as stopped:
             exec(ra.HARDENED_AUDIT_CODE,{'c':{'address':'192.0.2.10','become_password':secret},'opts':[],
@@ -208,9 +215,24 @@ class RHELAssessment(unittest.TestCase):
         self.assertEqual(stopped.exception.code,1);self.assertNotIn(secret,output.getvalue())
         rows=[json.loads(line) for line in output.getvalue().splitlines()]
         self.assertEqual(set(rows[0]['checks']),set(ra.HARDENED_CHECKS));self.assertEqual(rows[0]['returncode'],1)
+        self.assertEqual(rows[0]['crypto_runtime'],crypto)
         self.assertTrue(any(row.get('stage')=='assessment-archive' for row in rows))
         self.assertEqual(rows[-1]['outcome'],'hardened-functional-failed')
         self.assertEqual(len(calls),3)
+        if sys.platform!='win32':
+            namespace={};exec(ra.HARDENED_PROBE.split('\ndef encrypted(')[0],namespace)
+            observe=namespace['crypto_observe']
+            observed=observe([sys.executable,'-c','print("synthetic provider")'])
+            self.assertEqual(observed['status'],'observed');self.assertEqual(observed['stdout'],'synthetic provider\n')
+            limited=observe([sys.executable,'-c','import os;os.write(1,b"x"*16384);os.write(1,b"x")'])
+            self.assertEqual(limited['status'],'error');self.assertTrue(limited['truncated'])
+            self.assertEqual(len(limited['stdout']),8192)
+            failed=observe([sys.executable,'-c','import sys;print("unavailable",file=sys.stderr);sys.exit(7)'])
+            self.assertEqual(failed['status'],'error');self.assertEqual(failed['returncode'],7)
+            self.assertEqual(failed['stderr'],'unavailable\n')
+            with patch.object(subprocess,'run',side_effect=subprocess.TimeoutExpired('synthetic',10)):
+                expired=observe(['synthetic'])
+            self.assertEqual(expired['status'],'error');self.assertEqual(expired['error'],'TimeoutExpired')
 
     def test_native_coverage_preserves_findings_and_rejects_missing_or_wrong_identity(self):
         import hashlib

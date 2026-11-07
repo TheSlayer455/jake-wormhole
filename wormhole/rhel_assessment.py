@@ -67,10 +67,23 @@ print(json.dumps({'final_authentication':True,'ansible_ready':True,'catalog_star
 HARDENED_CHECKS = ('password-required-sudo', 'fips-runtime-mode', 'selinux-enforcing',
     'post-install-reboot', 'encrypted-filesystems', 'encrypted-swap', 'luks-pbkdf2',
     'audit-service', 'time-source-synchronized', 'logging-service')
+CRYPTO_OBSERVATIONS = ('openssl_providers', 'kernel_release', 'virtualization')
 HARDENED_PROBE = r'''
-import json,pathlib,subprocess
+import json,pathlib,resource,signal,subprocess,tempfile
 def command(*args):
  return subprocess.run(args,capture_output=True,text=True,check=True,timeout=10).stdout.strip()
+def crypto_observe(args):
+ with tempfile.TemporaryFile() as out,tempfile.TemporaryFile() as err:
+  status=None;error=None
+  try:
+   status=subprocess.run(args,stdin=subprocess.DEVNULL,stdout=out,stderr=err,timeout=10,
+    preexec_fn=lambda:resource.setrlimit(resource.RLIMIT_FSIZE,(8192,8192))).returncode
+  except Exception as exc:error=type(exc).__name__
+  out.seek(0);err.seek(0);stdout=out.read(8193);stderr=err.read(1025)
+  truncated=len(stdout)>=8192 or len(stderr)>1024 or status==-signal.SIGXFSZ
+  return {'status':'observed' if status==0 and stdout and not truncated else 'error',
+   'returncode':status,'stdout':stdout[:8192].decode(errors='replace'),
+   'stderr':stderr[:1024].decode(errors='replace'),'truncated':truncated,'error':error}
 def encrypted(source):
  return 'crypt' in command('lsblk','-s','-n','-o','TYPE',source).splitlines()
 def filesystems():
@@ -99,7 +112,10 @@ checks={};errors={}
 for name,observe in observations.items():
  try:checks[name]=bool(observe())
  except Exception as error:checks[name]=None;errors[name]=type(error).__name__
-print(json.dumps({'checks':checks,'errors':errors}))
+crypto_runtime={name:crypto_observe(args) for name,args in {
+ 'openssl_providers':['openssl','list','-providers','-verbose'],
+ 'kernel_release':['uname','-r'],'virtualization':['systemd-detect-virt','--vm']}.items()}
+print(json.dumps({'checks':checks,'errors':errors,'crypto_runtime':crypto_runtime}))
 '''
 
 
@@ -116,16 +132,17 @@ r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'sudo -k -n true'],cap
 checks['password-required-sudo']=r.returncode==1
 r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'sudo -S -p "" /usr/bin/python3 -c '+shlex.quote(functional_probe)],
  input=(password+'\n').encode(),capture_output=True,timeout=min(180,max(1,deadline-time.monotonic()-35)))
-errors={}
+errors={};crypto_runtime={}
 if r.returncode==0:
  try:
   observed=json.loads(r.stdout)
   if set(observed['checks'])!=set(expected_checks)-{'password-required-sudo'}:raise ValueError('check inventory')
-  checks.update(observed['checks']);errors=observed.get('errors',{})
+  checks.update(observed['checks']);errors=observed.get('errors',{});crypto_runtime=observed.get('crypto_runtime',{})
  except (ValueError,KeyError,TypeError):errors={'observer':'invalid-result'}
 else:errors={'observer':'remote-observation-failed'}
 functional_ok=all(value is True for value in checks.values())
-print(json.dumps({'stage':'hardened-functional','returncode':0 if functional_ok else 1,'checks':checks,'errors':errors}),flush=True)
+print(json.dumps({'stage':'hardened-functional','returncode':0 if functional_ok else 1,
+ 'checks':checks,'errors':errors,'crypto_runtime':crypto_runtime}),flush=True)
 '''
     code = RHEL_AUDIT_CODE.replace(CONTENT_SHA, CONTENT['sha256']).replace(
         '/usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml', '/usr/local/share/wormhole/ssg-rhel10-ds.xml')
@@ -237,12 +254,16 @@ def collect(run, result, rows):
             'fail' if checks.get(name) is False else 'blocked'} for name in HARDENED_CHECKS]
         summary['functional_counts']=dict(Counter(row['status'] for row in summary['functional_results']))
         summary['all_functional_checks_pass']=len(observations)==1 and set(checks)==set(HARDENED_CHECKS) and observations[0].get('returncode')==0 and all(row['status']=='pass' for row in summary['functional_results'])
+        crypto=observations[0].get('crypto_runtime',{}) if len(observations)==1 else {}
+        summary['crypto_runtime']={name:crypto.get(name,{'status':'missing'}) for name in CRYPTO_OBSERVATIONS}
     atomic_json(Path(run) / 'assessment.json', summary)
     title='RHEL 10 installation-hardened assessment (ComplianceAsCode 0.1.82, V1R2)' if hardened else 'RHEL 10 DVD vendor-STIG baseline (draft 0.1.76)'
     (Path(run) / 'assessment.txt').write_text(title+'\n'
         + '\n'.join(f'{key}: {value}' for key, value in sorted(summary['native_counts'].items()))
         + f'\nAll {summary["upstream_rule_count"]} rules accounted for. Lab and production qualification: false.\n' + summary['limitation'] + '\n'
-        + ''.join(row['id']+': '+row['status']+'\n' for row in summary.get('functional_results',[])))
+        + ''.join(row['id']+': '+row['status']+'\n' for row in summary.get('functional_results',[]))
+        + ''.join('Crypto runtime '+name+': '+json.dumps(value,sort_keys=True)+'\n'
+                  for name,value in summary.get('crypto_runtime',{}).items()))
     return summary
 
 
