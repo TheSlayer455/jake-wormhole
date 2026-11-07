@@ -199,7 +199,7 @@ install -m 0755 ready.sh /usr/local/sbin/wormhole-ready
 cat > /etc/systemd/system/wormhole-ready.service <<'UNIT'
 [Unit]
 Description=Verify the freshly booted hardened installation and publish its host key
-After=local-fs.target
+After=local-fs.target sshd-keygen.target
 Before=sshd.service
 [Service]
 Type=oneshot
@@ -240,7 +240,7 @@ def installation_contract():
         'console_receiver_sha256': fingerprint(EARLY),
         'services': {'ca': 'run-seed-scoped', 'logging': 'existing-sandbox-tls',
                      'audit': 'existing-sandbox-ascii', 'time': 'lab-host-clock'},
-        'qualification_policy': 'pending-complete-real-assessment-and-lab-policy'}
+        'qualification_policy': 'rhel10-stig-lab-v1'}
 
 
 def boot_config(text):

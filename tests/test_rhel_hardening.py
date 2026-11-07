@@ -1,5 +1,6 @@
 """Generated-input regressions; real fresh KVM execution remains separate."""
 from pathlib import Path
+import json
 import re
 import shutil
 import subprocess
@@ -66,6 +67,7 @@ class HardenedInputs(unittest.TestCase):
         self.assertIn('ssh_host_rsa_key.pub', h.READY)
         self.assertLess(h.READY.index('getenforce'), h.READY.index('installation-complete'))
         self.assertIn('Requires=wormhole-ready.service', h.FINALIZE)
+        self.assertIn('After=local-fs.target sshd-keygen.target', h.FINALIZE)
         self.assertIn('StreamDriverAuthMode="x509/name"', h.FINALIZE)
         self.assertNotIn('update-ca-trust', h.FINALIZE)
 
@@ -84,3 +86,15 @@ class HardenedInputs(unittest.TestCase):
             with self.assertRaises(RunError) as error: h.prepare(content)
             self.assertEqual(error.exception.code, 'rhel_content_identity_mismatch')
             self.assertEqual(list(root.iterdir()), [content])
+
+    def test_frozen_lab_policy_retains_native_coverage_and_unverified_dependencies(self):
+        policy = json.loads((Path(__file__).resolve().parents[1] / 'profiles/rhel10-lab-policy-v1.json').read_text())
+        self.assertEqual(policy['policy_id'], h.installation_contract()['qualification_policy'])
+        self.assertEqual(policy['content']['datastream_sha256'], h.CONTENT_SHA256)
+        self.assertEqual(policy['content']['profile_id'], h.PROFILE)
+        self.assertEqual(policy['content']['upstream_rules'], h.CONTENT['rules'])
+        self.assertEqual(policy['content']['selected_rules'], h.CONTENT['selected_rules'])
+        self.assertFalse(policy['production_iso_eligible'])
+        self.assertEqual(policy['tailoring'], {'excluded_rules': [], 'owner_approved_exceptions': []})
+        self.assertEqual(policy['requirements']['independent_same_iso_installations'], 2)
+        self.assertTrue(policy['unresolved_requirements'])
