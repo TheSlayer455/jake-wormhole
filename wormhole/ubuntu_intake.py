@@ -51,7 +51,9 @@ def expected_payload(store):
     files={}
     for row in manifest['files']:
         name=row['path']
-        require(type(name) is str and re.fullmatch(r'[A-Za-z0-9_+.-]+(?:/[A-Za-z0-9_+.-]+)*',name) and
+        # APT filenames retain literal percent-encoded epochs and version tildes.
+        # These are filesystem names, never URL-decoded before extraction.
+        require(type(name) is str and re.fullmatch(r'[A-Za-z0-9_+.%~-]+(?:/[A-Za-z0-9_+.%~-]+)*',name) and
             '..' not in Path(name).parts and name not in files and type(row['bytes']) is int and row['bytes']>=0 and
             type(row['sha256']) is str and SHA.fullmatch(row['sha256']),'ubuntu_bundle_manifest_invalid')
         files[name]=(row['bytes'],row['sha256'])

@@ -167,7 +167,8 @@ class Intake(unittest.TestCase):
             'entitlement.py','audit-offload.py','secret-audit.py','pkcs11-probe.py'}
         for name in names:(guest/name).write_text('fixture '+name)
         dependencies=self.base/'dependencies';bundle=dependencies/'bundle';bundle.mkdir(parents=True)
-        atomic_json(bundle/'manifest.json',{'files':[{'path':'repository/pinned.deb','bytes':4,'sha256':'a'*64}]})
+        package='repository/auditd_1%3a3.0.7-1ubuntu0.1~22.04_amd64.deb'
+        atomic_json(bundle/'manifest.json',{'files':[{'path':package,'bytes':4,'sha256':'a'*64}]})
         raw="# BEGIN fix (1 / 1) for 'xccdf_org.ssgproject.content_rule_sample'\necho fixture\n# END fix for 'xccdf_org.ssgproject.content_rule_sample'"
         upstream=dependencies/'ubuntu2204-script-stig.sh';upstream.write_text(raw)
         atomic_json(source/'ubuntu/remediation-plan-v1.json',{'upstream_script_sha256':sha256(upstream),
@@ -175,7 +176,7 @@ class Intake(unittest.TestCase):
         before=set(self.base.rglob('*'))
         with patch.object(u,'SOURCE_ROOT',source),patch.object(ubuntu_tailoring,'document',return_value=None):
             result=u.expected_payload(dependencies)
-            self.assertEqual(set(result),names | {'repository/pinned.deb','manifest.json','policy.json',
+            self.assertEqual(set(result),names | {package,'manifest.json','policy.json',
                 'remediation/sample.sh','remediation-plan.json','offline-apt.conf','install-contract.json',
                 'wormhole-finalize.service'})
             block=b'\necho fixture\n'
