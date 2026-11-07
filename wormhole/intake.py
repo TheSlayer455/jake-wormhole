@@ -89,7 +89,9 @@ def register(marker, *, generation='initial', scenario='healthy', store=None):
     require(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,63}',generation) and
         scenario in {'healthy','marker-inaccessible'},'intake_request_invalid')
     source,delivery=completed_delivery(marker)
-    context=acceptance_context(distribution(delivery))
+    target=distribution(delivery)
+    require(target=='rhel10' or scenario=='healthy','intake_request_invalid')
+    context=acceptance_context(target)
     key=fingerprint({'sha256':delivery['sha256'],'bytes':delivery['bytes'],
         'contract_sha256':delivery['contract_sha256'],'acceptance':context,
         'generation':generation,'scenario':scenario})

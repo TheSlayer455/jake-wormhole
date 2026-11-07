@@ -77,7 +77,12 @@ class Intake(unittest.TestCase):
         self.assertEqual(changed.exception.code,'delivery_build_manifest_mismatch')
 
     def test_ubuntu_stale_inputs_and_oversized_or_unbound_sidecars_refuse_before_dispatch(self):
-        dependencies,delivery=self.complete_ubuntu();request=i.register(self.marker,store=self.store)
+        dependencies,delivery=self.complete_ubuntu()
+        with self.assertRaises(RunError) as unsupported:
+            i.register(self.marker,store=self.store,scenario='marker-inaccessible')
+        self.assertEqual(unsupported.exception.code,'intake_request_invalid')
+        self.assertFalse((self.root/'intake').exists())
+        request=i.register(self.marker,store=self.store)
         atomic_json(dependencies/'bundle/manifest.json',{'files':[],'changed_installed_input':True})
         with self.assertRaises(RunError) as changed:
             i.submit(request['request_id'],'fixture',store=self.store,dependency_store=dependencies)
