@@ -578,7 +578,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                     result['hardened_checks']={key:'pass' if values.get(key) is True else 'fail' if values.get(key) is False else 'blocked' for key in HARDENED_CHECKS}
                 if controller_rc:result['first_failure']=controller_failure(rows)
                 save()
-            if hardened_rhel and any(row.get('stage')=='assessment-archive' and row.get('returncode')==0 for row in rows):
+            if hardened_rhel and (controller_rc==0 or any(row.get('stage')=='assessment-archive' and row.get('returncode')==0 for row in rows)):
                 from .rhel_assessment import collect
                 assessment=collect(run,result,rows)
                 result['assessment']={key:assessment[key] for key in ('capability','content_sha256','native_counts',
