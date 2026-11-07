@@ -251,7 +251,9 @@ def boot_config(text):
     for line in text.splitlines():
         if re.match(r'\s*linux\s+/images/pxeboot/vmlinuz\s', line) and 'inst.rescue' not in line:
             require(not any(token.startswith('fips=') for token in line.split()), 'unsupported_boot_config')
-            line += ' ' + BOOT_ARGS
+            # Anaconda's tmux frontend otherwise races the no-echo serial
+            # receiver and can echo its input. Use the supported unattended UI.
+            line += ' inst.notmux ' + BOOT_ARGS
         lines.append(line)
     return '\n'.join(lines) + '\n'
 

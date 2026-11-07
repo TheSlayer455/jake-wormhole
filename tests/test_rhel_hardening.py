@@ -26,6 +26,8 @@ class HardenedInputs(unittest.TestCase):
         boot = h.boot_config(original + kernel + '\n' + kernel + ' inst.rescue\n')
         self.assertIn(kernel + ' inst.rescue\n', boot)
         self.assertEqual(boot.count('fips=1'), 1)
+        self.assertEqual(boot.count('inst.notmux'), 1)
+        self.assertNotIn('inst.notmux',baseline.boot_config(original + kernel + '\n'))
         self.assertIn('inst.ks=hd:LABEL=WORMHOLEKS:/ks.cfg', boot)
         self.assertNotIn('fips=1', baseline.boot_config(original + kernel + '\n'))
         seed = self.seed()
