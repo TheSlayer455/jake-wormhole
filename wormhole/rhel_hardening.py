@@ -305,11 +305,13 @@ test -x /usr/bin/python3
 %post --nochroot --interpreter=/bin/bash --erroronfail --log=/mnt/sysroot/root/wormhole-payload.log
 set -euo pipefail
 trap 'printf "%s\\n" WORMHOLE_INSTALLATION_FAILED > /dev/ttyS0' ERR
-install -d -m 0755 /mnt/sysroot/usr/local/share/wormhole /mnt/sysroot/var/lib/wormhole
+mkdir -p /mnt/sysroot/usr/local/share/wormhole /mnt/sysroot/var/lib/wormhole
+chmod 0755 /mnt/sysroot/usr/local/share/wormhole /mnt/sysroot/var/lib/wormhole
 cp -a /run/install/repo/wormhole/. /mnt/sysroot/usr/local/share/wormhole/
-install -d -m 0700 /run/wormhole-seed
+mkdir -m 0700 /run/wormhole-seed
 mount -o ro /dev/disk/by-label/WORMHOLEKS /run/wormhole-seed
-install -m 0644 /run/wormhole-seed/sandbox-ca.crt /mnt/sysroot/etc/wormhole-lab-ca.crt
+cp /run/wormhole-seed/sandbox-ca.crt /mnt/sysroot/etc/wormhole-lab-ca.crt
+chmod 0644 /mnt/sysroot/etc/wormhole-lab-ca.crt
 umount /run/wormhole-seed
 printf '%s\\n' '{identifier}' > /mnt/sysroot/var/lib/wormhole/run-id
 %end

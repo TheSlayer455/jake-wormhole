@@ -72,6 +72,9 @@ class HardenedInputs(unittest.TestCase):
         self.assertIn('After=local-fs.target sshd-keygen.target', h.FINALIZE)
         self.assertIn('StreamDriverAuthMode="x509/name"', h.FINALIZE)
         self.assertNotIn('update-ca-trust', h.FINALIZE)
+        installer=self.seed().split('%post --nochroot',1)[1].split('%end',1)[0]
+        self.assertNotIn('\ninstall ',installer) # RHEL10 stage2 omits coreutils install.
+        self.assertIn('chmod 0644 /mnt/sysroot/etc/wormhole-lab-ca.crt',installer)
 
     def test_reuse_binds_installed_recipe_and_refuses_baseline_or_modified_bytes(self):
         manifest = {'capability': h.CAPABILITY, 'source': baseline.RHEL,
