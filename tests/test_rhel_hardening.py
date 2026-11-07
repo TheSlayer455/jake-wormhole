@@ -86,6 +86,15 @@ class HardenedInputs(unittest.TestCase):
         self.assertNotIn('lab_iso_qualified', h.installation_contract())
 
     @unittest.skipUnless(shutil.which('bash'), 'Actual Bash ERR semantics required')
+    def test_wrong_installed_os_stops_before_later_readiness_checks(self):
+        identity=h.READY.split('. /etc/os-release\n',1)[1].split('findmnt ',1)[0]
+        for distro,version in (('ubuntu','10.0'),('rhel','9.0'),('rhel','10.0')):
+            script='set -eu\nID='+distro+'\nVERSION_ID='+version+'\n'+identity+'echo CONTINUE\n'
+            result=subprocess.run(['bash'],input=script,text=True,capture_output=True)
+            self.assertEqual(result.returncode==0,(distro,version)==('rhel','10.0'))
+            self.assertEqual(result.stdout,'CONTINUE\n' if result.returncode==0 else '')
+
+    @unittest.skipUnless(shutil.which('bash'), 'Actual Bash ERR semantics required')
     def test_native_findings_do_not_emit_installer_failure_but_scanner_error_does(self):
         block=h.FINALIZE.split('if timeout ',1)[1].split('test -s ',1)[0].replace('/dev/ttyS0','/dev/stdout')
         for code in (0,2,3):

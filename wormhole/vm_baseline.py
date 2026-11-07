@@ -515,6 +515,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                     path=run/'console.log';text=path.read_text(errors='replace');unlock.check_capture(path)
                     if unlock.observe(text,console.stdin):result['unlock_events']=unlock.events;save()
                     current=path.read_bytes()[offset:].decode(errors='replace')
+                    require('WORMHOLE_FINALIZATION_FAILED' not in current,'finalization_failed')
                     found=re.search(r'WORMHOLE_FINAL_HOST_KEY_BEGIN\s+(ssh-rsa [A-Za-z0-9+/=]+)[^\n]*\s+WORMHOLE_FINAL_HOST_KEY_END',current)
                     if found:
                         require(found[1]==host_key,'cold_start_host_identity_changed');ready=True;break

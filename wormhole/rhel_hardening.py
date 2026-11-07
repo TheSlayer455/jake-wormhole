@@ -87,7 +87,8 @@ READY = r'''#!/bin/bash
 set -euo pipefail
 trap 'printf "%s\n" WORMHOLE_FINALIZATION_FAILED > /dev/ttyS0' ERR
 . /etc/os-release
-test "$ID" = rhel && test "$VERSION_ID" = 10.0
+test "$ID" = rhel
+test "$VERSION_ID" = 10.0
 findmnt -n -o SOURCE / | grep -q '^/dev/'
 test "$(cat /proc/sys/crypto/fips_enabled)" = 1
 test "$(getenforce)" = Enforcing
