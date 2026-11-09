@@ -9,7 +9,7 @@ import shutil
 import subprocess
 from unittest.mock import patch
 
-from wormhole.ubuntu_encryption import ConsoleUnlock,configure,storage,read_region
+from wormhole.ubuntu_encryption import ConsoleUnlock,WRONG_KEY,configure,storage,read_region
 from wormhole.runs import RunError
 
 
@@ -74,6 +74,21 @@ class Encryption(unittest.TestCase):
             self.assertTrue(unlock.observe(rejected,stream))
             self.assertFalse(unlock.observe(rejected,stream))
             self.assertEqual(unlock.events[-2]['kind'],'wrong-secret-refused')
+
+    @unittest.skipIf(os.name=='nt','POSIX owner permissions required')
+    def test_systemd_masked_submission_allows_retry_without_claiming_cryptographic_refusal(self):
+        with tempfile.TemporaryDirectory() as directory:
+            key=Path(directory)/'unlock';key.write_text('A'*64);key.chmod(0o600)
+            unlock=ConsoleUnlock(key,probes=True,systemd=True);stream=io.BytesIO()
+            prompt='Please enter passphrase for disk lab (luks-test):'
+            with patch('time.monotonic',return_value=1):self.assertFalse(unlock.observe(prompt,stream))
+            with patch('time.monotonic',return_value=12):self.assertTrue(unlock.observe(prompt,stream))
+            submitted=prompt+' (press TAB for no echo) \n'+'•'*len(WRONG_KEY)+'\n'
+            with self.assertRaises(RunError):
+                unlock.observe(submitted+'Please enter passphrase for disk unrelated:',stream)
+            self.assertTrue(unlock.observe(submitted+prompt,stream))
+            self.assertEqual(unlock.events[-2]['kind'],'wrong-secret-reprompted')
+            self.assertTrue(stream.getvalue().endswith(b'A'*64+b'\n'))
 
     @unittest.skipIf(os.name=='nt','POSIX owner permissions required')
     def test_broad_secret_permissions_are_refused(self):

@@ -8,6 +8,8 @@ from pathlib import Path
 
 from .runs import RunError
 
+WRONG_KEY = b'WORMHOLE-INTENTIONALLY-WRONG-KEY'
+
 
 EARLY = r'''import os,termios,select,time
 fd=os.open('/dev/ttyS0',os.O_RDWR|os.O_NOCTTY)
@@ -68,12 +70,14 @@ class ConsoleUnlock:
         self.probes=probes
         self.wait_started=None
         self.wrong_sent=False
+        self.wrong_probe_outcome=None
         self.systemd=systemd
 
     def observe(self,text,stream):
         installer=re.search(r'(?:^|\n)WORMHOLE_INSTALL_UNLOCK_REQUEST\r?(?:\n|$)',text) is not None and not self.installer_sent
         prompt=r'Please enter passphrase for disk [^\r\n]+?:' if self.systemd else r'Please unlock disk [^\r\n:]+:'
-        prompts=len(re.findall(prompt,text))
+        matches=re.findall(prompt,text)
+        prompts=len(matches)
         if not installer and prompts<=self.boot_prompts:return False
         if not self.secret_file.is_file():raise RunError('unlock_material_missing','Supply the run-owned private console unlock material.')
         info=self.secret_file.stat()
@@ -83,15 +87,25 @@ class ConsoleUnlock:
         if not installer and self.probes and not self.wrong_sent:
             if self.wait_started is None:self.wait_started=time.monotonic();return False
             if time.monotonic()-self.wait_started<10:return False
-            stream.write(b'WORMHOLE-INTENTIONALLY-WRONG-KEY\n');stream.flush()
+            stream.write(WRONG_KEY+b'\n');stream.flush()
             self.wrong_sent=True;self.boot_prompts=prompts
+            self.wrong_probe_offset=len(text)
+            self.wrong_probe_prompt=matches[-1]
             self.events.append({'kind':'missing-material-wait-and-wrong-secret-probe','wait_seconds':10,'prompt_number':prompts})
             return True
-        if self.wrong_sent and not any(e['kind']=='wrong-secret-refused' for e in self.events):
-            rejected=('Failed to activate with specified passphrase. (Passphrase incorrect?)' in text or
-                      'Failed to activate. (Key incorrect?)' in text) if self.systemd else ('No key available' in text or 'cryptsetup: ERROR' in text)
-            if not rejected:raise RunError('wrong_unlock_not_confirmed','Expected a real rejected unlock before proceeding.')
-            self.events.append({'kind':'wrong-secret-refused','prompt_number':prompts})
+        if self.wrong_sent and self.wrong_probe_outcome is None:
+            after_submission=text[self.wrong_probe_offset:]
+            rejected=('Failed to activate with specified passphrase. (Passphrase incorrect?)' in after_submission or
+                      'Failed to activate. (Key incorrect?)' in after_submission) if self.systemd else ('No key available' in text or 'cryptsetup: ERROR' in text)
+            # The RHEL initrd may keep the actual cryptsetup error in its journal.
+            # Require the masked submission to complete and the same prompt to
+            # return. The later powered-off test proves cryptographic refusal.
+            reprompted=self.systemd and re.search(
+                re.escape('•'*len(WRONG_KEY))+r'\r?\n'+re.escape(self.wrong_probe_prompt),after_submission)
+            if not rejected and not reprompted:
+                raise RunError('wrong_unlock_not_confirmed','Expected a rejection or a completed masked retry before proceeding.')
+            self.wrong_probe_outcome='wrong-secret-refused' if rejected else 'wrong-secret-reprompted'
+            self.events.append({'kind':self.wrong_probe_outcome,'prompt_number':prompts})
         stream.write(secret+b'\n');stream.flush()
         self.installer_sent |= installer
         self.boot_prompts=prompts
@@ -119,7 +133,7 @@ def offline_inspect(disk,run,secret_file,*,swap='disabled'):
     key=Path(secret_file).read_bytes()
     args=['cryptsetup','open','--test-passphrase','--key-file=-',str(header)]
     good=subprocess.run(args,input=key,capture_output=True,timeout=30).returncode
-    wrong=subprocess.run(args,input=b'WORMHOLE-INTENTIONALLY-WRONG-KEY',capture_output=True,timeout=30).returncode
+    wrong=subprocess.run(args,input=WRONG_KEY,capture_output=True,timeout=30).returncode
     missing=subprocess.run(['cryptsetup','open','--test-passphrase','--key-file',str(run/'missing-key'),str(header)],
                            capture_output=True,timeout=10).returncode
     if good!=0 or wrong==0 or missing==0:raise RunError('offline_unlock_contract','Actual disk key acceptance/refusal failed.')
