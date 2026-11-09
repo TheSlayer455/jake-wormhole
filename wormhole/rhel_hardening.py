@@ -190,6 +190,9 @@ format = string
 AUDIT
 # Preserve the vendor audit unit's early-boot ordering. Requiring network-online
 # here creates a cycle through sysinit.target and skips auditd on boot.
+# Give the isolated receiver port the vendor audit type in the installed guest.
+# The default X server type denies each retry and generates further audit work.
+semanage port -N -a -t audit_port_t -p tcp 6000
 # Local notification delivery is useful; no SMTP ingress is declared.
 postconf -e 'inet_interfaces = loopback-only'
 install -d -m 0755 /var/lib/wormhole /etc/systemd/system/sshd.service.d

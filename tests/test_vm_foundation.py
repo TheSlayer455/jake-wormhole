@@ -437,6 +437,13 @@ class VMExecution(unittest.TestCase):
                 self.assertEqual(observed['outcome'],'running')
                 self.assertEqual(json.loads((run/'result.json').read_text()),value)
 
+    def test_confirmed_guest_panic_is_reported_at_boot_without_a_generic_timeout(self):
+        from wormhole.vm_baseline import require_no_guest_panic
+        require_no_guest_panic('diagnostic text mentioning Kernel panic - not syncing: audit')
+        with self.assertRaises(RunError) as panic:
+            require_no_guest_panic('[   11.125266] Kernel panic - not syncing: audit: backlog limit exceeded\n')
+        self.assertEqual(panic.exception.code,'guest_audit_backlog_panic')
+
     def test_real_authentication_cannot_hide_failed_readiness_or_missing_dependents(self):
         from wormhole.vm_baseline import controller_checks,controller_failure,HELPER_CODE
         compile(HELPER_CODE,'<existing-vm-helper>','exec')

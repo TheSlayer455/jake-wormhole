@@ -70,6 +70,13 @@ def controller_failure(rows):
     terminal=rows[-1] if rows else {}
     return terminal.get('category',terminal.get('error_category','controller-failed'))
 
+
+def require_no_guest_panic(text):
+    panic = re.search(r'(?m)^\[\s*\d+\.\d+\]\s+Kernel panic - not syncing: ([^\r\n]+)', text)
+    if panic:
+        category = 'guest_audit_backlog_panic' if panic[1].startswith('audit: backlog limit exceeded') else 'guest_kernel_panic'
+        raise RunError(category, 'The owned guest kernel reported a panic. See the restricted console.')
+
 # Runs inside the existing nonroot, pinned helper; only outgoing guest SSH.
 # Secrets arrive through stdin and live in its private tmpfs, never argv/env/state.
 HELPER_CODE = r'''
@@ -443,6 +450,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                 path = run / 'console.log'
                 require(path.stat().st_size <= 16 * 1024**2, 'installer_diagnostic_limit')
                 text = path.read_text(errors='replace')
+                require_no_guest_panic(text)
                 packages=re.findall(r'Installing [^\r\n]+\((\d+)/(\d+)\)',text)
                 if packages:
                     completed,total=map(int,packages[-1])
@@ -515,6 +523,7 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                     path=run/'console.log';text=path.read_text(errors='replace');unlock.check_capture(path)
                     if unlock.observe(text,console.stdin):result['unlock_events']=unlock.events;save()
                     current=path.read_bytes()[offset:].decode(errors='replace')
+                    require_no_guest_panic(current)
                     require('WORMHOLE_FINALIZATION_FAILED' not in current,'finalization_failed')
                     found=re.search(r'WORMHOLE_FINAL_HOST_KEY_BEGIN\s+(ssh-rsa [A-Za-z0-9+/=]+)[^\n]*\s+WORMHOLE_FINAL_HOST_KEY_END',current)
                     if found:
