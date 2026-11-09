@@ -83,7 +83,7 @@ class Encryption(unittest.TestCase):
             prompt='Please enter passphrase for disk lab (luks-test):'
             with patch('time.monotonic',return_value=1):self.assertFalse(unlock.observe(prompt,stream))
             with patch('time.monotonic',return_value=12):self.assertTrue(unlock.observe(prompt,stream))
-            submitted=prompt+' (press TAB for no echo) \n'+'•'*len(WRONG_KEY)+'\n'
+            submitted=prompt+' (press TAB for no echo) \n'+'•'*len(WRONG_KEY)+'\n\x1b[0;1;39m'
             for suffix in ('',prompt+'\n'):
                 with self.assertRaises(RunError):
                     unlock.observe(submitted+suffix+'Please enter passphrase for disk unrelated:',stream)

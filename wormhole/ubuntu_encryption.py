@@ -103,7 +103,8 @@ class ConsoleUnlock:
             # Require the masked submission to complete and the same prompt to
             # return. The later powered-off test proves cryptographic refusal.
             reprompted=self.systemd and re.search(
-                re.escape('•'*len(WRONG_KEY))+r'\r?\n'+re.escape(self.wrong_probe_prompt),after_submission)
+                re.escape('•'*len(WRONG_KEY))+r'\r?\n(?:\x1b\[[0-9;]{1,20}m){0,3}'
+                +re.escape(self.wrong_probe_prompt),after_submission)
             if not rejected and not reprompted:
                 raise RunError('wrong_unlock_not_confirmed','Expected a rejection or a completed masked retry before proceeding.')
             self.wrong_probe_outcome='wrong-secret-refused' if rejected else 'wrong-secret-reprompted'
