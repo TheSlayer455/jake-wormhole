@@ -84,8 +84,9 @@ class Encryption(unittest.TestCase):
             with patch('time.monotonic',return_value=1):self.assertFalse(unlock.observe(prompt,stream))
             with patch('time.monotonic',return_value=12):self.assertTrue(unlock.observe(prompt,stream))
             submitted=prompt+' (press TAB for no echo) \n'+'•'*len(WRONG_KEY)+'\n'
-            with self.assertRaises(RunError):
-                unlock.observe(submitted+'Please enter passphrase for disk unrelated:',stream)
+            for suffix in ('',prompt+'\n'):
+                with self.assertRaises(RunError):
+                    unlock.observe(submitted+suffix+'Please enter passphrase for disk unrelated:',stream)
             self.assertTrue(unlock.observe(submitted+prompt,stream))
             self.assertEqual(unlock.events[-2]['kind'],'wrong-secret-reprompted')
             self.assertTrue(stream.getvalue().endswith(b'A'*64+b'\n'))

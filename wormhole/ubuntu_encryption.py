@@ -94,6 +94,8 @@ class ConsoleUnlock:
             self.events.append({'kind':'missing-material-wait-and-wrong-secret-probe','wait_seconds':10,'prompt_number':prompts})
             return True
         if self.wrong_sent and self.wrong_probe_outcome is None:
+            if self.systemd and matches[-1]!=self.wrong_probe_prompt:
+                raise RunError('unlock_retry_target_changed','The console requested a different volume after the probe.')
             after_submission=text[self.wrong_probe_offset:]
             rejected=('Failed to activate with specified passphrase. (Passphrase incorrect?)' in after_submission or
                       'Failed to activate. (Key incorrect?)' in after_submission) if self.systemd else ('No key available' in text or 'cryptsetup: ERROR' in text)
