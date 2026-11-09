@@ -188,15 +188,8 @@ path = /sbin/audisp-remote
 type = always
 format = string
 AUDIT
-install -d -m 0755 /etc/systemd/system/auditd.service.d
-cat > /etc/systemd/system/auditd.service.d/50-wormhole-network.conf <<'UNIT'
-[Unit]
-After=
-After=network-online.target local-fs.target systemd-tmpfiles-setup.service
-Wants=network-online.target
-Before=
-Before=shutdown.target
-UNIT
+# Preserve the vendor audit unit's early-boot ordering. Requiring network-online
+# here creates a cycle through sysinit.target and skips auditd on boot.
 # Local notification delivery is useful; no SMTP ingress is declared.
 postconf -e 'inet_interfaces = loopback-only'
 install -d -m 0755 /var/lib/wormhole /etc/systemd/system/sshd.service.d

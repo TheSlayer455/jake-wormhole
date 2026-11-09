@@ -72,6 +72,11 @@ HARDENED_PROBE = r'''
 import json,pathlib,resource,signal,subprocess,tempfile
 def command(*args):
  return subprocess.run(args,capture_output=True,text=True,check=True,timeout=10).stdout.strip()
+def service_active(unit):
+ result=subprocess.run(['systemctl','is-active',unit],capture_output=True,text=True,timeout=10)
+ if result.returncode in (3,4):return False
+ result.check_returncode()
+ return result.stdout.strip()=='active'
 def crypto_observe(args):
  with tempfile.TemporaryFile() as out,tempfile.TemporaryFile() as err:
   status=None;error=None
@@ -105,9 +110,9 @@ observations={
  'post-install-reboot':lambda:bool((root/'installation-boot-id').read_text().strip()) and (root/'installation-boot-id').read_text().strip()!=pathlib.Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
  'encrypted-filesystems':filesystems,'encrypted-swap':swap,
  'luks-pbkdf2':lambda:'pbkdf2' in command('cryptsetup','luksDump','/dev/vda3').lower(),
- 'audit-service':lambda:command('systemctl','is-active','auditd')=='active',
- 'time-source-synchronized':lambda:command('systemctl','is-active','chronyd')=='active' and any(line.split()[:2]==['^*','192.0.2.1'] for line in command('chronyc','-n','sources').splitlines()),
- 'logging-service':lambda:command('systemctl','is-active','rsyslog')=='active'}
+ 'audit-service':lambda:service_active('auditd'),
+ 'time-source-synchronized':lambda:service_active('chronyd') and any(line.split()[:2]==['^*','192.0.2.1'] for line in command('chronyc','-n','sources').splitlines()),
+ 'logging-service':lambda:service_active('rsyslog')}
 checks={};errors={}
 for name,observe in observations.items():
  try:checks[name]=bool(observe())

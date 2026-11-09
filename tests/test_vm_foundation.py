@@ -191,6 +191,19 @@ class RHELAssessment(unittest.TestCase):
             ra.read_results(changed,native,expected_target=target,scanner_exit=2,hardened=True)
         self.assertEqual(metadata.exception.code,'assessment_content_metadata')
 
+    def test_hardened_service_probe_distinguishes_inactive_service_from_tool_error(self):
+        import subprocess
+        namespace={}
+        exec(ra.HARDENED_PROBE.split('\ndef encrypted(')[0],namespace)
+        service_active=namespace['service_active']
+        with patch.object(subprocess,'run') as run:
+            run.return_value=subprocess.CompletedProcess([],0,stdout='active\n')
+            self.assertTrue(service_active('auditd'))
+            run.return_value=subprocess.CompletedProcess([],3,stdout='inactive\n')
+            self.assertFalse(service_active('auditd'))
+            run.return_value=subprocess.CompletedProcess([],1,stdout='')
+            with self.assertRaises(subprocess.CalledProcessError):service_active('auditd')
+
     def test_hardened_helper_preserves_failed_checks_collects_scan_and_never_puts_password_in_argv(self):
         import contextlib,io,subprocess,sys,time
         from types import SimpleNamespace
