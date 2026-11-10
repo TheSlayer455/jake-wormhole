@@ -417,6 +417,27 @@ class VMJournal(unittest.TestCase):
 
 @unittest.skipUnless(os.name=='posix','Linux supervisor process observations')
 class VMExecution(unittest.TestCase):
+    def test_hardened_recovery_recognizes_only_the_run_owned_support_service(self):
+        from contextlib import nullcontext
+        from subprocess import CompletedProcess
+        from unittest.mock import Mock
+        from wormhole import ubuntu_recovery as recovery, rhel_hardening
+        identifier=str(uuid4());name='wormhole-vm-'+identifier.replace('-','')[:12]
+        result={'run_id':identifier,'source_revision':'a'*40,'provisioner':'terraform',
+                'supervisor':{'pid':10},'build':{'capability':rhel_hardening.CAPABILITY}}
+        lease=Mock()
+        with patch.object(recovery.os,'geteuid',return_value=0),patch.object(recovery,'workspace_path',side_effect=lambda path:path), \
+             patch.object(recovery,'read_json',return_value=result),patch.object(recovery,'sha256',return_value=recovery.vm.TF_SHA), \
+             patch.object(recovery.vm,'process_identity',return_value=None),patch.object(recovery.VMLease,'resume',return_value=nullcontext(lease)), \
+             patch.object(recovery.subprocess,'run',side_effect=[CompletedProcess([],1),RuntimeError('reached owned inspection')]) as inspect:
+            lease.record={'resources':[{'kind':'support_container','identity':'other-services'}]}
+            with self.assertRaises(RunError) as mismatch:recovery.recover(identifier,'fixture')
+            self.assertEqual(mismatch.exception.code,'recovery_ownership_mismatch')
+            inspect.assert_not_called()
+            lease.record['resources'][0]['identity']=name+'-services'
+            with self.assertRaisesRegex(RuntimeError,'reached owned inspection'):recovery.recover(identifier,'fixture')
+            self.assertEqual(inspect.call_args.args[0],['docker','inspect',name+'-services'])
+
     def test_status_distinguishes_liveness_progress_and_lost_supervisor(self):
         import subprocess,sys
         from wormhole import vm_baseline as vm

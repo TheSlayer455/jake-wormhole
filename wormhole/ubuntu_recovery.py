@@ -35,15 +35,17 @@ def recover(identifier, terraform=None):
     candidate,seed=share/'candidate.iso',share/'seed.iso'
     expected={('domain',name),('network',name),('pool',name),('disk',str(pool/(name+'.qcow2'))),
               ('installer_iso',str(candidate)),('seed_iso',str(seed)),('controller_container',name+'-controller')}
-    sandbox=result.get('build',{}).get('sandbox') is True
-    isolated=sandbox or result.get('network_isolated') is True
-    if sandbox:expected.add(('support_container',name+'-services'))
+    from .rhel_hardening import CAPABILITY as RHEL_HARDENED
+    build=result.get('build',{})
+    support=build.get('sandbox') is True or build.get('capability')==RHEL_HARDENED
+    isolated=support or result.get('network_isolated') is True
+    if support:expected.add(('support_container',name+'-services'))
     if isolated:expected.add(('network_filter',name+'-isolation'))
     def virsh(*args):
         return subprocess.check_output(['virsh','-c','qemu:///system',*args],timeout=10,text=True)
     with VMLease.resume(CANONICAL_INFRASTRUCTURE_ROOT,identifier,result['source_revision']) as lease:
         require({(x['kind'],x['identity']) for x in lease.record['resources']}<=expected,'recovery_ownership_mismatch')
-        for helper in [name+'-controller']+([name+'-services'] if sandbox else []):
+        for helper in [name+'-controller']+([name+'-services'] if support else []):
             inspected=subprocess.run(['docker','inspect',helper],capture_output=True,text=True,timeout=10)
             if inspected.returncode==0:
                 item=json.loads(inspected.stdout)[0]
