@@ -5,7 +5,17 @@ build/Forge contract is a separate task and is not a prerequisite for this path.
 The first supported contract is the existing RHEL 10.0 BIOS baseline: 8 GiB RAM,
 two vCPUs, 32 GiB empty disk, separate run-scoped Kickstart seed, final key-based
 SSH and declared passwordless baseline sudo. It is not hardened or qualified.
-Ubuntu intake and arbitrary team installation contracts are not implemented here.
+Ubuntu 22.04.5 hardened sandbox intake now has a separate BIOS contract with
+password-required sudo, a pinned build sidecar and fresh private CIDATA seed.
+Other producer installation contracts require separate verification.
+
+At [`9a19b53`](https://github.com/TheSlayer455/jake-wormhole/tree/9a19b537b0897fad5e649f7b9292f3e2102cacfa),
+a fresh Ubuntu installation used unchanged bytes, passed 40/40 checks and
+encrypted cold start, and recorded trusted SSH/Ansible, SVD, native assessment
+and exact cleanup. Replay returned the same completed request. The command
+returned 1 because lab qualification remained pending. The first attempt refused
+valid Debian epoch/version filenames before Terraform. The fix treats percent
+escapes and tildes as literal filename characters and retains the payload checks.
 
 ## Verified experiment
 
@@ -52,8 +62,9 @@ boundaries using existing fixtures/locks; mocked dispatch is not VM evidence.
 
 ## Producer and operator contract
 
-Run `python -m wormhole intake contract` to obtain the supported declaration and
-its digest. The producer writes the ISO completely, closes/syncs it, then writes
+Run `python -m wormhole intake contract` for the RHEL baseline declaration and
+digest. For Ubuntu use `python -m wormhole intake contract --distribution ubuntu`.
+The producer writes the ISO completely, closes/syncs it, then writes
 this JSON to a temporary filename and atomically renames it to `release.ready.json`
 **last**. Use the actual filename, byte count, ISO SHA256 and contract digest:
 
@@ -66,6 +77,11 @@ this JSON to a temporary filename and atomically renames it to `release.ready.js
   "contract_sha256": "<digest-from-intake-contract>"
 }
 ```
+
+Ubuntu uses schema `2.0` and also declares `build_manifest` and
+`build_manifest_sha256`. Keep the original bounded build manifest beside the
+ISO. The submit/scan command needs `--store /private/pinned-ubuntu-inputs` for
+that candidate's verified dependency store.
 
 These placeholders are not valid input values. A quiet size/mtime interval is
 not completion. Missing markers are ignored; wrong size/hash/contract is refused.
@@ -86,6 +102,9 @@ The first command registers a durable request/run identity; the next submits tha
 exact request. Scan calls those same functions. Intake verifies an independent
 private copy, or reuses an already protected candidate after existing ownership,
 reconciliation and hash proofs. It never hard-links writable producer data.
+Ubuntu records `assessment-complete` when the engineering run succeeds. Read the
+qualification report for the functional grid and release decision. A pending
+qualification returns 1, including when replaying the completed request.
 Producer files are not cleanup-owned. Missing cache origins or changed staged
 bytes are refused. All copies and guest allocation use existing storage/admission
 budgets; no additional host capacity or relaxed limit is assumed.

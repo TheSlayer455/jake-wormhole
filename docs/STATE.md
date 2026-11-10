@@ -1,5 +1,45 @@
 # Current engineering state
 
+## Fixed two-OS completion checklist
+
+Resumed from `3a4b909` under the November 7 completion assignment. Preserve the
+historical evidence below. PASS means the stated boundary has proof, not that a
+downstream release is qualified. November 9 reconciliation found both journals
+finished and no owned VM or controller. Storage measured 83.277 GiB managed,
+37.784 GiB candidate cache and 131.629 GiB filesystem availability. The archive
+has 361 committed and 30 pending objects, including a newly verified copy of
+the repeat's installed inventory. The explicit Pro slot is empty.
+
+| Required boundary | Status | Next proof or external dependency |
+| --- | --- | --- |
+| Scope, existing container layer, two real OS baselines | PASS | Keep RHEL 10.0/Ubuntu 22.04.5, Terraform and existing admission |
+| Ubuntu encrypted engineering lifecycle | PASS | Preserve historical pair at a705e2b and fresh unchanged-media intake at 9a19b53 |
+| Ubuntu Pro/FIPS/USG | BLOCKED | Owner supplies legitimate entitlement through protected provider; actual integration/execution remains work |
+| RHEL hardened/encrypted engineering lifecycle | PASS | Fresh d6dfaf3 and 4980aa0 ran identical ISO bytes on independent disks. Both passed ten hardened checks, trusted SSH/Ansible, 449-package SVD, native audit and cleanup |
+| Final matching installation pairs | PASS for engineering | RHEL's pair and Ubuntu's non-Pro build/intake comparison match. The vendor-enabled Ubuntu qualification pair remains blocked |
+| Completed-media intake | PASS for both tested contracts | RHEL baseline proven at 0a6acb5; Ubuntu hardened sandbox intake at 9a19b53 passed 40/40 and terminal replay deduplicated |
+| Failure/recovery | PASS for existing paths | Exercise changed boundary without relabeling unknown historical outcomes |
+| Lab qualification and eligible exact-byte publication | BLOCKED | Required technical/policy evidence, then real positive publisher/readback |
+| Archive/restore and automatic cleanup | PASS | Exact RHEL ISO and console restores, verified obsolete-candidate reclamation, duplicate cleanup and protected interrupted evidence |
+| Work-integration readiness | PASS for PR 47 reference | Update reviewed sanitized facts after new runtime milestones; no work compatibility claim |
+| Evaluate-STIG / Nessus work-equivalence | BLOCKED | Authorized supported tool package/interface absent; neither is a new Ubuntu lab-gate requirement |
+| Delivery evidence | PASS at tested source | 4980aa0 source CI passed 997 tests with 12 skips and controlled parity. PR 48 records final delivery and main verification |
+
+Engineering lifecycle verification, lab-qualified publication and work-integration
+readiness are separate outcomes. No overall completion or production eligibility
+is claimed. Physical-token hardware and another owner trust review are not chores.
+The current [continuation](../handoff/CURRENT.md) and draft
+[PR 48](https://github.com/TheSlayer455/jake-wormhole/pull/48) preserve exact failed
+runtime attribution and the next correction. Later findings are not comparisons
+against the older RHEL draft profile: content and selected coverage have changed.
+
+The completed hardened RHEL audit still records nine selected failures covering
+local account authorization, GRUB administration, name resolution, SELinux sudo
+role elevation, kdump, two chrony exposure settings, the SSH warning banner and
+SSSD certificate mapping. Ten native checks need separate disposition. FIPS
+runtime mode passed, but module and operating-environment verification remains
+open. These conditions keep the lab release gate closed.
+
 ## Portable cross-reference deliverable
 
 The [Luna comparison prompt](../handoff/LIGHTSPEED-CROSS-REFERENCE.md) and

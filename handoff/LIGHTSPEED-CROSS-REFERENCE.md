@@ -11,9 +11,9 @@ Public reference repository: https://github.com/TheSlayer455/jake-wormhole
 Read [WORMHOLE-SANITIZED-REFERENCE.md](WORMHOLE-SANITIZED-REFERENCE.md) from the
 same immutable public revision as this prompt. Resolve and record that public
 revision; inspect the reference's pinned implementation, tests and evidence
-checkpoints. Distinguish its last reviewed main revision from each actual runtime
-revision. If a newer milestone changes a claim, reconcile the evidence first;
-do not silently combine different attempts or promote source tests to runtime proof.
+checkpoints. Distinguish its public baseline from each actual runtime revision.
+Reconcile newer claims against their own evidence. If an identity record is
+archived, retrieve and verify it before using it to establish repeatability.
 
 Inside the authorized work environment, inspect the actual Jake Lightspeed
 repository, original Jake ISO team repositories, integration engine, Bash build

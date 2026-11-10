@@ -1,6 +1,18 @@
 # Minx work index
 
-Current increment: `codex/WORM-001-lightspeed-cross-reference`, [PR 47](https://github.com/TheSlayer455/jake-wormhole/pull/47). Deliver the
+Current assignment: `codex/WORM-001-two-os-completion`. Follow the single
+[completion checklist](STATE.md), preserving PRs 43-47. RHEL hardening is now
+authorized; Ubuntu vendor work depends only on the explicit owner-populated
+provider. One implementation/runtime owner coordinates isolated source worktrees.
+Do not add another controller, backend, scheduler or archive system.
+
+Current operation in [PR 48](https://github.com/TheSlayer455/jake-wormhole/pull/48).
+The engineering pair passed at `d6dfaf3` and `4980aa0`. Native RHEL findings,
+manual evidence and vendor module/environment verification remain open.
+Ubuntu unchanged intake passed at `9a19b53`. Archive readback and comparison
+confirmed independent non-Pro installations. Pro-dependent qualification is pending.
+
+Completed increment: `codex/WORM-001-lightspeed-cross-reference`, [PR 47](https://github.com/TheSlayer455/jake-wormhole/pull/47). Delivered the
 [copy-ready comparison prompt](../handoff/LIGHTSPEED-CROSS-REFERENCE.md),
 [sanitized verified reference](../handoff/WORMHOLE-SANITIZED-REFERENCE.md) and small
 existing-verifier extension. Reconcile original evidence, obtain independent

@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "rhel10-stig-lab-v1",
+  "os": {"release": "10.0", "architecture": "x86_64"},
+  "firmware": "bios",
+  "workload": "Disposable encrypted Linux VM with final SSH identity, password-authenticated sudo, Python and Ansible; no application payload",
+  "lab_scope": {
+    "physical_token_required": false,
+    "physical_token_assurance": "unverified",
+    "government_identity_or_authorization_claimed": false,
+    "production_certification_claimed": false,
+    "historical_results_requalified": false
+  },
+  "content": {
+    "distribution": "ComplianceAsCode",
+    "version": "0.1.82",
+    "upstream_asset_sha256": "765e84bdce7f9055f9b9c2dd0ee2b713d4255f8eec94eac6d35ea4973c28919c",
+    "datastream_sha256": "3a22f1f747ef7b895268b2da838f680b6a7ea421c5132d6ac4141d858afc60c6",
+    "profile_id": "xccdf_org.ssgproject.content_profile_stig",
+    "benchmark_label": "RHEL 10 STIG V1R2",
+    "upstream_rules": 1073,
+    "selected_rules": 473
+  },
+  "tailoring": {"excluded_rules": [], "owner_approved_exceptions": []},
+  "requirements": {
+    "all_selected_automated_rules_pass": true,
+    "scanner_errors_allowed": 0,
+    "all_upstream_rules_accounted": true,
+    "manual_evidence_and_accountable_dispositions": true,
+    "fips_installation_runtime_and_module_identity": true,
+    "cryptographic_module_operational_environment_verified": true,
+    "all_declared_functional_checks_pass": true,
+    "fresh_empty_disk_iso_installation": true,
+    "independent_same_iso_installations": 2,
+    "encryption_unlock_cold_start_and_offline_inspection": true,
+    "no_retained_installation_unlock_material": true,
+    "trusted_final_ssh_and_real_ansible": true,
+    "native_installed_svd_required": true,
+    "native_xml_arf_html_required": true,
+    "assessment_must_not_remediate": true,
+    "evidence_identity_and_cleanup_verified": true,
+    "publication_exact_tested_bytes_and_readback": true
+  },
+  "tool_coverage": {
+    "openscap": "required-real-audit",
+    "evaluate_stig": "requested-unverified",
+    "nessus": "unverified"
+  },
+  "external_work_equivalence_pending": [
+    "approved-evaluate-stig-package-and-supported-rhel10-execution",
+    "authorized-nessus-execution"
+  ],
+  "unresolved_requirements": [
+    "cryptographic-module-and-operational-environment-verification",
+    "rule-level-manual-evidence"
+  ],
+  "production_iso_eligible": false
+}

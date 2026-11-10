@@ -49,7 +49,7 @@ def stage_catalog():
             for stage in STAGES.values()]
 
 
-def _run_process(arguments, *, cwd, timeout, log_limit=LOG_LIMIT):
+def _run_process(arguments, *, cwd, timeout, log_limit=LOG_LIMIT, stderr=subprocess.STDOUT):
     """Absolute parent/pipe deadline; POSIX group ownership, Windows fixed leaves.
 
     This is not a sandbox for untrusted commands. Imported data never supplies argv.
@@ -69,7 +69,7 @@ def _run_process(arguments, *, cwd, timeout, log_limit=LOG_LIMIT):
     started = time.monotonic()
     try:
         process = subprocess.Popen(arguments, cwd=cwd, env=environment, stdin=subprocess.DEVNULL,
-                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                   stdout=subprocess.PIPE, stderr=stderr,
                                    start_new_session=os.name == "posix", close_fds=True, bufsize=0)
     except OSError:
         return {"status": "error", "returncode": None, "duration_seconds": time.monotonic() - started,

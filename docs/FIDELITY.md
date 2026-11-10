@@ -14,11 +14,12 @@ Native libvirt and Terraform produced matching packages and rule-level outcomes.
 One observation per path (278.225 versus 272.246 seconds) establishes equivalence
 for this control case, not comparative reliability or a speedup. Terraform remains
 the simpler maintained choice. Neither result establishes the cause of missing
-launch/status evidence in another environment. RHEL hardening remains deferred.
+launch/status evidence in another environment. RHEL hardening was deferred for
+that comparison and is now authorized by the two-OS completion assignment.
 
 [Ubuntu policy v2](UBUNTU-LAB-POLICY.md) is prospective: physical hardware is not
 required for the home profile, physical assurance stays unverified, and Codex owns
-the pending lab trust review. Historical v1 outcomes remain unchanged. Pro/FIPS
+the lab trust review completed in PR 46. Historical v1 outcomes remain unchanged. Pro/FIPS
 still require legitimate entitlement and observed execution.
 
 The verified container reference uses generated source and explicitly synthetic assessment policy. The newly authorized [real-ISO extension](../handoff/ISO-FOUNDATION.md) is incomplete and has separate evidence. Neither capability validates proprietary production infrastructure. The [historical matrix](acceptance-matrix.md) binds observations to original tested sources/evidence; it is not a final-source runtime rerun.
