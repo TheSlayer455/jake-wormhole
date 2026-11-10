@@ -437,6 +437,17 @@ class VMExecution(unittest.TestCase):
                 self.assertEqual(observed['outcome'],'running')
                 self.assertEqual(json.loads((run/'result.json').read_text()),value)
 
+    def test_console_key_frame_tolerates_boot_messages_but_rejects_ambiguity(self):
+        from wormhole.vm_baseline import console_host_key
+        start='WORMHOLE_FINAL_HOST_KEY_BEGIN\n'
+        end='WORMHOLE_FINAL_HOST_KEY_END\n'
+        body='[ OK ] Network ready\nssh-rsa AAAA fixture\n[ OK ] Audit started\n'
+        self.assertIsNone(console_host_key(start+body,'ssh-rsa'))
+        self.assertEqual(console_host_key(start+body+end,'ssh-rsa'),'ssh-rsa AAAA')
+        with self.assertRaises(RunError) as error:
+            console_host_key(start+body+'ssh-rsa BBBB other\n'+end,'ssh-rsa')
+        self.assertEqual(error.exception.code,'guest_host_key_ambiguous')
+
     def test_confirmed_guest_panic_is_reported_at_boot_without_a_generic_timeout(self):
         from wormhole.vm_baseline import require_no_guest_panic
         require_no_guest_panic('diagnostic text mentioning Kernel panic - not syncing: audit')

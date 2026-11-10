@@ -77,6 +77,20 @@ def require_no_guest_panic(text):
         category = 'guest_audit_backlog_panic' if panic[1].startswith('audit: backlog limit exceeded') else 'guest_kernel_panic'
         raise RunError(category, 'The owned guest kernel reported a panic. See the restricted console.')
 
+
+def console_host_key(text, key_type):
+    """Accept one complete key line inside a bounded installed-guest frame."""
+    keys = set()
+    for frame in re.finditer(r'(?ms)^WORMHOLE_FINAL_HOST_KEY_BEGIN\r?\n(.{0,4096}?)^WORMHOLE_FINAL_HOST_KEY_END\r?$', text):
+        body = frame[1]
+        if 'WORMHOLE_FINAL_HOST_KEY_BEGIN' in body:
+            continue
+        matches = re.findall(r'(?m)^(' + re.escape(key_type) + r' [A-Za-z0-9+/=]+)(?:[ \t][^\r\n]*)?\r?$', body)
+        require(len(matches) <= 1, 'guest_host_key_ambiguous')
+        keys.update(matches)
+        require(len(keys) <= 1, 'guest_host_key_ambiguous')
+    return next(iter(keys), None)
+
 # Runs inside the existing nonroot, pinned helper; only outgoing guest SSH.
 # Secrets arrive through stdin and live in its private tmpfs, never argv/env/state.
 HELPER_CODE = r'''
@@ -487,11 +501,11 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                             'bootloader_unattended_boot_blocked')
                     require(time.monotonic()-phase_start < 180,'required_reboot_progress_deadline')
                 host_type = 'ssh-rsa' if ubuntu_mode or hardened_rhel else 'ssh-ed25519'
-                found = re.search(r'WORMHOLE_FINAL_HOST_KEY_BEGIN\s+(' + host_type + r' [A-Za-z0-9+/=]+)[^\n]*\s+WORMHOLE_FINAL_HOST_KEY_END', text)
+                found = console_host_key(text,host_type)
                 if found:
                     if observed_phases:
                         observed_phases[-1]['elapsed_seconds'] = round(time.monotonic()-phase_start,3)
-                    host_key = found[1];break
+                    host_key = found;break
                 require(console.poll() is None, 'installer_console_lost')
                 time.sleep(3)
             require(host_key is not None, 'installation_deadline')
@@ -525,9 +539,9 @@ def execute(source, terraform=None, *, reuse_run=None, ubuntu_mode=None, depende
                     current=path.read_bytes()[offset:].decode(errors='replace')
                     require_no_guest_panic(current)
                     require('WORMHOLE_FINALIZATION_FAILED' not in current,'finalization_failed')
-                    found=re.search(r'WORMHOLE_FINAL_HOST_KEY_BEGIN\s+(ssh-rsa [A-Za-z0-9+/=]+)[^\n]*\s+WORMHOLE_FINAL_HOST_KEY_END',current)
+                    found=console_host_key(current,'ssh-rsa')
                     if found:
-                        require(found[1]==host_key,'cold_start_host_identity_changed');ready=True;break
+                        require(found==host_key,'cold_start_host_identity_changed');ready=True;break
                     require(console.poll() is None,'cold_start_console_lost');time.sleep(2)
                 require(ready,'cold_start_unlock_deadline')
                 result['cold_start_verified']=True
