@@ -1,15 +1,13 @@
 # External integration: start here
 
-**Official comparison deliverable:** use the copy-ready
-[Lightspeed cross-reference prompt](../handoff/LIGHTSPEED-CROSS-REFERENCE.md) and
-[verified sanitized reference](../handoff/WORMHOLE-SANITIZED-REFERENCE.md) from the
-same public revision. Luna inspects private sources only inside its authorized
-environment and returns newly written, sanitized findings. Reconcile the reference
-after meaningful evidence changes, with the existing source hygiene check and
-independent review. It distinguishes tested installation, source fixtures and
-pending qualification; it does not authorize copying operational examples wholesale.
+Copy the entire [Terra execution brief](../handoff/LIGHTSPEED-CROSS-REFERENCE.md)
+into the authorized work chat. The brief combines the owner's operating directive,
+the immediate recovery sequence, verified Wormhole evidence and optional public
+source excerpts. Internal GitLab diagnostics and a sanitized external update
+serve separate purposes. Maintain the brief with original evidence, the existing
+source hygiene check and independent review of the public changes.
 
-**Immediate Luna handoff: [completed-directory intake into existing acceptance](../handoff/solutions/directory-intake.md).**
+**Background: [completed-directory intake into existing acceptance](../handoff/solutions/directory-intake.md).**
 Validate team-delivered ISO bytes using their declared installation contract;
 the private build/Forge contract is needed for later source builds, not this
 intake path. Completion, immutable identity, required tests, scanner rights and
@@ -97,7 +95,7 @@ installation baseline with security findings, not a hardened release.
 
 The separate hardened RHEL run passed encrypted cold boot, trusted
 SSH/Ansible, audit receiver delivery, installed inventory and native V1R2
-assessment at `d6dfaf3`. Review the [pinned mechanisms and limits](../handoff/WORMHOLE-SANITIZED-REFERENCE.md)
+assessment at `d6dfaf3`. Review the [pinned mechanisms and limits](../handoff/LIGHTSPEED-CROSS-REFERENCE.md#verified-wormhole-reference)
 before adapting any part. Lab qualification remains pending.
 
 Earlier Ubuntu result: [source-pinned PAM solution](../handoff/solutions/ubuntu-pam-crl.md).

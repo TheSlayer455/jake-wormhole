@@ -1,5 +1,8 @@
 # Linux image pipeline: Verify the Current Retry, Repair Remaining Defects, and Complete Linux Acceptance
 
+> For current Lightspeed work in Chat Terra, copy the [combined execution brief](../handoff/LIGHTSPEED-CROSS-REFERENCE.md).
+> Its current owner directive and focused budget supersede the earlier workflow below.
+
 ## Mission
 
 Work in the existing Linux image pipeline repository and authorized GitLab environment. Complete the Linux acceptance workflow using evidence from real executions.

@@ -1,5 +1,9 @@
 # Prompt 2: Reusable Sanitized Update
 
+> Use this standalone prompt when requesting an external update.
+> The [combined Terra execution brief](../handoff/LIGHTSPEED-CROSS-REFERENCE.md) covers
+> internal development, live GitLab output and the portable reporting boundary.
+
 ## Task
 
 Inspect the latest relevant Linux pipeline attempt and produce a concise, plain-language engineering update for independent review.

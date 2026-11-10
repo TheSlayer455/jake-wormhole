@@ -33,11 +33,10 @@ runtime evidence remain private.
 
 **Luna and external engineering agents: [start here](docs/EXTERNAL-INTEGRATION.md).** The short guide maps capabilities to source and tests, with explicit integration limits.
 
-For a current Lightspeed failure, copy the official
-[cross-reference prompt](handoff/LIGHTSPEED-CROSS-REFERENCE.md) into the authorized
-work session with its [sanitized evidence reference](handoff/WORMHOLE-SANITIZED-REFERENCE.md).
-It compares the first failed lifecycle boundary without exporting private code or
-assuming the lab installation proves a proprietary image works.
+For a current Lightspeed failure, copy the entire
+[Terra execution brief](handoff/LIGHTSPEED-CROSS-REFERENCE.md) into the authorized
+work chat. It includes the owner directive, the next recovery steps and the
+verified Wormhole reference, with public source pointers for follow-up pastes.
 
 Completed ISO delivery supports the RHEL 10 BIOS baseline and Ubuntu 22.04
 hardened sandbox. Register it with

@@ -21,17 +21,17 @@ the repeat's installed inventory. The explicit Pro slot is empty.
 | Failure/recovery | PASS for existing paths | Exercise changed boundary without relabeling unknown historical outcomes |
 | Lab qualification and eligible exact-byte publication | BLOCKED | Required technical/policy evidence, then real positive publisher/readback |
 | Archive/restore and automatic cleanup | PASS | Exact RHEL ISO and console restores, verified obsolete-candidate reclamation, duplicate cleanup and protected interrupted evidence |
-| Work-integration readiness | PASS for PR 47 reference | Update reviewed sanitized facts after new runtime milestones; no work compatibility claim |
+| Work-integration readiness | PASS for maintained reference | Update reviewed sanitized facts after new runtime milestones; no work compatibility claim |
 | Evaluate-STIG / Nessus work-equivalence | BLOCKED | Authorized supported tool package/interface absent; neither is a new Ubuntu lab-gate requirement |
 | Delivery evidence | PASS at tested source | 4980aa0 source CI passed 997 tests with 12 skips and controlled parity. PR 48 records final delivery and main verification |
 
 Engineering lifecycle verification, lab-qualified publication and work-integration
 readiness are separate outcomes. No overall completion or production eligibility
 is claimed. Physical-token hardware and another owner trust review are not chores.
-The current [continuation](../handoff/CURRENT.md) and draft
-[PR 48](https://github.com/TheSlayer455/jake-wormhole/pull/48) preserve exact failed
-runtime attribution and the next correction. Later findings are not comparisons
-against the older RHEL draft profile: content and selected coverage have changed.
+The [continuation](../handoff/CURRENT.md) and merged
+[PR 48](https://github.com/TheSlayer455/jake-wormhole/pull/48) preserve the failed
+attempts, corrections and actual runtime attribution. The hardened run used
+different content and selected coverage from the older RHEL draft profile.
 
 The completed hardened RHEL audit still records nine selected failures covering
 local account authorization, GRUB administration, name resolution, SELinux sudo
@@ -42,13 +42,12 @@ open. These conditions keep the lab release gate closed.
 
 ## Portable cross-reference deliverable
 
-The [Luna comparison prompt](../handoff/LIGHTSPEED-CROSS-REFERENCE.md) and
-[sanitized reference](../handoff/WORMHOLE-SANITIZED-REFERENCE.md) are maintained
-milestone deliverables. They compare equivalent lifecycle contracts, preserve
-actual evidence categories and prohibit private-source export. Original OS
-records were reread without runtime mutation; no new installation is claimed.
-Selected-pattern sanitization runs in the existing repository/CI verifier;
-independent review remains necessary because heuristics cannot certify disclosure.
+The [Terra execution brief](../handoff/LIGHTSPEED-CROSS-REFERENCE.md) combines the
+maintained prompt and verified reference in one paste. It starts with the live
+Lightspeed console boundary, keeps one collector and preserves the first failure.
+The owner's focused work run starts with a 20-minute total budget. This handoff
+change carries forward PR 48's attributable evidence. Source checks and independent
+review cover the portable brief, with no new runtime execution.
 [PR 47](https://github.com/TheSlayer455/jake-wormhole/pull/47) records final delivery
 and CI. Production +56/-1, tests +79/-0; three focused cases cover allowed public
 references, network/reference refusal and private configuration/material refusal.
