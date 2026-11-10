@@ -27,33 +27,80 @@ installation contract and strict host trust. Fix the smallest component that
 owns the observed defect. Preserve the existing authorized access and cleanup
 mechanisms. Keep review and reporting work proportional to the immediate repair.
 
-## Start with the current attempt
+## Verify one change before running the pipeline
 
-1. Ask for one bounded, read-only inspection in work WSL. Establish the current
-   revision and owning entry points. Inspect the console collector, preflight
-   reader, remote relay, timeout settings, and latest run's status and ownership
-   evidence. If the work checkout is unknown, start by identifying it.
-2. Correlate the observer, remote controller, guest, exact ISO and declared seed
-   with one attempt. Distinguish real progress, stopped execution and unknown
-   remote state. A CI timeout or disconnected relay alone does not establish
-   that the remote run stopped. Resolve active or uncertain ownership before
-   changing in-use inputs, retrying or removing resources.
-3. Verify the suspected repeated short console attachments from source and
-   evidence. Fix the existing collector to attach early enough to capture the
-   required marker and preserve output incrementally. Keep one collector per
-   guest. Preflight should read its existing evidence. A relay should follow
-   that same output without attaching to the console or restarting execution.
-4. Prove live transport with a short remote test through the existing
-   authenticated route. Verify distinct nonsecret messages arrive in GitLab
-   before the producer exits, with usable ordering and timestamps. Verify
-   exit-status propagation and targeted redaction with synthetic input. Use
-   the test to isolate transport from installer behavior.
-5. After prior resources are reconciled, run **one focused RHEL 9 guest** from
-   the real work controller. Check exact ISO/seed attachment, early console
-   capture, installer progress, installed-disk boot, the completion marker,
-   trusted final SSH, real Ansible and the declared functional checks. Collect
-   required assessments after their prerequisites pass. Preserve inventory and
-   a terminal receipt attributable to this attempt.
+Name one failing behavior, the boundary that owns it and the smallest check
+that can disprove the proposed cause. Freeze the case and change one input or
+behavior at a time. Reuse the closest existing test or invoke the actual
+component with a small fixture. Give the owner one bounded command group with
+the expected result and the useful output to return.
+
+| Change | Fastest useful check |
+| --- | --- |
+| Code or script | Run the actual function or entry point with the same failing input before and after the change. Assert on output, status or the expected side effect. |
+| Configuration | Use the real loader or command that consumes the config. Check the effective value and its effect, including any override relevant to the failure. |
+| Generated installer input or deployed script | Run the normal render or staging step in isolation. Inspect the resulting input or script where its consumer reads it. Record the identity of the file actually used, separately from the source revision. |
+
+Show the original failure and the corrected behavior with the same test. If
+the original does not reproduce, check the input, execution context and timing
+before choosing another fix. Syntax checks and rendered-file inspection give
+useful intermediate evidence. Label what actually ran and what still requires
+integration. Record the observed before/after result and elapsed time in the
+existing tracker. Once the fast check answers the question, use only the next
+runtime boundary the check cannot reach.
+
+## Current case: the missing console marker
+
+1. Start with one read-only inspection in work WSL. Locate the owning collector,
+   preflight reader, remote relay and latest attempt. Freeze that attempt's
+   controller revision, actual remote script, exact ISO and effective
+   installation inputs, and the console evidence file. Keep the work records
+   private. Correlate the observer, remote process, guest and files to the same
+   attempt. A CI timeout or disconnected relay leaves remote termination
+   unverified. Reconcile active or uncertain ownership before mutation, retry
+   or cleanup. A prior manual console observation belongs to its own attempt.
+2. Trace one marker from reader attachment to emission, collector receipt,
+   incremental write and preflight read. Establish which events the latest
+   evidence supports, including whether collector and preflight used the same
+   file and whether bytes were visible before evaluation. Find the first
+   missing transition. Keep repeated short attachments as a hypothesis until
+   the trace or a reproducing test supports it.
+3. Without a VM, feed a timed, one-shot marker into the actual collector
+   through a disposable stream or fixture at the console boundary. Reuse the
+   observed timing that triggers the problem and keep the producer open
+   through preflight. Use an observed event or bounded wait to coordinate the
+   test. Run unchanged preflight against the actual output file while the
+   collector is active. Keep separate fresh
+   evidence files for both variants. Verify the original fails as observed,
+   then run the identical case with the smallest collector correction. A
+   marker appended by the test to the evidence file can test the parser alone.
+   The collector regression needs the bytes to travel through the collector.
+   If the collector has no usable input seam, report the exact boundary the
+   cheap check can reach and keep the rest unverified.
+4. Before the focused run, prove live transport with a short remote probe over
+   the existing authenticated route. Reuse a recorded probe for the same relay
+   if its path and behavior are unchanged. Check that distinct nonsecret
+   messages appear in GitLab before producer exit, with usable ordering,
+   timestamps and correct exit status. Test redaction with synthetic input. Keep one
+   early collector per guest. The relay follows that collector's evidence
+   without a second attachment or remote restart.
+5. After the cheap regression passes and prior resources are reconciled,
+   run one focused RHEL 9 installation. Verify the executing revision and
+   effective deployed inputs against the corrected test, with the candidate
+   and unrelated inputs unchanged. The checkpoint is the intended collector
+   capturing the marker, the same file containing it before evaluation, and
+   the unchanged preflight accepting it while the collector is active.
+   Continue through installed-disk boot, trusted final SSH, Ansible and
+   dependent checks as their prerequisites pass within the run budget. Preserve
+   installed inventory and required assessment results when reached. Keep a
+   terminal receipt for this attempt with any first failure, blocked checks
+   and cleanup disposition.
+
+| Result | Meaning |
+| --- | --- |
+| Preflight still misses the marker | The boundary remains open. Revisit the trace and the evidence for the proposed cause. |
+| Preflight accepts the marker, then final SSH fails | Record the verified repair and investigate final SSH as a separate boundary. |
+| Logging disconnects after a recorded failure | Preserve the original failure. Record the logging failure separately and reconcile the attempt. |
 
 ## Time budget and failure behavior
 
@@ -131,6 +178,15 @@ supply it even when chat cannot fetch public links.
 | Completed ISO intake and identity | wormhole/intake.py, wormhole/ubuntu_intake.py and tests/test_intake.py |
 | Installed inventory and assessment | wormhole/rhel_assessment.py, wormhole/ubuntu_runtime.py, tests/test_vm_foundation.py and tests/test_ubuntu_helper.py |
 | More context | docs/STATE.md, docs/ARCHITECTURE.md, docs/FIDELITY.md and handoff/CURRENT.md |
+
+For quick public examples, run these from the Wormhole checkout at the pinned
+revision. The first exercises the real console frame parser. The second calls
+the real candidate reuse check with changed boot inputs. Both are no-VM tests.
+
+```sh
+python3 -B -m unittest discover -s tests -p test_vm_foundation.py -k console_key_frame
+python3 -B -m unittest discover -s tests -p test_vm_foundation.py -k valid_old_hash
+```
 
 ## External update, only when requested
 
@@ -280,4 +336,4 @@ require separate work-side evidence. Production eligibility is false.
 ## Start here in Terra
 
 Return one read-only command group for work WSL to inspect the checkout and
-latest attempt. Use the returned evidence to choose the first repair.
+latest attempt. Use the returned evidence to choose the first no-VM check.
