@@ -1,12 +1,17 @@
 # Minx work index
 
-Current assignment: `codex/WORM-001-two-os-completion`. Follow the single
+Current handoff increment is the [single Terra paste](../handoff/LIGHTSPEED-CROSS-REFERENCE.md).
+It combines the work-side owner directive, live console recovery sequence and
+existing evidence. Verify the exact portable diff and its public source pins.
+This increment changes documentation only.
+
+Two-OS assignment: `codex/WORM-001-two-os-completion`. Follow the single
 [completion checklist](STATE.md), preserving PRs 43-47. RHEL hardening is now
 authorized; Ubuntu vendor work depends only on the explicit owner-populated
 provider. One implementation/runtime owner coordinates isolated source worktrees.
 Do not add another controller, backend, scheduler or archive system.
 
-Current operation in [PR 48](https://github.com/TheSlayer455/jake-wormhole/pull/48).
+Completed engineering increment in [PR 48](https://github.com/TheSlayer455/jake-wormhole/pull/48).
 The engineering pair passed at `d6dfaf3` and `4980aa0`. Native RHEL findings,
 manual evidence and vendor module/environment verification remain open.
 Ubuntu unchanged intake passed at `9a19b53`. Archive readback and comparison

@@ -1,5 +1,8 @@
 # Prompt 1: Installer Recovery and End-to-End Acceptance
 
+> For current Lightspeed work in Chat Terra, copy the [combined execution brief](../handoff/LIGHTSPEED-CROSS-REFERENCE.md).
+> The historical recovery prompt below preserves the earlier fleet scope and budget.
+
 ## Mission
 
 Continue work in the existing authorized repository and GitLab environment. Repair the Linux installation and acceptance path, then complete the existing qualification workflow with evidence from real executions.

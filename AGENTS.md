@@ -42,14 +42,15 @@ lifecycle proof, lab qualification/publication and work-integration readiness ar
 separate outcomes. Pro must come only from the explicit owner-file provider;
 do not create accounts, purchase subscriptions or accept terms for the owner.
 
-The official [Lightspeed comparison prompt](handoff/LIGHTSPEED-CROSS-REFERENCE.md)
-and [sanitized reference](handoff/WORMHOLE-SANITIZED-REFERENCE.md) are milestone
-deliverables. Reconcile changed capabilities with original attributable evidence,
-record source/runtime revisions and evidence dates, and preserve unresolved limits.
-Construct portable prose from the reference's safe-fact allowlist; never ingest
-private work source or raw logs. Run the existing repository verifier and obtain
-independent engineering review of the exact portable diff before sharing. Record
-the actual review in the PR; pattern checks are not comprehensive disclosure review.
+The [Terra execution brief](handoff/LIGHTSPEED-CROSS-REFERENCE.md) is the single
+copy-ready Lightspeed prompt and verified Wormhole reference. Reconcile changed
+capabilities with original attributable evidence. Record source/runtime revisions,
+evidence dates and unresolved limits. Use the brief's safe-fact allowlist for
+portable prose and keep private work source and raw logs out of Wormhole.
+Before sharing a changed public brief, run the repository verifier and record
+independent review of the exact portable diff in the Wormhole PR. Heuristics have
+limited coverage. This publication check applies to Wormhole's portable brief.
+Terra follows the owner's work-side development directive inside Lightspeed.
 If a milestone changes no evidence, record that instead of inventing a new runtime
 claim. Do not rerun installations for a handoff-only change.
 

@@ -1,6 +1,14 @@
 # Current handoff
 
-## Current increment: fixed two-OS completion
+## Terra work-side handoff
+
+Copy the [combined execution brief](LIGHTSPEED-CROSS-REFERENCE.md) into the
+authorized work chat. It contains the first read-only step, live GitLab logging
+requirements, focused 20-minute budget and verified Wormhole evidence. Private
+Lightspeed observations remain work-side unless the owner requests a sanitized
+update. This change carries forward existing runtime evidence.
+
+## Delivered increment: fixed two-OS engineering lifecycle
 
 [PR 48](https://github.com/TheSlayer455/jake-wormhole/pull/48) delivers this
 engineering increment. The completion checklist is in [STATE](../docs/STATE.md).
@@ -106,11 +114,11 @@ the declared policies.
 
 ## Previous increment: portable Lightspeed cross-reference
 
-The official [copy-ready Luna prompt](LIGHTSPEED-CROSS-REFERENCE.md) consumes the
-[sanitized evidence reference](WORMHOLE-SANITIZED-REFERENCE.md). It requires a
-failure-first matrix, original ISO contract preservation and a safe report, with
-no proprietary source transfer. The reference was reconciled against current
-main, pinned implementation/checkpoints and read-only original OS records; no new
+PR 47 originally delivered a separate prompt and evidence reference, since
+consolidated into the [Terra execution brief](LIGHTSPEED-CROSS-REFERENCE.md).
+The handoff compares the first confirmed failure, preserves the original ISO
+contract and keeps private source inside work. The PR reconciled the reference
+against pinned implementation, checkpoints and read-only original OS records. No new
 installation or scanner capability is claimed. The existing repository verifier
 checks both portable files. Maintain them after meaningful evidence changes and
 use [PR 47](https://github.com/TheSlayer455/jake-wormhole/pull/47) for tested,
