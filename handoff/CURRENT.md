@@ -2,10 +2,19 @@
 
 ## Current increment: fixed two-OS completion
 
-[PR 48](https://github.com/TheSlayer455/jake-wormhole/pull/48) is a draft runtime
-increment. The single completion checklist is in [STATE](../docs/STATE.md).
-Ubuntu unchanged-media intake now uses its existing declared private seed,
-password-required sudo and sandbox; its real installation proof is pending.
+[PR 48](https://github.com/TheSlayer455/jake-wormhole/pull/48) delivers this
+engineering increment. The completion checklist is in [STATE](../docs/STATE.md).
+Ubuntu unchanged-media intake at `9a19b53` installed from the unchanged verified
+ISO with a fresh private seed, password-required sudo and sandbox. It passed
+40/40 functional checks, encrypted cold start, trusted SSH/Ansible and exact
+cleanup. The observed inventory contains 638 packages, three Snaps and two
+payloads. The native audit records 210 pass, one FIPS failure, 14 not applicable,
+five not checked and 409 not selected. The completed request replay returned the
+same terminal receipt. Frozen manual revision mapping was bound to the new run
+through the existing coverage/report commands. The archive restored both console
+records with verified hashes. The comparator confirmed matching software,
+functional and assessment results with independent seeds, boots and host keys
+for the historical build-path run and this intake run.
 RHEL hardening selects pinned ComplianceAsCode 0.1.82/V1R2 separately from the
 historical DVD draft baseline. The actual DVD's Kickstart parser accepts the
 generated storage/configuration, installer Python exists, and requested packages
@@ -17,17 +26,83 @@ owned resources were removed. The next fresh trial at `39b2825` used documented
 `inst.notmux`, received the secret without capturing it, created encrypted storage,
 and installed 449 packages. It then failed in the installer-context payload copy:
 that environment lacks the `install` executable. `6f75a46` uses its available
-mkdir/cp/chmod tools; another fresh run is required. Preserve both original failed
-records. No private capture may be exported. The private operational checkpoint
+mkdir/cp/chmod tools. The fresh `737e2d1` trial reached hardening completion.
+An error trap interpreted the scanner's normal findings exit as an installation
+failure and stopped the run. `fa79984` distinguishes findings from scanner
+errors. The fresh `027bc31` trial completed hardening and reached the installed
+LUKS prompt. The controller stopped when a masked wrong-key submission returned
+the same prompt without a visible error. It blocked dependents and verified
+cleanup. `8b217ce` recognizes the completed retry, including terminal styling,
+and leaves proof of cryptographic refusal to the required offline key test.
+Replay of the restored console passed with synthetic input. A fresh
+`8b217ce` guest used the exact archived and restored candidate. It passed
+installed boot, powered-off key acceptance/refusal, cold start, trusted
+SSH/Ansible and RPM inventory (449 packages). Native V1R2 coverage accounted
+for all 1,073 outcomes: 424 pass, ten fail, 29 not applicable, ten not checked
+and 600 not selected. Nine hardened checks passed. Both consoles showed an
+ordering cycle that skipped the required audit service. The original failure
+and complete audit evidence remain retained after verified cleanup.
+
+The vendor DVD unit orders auditd before sysinit. The added dependency on
+network-online formed the cycle. `c49edf9` preserves the vendor unit and
+distinguishes an observed inactive service from a failed observation. Its fresh
+guest started auditd on both boots. Cold boot then panicked after the audit
+backlog filled, with the audit forwarder in SELinux socket-connect auditing.
+The original terminal receipt recorded a cold-start timeout and verified cleanup.
+The DVD policy permits the audit port type for the forwarder; the sandbox port
+had an X server type. `b8b93f7` sets the one guest port label and recognizes the
+kernel panic directly. The original console replay confirms that classification.
+The fresh `b8b93f7` guest sent more than a thousand real audit records to its
+receiver and emitted a complete host-key frame. Concurrent boot diagnostics
+interleaved the frame and blocked the original parser. An exact supervisor
+interrupt preserved the unknown outcome and verified all temporary resource
+absence. `d6dfaf3` accepts a single complete key within the bounded frame and
+rejects ambiguity. Replay of the original RHEL console and comparison against
+both retained Ubuntu consoles passed. A fresh run reuses the exact same ISO.
+
+The fresh `d6dfaf3` run passed all ten hardened functionals and six controller
+checks. It verified encrypted cold boot, trusted final SSH/Ansible, the 449 RPM
+inventory, actual guest audit delivery and exact cleanup. The native assessment
+recorded 425 pass, nine fail, 29 not applicable, ten not checked and 600 not
+selected. Lab qualification remains pending. The first completed run took
+536.490 seconds through teardown. The prior protected copy and the completed
+copy left candidate storage above its retention budget. Verified encrypted
+archival reclaimed 8,487,047,168 allocated bytes from the obsolete failed
+candidate before the repeat.
+
+The fresh repeat at `4980aa0` took 495.733 seconds through teardown. Both runs
+used identical ISO bytes, the same pinned policy and scanner content, and
+different seeds, boot IDs and host keys. The comparison matched every package,
+kernel, functional result and native rule outcome. The receiver retained 4,030
+and 4,032 guest audit records. The protected record retains both runtime
+revisions. `4980aa0` changes only the existing recovery path and its fixture
+relative to `d6dfaf3`; live interruption used the original controller cleanup.
+The repeat's cleanup unlinked 8,487,452,672 allocated bytes, including its
+redundant candidate copy. Both admission journals are finished. No owned VM
+or helper remains, and the existing host services are active.
+
+The hardened path uses the existing VM command. On the authorized Linux runtime,
+set the variables to the verified stock DVD, pinned Terraform executable and
+profile datastream. The profile records the required content hash. A fresh
+build needs the verified ISO checksum tool on the path.
+
+```sh
+python -m wormhole.vm_baseline --distribution rhel10 --source "$stock_iso" \
+  --terraform "$terraform" --rhel-content "$datastream"
+```
+
+For a fresh installation of verified retained bytes, add `--reuse-run RUN_UUID`.
+The controller checks the retained manifest and creates a fresh disk and seed.
+No private capture may be exported. The private operational checkpoint
 holds actual attempts, paths and continuation commands.
 
 Shared controller review also corrected an intermediate success record masking a
 later failure and required the complete hardened functional/native-evidence grid.
-Source/fixture tests and CI passed through `39b2825`; later changes need their own
-verification. Pro is still absent from the configured provider. Evaluate-STIG and
-Nessus remain unverified. Neither successful qualified publication nor final
-two-OS repeatability is claimed. Continue runtime work; do not restart architecture
-or the already-proven archive/trust/handoff work.
+Source CI at `4980aa0` passed 997 tests with 12 explicit skips and controlled
+parity. Pro is absent from the configured provider. Evaluate-STIG and Nessus
+remain unverified. The real Ubuntu intake publication attempt refused pending
+qualification and created no release. Both lab releases remain pending under
+the declared policies.
 
 ## Previous increment: portable Lightspeed cross-reference
 

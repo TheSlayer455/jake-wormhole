@@ -83,11 +83,22 @@ actual FIPS/USG execution remains work. The [final Ubuntu pair](../handoff/solut
 at `a705e2b` passed 40/40 checks each and closed delegated trust/frozen manual
 revision review with actual evidence. The newer manual V2R10 remains distinct.
 
-RHEL 10.0 is newly active: [installation baseline and readiness defect](../handoff/solutions/rhel10-install-baseline.md).
-The first real install exposed inaccessible completion evidence despite working
-diagnostic SSH. The corrected fresh retry passed normal final SSH/Ansible, RPM
+Completed-media intake now has two exercised contracts. Ubuntu's encrypted
+unchanged-media run at `9a19b53` passed 40/40 with SVD, native assessment and
+cleanup. RHEL's original BIOS intake remains the baseline experiment.
+See [directory intake and tested source pins](../handoff/solutions/directory-intake.md).
+
+The RHEL 10.0 baseline first exposed inaccessible completion evidence despite
+working diagnostic SSH. See the
+[installation baseline and readiness defect](../handoff/solutions/rhel10-install-baseline.md).
+The corrected fresh retry passed normal final SSH/Ansible, RPM
 inventory and complete native vendor-draft audit. It remains an unqualified
 installation baseline with security findings, not a hardened release.
+
+The separate hardened RHEL run passed encrypted cold boot, trusted
+SSH/Ansible, audit receiver delivery, installed inventory and native V1R2
+assessment at `d6dfaf3`. Review the [pinned mechanisms and limits](../handoff/WORMHOLE-SANITIZED-REFERENCE.md)
+before adapting any part. Lab qualification remains pending.
 
 Earlier Ubuntu result: [source-pinned PAM solution](../handoff/solutions/ubuntu-pam-crl.md).
 Two fresh encrypted installations passed 40/40 checks each with matching native

@@ -39,13 +39,14 @@ work session with its [sanitized evidence reference](handoff/WORMHOLE-SANITIZED-
 It compares the first failed lifecycle boundary without exporting private code or
 assuming the lab installation proves a proprietary image works.
 
-Completed ISO delivery can enter the existing RHEL 10 BIOS acceptance path with
+Completed ISO delivery supports the RHEL 10 BIOS baseline and Ubuntu 22.04
+hardened sandbox. Register it with
 `python -m wormhole intake register /private/inbox/release.ready.json`, then
 `python -m wormhole intake submit REQUEST_SHA256 --terraform /private/tools/terraform`. Periodic
 `python -m wormhole intake scan /private/inbox --submit --terraform /private/tools/terraform` uses
 the same dispatch. See the [installation contract, completion marker and runtime
-evidence](handoff/solutions/directory-intake.md). This path does not call the ISO
-builder or remaster delivered bytes; it remains an unqualified lab baseline.
+evidence](handoff/solutions/directory-intake.md). Ubuntu submission also needs
+the pinned dependency store. Both paths install the unchanged delivered bytes.
 
 The measured [lifecycle comparison](handoff/solutions/lifecycle-comparison.md)
 keeps Terraform. Native libvirt passed the same RHEL candidate and checks, but
