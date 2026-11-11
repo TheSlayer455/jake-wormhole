@@ -1,5 +1,24 @@
 # Current engineering state
 
+## Fresh real runs after storage delivery
+
+Both supported OSes completed fresh sequential installations at main
+`21fb946` on November 10, 2026. RHEL passed 10 hardened and six controller
+checks with 449 RPMs. Ubuntu passed 40 checks with 638 packages, three Snaps and
+two payloads. Both completed native assessments and verified exact-owned cleanup.
+Automatic transient unlink reclaimed 7.905/2.130 GiB respectively, separately
+from VM disk destruction. Final managed storage is 83.473 GiB with a 37.784 GiB
+candidate cache. New evidence is retained and encrypted archival is reconciled.
+See the [current run report and exact blockers](../handoff/CURRENT.md#fresh-two-os-acceptance-with-automatic-cleanup).
+
+RHEL still has nine automated findings, ten native manual statuses and unresolved
+module/environment verification, plus its release evaluator/publisher engineering
+gap. Ubuntu still needs a privately supplied legitimate Pro entitlement followed
+by actual vendor execution and reassessment. Its five supplemental manual
+observations and frozen benchmark review passed. The publisher refused the
+pending candidate. Evaluate-STIG/Nessus remain unexecuted work-equivalence inputs.
+No lab-qualified ISO or production eligibility is claimed.
+
 ## Automatic temporary storage cleanup
 
 At `461b113`, the existing workstation client and Linux runtime storage lifecycle

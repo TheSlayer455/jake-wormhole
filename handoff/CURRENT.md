@@ -1,5 +1,104 @@
 # Current handoff
 
+## Fresh two-OS acceptance with automatic cleanup
+
+Runtime source `21fb946831a451a93c970346855e2c2aec781fb0` completed one new
+empty-disk installation for each OS on November 10, 2026. Both reused verified
+unchanged candidate bytes with fresh disks, seeds, host identities and secrets.
+Guests ran sequentially with 8 GiB RAM, two vCPUs and BIOS firmware. The existing
+Terraform/controller/helper path performed installation, encryption/reboot,
+trusted SSH, Ansible, native inventory and real assessment. No installed guest
+was repaired during acceptance.
+
+| Observed boundary | RHEL 10.0 | Ubuntu 22.04.5 |
+| --- | --- | --- |
+| Complete CLI elapsed | 582.820 s | 712.432 s |
+| Installation through installed host key | 357.349 s | 495.561 s |
+| Offline encryption and cold start | 35.503 s | 64.201 s |
+| SSH/Ansible, validation, inventory and assessment | 42.363 s | 56.051 s |
+| Functional results | 10/10 hardened and 6/6 controller | 40/40 |
+| Installed SVD | 449 RPM records, readable and structured | 638 packages, three Snaps, two payload entries, readable and structured |
+| Native pass / fail / not applicable / not checked / not selected | 425 / 9 / 29 / 10 / 600 | 210 / 1 / 14 / 5 / 409 |
+| Native rules accounted | 1,073, pinned V1R2 | 639, pinned V2R7 plus frozen V2R8 manual reconciliation |
+| Automatic file cleanup | 8,487,452,672 allocated bytes, seven actions | 2,287,243,264 allocated bytes, 196 actions |
+| Further verified-archive reclamation | 319,488 allocated bytes | 667,648 allocated bytes, including the restored comparison console |
+| New retained encrypted archive objects | Eight, 53,293,044 bytes | Eight, 28,924,636 bytes |
+| CLI outcome | Lifecycle passed, exit 0 | Assessment complete, qualification pending, exit 1 |
+| New lab-qualified release | None | Refused by the normal publisher |
+
+The nested timings overlap and must not be added to the complete CLI time.
+Terraform also removed the 32/64 GiB virtual disks. The largest sampled physical
+allocations before teardown were 2.276/5.353 GiB, which are observed lower bounds
+rather than exact final disk sizes. They are separate from file-cleanup receipts.
+Both runs expired their private keys/passwords and detached seeds. Final
+reconciliation found zero owned resources, stopped supervisors and the same
+66 unrelated running containers. Repeating cleanup reclaimed zero.
+
+RHEL archival took 65.776 seconds. Ubuntu archival was completed by the existing
+scheduled task, whose lock correctly deferred the overlapping manual request.
+Nine objects were verified in that pass because an existing comparison console
+was reread without another upload. Workstation transfer staging is empty, with
+407 committed objects, no pending bytes and no failed receipts.
+
+Final managed storage is 83.473 GiB, including a 37.784 GiB candidate cache,
+9.874 GiB source media, 22.402 GiB retained evidence and 13.354 GiB other protected
+state. Another 55.676 MiB is classified as protected/retained staging and
+3.820 MiB as historical reference-release bundles. The existing preview reports
+46 protected entries. Required evidence and uncertain historical state were
+preserved. Available host space is 131.340 GiB. The workstation retains
+68.794 GiB of encrypted objects with 1,037.154 GiB available. Managed retention
+grew about 200.7 MiB for the new evidence, while transient file cleanup reclaimed
+10.035 GiB plus 964 KiB of archive-eligible source copies.
+
+### Remaining qualification work
+
+RHEL's nine observed automated failures have these public rule suffixes.
+
+| Rule | Observed requirement still failing |
+| --- | --- |
+| accounts_authorized_local_users | Authorized local accounts |
+| grub2_admin_username | Nondefault boot-loader administrator |
+| network_configure_name_resolution | Multiple configured DNS servers |
+| selinux_context_elevation_for_sudo | SELinux context elevation through sudo |
+| service_kdump_disabled | Disabled kdump |
+| chronyd_client_only | Chrony client-only operation |
+| chronyd_no_chronyc_network | Disabled network management of chrony |
+| sshd_enable_warning_banner | SSH warning banner |
+| sssd_enable_certmap | SSSD certificate mapping |
+
+The ten native not-checked rules still need accountable rule-level evidence
+and disposition. Their suffixes are `crypto_policy_not_overridden`,
+`encrypt_partitions`, `account_temp_expire_date`,
+`accounts_user_home_paths_only`, `configure_firewalld_ports`,
+`configured_firewalld_default_deny`, `libreswan_approved_tunnels`,
+`ssh_keys_passphrase_protected`, `sssd_has_trust_anchor` and
+`auditd_audispd_configure_sufficiently_large_partition`. Encryption and FIPS-mode
+functional passes supply specific supplemental observations. Cryptographic
+module identity, certification scope and operating-environment applicability
+remain unverified. The current RHEL collector keeps qualification false and has
+no completed RHEL release evaluator/publisher. Those are engineering tasks.
+
+Ubuntu's remaining automated failure is `is_fips_mode_enabled`. The explicit
+private Pro provider is empty. The owner must privately supply a legitimate
+entitlement through the existing owner-file provider. Supported enrollment,
+package/module freezing, USG/FIPS execution, reboot/unlock and reassessment then
+remain engineering work. All five objective manual observations passed while
+their native not-checked statuses remain intact. Delegated trust review and
+the frozen V2R7/V2R8 mapping are resolved for this run. The existing comparator
+proved unchanged ISO/contract, independent installation identities, matching
+inventories and matching findings against the earlier intake run.
+
+The Ubuntu publisher returned `lab_policy_dependencies_pending` and created
+no release. Its static policy still lists dependencies that the report can
+resolve from evidence, so the final prospective policy/gate reconciliation
+remains engineering work. It does not create another owner trust-review chore.
+After any installed-input correction, the final candidate needs the declared
+fresh repeatability and eligible exact-byte publication proof.
+
+Evaluate-STIG and Nessus did not run. Authorized supported packages/interfaces
+remain external work-equivalence inputs, separate from the current required
+OpenSCAP lab audits. Neither ISO is lab-qualified or production eligible.
+
 ## Automatic storage cleanup
 
 Runtime source `461b113` verified temporary transfer cleanup on the workstation

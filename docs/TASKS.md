@@ -1,6 +1,12 @@
 # Minx work index
 
-Current storage increment is `codex/WORM-001-run-storage-cleanup`. Fix abandoned
+Current increment is `codex/WORM-001-two-os-cleanup-acceptance`. The fresh
+RHEL/Ubuntu executions at main `21fb946`, per-run cleanup, archive readback,
+repeatability and final reconciliation are complete. Preserve the
+[current measured results and remaining qualification work](../handoff/CURRENT.md#fresh-two-os-acceptance-with-automatic-cleanup).
+This increment records execution evidence with no production/test code changes.
+
+Completed storage increment is `codex/WORM-001-run-storage-cleanup`. Fix abandoned
 transfer and restore staging in the existing cleanup paths, with real workstation
 and host verification at `461b113`. Existing archive scheduling and shared
 admission continue to govern retention. Preserve all required evidence.
