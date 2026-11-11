@@ -1,9 +1,11 @@
 # Minx work index
 
 Current handoff increment is the [single Terra paste](../handoff/LIGHTSPEED-CROSS-REFERENCE.md).
-It combines the work-side owner directive, live console recovery sequence and
-existing evidence. Verify the exact portable diff and its public source pins.
-This increment changes documentation only.
+It combines the work-side directive, fast component checks and verified evidence.
+The latest comparison adds work-side inspection tasks for the effective remaining
+deadline, expected results in the existing receipt, and authoritative product-case
+mapping. Installer proof and release coverage remain separate tracker items.
+This increment changes documentation only and adds no private runtime evidence.
 
 Two-OS assignment: `codex/WORM-001-two-os-completion`. Follow the single
 [completion checklist](STATE.md), preserving PRs 43-47. RHEL hardening is now

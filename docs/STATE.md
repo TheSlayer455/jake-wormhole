@@ -46,8 +46,10 @@ The [Terra execution brief](../handoff/LIGHTSPEED-CROSS-REFERENCE.md) combines t
 maintained prompt and verified reference in one paste. It starts with the live
 Lightspeed console boundary, keeps one collector and preserves the first failure.
 The owner's focused work run starts with a 20-minute total budget. This handoff
-change carries forward PR 48's attributable evidence. Source checks and independent
-review cover the portable brief, with no new runtime execution.
+change carries forward PR 48's attributable evidence. The brief now directs
+work-side verification of the effective remaining deadline and authoritative
+product-case coverage inside the existing receipt and evaluator. Source checks
+and independent review cover the portable brief, with no new runtime execution.
 [PR 47](https://github.com/TheSlayer455/jake-wormhole/pull/47) records final delivery
 and CI. Production +56/-1, tests +79/-0; three focused cases cover allowed public
 references, network/reference refusal and private configuration/material refusal.
