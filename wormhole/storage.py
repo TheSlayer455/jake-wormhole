@@ -371,6 +371,10 @@ class Store:
                 actions.append({'path':str(candidate),'signature':signature(candidate),'reason':'identical-candidate',
                     'run_id':run.name,'canonical_run':canonical.parent.name,'sha256':digest})
         self.scanner_staging(actions,blocked,references)
+        from .storage_archive import restore_staging
+        restore_actions, restore_blocked = restore_staging(self, references, current=current)
+        actions.extend(restore_actions)
+        blocked.extend(restore_blocked)
         reserved=self.status()['allocated_bytes']['candidates']-sum(a['signature'][3] for a in actions
                     if Path(a['path']).name=='candidate.iso')
         return {'actions':actions,'blocked':blocked,'unique_candidate_allocated_bytes':unique,
