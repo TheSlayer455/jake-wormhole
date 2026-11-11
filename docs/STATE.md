@@ -1,5 +1,16 @@
 # Current engineering state
 
+## Automatic temporary storage cleanup
+
+At `461b113`, the existing workstation client and Linux runtime storage lifecycle
+reclaimed interrupted transfer/restore staging before capacity admission.
+Live tests freed 32 MiB of temporary storage on each machine. An existing 6 MiB
+archive probe restored exactly and was reclaimed again without a new upload.
+The repeated host cleanup reclaimed zero. All 66 unrelated containers remained
+and no VM was allocated. Source fixtures also preserve active/unknown inputs,
+open files, unrelated data and the first transfer failure. Required retained
+media/evidence and completed encrypted archives remain protected.
+
 ## Fixed two-OS completion checklist
 
 Resumed from `3a4b909` under the November 7 completion assignment. Preserve the

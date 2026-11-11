@@ -112,6 +112,34 @@ class Archive(unittest.TestCase):
             self.assertFalse(path.exists());self.assertFalse(path.with_name('candidate.iso.archive-part').exists())
         self.assertEqual(a.record(self.store,digest)['state'],'committed')
 
+    def test_completed_run_cleanup_removes_only_verified_restore_staging(self):
+        run,path,digest=self.queued()
+        original=path.read_bytes();a.commit(self.store,digest,self.receipt(digest))
+        temporary=path.with_name(path.name+'.archive-part');temporary.write_bytes(original)
+        unrelated=path.parent/'unrelated.archive-part';unrelated.write_bytes(b'keep')
+        with self.store.locked(),patch.object(self.store,'observe',return_value=[str(temporary)]):
+            self.store.clean_held()
+        self.assertTrue(temporary.exists())
+        value=read_json(run/'result.json');atomic_json(run/'result.json',{**value,'outcome':'unknown'})
+        with self.store.locked():self.store.clean_held()
+        self.assertTrue(temporary.exists())
+        atomic_json(run/'result.json',value)
+        with self.store.locked():receipt=self.store.clean_held()
+        self.assertFalse(temporary.exists());self.assertGreater(receipt['unlinked_allocated_bytes'],0)
+        self.assertEqual(unrelated.read_bytes(),b'keep')
+        self.assertEqual(a.record(self.store,digest)['state'],'committed')
+        with self.store.locked():self.assertEqual(self.store.clean_held()['unlinked_allocated_bytes'],0)
+
+    def test_restore_discards_orphan_before_capacity_admission(self):
+        _,path,digest=self.queued();original=path.read_bytes()
+        a.commit(self.store,digest,self.receipt(digest))
+        temporary=path.with_name(path.name+'.archive-part');temporary.write_bytes(original)
+        def admitted(*args,**kwargs):self.assertFalse(temporary.exists())
+        with patch.object(a,'admission',side_effect=admitted),\
+                patch.object(a.sys,'stdin',SimpleNamespace(buffer=io.BytesIO(original))):
+            a.restore(self.store,digest)
+        self.assertEqual(path.read_bytes(),original)
+
     def test_export_releases_host_lock_and_exact_stream_is_attributable(self):
         _,path,digest=self.queued();sink=io.BytesIO();store=self.store
         class Output:

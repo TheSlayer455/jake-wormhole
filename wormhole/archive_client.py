@@ -118,6 +118,36 @@ class Client:
         require(remaining > 0, "archive_timeout", "The archive operation exceeded its absolute deadline.")
         return remaining
 
+    def cleanup_partials(self):
+        """Release abandoned transfer staging under the existing archive lock."""
+        self.guard()
+        cleanup = {"removed_files": 0, "unlinked_allocated_bytes": 0, "blocked_checks": 0}
+        cutoff = min(self.deadline, time.monotonic() + 5)
+        for path in self.objects.glob("*.age.part"):
+            remaining = cutoff - time.monotonic()
+            if remaining <= 0:
+                cleanup["blocked_checks"] += 1
+                break
+            digest = path.name.removesuffix(".age.part")
+            if not SHA.fullmatch(digest):
+                continue
+            try:
+                with lock(self.objects / (digest + ".lock")):
+                    self.guard(); ordinary(path)
+                    info = path.stat()
+                    opened = subprocess.run(["fuser", "-s", str(path)],
+                        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                        stderr=subprocess.PIPE, timeout=remaining)
+                    require(opened.returncode == 1 and not opened.stderr, "archive_partial_in_use")
+                    self.guard()
+                    require(path.stat() == info, "archive_partial_changed")
+                    path.unlink()
+                    cleanup["removed_files"] += 1
+                    cleanup["unlinked_allocated_bytes"] += info.st_blocks * 512
+            except (RunError, OSError, subprocess.TimeoutExpired):
+                cleanup["blocked_checks"] += 1
+        return cleanup
+
     @contextmanager
     def process(self, argv, **kwargs):
         process = subprocess.Popen(argv, stderr=subprocess.DEVNULL, start_new_session=True, **kwargs)
@@ -209,8 +239,7 @@ class Client:
                     require(shutil.disk_usage(self.root).free >= self.reserve + size + size // 100 + 1024 * 1024,
                             "archive_capacity", "Workstation archive headroom is insufficient.")
                     partial = path.with_suffix(".age.part")
-                    if partial.exists():
-                        ordinary(partial); partial.unlink()
+                    require(not partial.exists() and not partial.is_symlink(), "archive_partial_in_use")
                     descriptor = os.open(partial, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
                     with os.fdopen(descriptor, "wb") as output:
                         with self.process(self.remote("archive-export", sha), stdout=subprocess.PIPE) as remote:
@@ -265,11 +294,21 @@ def run(operation, config_path, digest=None):
         client = Client(config_path)
         with lock(client.root / "archive.lock"):
             client.guard()
+            cleanup = {"removed_files": 0, "unlinked_allocated_bytes": 0, "blocked_checks": 0}
             try:
+                cleanup = client.cleanup_partials()
                 results = client.sync(digest) if operation == "sync" else client.local(operation, digest)
-                status = {"operation": operation, "outcome": "complete", "objects": results, "completed_at": now()}
+                status = {"operation": operation, "outcome": "complete", "objects": results,
+                          "temporary_cleanup": cleanup, "completed_at": now()}
             except (RunError, OSError, KeyError, TypeError) as error:
                 status = {"operation": operation, "outcome": "failed", "error_category": getattr(error, "code", "archive_io_failed"), "completed_at": now()}
+                try:
+                    final_cleanup = client.cleanup_partials()
+                    for key in cleanup:
+                        cleanup[key] += final_cleanup[key]
+                    status["temporary_cleanup"] = cleanup
+                except (RunError, OSError) as cleanup_error:
+                    status["temporary_cleanup_error"] = getattr(cleanup_error, "code", "archive_io_failed")
                 client.guard(); durable(client.root / "status.json", status)
                 raise
             client.guard(); durable(client.root / "status.json", status)

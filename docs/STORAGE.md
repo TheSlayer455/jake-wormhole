@@ -123,6 +123,21 @@ Mutable run-status records are excluded. Source ISOs, current-input pins, keys, 
 journals, unresolved runs and qualified artifacts stay outside reclamation.
 Existing key/seed expiry remains unchanged. The 100/40 GiB budgets are unchanged.
 
+Each workstation sync, verification and restore first removes eligible abandoned
+encrypted transfer staging, before network access or destination capacity checks.
+The existing archive/object locks and a bounded `fuser` check preserve open,
+linked or otherwise unverified files. Install `psmisc` alongside age in the
+Linux/WSL client environment. A transfer failure keeps its original result and
+records temporary cleanup separately. A killed or deadline-exhausted operation
+leaves staging for the next bounded pass. The Windows archive keeps completed
+encrypted objects and receipts according to retention.
+
+The existing Linux runtime post-run cleanup also removes fixed restore-part files bound
+to verified archival records and reconciled runs. Active and unknown runs stay
+protected. Explicit restore removes its eligible stale staging before checking
+capacity. Repeated cleanup is idempotent. Required evidence, current media and
+reusable pinned candidates remain governed by the existing retention policy.
+
 The workstation pulls plaintext through SSH directly into age; only encrypted
 objects and nonsecret receipts are stored in its archive. It decrypts the stored
 ciphertext and checks the original size/hash before committing. That fresh commit
@@ -156,6 +171,16 @@ native assessments and unresolved evidence remain local. Candidate storage is
 21.976 GiB. This is archive retention and verified recovery, not an independently
 established backup/key-recovery policy. No new VM installation was needed to prove
 this storage-only increment.
+
+The cleanup follow-up at `461b113` removed a deliberately created 32 MiB
+abandoned encrypted transfer on the actual workstation before an intentionally
+failed SSH connection, then verified its completed archive unchanged. Normal
+host cleanup reclaimed 32 MiB of record-bound restore staging; its second pass
+reclaimed zero. An existing 6 MiB archived probe restored byte-for-byte through
+the normal client and was reclaimed after fresh destination verification,
+without uploading another encrypted object. All temporary probe copies were
+removed, no VM was allocated and the 66 unrelated running containers were
+unchanged. The open-file check covers the configured Linux/WSL operator context.
 
 The retained-SVD follow-up at `f2a3d5c` completed 298 total objects with no pending
 or failed receipt (18,117,038,420 original bytes). Six further encrypted readbacks

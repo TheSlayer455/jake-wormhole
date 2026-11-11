@@ -65,14 +65,55 @@ class ArchiveClient(unittest.TestCase):
         self.assertTrue((self.base/'failed').exists()); self.assertFalse((self.base/'restored').exists())
         self.assertEqual(json.loads((self.root/'status.json').read_text())['outcome'],'failed')
 
-    def test_failed_export_retains_partial_without_ack_and_retry_recovers(self):
+    def test_failed_export_removes_partial_without_ack_and_retry_recovers(self):
         (self.base/'interrupt').touch()
         with self.assertRaises(a.ArchiveError): self.call('sync')
         self.assertFalse((self.base/'commit').exists())
         self.assertFalse((self.root/'objects'/f'{self.sha}.age').exists())
-        self.assertTrue((self.root/'objects'/f'{self.sha}.age.part').exists())
+        self.assertFalse((self.root/'objects'/f'{self.sha}.age.part').exists())
         (self.base/'interrupt').unlink(); self.call('sync')
         self.assertTrue((self.base/'commit').exists())
+
+    def test_orphan_cleanup_precedes_offline_listing_and_preserves_open_and_unrelated_files(self):
+        self.call('sync')
+        objects=self.root/'objects'
+        orphan=objects/('a'*64+'.age.part');orphan.write_bytes(b'orphan'*4096)
+        opened=objects/('b'*64+'.age.part');opened.write_bytes(b'active transfer')
+        unrelated=objects/'unrelated.part';unrelated.write_bytes(b'keep')
+        linked=objects/('c'*64+'.age.part');linked.symlink_to(unrelated)
+        (self.base/'offline').touch()
+        with opened.open('ab'):
+            with self.assertRaises(a.ArchiveError):self.call('sync')
+            self.assertTrue(opened.exists())
+        self.assertFalse(orphan.exists());self.assertTrue(linked.is_symlink())
+        self.assertEqual(unrelated.read_bytes(),b'keep')
+        self.assertTrue((objects/f'{self.sha}.age').exists())
+        self.assertTrue((objects/f'{self.sha}.json').exists())
+        status=json.loads((self.root/'status.json').read_text())
+        self.assertGreater(status['temporary_cleanup']['unlinked_allocated_bytes'],0)
+
+    def test_orphan_cleanup_frees_space_before_capacity_check(self):
+        objects=self.root/'objects';objects.mkdir()
+        partial=objects/f'{self.sha}.age.part';partial.write_bytes(self.data)
+        def available(_):
+            return type('Space',(),{'free':0 if partial.exists() else len(self.data)*2})()
+        with patch.object(a.shutil,'disk_usage',side_effect=available):self.call('sync')
+        self.assertFalse(partial.exists());self.assertTrue((self.base/'commit').exists())
+
+    def test_cleanup_failure_keeps_the_transfer_failure_and_unverified_source(self):
+        (self.base/'interrupt').touch()
+        unlink=Path.unlink
+        def refuse_partial(path,*args,**kwargs):
+            if path.name.endswith('.age.part'):raise PermissionError('fixture cleanup failure')
+            return unlink(path,*args,**kwargs)
+        with patch.object(Path,'unlink',refuse_partial):
+            with self.assertRaises(a.ArchiveError) as failure:self.call('sync')
+        self.assertEqual(failure.exception.code,'archive_transfer_failed')
+        self.assertFalse((self.base/'commit').exists())
+        self.assertEqual((self.base/'source').read_bytes(),self.data)
+        status=json.loads((self.root/'status.json').read_text())
+        self.assertEqual(status['error_category'],'archive_transfer_failed')
+        self.assertGreater(status['temporary_cleanup']['blocked_checks'],0)
 
     def test_owner_lock_offline_and_deadline_refuse_without_ack(self):
         client=a.Client(self.config)

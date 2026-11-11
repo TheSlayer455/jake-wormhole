@@ -213,6 +213,37 @@ def cleanup_actions(store, references, verified):
     return actions
 
 
+def restore_staging(store, references, *, current=None):
+    """Offer only manifest-bound, reconciled restore partials to Store cleanup."""
+    actions, blocked, seen = [], [], set()
+    if not configuration(store):
+        return actions, blocked
+    for receipt in directory(store).glob('*.json'):
+        try:
+            value = record(store, receipt.stem)
+            for source in value['sources']:
+                path = source_path(store, source)
+                temporary = path.with_name(path.name + '.archive-part')
+                if temporary in seen:
+                    continue
+                if not temporary.exists() and not temporary.is_symlink():
+                    continue
+                require(value['state'] == 'committed' and value['receipt']['verified'] is True)
+                if source['kind'] == 'probe':
+                    require(read_json(path.parent/'owner.json') == {
+                        'application':'jake-wormhole', 'schema_version':'1.0',
+                        'kind':'archive-roundtrip-probe', 'run_id':source['run_id']})
+                else:
+                    _, result, _ = store.proof(source['run_id'], references, current=current)
+                    require(result['outcome'] not in {'unknown', 'running'}, 'archive_run_protected')
+                actions.append({'path':str(temporary), 'signature':store.checked(temporary, references),
+                    'reason':'interrupted-archive-restore', 'run_id':source['run_id']})
+                seen.add(temporary)
+        except (RunError, OSError, KeyError, ValueError) as error:
+            blocked.append({'archive_object':receipt.stem, 'reason':getattr(error, 'code', type(error).__name__)})
+    return actions, blocked
+
+
 def export(store,digest):
     # Opening under the lock pins the source through /proc fd observation while
     # the bounded SSH stream proceeds WITHOUT holding VM admission.
@@ -268,13 +299,13 @@ def restore(store,digest):
         if source['kind']!='probe':store.proof(source['run_id'],references)
         _owned(path.parent,directory=True) if source['kind']!='candidate' else require(
             path.parent.stat().st_uid==os.getuid() and not path.parent.stat().st_mode&0o022)
-        measured=store.status();admission(store.root,value['bytes'],
-            managed_bytes=measured['total_allocated_bytes']+value['bytes'],
-            candidate_bytes=measured['allocated_bytes']['candidates']+(value['bytes'] if source['kind']=='candidate' else 0))
         temporary=path.with_name(path.name+'.archive-part')
         require(not temporary.is_symlink(),'archive_restore_conflict')
         if temporary.exists():
             store.checked(temporary,references);temporary.unlink() # fixed, private interrupted restore only
+        measured=store.status();admission(store.root,value['bytes'],
+            managed_bytes=measured['total_allocated_bytes']+value['bytes'],
+            candidate_bytes=measured['allocated_bytes']['candidates']+(value['bytes'] if source['kind']=='candidate' else 0))
         try:
             with temporary.open('xb') as out:
                 os.chmod(temporary,0o600);remaining=value['bytes'];h=hashlib.sha256()
