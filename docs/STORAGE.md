@@ -172,6 +172,15 @@ native assessments and unresolved evidence remain local. Candidate storage is
 established backup/key-recovery policy. No new VM installation was needed to prove
 this storage-only increment.
 
+Two fresh real-VM runs at `21fb946` subsequently exercised normal post-run
+cleanup. The RHEL run unlinked 8,487,452,672 allocated bytes, and Ubuntu unlinked
+2,287,243,264, separately from Terraform disk destruction. Fresh destination
+verification reclaimed another 319,488/667,648 bytes. Both complete native
+evidence sets remain retained. Archive objects grew from 391 to 407, with no
+transfer partials, pending items or failed receipts. Final managed storage is
+83.473 GiB and cache storage 37.784 GiB, within the unchanged limits.
+[Run measurements and retention](../handoff/CURRENT.md#fresh-two-os-acceptance-with-automatic-cleanup).
+
 The cleanup follow-up at `461b113` removed a deliberately created 32 MiB
 abandoned encrypted transfer on the actual workstation before an intentionally
 failed SSH connection, then verified its completed archive unchanged. Normal

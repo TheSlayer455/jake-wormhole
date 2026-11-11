@@ -1,5 +1,10 @@
 # Fidelity and evidence limits
 
+The [fresh two-OS runs](../handoff/CURRENT.md#fresh-two-os-acceptance-with-automatic-cleanup)
+at `21fb946` verify the current encrypted engineering lifecycle and cleanup.
+Their remaining automated, manual, vendor and publication gaps are explicit.
+The older baseline observations below retain their original scope and attribution.
+
 The archive increment has real strict-SSH workstation encryption, verified
 reclamation and selective restore proofs for a 6 MiB probe and a completed
 2,136,473,600-byte Ubuntu ISO. A real 256 MiB interrupted transfer and damaged
