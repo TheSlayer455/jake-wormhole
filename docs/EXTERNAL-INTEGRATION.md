@@ -7,6 +7,15 @@ source excerpts. Internal GitLab diagnostics and a sanitized external update
 serve separate purposes. Maintain the brief with original evidence, the existing
 source hygiene check and independent review of the public changes.
 
+Use the effective remaining job and script time when launching remote work,
+with evidence, cleanup and transport reserves counted once. Resolve lifecycle
+accounting and product-case coverage inside the receiving implementation's
+existing receipt and evaluator. An installer diagnostic can progress while
+catalog mapping or required scanner inputs remain unresolved. GitLab documents
+the job/runner/script limits and the distinction between JUnit display and job
+exit status. [Timeout configuration](https://docs.gitlab.com/ci/runners/configure_runners/),
+[JUnit behavior](https://docs.gitlab.com/ci/testing/unit_test_reports/).
+
 **Background: [completed-directory intake into existing acceptance](../handoff/solutions/directory-intake.md).**
 Validate team-delivered ISO bytes using their declared installation contract;
 the private build/Forge contract is needed for later source builds, not this

@@ -51,6 +51,11 @@ runtime boundary the check cannot reach.
 
 ## Current case: the missing console marker
 
+Use the latest attempt to establish the current failure. A history of repairs
+and clean worktrees do not establish the remote runtime state. If current
+evidence already proves the marker boundary, preserve that result and move to
+the first unresolved installer transition.
+
 1. Start with one read-only inspection in work WSL. Locate the owning collector,
    preflight reader, remote relay and latest attempt. Freeze that attempt's
    controller revision, actual remote script, exact ISO and effective
@@ -91,7 +96,11 @@ runtime boundary the check cannot reach.
    capturing the marker, the same file containing it before evaluation, and
    the unchanged preflight accepting it while the collector is active.
    Continue through installed-disk boot, trusted final SSH, Ansible and
-   dependent checks as their prerequisites pass within the run budget. Preserve
+   dependent checks as their prerequisites pass within the run budget. Inspect
+   existing installer, generated-input and storage evidence for the actual
+   error or wait if installation stops. Verify generated inputs were consumed.
+   A marker alone cannot prove target-disk installation. A preinstall generator
+   must not wait for disk changes performed later by the installer. Preserve
    installed inventory and required assessment results when reached. Keep a
    terminal receipt for this attempt with any first failure, blocked checks
    and cleanup disposition.
@@ -111,15 +120,26 @@ the same 20-minute operational deadline in the controller and relay while
 reporting that outer limit accurately. The earlier 90-minute wording is
 historical context, not this attempt's wait budget.
 
-Set one absolute deadline before launch and reserve a few minutes within it for
-evidence and teardown. Start with about 16 minutes for execution and four for
-collection and cleanup, using the actual remaining job time if setup consumed
-part of the budget. Keep the relay available during the evidence reserve and
-use remaining time for each wait or retry. Stop
-launching dependent work when its prerequisite fails or the remaining time
-cannot support it. Leave other job profiles outside this change. Raise the
-focused budget later when measured stage progress warrants it and the owner
-chooses to do so.
+Set the focused command's absolute cutoff once, including its setup and staging.
+At remote launch, inspect the actual job, runner and script limits and use the
+earliest applicable cutoff. Compute the remaining execution allowance from the
+time still available, less the remaining evidence-finalization, cleanup,
+transport/upload and safety reserves. Count each operation once, including
+reserves already inside another stage's allowance. A setup stage or retry never
+resets the original budget.
+
+For an otherwise unused 20-minute window, about 16 minutes of work and four
+minutes of reserve is a starting allocation. Reduce work time for elapsed setup,
+a shorter effective cutoff or a larger measured reserve. Keep the relay
+available through collection. Bound existing subprocesses by their remaining
+stage allowance. Use the existing timeout and receipt mechanisms. Record the
+effective cutoff and reserves before remote mutation. If the time cannot
+support the next stage and its remaining reserve, finalize the current result.
+
+Stop dependent work after a definitive prerequisite failure. Preserve existing
+reconciliation for runner or transport loss. Leave other job profiles outside
+this focused change. Raise the focused budget when measured progress warrants
+it and the owner chooses to do so.
 
 | Observation | Required outcome |
 | --- | --- |
@@ -128,6 +148,38 @@ chooses to do so.
 | Independent diagnostics and teardown | Preserve available evidence and reconcile exactly identified run-owned resources. Record secondary failures separately. |
 | Deadline, cancellation or lost observation | Record the actual outcome. Keep remote state unknown when termination is unverified and reconcile it before retrying. |
 | Collection or cleanup succeeds after deployment fails | Keep the deployment failure and its nonzero result. A successful relay, evidence job or teardown cannot change it. |
+
+## Account for results inside the existing receipt
+
+Inspect the existing plan and receipt first. Freeze expected lifecycle and
+test rows before execution. Reuse shared run, source, candidate, contract,
+profile and catalog identity in the enclosing record. Each row needs its
+stage or case, status, reason, expected and observed behavior, and evidence
+reference. Extend the owning record only where the required information is
+missing. Preserve the first failure and explicit blocked, missing or error
+rows, with evidence transfer and cleanup outcomes recorded separately.
+
+Resolve product test coverage independently from installer diagnosis. Inspect
+the current catalog and map the existing authoritative test definitions and
+assertions to stable case IDs, applicable OS/profiles, implementation references,
+expected outcomes and policy-required or optional status. Record unmapped
+requirements as coverage gaps. An empty catalog cannot establish complete
+release functional acceptance. A lifecycle summary such as functional checks
+passed needs the individual required results behind it. Keep catalog mapping
+and unavailable scanner dependencies on separate tracker items while continuing
+the focused installation repair.
+
+Use unique guest/profile/case identities in reports. The existing evaluator
+must enforce required-result completeness and return failure when required
+checks fail or are absent. JUnit display alone cannot make that decision.
+
+Retain automatic acceptance and the common execution implementation. Record
+whether an attempt is a focused diagnostic, an instrumented derivative,
+unchanged-media acceptance or full release acceptance, and what it exercised.
+A successful diagnostic proves its declared boundary. Full release eligibility
+requires the actual product catalog, required assessments and existing release
+policy. Reuse local ownership records for resource reconciliation and the
+existing release chain for promotion authority.
 
 ## Live GitLab output is required
 

@@ -4,9 +4,11 @@
 
 Copy the [combined execution brief](LIGHTSPEED-CROSS-REFERENCE.md) into the
 authorized work chat. It contains the first read-only step, live GitLab logging
-requirements, focused 20-minute budget and verified Wormhole evidence. Private
-Lightspeed observations remain work-side unless the owner requests a sanitized
-update. This change carries forward existing runtime evidence.
+requirements, focused 20-minute budget and verified Wormhole evidence. Use actual
+remaining job time at remote launch and keep product-case mapping independent
+from the current installer repair. The expected-result plan belongs in the
+existing receipt. Private observations remain work-side unless the owner
+requests a sanitized update. This change carries forward runtime evidence.
 
 ## Delivered increment: fixed two-OS engineering lifecycle
 
