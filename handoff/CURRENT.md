@@ -1,5 +1,17 @@
 # Current handoff
 
+## Automatic storage cleanup
+
+Runtime source `461b113` verified temporary transfer cleanup on the workstation
+even when transport failed, record-bound restore cleanup on the host, idempotent
+repeat cleanup and normal exact-byte archive restore/reclamation. Each machine
+freed a 32 MiB temporary file; the restored 6 MiB probe was also reclaimed.
+No new encrypted archive object or VM was created, and all 66 unrelated running
+containers remained. Partial files from killed or deadline-exhausted operations
+are handled on the next bounded pass. Required archives and evidence remain.
+The source suite at that revision passed 1,002 tests with 12 explicit skips;
+all 17 controlled parity cases passed.
+
 ## Terra work-side handoff
 
 Copy the [combined execution brief](LIGHTSPEED-CROSS-REFERENCE.md) into the

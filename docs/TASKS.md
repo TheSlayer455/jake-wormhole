@@ -1,6 +1,11 @@
 # Minx work index
 
-Current handoff increment is the [single Terra paste](../handoff/LIGHTSPEED-CROSS-REFERENCE.md).
+Current storage increment is `codex/WORM-001-run-storage-cleanup`. Fix abandoned
+transfer and restore staging in the existing cleanup paths, with real workstation
+and host verification at `461b113`. Existing archive scheduling and shared
+admission continue to govern retention. Preserve all required evidence.
+
+Previous handoff increment is the [single Terra paste](../handoff/LIGHTSPEED-CROSS-REFERENCE.md).
 It combines the work-side directive, fast component checks and verified evidence.
 The latest comparison adds work-side inspection tasks for the effective remaining
 deadline, expected results in the existing receipt, and authoritative product-case
