@@ -91,13 +91,18 @@ class Archive(unittest.TestCase):
         value=a.record(self.store,digest);atomic_json(a.directory(self.store)/(digest+'.json'),{**value,'state':'failed'})
         with self.assertRaises(RunError):a.cleanup_actions(self.store,[],{digest})
 
-    def test_svd_and_manifest_archive_keeps_required_local_evidence(self):
+    def test_release_evidence_archive_keeps_required_local_evidence(self):
         run,_,_=self.queued()
         svd=run/'installed-svd.json';atomic_json(svd,{'native_inventory':'fixture'})
+        additions=[]
+        for name in ('assessment.json','manual-evidence.json','crypto-operating-environment.json',
+                'qualification.json','assessment/receipt.json'):
+            path=run/name;path.parent.mkdir(mode=0o700,exist_ok=True);atomic_json(path,{'fixture':name});additions.append(path)
         with self.store.locked():a.queue(self.store,[])
-        for path in (svd,run/'inputs/build-manifest.json'):
+        for path in (svd,run/'inputs/build-manifest.json',*additions):
             digest=sha256(path);value=a.record(self.store,digest)
-            self.assertTrue(all(s['kind']=='evidence' and not s['reclaim'] for s in value['sources']))
+            kind='assessment' if path.is_relative_to(run/'assessment') else 'evidence'
+            self.assertTrue(all(s['kind']==kind and not s['reclaim'] for s in value['sources']))
             with patch.object(self.store,'clean_held',side_effect=AssertionError('retained-only evidence needs no cleanup')):
                 result=a.commit(self.store,digest,self.receipt(digest))
             self.assertEqual(result['cleanup']['unlinked_allocated_bytes'],0)

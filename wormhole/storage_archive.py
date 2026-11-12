@@ -19,9 +19,12 @@ from .vm_inputs import sha256
 
 SHA = re.compile(r'[a-f0-9]{64}')
 DIAGNOSTICS = ('console.log', 'terraform-apply.log', 'terraform-cleanup.log')
-ASSESSMENTS = ('assessment/arf.xml', 'assessment/xccdf.xml', 'assessment/report.html')
+ASSESSMENTS = ('assessment/datastream.xml', 'assessment/arf.xml', 'assessment/xccdf.xml',
+               'assessment/report.html', 'assessment/scanner-version.txt', 'assessment/receipt.json')
 EVIDENCE = ('inputs/build-manifest.json', 'installed-svd.json', 'installed-svd.txt',
-            'build-svd/svd.json', 'build-svd/svd.txt')
+            'build-svd/svd.json', 'build-svd/svd.txt', 'assessment.json', 'assessment.txt',
+            'manual-evidence.json', 'crypto-operating-environment.json',
+            'qualification.json', 'qualification.txt', 'junit.xml')
 
 
 def directory(store):
