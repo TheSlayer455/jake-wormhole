@@ -20,6 +20,10 @@ Delivery verification at `d8c9ef3` passed repository/matrix checks, 1,030 source
 tests with 12 declared skips, and the complete 17-case parity/readback path in a
 fresh full-history Linux checkout. The next delivery action is the normal PR and
 post-merge main verification; it does not change the three qualification blockers.
+[PR 57](https://github.com/TheSlayer455/jake-wormhole/pull/57) merged the
+implementation as `f4cddeac41c54d91d341985bd94b465348c4c19a`; both PR checks
+and the post-merge main workflow passed. No additional RHEL runtime is justified
+until the authoritative OE/policy dependency changes.
 
 Current qualification-closure increment:
 `codex/WORM-001-rhel-chrony-closure`. Runtime source
