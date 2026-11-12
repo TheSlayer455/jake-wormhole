@@ -16,6 +16,10 @@ all nine expected records from the evaluated run are verified, and pending/
 failure counts are zero. Managed/candidate/free storage is 76.968/29.880/137.403
 GiB; no VM/controller/disk remains.
 Do not run the final pair until the OE/policy input can remain stable across it.
+Delivery verification at `d8c9ef3` passed repository/matrix checks, 1,030 source
+tests with 12 declared skips, and the complete 17-case parity/readback path in a
+fresh full-history Linux checkout. The next delivery action is the normal PR and
+post-merge main verification; it does not change the three qualification blockers.
 
 Current qualification-closure increment:
 `codex/WORM-001-rhel-chrony-closure`. Runtime source

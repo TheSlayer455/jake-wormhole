@@ -29,6 +29,15 @@ the evaluated run, with zero pending bytes/failures. Managed storage is 76.968
 GiB, candidates 29.880 GiB and filesystem headroom 137.403 GiB. No VM/controller
 or VM disk remains.
 
+Delivery-boundary verification at `d8c9ef3d1d9341317856531d6b0132f5d81e25a1`
+used a fresh full-history Linux checkout: repository hygiene and the historical
+evidence index passed, all 1,030 source tests passed with 12 explicit
+platform/privilege skips, and all 17 controlled parity cases plus staged-export
+readback passed. The Windows-linked worktree cannot supply Git-backed source
+identity to WSL because its `.git` pointer contains a Windows path; that
+unsupported-context failure was reproduced separately and is not counted as a
+source regression.
+
 ## Bounded Lightspeed tool decisions
 
 The canonical Terra brief now records one evidence-backed adoption order without

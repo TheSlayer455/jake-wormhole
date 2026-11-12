@@ -36,6 +36,14 @@ verified, and pending/failure counts are zero. Archive verified bytes total
 187.882 GiB. Managed/candidate/free storage is 76.968/29.880/137.403 GiB. No
 source was reclaimed without a commit; no VM/controller/disk remains.
 
+The delivery-boundary revision is
+`d8c9ef3d1d9341317856531d6b0132f5d81e25a1`. A fresh full-history Linux
+checkout passed repository hygiene, the historical evidence index, all 1,030
+source tests (12 explicit platform/privilege skips), all 17 controlled parity
+cases and staged-export validation. A separate attempt from the Windows-linked
+worktree reproduced an unsupported WSL `.git`-pointer context failure; the clean
+Linux checkout and hosted branch workflow both pass.
+
 ## RHEL manual-control final-readiness diagnosis
 
 Source `a8263e900e10f04eab3f6e4f98e4a6d9fa26842b` implements one
