@@ -247,6 +247,18 @@ interface/services/rule checks remain separate, so the correction weakens no
 policy. Sixteen focused hardening/collector cases pass. A fresh installation must
 now prove readiness, the ten manual dispositions and unchanged native outcomes.
 
+Runtime source `8ba42740da296aa6428b2602f7ec37bb06578b4e` completed the fresh
+installation in 501.958 seconds. Final readiness, trusted SSH, password-required
+Ansible, all 12 hardened/six controller checks, encrypted cold start, 449-RPM
+SVD and read-only assessment passed. Native totals remain 433 pass/zero fail/29
+not applicable/ten not checked/601 not selected. Eight manual rows passed, but
+the two firewall rows remained false because RHEL 10 labels the active zone
+`drop (default)` and the collector treated that full display label as its zone
+name. Source `0cbb4c18fb078f10e791de43e05be2f74a3e68ae` normalizes that
+annotation to `drop`; the executable regression uses the exact observed output.
+Sixteen focused cases pass. The candidate bytes and hardening are unchanged;
+fresh collector/runtime proof of all ten rows remains required.
+
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
 terminal receipt whose immutable ownership journal was already finished: the

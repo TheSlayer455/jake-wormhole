@@ -165,6 +165,16 @@ changes no firewall setting or policy. Sixteen focused cases pass. Next: archive
 the diagnostic candidate, run one fresh installation, and verify complete manual
 evidence plus unchanged native assessment/accounting.
 
+Runtime source `8ba4274` then completed a fresh 501.958-second installation:
+readiness, SSH/Ansible, all hardened/controller checks, encryption, 449-RPM SVD,
+read-only assessment and teardown passed. Native totals remain 433 pass/zero
+fail/29 not applicable/ten not checked/601 not selected. Manual evidence closed
+eight rows; both firewall rows were false because the observer parsed the real
+`drop (default)` display label as an invalid zone name. Source `0cbb4c1`
+normalizes the annotation and has an executable exact-output regression. Sixteen
+focused cases pass. Next: reuse the unchanged candidate for one fresh install,
+verify all ten manual rows, archive evidence and record final storage state.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra

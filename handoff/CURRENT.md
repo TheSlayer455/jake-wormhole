@@ -68,6 +68,19 @@ undeclared rules. No hardening requirement or firewall setting changed. Sixteen
 focused tests pass. Archive the retained diagnostic candidate, then run one fresh
 installation to prove final readiness and the complete ten-rule evidence record.
 
+Runtime source `8ba42740da296aa6428b2602f7ec37bb06578b4e` completed a fresh
+501.958-second installation. Final readiness, strict SSH, password-required
+Ansible, all 12 hardened/six controller checks, encrypted cold start, 449-RPM
+SVD, native assessment and exact teardown passed. Native results are 433 pass,
+zero fail, 29 not applicable, ten not checked and 601 not selected. Eight manual
+rows were complete. RHEL 10 returned the active zone label `drop (default)`; the
+collector used that whole label as the query name, leaving the two firewall rows
+false despite the independent live readiness checks passing. Source
+`0cbb4c18fb078f10e791de43e05be2f74a3e68ae` normalizes the display annotation
+to `drop` and tests the exact observed shape. Candidate/hardening inputs are
+unchanged. Sixteen focused tests pass; run one fresh candidate-reuse installation
+to close all ten manual rows, then archive and remeasure storage.
+
 ## RHEL selected-automated-rule closure
 
 Runtime source `4ac320ddb2d21ff3172d04b4cf33547c425c9490` completed a fresh
