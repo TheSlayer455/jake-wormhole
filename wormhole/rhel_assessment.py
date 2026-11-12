@@ -176,7 +176,7 @@ HARDENED_AUDIT_CODE = hardened_audit_code()
 def read_results(content, native, *, expected_target, scanner_exit, expected_hash=CONTENT_SHA, expected_rules=948, hardened=False):
     """Fixture overrides are explicit; live content selection is capability-bound."""
     if hardened:
-        from .rhel_hardening import CONTENT, LAB_PROFILE
+        from .rhel_hardening import CONTENT, LAB_PROFILE, SSSD_CERTMAP_RULE
         expected_hash,expected_rules=CONTENT['sha256'],CONTENT['rules']
     result_profile = LAB_PROFILE if hardened else PROFILE
     require(0 < len(content) <= 64 * 1024**2 and 0 < len(native) <= 64 * 1024**2, 'assessment_size')
@@ -215,6 +215,7 @@ def read_results(content, native, *, expected_target, scanner_exit, expected_has
         'limitation': 'DVD vendor draft anticipates RHEL 10 STIG; no released DISA benchmark alignment or hardening qualification.'}
     if hardened:
         require(sum(status!='notselected' for status in observed.values())==CONTENT['selected_rules'],'assessment_selected_coverage')
+        require(observed.get(SSSD_CERTMAP_RULE)=='notselected', 'assessment_rule_applicability')
         summary.update(capability='real-rhel-hardened-assessment',content_version=CONTENT['release'],
             content_status='upstream-versioned-profile',benchmark=CONTENT['benchmark'],
             limitation='Pinned ComplianceAsCode V1R2 assessment after installation hardening; findings and manual controls remain visible. FIPS mode is not proof of module certification or operational-environment applicability. Lab qualification and eligible ISO publication remain unproven.')

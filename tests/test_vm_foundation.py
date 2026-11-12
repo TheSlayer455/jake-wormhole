@@ -146,11 +146,13 @@ class RHELAssessment(unittest.TestCase):
         content=('<Benchmark xmlns="'+ra.X[1:-1]+'"><version>0.1.82</version><Profile id="'+ra.PROFILE+'">'
             '<title>DISA STIG for Red Hat Enterprise Linux 10</title>'
             '<description>Checks align to Red Hat Enterprise Linux 10 V1R2.</description></Profile>'
-            '<Rule id="one"/><Rule id="two"/></Benchmark>').encode()
-        pinned={**h.CONTENT,'sha256':hashlib.sha256(content).hexdigest(),'rules':2,'selected_rules':2}
+            '<Rule id="one"/><Rule id="two"/><Rule id="'+h.SSSD_CERTMAP_RULE+'"/></Benchmark>').encode()
+        pinned={**h.CONTENT,'sha256':hashlib.sha256(content).hexdigest(),'rules':3,'selected_rules':2}
         native=('<Benchmark xmlns="'+ra.X[1:-1]+'"><TestResult><profile idref="'+h.LAB_PROFILE+'"/>'
             '<target>'+target+'</target><rule-result idref="one"><result>pass</result></rule-result>'
-            '<rule-result idref="two"><result>fail</result></rule-result></TestResult></Benchmark>').encode()
+            '<rule-result idref="two"><result>fail</result></rule-result>'
+            '<rule-result idref="'+h.SSSD_CERTMAP_RULE+'"><result>notselected</result></rule-result>'
+            '</TestResult></Benchmark>').encode()
         receipt.update(run_id=result['run_id'],target=target,content_sha256=pinned['sha256'],profile_id=h.LAB_PROFILE,
             scanner_exit=2,remediation_during_assessment=False,installation_boot_id=str(uuid4()),
             tailoring_sha256=h.installation_contract()['tailoring_sha256'])
@@ -171,14 +173,14 @@ class RHELAssessment(unittest.TestCase):
              'archive_base64':base64.b64encode(payload).decode()}]
         with patch.object(h,'CONTENT',pinned),tempfile.TemporaryDirectory() as directory:
             summary=ra.collect(Path(directory),result,rows)
-            self.assertEqual(summary['native_counts'],{'pass':1,'fail':1})
+            self.assertEqual(summary['native_counts'],{'pass':1,'fail':1,'notselected':1})
             self.assertEqual(summary['content_version'],'0.1.82');self.assertEqual(summary['benchmark'],'RHEL 10 STIG V1R2')
-            self.assertEqual(summary['functional_counts'],{'pass':9,'fail':1})
+            self.assertEqual(summary['functional_counts'],{'pass':10,'fail':1})
             self.assertFalse(summary['all_functional_checks_pass']);self.assertFalse(summary['lab_iso_qualified'])
             self.assertEqual(summary['crypto_runtime'],{**crypto,'kernel_release':{'status':'missing'}})
             self.assertIn('synthetic provider version',(Path(directory)/'assessment.txt').read_text())
             self.assertEqual(json.loads((Path(directory)/'installed-svd.json').read_text())['packages'][0]['epoch'],'2')
-            self.assertIn('All 2 rules accounted for',(Path(directory)/'assessment.txt').read_text())
+            self.assertIn('All 3 rules accounted for',(Path(directory)/'assessment.txt').read_text())
         for changed in ({'assessment_content':{**pinned,'release':'other'}},{'capability':r.CAPABILITY}):
             with patch.object(h,'CONTENT',pinned),tempfile.TemporaryDirectory() as directory,self.assertRaises(RunError) as error:
                 ra.collect(Path(directory),{**result,'build':{**result['build'],**changed}},rows)
@@ -188,6 +190,8 @@ class RHELAssessment(unittest.TestCase):
                 expected_hash='a'*64)['content_sha256'],pinned['sha256'])
             with self.assertRaises(RunError):ra.read_results(content+b'changed',native,expected_target=target,scanner_exit=2,hardened=True)
             with self.assertRaises(RunError):ra.read_results(content,native.replace(b'>fail<',b'>notselected<'),expected_target=target,scanner_exit=2,hardened=True)
+            with self.assertRaises(RunError):ra.read_results(content,native.replace(
+                b'>notselected<', b'>pass<'),expected_target=target,scanner_exit=2,hardened=True)
         changed=content.replace(b'0.1.82',b'0.1.83')
         with patch.object(h,'CONTENT',{**pinned,'sha256':hashlib.sha256(changed).hexdigest()}),self.assertRaises(RunError) as metadata:
             ra.read_results(changed,native,expected_target=target,scanner_exit=2,hardened=True)

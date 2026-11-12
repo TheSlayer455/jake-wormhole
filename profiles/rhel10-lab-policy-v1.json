@@ -19,9 +19,12 @@
     "profile_id": "xccdf_org.ssgproject.content_profile_stig",
     "benchmark_label": "RHEL 10 STIG V1R2",
     "upstream_rules": 1073,
-    "selected_rules": 473
+    "selected_rules": 472
   },
-  "tailoring": {"excluded_rules": [], "parameters": {"login_banner_text": "^Wormhole private home lab\\. Authorized lab use only\\. Activity is monitored\\.$", "var_accounts_authorized_local_users_regex": "^(root|bin|daemon|adm|lp|sync|shutdown|halt|mail|operator|games|ftp|nobody|tss|systemd-coredump|dbus|polkitd|avahi|colord|rtkit|pipewire|clevis|sssd|geoclue|flatpak|setroubleshoot|fapolicyd|libstoragemgmt|systemd-oom|gdm|cockpit-ws|gnome-initial-setup|sshd|chrony|dnsmasq|postfix|tcpdump|admin|unbound|yggdrasil|yggdrasil-worker|lab\\.service)$", "var_networkmanager_dns_mode": "none"}, "owner_approved_exceptions": []},
+  "tailoring": {"excluded_rules": ["xccdf_org.ssgproject.content_rule_sssd_enable_certmap"], "parameters": {"login_banner_text": "^Wormhole private home lab\\. Authorized lab use only\\. Activity is monitored\\.$", "var_accounts_authorized_local_users_regex": "^(root|bin|daemon|adm|lp|sync|shutdown|halt|mail|operator|games|ftp|nobody|tss|systemd-coredump|dbus|polkitd|avahi|colord|rtkit|pipewire|clevis|sssd|geoclue|flatpak|setroubleshoot|fapolicyd|libstoragemgmt|systemd-oom|gdm|cockpit-ws|gnome-initial-setup|sshd|chrony|dnsmasq|postfix|tcpdump|admin|unbound|yggdrasil|yggdrasil-worker|lab\\.service)$", "var_networkmanager_dns_mode": "none"}, "owner_approved_exceptions": []},
+  "rule_applicability": {
+    "xccdf_org.ssgproject.content_rule_sssd_enable_certmap": {"applicable": false, "pki_based_authentication": false, "authentication_contract": "run-scoped-ssh-public-key-and-local-password-required-sudo", "reason": "The declared lab workload does not use PKI authentication."}
+  },
   "requirements": {
     "all_selected_automated_rules_pass": true,
     "scanner_errors_allowed": 0,

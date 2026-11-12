@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from uuid import uuid4
 
 from wormhole import rhel_hardening as h, rhel_inputs as baseline
@@ -101,7 +102,10 @@ class HardenedInputs(unittest.TestCase):
         self.assertIn('content_value_login_banner_text', tailoring)
         self.assertIn('content_value_var_accounts_authorized_local_users_regex', tailoring)
         self.assertIn(h.LAB_AUTHORIZED_USERS_REGEX, tailoring)
-        self.assertNotIn(':select', tailoring)
+        root = ET.fromstring(tailoring)
+        selects = list(root.iter('{http://checklists.nist.gov/xccdf/1.2}select'))
+        self.assertEqual([(row.get('idref'), row.get('selected')) for row in selects],
+                         [(h.SSSD_CERTMAP_RULE, 'false')])
 
     def test_final_kdump_unit_is_disabled_and_masked_after_remediation(self):
         self.assertIn('services --disabled=debug-shell,autofs,kdump', self.seed())
@@ -192,11 +196,13 @@ fi
         self.assertEqual(policy['content']['selected_rules'], h.CONTENT['selected_rules'])
         self.assertEqual(h.installation_contract()['policy_sha256'], h.sha256(h.POLICY))
         self.assertFalse(policy['production_iso_eligible'])
-        self.assertEqual(policy['tailoring'], {'excluded_rules': [],
+        self.assertEqual(policy['tailoring'], {'excluded_rules': [h.SSSD_CERTMAP_RULE],
             'parameters': {'login_banner_text': h.LAB_BANNER_REGEX,
                 'var_accounts_authorized_local_users_regex': h.LAB_AUTHORIZED_USERS_REGEX,
                 'var_networkmanager_dns_mode': 'none'},
             'owner_approved_exceptions': []})
+        self.assertEqual(policy['rule_applicability'], {
+            h.SSSD_CERTMAP_RULE: h.SSSD_CERTMAP_APPLICABILITY})
         self.assertEqual(policy['requirements']['independent_same_iso_installations'], 2)
         self.assertTrue(policy['unresolved_requirements'])
         self.assertIn('approved-evaluate-stig-package-and-supported-rhel10-execution', policy['external_work_equivalence_pending'])

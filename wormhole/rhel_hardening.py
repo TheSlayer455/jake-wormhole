@@ -24,6 +24,13 @@ POLICY = SOURCE_ROOT / 'profiles/rhel10-lab-policy-v1.json'
 CONTENT_SHA256 = '3a22f1f747ef7b895268b2da838f680b6a7ea421c5132d6ac4141d858afc60c6'
 PROFILE = 'xccdf_org.ssgproject.content_profile_stig'
 LAB_PROFILE = 'xccdf_org.wormhole_profile_rhel10_lab_stig'
+SSSD_CERTMAP_RULE = 'xccdf_org.ssgproject.content_rule_sssd_enable_certmap'
+AUTHENTICATION_CONTRACT = 'run-scoped-ssh-public-key-and-local-password-required-sudo'
+SSSD_CERTMAP_APPLICABILITY = {
+    'applicable': False,
+    'pki_based_authentication': False,
+    'authentication_contract': AUTHENTICATION_CONTRACT,
+    'reason': 'The declared lab workload does not use PKI authentication.'}
 LAB_BANNER = 'Wormhole private home lab. Authorized lab use only. Activity is monitored.'
 LAB_BANNER_REGEX = r'^Wormhole private home lab\. Authorized lab use only\. Activity is monitored\.$'
 LAB_AUTHORIZED_USERS_REGEX = (
@@ -33,25 +40,29 @@ LAB_AUTHORIZED_USERS_REGEX = (
     r'gnome-initial-setup|sshd|chrony|dnsmasq|postfix|tcpdump|admin|unbound|yggdrasil|'
     r'yggdrasil-worker|lab\.service)$')
 CONTENT = {'release': '0.1.82', 'benchmark': 'RHEL 10 STIG V1R2',
-           'sha256': CONTENT_SHA256, 'profile': PROFILE, 'rules': 1073, 'selected_rules': 473}
+           'sha256': CONTENT_SHA256, 'profile': PROFILE, 'rules': 1073, 'selected_rules': 472}
 BOOT_ARGS = 'fips=1 init_on_free=1 pti=on vsyscall=none page_poison=1 audit=1 audit_backlog_limit=8192'
 
 
 def tailoring_document():
-    """Declare truthful lab values without changing rule selection."""
-    tailoring = json.loads(POLICY.read_text())['tailoring']
+    """Declare truthful lab values and the workload's one inapplicable PKI rule."""
+    policy = json.loads(POLICY.read_text())
+    tailoring = policy['tailoring']
     values = {'login_banner_text': LAB_BANNER_REGEX,
         'var_accounts_authorized_local_users_regex': LAB_AUTHORIZED_USERS_REGEX,
         'var_networkmanager_dns_mode': 'none'}
-    require(tailoring == {'excluded_rules': [], 'parameters': values,
+    require(tailoring == {'excluded_rules': [SSSD_CERTMAP_RULE], 'parameters': values,
         'owner_approved_exceptions': []}, 'unsupported_assessment_tailoring')
+    require(policy.get('rule_applicability') == {
+        SSSD_CERTMAP_RULE: SSSD_CERTMAP_APPLICABILITY}, 'unsupported_rule_applicability')
     x = '{http://checklists.nist.gov/xccdf/1.2}'
     root = ET.Element(x + 'Tailoring', id='xccdf_org.wormhole_tailoring_rhel10_lab')
     ET.SubElement(root, x + 'benchmark', href='ssg-rhel10-ds.xml')
     ET.SubElement(root, x + 'version', time='2026-11-12T00:00:00Z').text = '1'
     profile = ET.SubElement(root, x + 'Profile', id=LAB_PROFILE, extends=PROFILE)
-    ET.SubElement(profile, x + 'title').text = 'Wormhole declared home-lab values'
-    ET.SubElement(profile, x + 'description').text = 'Unchanged upstream rule selection; declared values cover the truthful warning banner and installed authorized accounts.'
+    ET.SubElement(profile, x + 'title').text = 'Wormhole declared home-lab values and applicability'
+    ET.SubElement(profile, x + 'description').text = 'Declared values cover the truthful warning banner and installed authorized accounts; the PKI certificate-map rule is not selected because the declared workload does not use PKI authentication.'
+    ET.SubElement(profile, x + 'select', idref=SSSD_CERTMAP_RULE, selected='false')
     ET.SubElement(profile, x + 'set-value',
         idref='xccdf_org.ssgproject.content_value_login_banner_text').text = LAB_BANNER_REGEX
     ET.SubElement(profile, x + 'set-value',
