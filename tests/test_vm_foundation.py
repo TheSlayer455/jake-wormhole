@@ -160,7 +160,8 @@ class RHELAssessment(unittest.TestCase):
             scanner_exit=2,remediation_during_assessment=False,installation_boot_id=str(uuid4()),
             tailoring_sha256=h.installation_contract()['tailoring_sha256'])
         result['build'].update(capability=h.CAPABILITY,assessment_content=pinned,
-            installation_contract={'tailoring_sha256':receipt['tailoring_sha256']})
+            policy_sha256=h.sha256(h.POLICY),installation_contract={
+                'tailoring_sha256':receipt['tailoring_sha256'],'policy_sha256':h.sha256(h.POLICY)})
         result.update(hardened_checks=dict.fromkeys(ra.HARDENED_CHECKS,'pass'),offline_encryption={
             'luks_magic_verified':True,'correct_key_accepted':True,'wrong_key_refused':True})
         files={name:b'synthetic output' for name in ra.FILES}
@@ -173,7 +174,7 @@ class RHELAssessment(unittest.TestCase):
         crypto={'openssl_providers':{'status':'observed','returncode':0,'stdout':'synthetic provider version',
             'stderr':'','truncated':False,'error':None},'virtualization':{'status':'error','returncode':1,
             'stdout':'none\n','stderr':'','truncated':False,'error':None}}
-        manual={'schema_version':'1.0','facts':{
+        manual={'schema_version':'1.0','run_id':result['run_id'],'boot_id':receipt['boot_id'],'facts':{
             'crypto_check':{'returncode':0,'output':'The configured policy matches the generated policy.\n','error':None},
             'crypto_policy':{'returncode':0,'output':'FIPS\n','error':None},
             'interactive_accounts':[{'name':'lab.service','uid':1000,'home':'/home/lab.service','shell':'/bin/bash',
@@ -183,7 +184,9 @@ class RHELAssessment(unittest.TestCase):
             'firewall':{'state':{'returncode':0,'output':'running\n','error':None},
                 'default_zone':{'returncode':0,'output':'drop\n','error':None},
                 'active_zones':{'drop':{'interfaces':['eth0'],'target':{'returncode':0,'output':'DROP\n','error':None},
-                    'services':{'returncode':0,'output':'ssh\n','error':None},'ports':{'returncode':0,'output':'\n','error':None}}}},
+                    'services':{'returncode':0,'output':'ssh\n','error':None},
+                    **{name:{'returncode':0,'output':'\n','error':None} for name in
+                       ('ports','protocols','source_ports','forward_ports','rich_rules')}}}},
             'ipsec_connection_count':0,'sssd_certmap_count':0,
             'audit_storage':{'source':{'returncode':0,'output':'/dev/mapper/system-varlogaudit\n','error':None},
                 'size':{'returncode':0,'output':str(10*1024**3)+'\n','error':None}}}}
@@ -202,6 +205,16 @@ class RHELAssessment(unittest.TestCase):
             self.assertIn('synthetic provider version',(Path(directory)/'assessment.txt').read_text())
             self.assertEqual(json.loads((Path(directory)/'installed-svd.json').read_text())['packages'][0]['epoch'],'2')
             self.assertIn('All 13 rules accounted for',(Path(directory)/'assessment.txt').read_text())
+        for fault,code in (('run','manual_observation_identity'),('boot','manual_observation_identity'),
+                           ('policy','manual_policy_identity')):
+            bad_manual=json.loads(json.dumps(manual));bad_result=json.loads(json.dumps(result))
+            if fault=='run':bad_manual['run_id']=str(uuid4())
+            elif fault=='boot':bad_manual['boot_id']=str(uuid4())
+            else:bad_result['build']['policy_sha256']='f'*64
+            bad_rows=[{**row,'output':json.dumps(bad_manual)} if row.get('stage')=='manual-observations' else row for row in rows]
+            with patch.object(h,'CONTENT',pinned),tempfile.TemporaryDirectory() as directory,self.assertRaises(RunError) as error:
+                ra.collect(Path(directory),bad_result,bad_rows)
+            self.assertEqual(error.exception.code,code)
         for changed in ({'assessment_content':{**pinned,'release':'other'}},{'capability':r.CAPABILITY}):
             with patch.object(h,'CONTENT',pinned),tempfile.TemporaryDirectory() as directory,self.assertRaises(RunError) as error:
                 ra.collect(Path(directory),{**result,'build':{**result['build'],**changed}},rows)

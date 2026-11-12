@@ -60,14 +60,20 @@ if active['returncode']==0:
 for zone in zones:
  zones[zone].update(target=run('firewall-cmd','--zone='+zone,'--get-target'),
   services=run('firewall-cmd','--zone='+zone,'--list-services'),
-  ports=run('firewall-cmd','--zone='+zone,'--list-ports'))
+  ports=run('firewall-cmd','--zone='+zone,'--list-ports'),
+  protocols=run('firewall-cmd','--zone='+zone,'--list-protocols'),
+  source_ports=run('firewall-cmd','--zone='+zone,'--list-source-ports'),
+  forward_ports=run('firewall-cmd','--zone='+zone,'--list-forward-ports'),
+  rich_rules=run('firewall-cmd','--zone='+zone,'--list-rich-rules'))
 configs=[pathlib.Path('/etc/ipsec.conf'),*pathlib.Path('/etc/ipsec.d').glob('*.conf')]
 connections=sum(len(re.findall(r'^\s*conn\s+\S+',p.read_text(errors='replace'),re.MULTILINE)) for p in configs if p.is_file())
 sssd=[pathlib.Path('/etc/sssd/sssd.conf'),*pathlib.Path('/etc/sssd/conf.d').glob('*.conf')]
 certmaps=sum(len(re.findall(r'^\s*\[certmap/[^/]+/[^]]+\]\s*$',p.read_text(errors='replace'),re.MULTILINE)) for p in sssd if p.is_file())
 audit_source=run('findmnt','-n','-o','SOURCE','--target','/var/log/audit')
 audit_size=run('lsblk','-b','-n','-o','SIZE',audit_source['output'].strip()) if audit_source['returncode']==0 else {'returncode':1,'output':'','error':None}
-print(json.dumps({'schema_version':'1.0','facts':{
+print(json.dumps({'schema_version':'1.0',
+ 'run_id':pathlib.Path('/var/lib/wormhole/run-id').read_text().strip(),
+ 'boot_id':pathlib.Path('/proc/sys/kernel/random/boot_id').read_text().strip(),'facts':{
  'crypto_check':run('update-crypto-policies','--check'),'crypto_policy':run('update-crypto-policies','--show'),
  'interactive_accounts':accounts,'client_private_key_count':client_keys,
  'firewall':{'state':run('firewall-cmd','--state'),'default_zone':run('firewall-cmd','--get-default-zone'),'active_zones':zones},
@@ -80,9 +86,15 @@ def compile_evidence(run, result, assessment, raw):
     """Bind observed manual facts to this run without changing native statuses."""
     from .rhel_hardening import POLICY, SSSD_CERTMAP_RULE
     policy=json.loads(POLICY.read_text())
-    require(set(raw)=={'schema_version','facts'} and raw['schema_version']=='1.0' and
+    require(set(raw)=={'schema_version','run_id','boot_id','facts'} and raw['schema_version']=='1.0' and
             type(raw['facts']) is dict, 'manual_observation_invalid')
     facts=raw['facts'];build=result['build'];checks=result['hardened_checks']
+    policy_hash=sha256(POLICY)
+    require(raw['run_id']==result['run_id'] and raw['boot_id']==assessment['boot_id'],
+            'manual_observation_identity')
+    require(build.get('policy_sha256')==policy_hash and
+            build.get('installation_contract',{}).get('policy_sha256')==policy_hash,
+            'manual_policy_identity')
     native={row['rule_id']:row['native_status'] for row in assessment['rules'] if row['rule_id'] in MANUAL_RULES}
     require(set(native)==set(MANUAL_RULES) and set(native.values())=={'notchecked'},
             'manual_native_status_changed')
@@ -101,8 +113,11 @@ def compile_evidence(run, result, assessment, raw):
     firewall_ok=(state.get('returncode')==0 and state.get('output','').strip()=='running' and
         default.get('returncode')==0 and default.get('output','').strip()=='drop' and set(zones)=={'drop'} and
         bool(zone.get('interfaces')) and zone.get('target',{}).get('output','').strip()=='DROP' and
-        set(zone.get('services',{}).get('output','').split())=={'ssh'} and
-        not zone.get('ports',{}).get('output','').strip())
+        zone.get('target',{}).get('returncode')==0 and
+        zone.get('services',{}).get('returncode')==0 and
+        set(zone['services'].get('output','').split())=={'ssh'} and
+        all(zone.get(name,{}).get('returncode')==0 and not zone[name].get('output','').strip()
+            for name in ('ports','protocols','source_ports','forward_ports','rich_rules')))
     crypto_ok=(facts.get('crypto_check',{}).get('returncode')==0 and
         facts.get('crypto_policy',{}).get('output','').strip().split(':')[0]=='FIPS')
     encrypted_ok=(checks.get('encrypted-filesystems')=='pass' and checks.get('encrypted-swap')=='pass' and
@@ -128,7 +143,7 @@ def compile_evidence(run, result, assessment, raw):
     objective={PREFIX+name:{'disposition':disposition if observed else 'failed',
         'observed_satisfied':observed,'reason':reason} for name,(disposition,observed,reason) in outcomes.items()}
     evidence={'schema_version':'1.0','run_id':result['run_id'],
-        'candidate_sha256':build['candidate_sha256'],'policy_sha256':sha256(POLICY),
+        'candidate_sha256':build['candidate_sha256'],'policy_sha256':policy_hash,
         'content_sha256':assessment['content_sha256'],
         'tailoring_sha256':build['installation_contract']['tailoring_sha256'],
         'native_statuses':native,'native_notchecked_statuses_preserved':True,
