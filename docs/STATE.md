@@ -228,6 +228,15 @@ assessment did not run, exact-owned teardown passed and cleanup reclaimed
 now names each of the six firewall assertions; fifteen focused tests pass. The
 next fresh run must identify the exact firewall condition before correction.
 
+Runtime source `1ecefafecfedfecac7b57dbeac478b3bcc4e8705` then proved that
+default-zone, active-zone and interface binding pass and the first failed
+assertion is `firewall-target`. All 449 packages and hardening completed; access,
+validation and assessment stayed blocked, teardown passed and cleanup reclaimed
+405,504 bytes. Source `705c3c152b79937387b261352b1c7abf08967c90`
+allowlists only the four documented target enums in the failure marker, retaining
+`unexpected` for anything else. Fifteen focused tests pass. It changes no
+firewall setting or gate; one more fresh diagnostic must record the actual enum.
+
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
 terminal receipt whose immutable ownership journal was already finished: the

@@ -46,6 +46,17 @@ teardown passed and transient cleanup reclaimed 405,504 bytes. Source
 the six unchanged firewall assertions. Fifteen focused tests pass. One fresh
 diagnostic installation is next; correction still waits for the exact condition.
 
+Runtime source `1ecefafecfedfecac7b57dbeac478b3bcc4e8705` completed package
+installation and hardening again. Its marker proves default-zone, active-zone and
+interface binding pass; `firewall-target` is the first failed assertion. All
+dependent rows and assessment remained blocked, teardown passed and cleanup
+reclaimed 405,504 bytes. Official RHEL/firewalld interfaces document only
+`default`, `ACCEPT`, `DROP` and `REJECT`. Source
+`705c3c152b79937387b261352b1c7abf08967c90` allows only those values into the
+static marker and maps any other output to `unexpected`; no configuration or
+qualification behavior changes. Fifteen focused tests pass. Run once to observe
+the actual enum, then correct the proven mismatch.
+
 ## RHEL selected-automated-rule closure
 
 Runtime source `4ac320ddb2d21ff3172d04b4cf33547c425c9490` completed a fresh

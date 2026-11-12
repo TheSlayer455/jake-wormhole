@@ -147,6 +147,15 @@ services and ports while leaving the checks and policy unchanged. Fifteen
 focused tests pass. Next: one fresh diagnostic installation, then the smallest
 correction to the named condition.
 
+The fresh source `1ecefaf` attempt narrowed the boundary again: default zone,
+active zone and interface binding pass; `firewall-target` is the first failed
+assertion. Package installation/hardening completed, dependent checks and
+assessment stayed blocked, teardown passed and transient cleanup reclaimed
+405,504 bytes. Source `705c3c1` emits only an allowlisted documented target enum
+(`default`, `ACCEPT`, `DROP`, `REJECT`) or `unexpected`; it changes no policy.
+Fifteen focused tests pass. Next: record that enum in one fresh run, then patch
+the owning installed configuration or expectation from evidence.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra
