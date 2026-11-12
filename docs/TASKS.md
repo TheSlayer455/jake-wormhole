@@ -175,6 +175,17 @@ normalizes the annotation and has an executable exact-output regression. Sixteen
 focused cases pass. Next: reuse the unchanged candidate for one fresh install,
 verify all ten manual rows, archive evidence and record final storage state.
 
+Runtime source `239aad0` completed the fresh collector proof in 489.836 seconds.
+All ten manual rows now close (seven satisfied, three governed N/A) while their
+native `notchecked` statuses remain unchanged. All lifecycle, SSH/Ansible,
+hardened/controller, encryption, SVD and read-only assessment checks pass; native
+totals remain 433/zero/29/10/601. VM cleanup reclaimed 405,504 bytes. Encrypted
+archival reclaimed another 8,487,362,560 bytes; storage is 76.967 GiB managed,
+29.880 GiB candidates, 137.404 GiB free, zero pending/failures and no VM disk.
+Next: implement the existing-contract RHEL evaluator/publisher; keep it refusing
+until cryptographic operating-environment evidence satisfies the frozen policy,
+then require a final independent same-candidate pair before positive publication.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra

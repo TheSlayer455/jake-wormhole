@@ -81,6 +81,20 @@ to `drop` and tests the exact observed shape. Candidate/hardening inputs are
 unchanged. Sixteen focused tests pass; run one fresh candidate-reuse installation
 to close all ten manual rows, then archive and remeasure storage.
 
+Runtime source `239aad0e76d10d158dc08848648a85df9ef3dc9e` completed that
+fresh proof in 489.836 seconds. All ten manual rows are complete: seven objective
+`satisfied`, three policy-governed `not-applicable`, native `notchecked` preserved
+and no exception. Final readiness, trusted SSH, password-required Ansible, all 12
+hardened/six controller checks, encryption, 449-RPM SVD and read-only assessment
+pass; native totals remain 433 pass/zero fail/29 not applicable/ten not checked/
+601 not selected. Exact cleanup reclaimed 405,504 bytes. The encrypted archive
+then verified the evidence and reclaimed 8,487,362,560 allocated bytes. Storage
+is 76.967 GiB managed, 29.880 GiB candidates and 137.404 GiB free, with 532
+verified objects, zero pending bytes/failures and no VM disk. RHEL engineering
+lifecycle/manual evidence is closed. Lab release remains pending cryptographic
+operating-environment evidence, the unfinished evaluator/publisher and a final
+independent same-candidate pair after the converged inputs.
+
 ## RHEL selected-automated-rule closure
 
 Runtime source `4ac320ddb2d21ff3172d04b4cf33547c425c9490` completed a fresh

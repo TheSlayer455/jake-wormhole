@@ -256,16 +256,29 @@ the two firewall rows remained false because RHEL 10 labels the active zone
 `drop (default)` and the collector treated that full display label as its zone
 name. Source `0cbb4c18fb078f10e791de43e05be2f74a3e68ae` normalizes that
 annotation to `drop`; the executable regression uses the exact observed output.
-Sixteen focused cases pass. The candidate bytes and hardening are unchanged;
-fresh collector/runtime proof of all ten rows remains required.
+Sixteen focused cases pass. The installed inputs and hardening policy are
+unchanged; fresh collector/runtime proof of all ten rows remains required.
+
+Runtime source `239aad0e76d10d158dc08848648a85df9ef3dc9e` completed that
+fresh proof in 489.836 seconds. All ten manual rows are complete: seven objective
+`satisfied`, three governed `not-applicable`, all native `notchecked` statuses
+preserved and no exception. Final readiness, SSH/Ansible, all hardened/controller
+checks, encryption, 449-RPM SVD and read-only assessment pass. Native totals are
+unchanged at 433/zero/29/10/601 and all 1,073 outcomes are accounted. Exact VM
+cleanup reclaimed 405,504 transient bytes. Encrypted archival verified the new
+evidence and reclaimed 8,487,362,560 allocated bytes. Current storage is 76.967
+GiB managed, 29.880 GiB candidates and 137.404 GiB free, with 532 verified archive
+objects, zero pending bytes/failures and no VM disk. Qualification remains false
+for the separate cryptographic operating-environment/release requirements and a
+final independent same-candidate installation pair after the converged inputs.
 
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
 terminal receipt whose immutable ownership journal was already finished: the
 workload remains `unknown`, the first failure is retained, and normal storage
 deduplication reclaimed 8,487,432,192 allocated bytes while preserving one local
-canonical candidate and the encrypted archive. After the latest verified archive
-transaction, current storage is 76.047 GiB managed, 29.880 GiB candidate cache
+canonical candidate and the encrypted archive. At that earlier archive
+checkpoint, storage was 76.047 GiB managed, 29.880 GiB candidate cache
 and 138.327 GiB filesystem availability.
 The explicit Pro slot remains empty.
 
