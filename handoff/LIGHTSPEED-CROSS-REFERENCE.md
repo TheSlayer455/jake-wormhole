@@ -541,6 +541,8 @@ assertion of the precise execution time.
 | K / 2026-11-12, runtime receipt date | [Kdump and banner-path runtime at da63dc0](https://github.com/TheSlayer455/jake-wormhole/commit/da63dc0a79b6b545f4fe7ef9c55cf9d9ac0b2be0) | One fresh encrypted RHEL 10 installation passed the final masked-kdump and SSH banner-path rules, every hardened/controller check, SVD, full native accounting, no-remediation assessment and cleanup. The honest local banner exposed a separate upstream-default value mismatch, so eligibility remains false. |
 | B / 2026-11-12, runtime receipt date | [Declared banner tailoring runtime at 03d2986](https://github.com/TheSlayer455/jake-wormhole/commit/03d29868184bb711c78932eb1eea78e3f18b0ac3) | One fresh encrypted RHEL 10 installation used a one-value XCCDF tailoring for the truthful lab banner. The receipt binds those exact tailoring bytes; the banner rule and all previously closed chrony/kdump/SSH-banner rules pass, assessment performed no remediation, all hardened/controller checks and cleanup passed, and all 1,073 native outcomes remain accounted. |
 | AC / 2026-11-12, runtime receipt date | [Authorized-account runtime at c944a86](https://github.com/TheSlayer455/jake-wormhole/commit/c944a8668e86979e38af673c5d81a9bf54d270a6) | One fresh encrypted RHEL 10 installation declared only the three locked package service identities and final Wormhole identity omitted by the pinned default. The native account rule passed without deleting accounts or excluding rules; all 1,073 outcomes, hardened/controller checks, read-only assessment and cleanup passed. |
+| NR / 2026-11-12, runtime receipt date | [Local-only name-resolution runtime at 77498b3](https://github.com/TheSlayer455/jake-wormhole/commit/77498b3a5934e3ee7cc538e30194e39b74e9eba1) | One fresh encrypted RHEL 10 installation used the pinned rule's truthful local-only branch rather than inventing a second DNS service. The name-resolution and NetworkManager rules, time/log/audit services, all hardened/controller checks, SVD, read-only assessment and cleanup passed; all 1,073 outcomes remain accounted. The encrypted archive verified ten objects and exact-file cleanup reclaimed 8,487,366,656 allocated bytes. |
+| GA / 2026-11-12, source proof pending runtime | [GRUB generator correction at ddda124](https://github.com/TheSlayer455/jake-wormhole/commit/ddda124cd98be5d6b17aad5d8cdf66229de1d5f3) | The installation input preserves Anaconda's per-installation PBKDF2 hash, changes the generator to a non-login boot administrator and rebuilds the installed BIOS configuration. Thirteen focused tests pass; no runtime or native-rule success is claimed until a fresh installation proves it. |
 | S / 2026-10-31 checkpoint | [Retained SVD archival at f2a3d5c](https://github.com/TheSlayer455/jake-wormhole/blob/f2a3d5ca383a1fea9230a9d1225406ae1f9bde26/wormhole/storage_archive.py); [PR 45](https://github.com/TheSlayer455/jake-wormhole/pull/45) | 298 verified encrypted objects at that checkpoint; six additional SVD/build-manifest readbacks; local originals retained. This is not a live backlog count. |
 
 ## Verified mechanisms and boundaries
@@ -564,14 +566,14 @@ assertion of the precise execution time.
 
 ## Native outcomes and unresolved qualification
 
-| Native result | RHEL baseline R | Hardened RHEL H/E | Chrony closure C | Kdump/banner K | Tailored banner B | Authorized accounts AC | Ubuntu U and D, each |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Pass | 172 | 425 | 427 | 428 | 429 | 430 | 210 |
-| Fail | 261 | 9 | 7 | 6 | 5 | 4 | 1 |
-| Not applicable | 56 | 29 | 29 | 29 | 29 | 29 | 14 |
-| Not checked | 9 | 10 | 10 | 10 | 10 | 10 | 5 |
-| Not selected | 450 | 600 | 600 | 600 | 600 | 600 | 409 |
-| Total | 948 | 1,073 | 1,073 | 1,073 | 1,073 | 1,073 | 639 |
+| Native result | RHEL baseline R | Hardened RHEL H/E | Chrony C | Kdump/banner K | Tailored banner B | Accounts AC | Name resolution NR | Ubuntu U/D, each |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Pass | 172 | 425 | 427 | 428 | 429 | 430 | 431 | 210 |
+| Fail | 261 | 9 | 7 | 6 | 5 | 4 | 3 | 1 |
+| Not applicable | 56 | 29 | 29 | 29 | 29 | 29 | 29 | 14 |
+| Not checked | 9 | 10 | 10 | 10 | 10 | 10 | 10 | 5 |
+| Not selected | 450 | 600 | 600 | 600 | 600 | 600 | 600 | 409 |
+| Total | 948 | 1,073 | 1,073 | 1,073 | 1,073 | 1,073 | 1,073 | 639 |
 
 R uses the DVD's pinned SCAP Security Guide 0.1.76 vendor-draft content; it does
 not prove alignment with a current released DISA benchmark. U uses OpenSCAP 1.4.6
@@ -607,13 +609,13 @@ The fresh C run closed the two historical chrony failures while preserving time
 synchronization. K then closed kdump and the SSH banner path, while exposing the
 separate declared-banner-value mismatch. B closed that value mismatch through a
 single declared XCCDF value, without changing rule selection. AC then closed the
-authorized-account mismatch. These four selected automated failures remain. The
+authorized-account mismatch, and NR closed the name-resolution finding without
+adding a fictitious resolver. These three selected automated failures remain. The
 names are public rule suffixes, not private configuration values.
 
 | Rule suffix | Open requirement |
 | --- | --- |
 | `grub2_admin_username` | Nondefault boot-loader administrator |
-| `network_configure_name_resolution` | Multiple declared name-resolution servers |
 | `selinux_context_elevation_for_sudo` | SELinux context elevation through sudo |
 | `sssd_enable_certmap` | SSSD certificate mapping |
 
@@ -626,14 +628,20 @@ accounts, exclude the rule or change rule selection. Focused generated-input
 tests passed. AC's fresh installation proved the native result while preserving
 authentication, inventory, assessment and cleanup.
 
-The next retained failure is similarly exact: the isolated guest enables DNS
-lookup but has no second resolver or declared DNS dependency. Source
+The isolated guest enabled DNS lookup but had no second resolver or declared
+DNS dependency. Source
 [2b3c16b](https://github.com/TheSlayer455/jake-wormhole/commit/2b3c16ba476c5d0c5f03467030b37c0422531923)
 implements the pinned rule's documented local-only branch using NetworkManager
 `dns=none`, NSS without the `dns` token and an empty resolver file. It does not
-invent duplicate DNS servers. Twelve focused tests pass; the rule remains open
-until a fresh installation proves post-reboot state and unchanged lab-service
-behavior.
+invent duplicate DNS servers. NR proved the native rule and unchanged
+post-reboot lab-service behavior in a fresh installation.
+
+The retained GRUB OVAL evidence found Anaconda's default `root` boot-loader
+administrator even though a valid per-installation PBKDF2 secret existed.
+[ddda124](https://github.com/TheSlayer455/jake-wormhole/commit/ddda124cd98be5d6b17aad5d8cdf66229de1d5f3)
+changes the generator, preserves that secret, uses the non-login
+`wormhole_boot_admin` and regenerates the installed BIOS configuration. Focused
+source tests pass; the rule and actual boot remain open pending a fresh install.
 
 The retained native objects established that the final kdump unit was inactive
 but loaded rather than masked, and that the post-remediation SSH drop-in used a
@@ -706,6 +714,11 @@ Its fresh RHEL run reclaimed another 405,504 transient allocated bytes. Current
 managed storage is 83.594 GiB, including a 37.784 GiB candidate cache, with
 130.785 GiB host filesystem availability. All 66 unrelated running containers
 matched the pre-run set.
+
+NR's archive then verified ten additional encrypted objects and exact-file
+cleanup reclaimed 8,487,366,656 allocated bytes. Current allocation is 76.167
+GiB managed, 29.880 GiB candidates and 138.207 GiB available, with 457 committed
+archive objects, zero pending bytes, zero failed receipts and no VM disk.
 
 Managed retention grew about 200.7 MiB because the new native evidence is kept.
 That growth does not negate temporary cleanup. Protected active inputs, required

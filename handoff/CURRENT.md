@@ -1,6 +1,34 @@
 # Current handoff
 
-## RHEL authorized-account closure and pending local-only resolution
+## RHEL local-only resolution closure and pending GRUB correction
+
+Runtime source `77498b3a5934e3ee7cc538e30194e39b74e9eba1` completed a fresh
+encrypted RHEL 10 installation in 525.220 seconds. The retained OVAL had proved
+that the isolated direct-IP workload enabled DNS but had no second resolver or
+declared DNS service. Source `2b3c16b` uses the pinned rule's documented
+local-only branch: NetworkManager `dns=none`, NSS without the `dns` token and an
+empty resolver file. It does not fabricate a second DNS server.
+
+`network_configure_name_resolution` now passes and
+`networkmanager_dns_mode` remains passing. All ten hardened checks, six
+controller checks, synchronized time, lab logging/audit, trusted SSH/Ansible,
+449-RPM SVD, complete native accounting, read-only assessment and cleanup pass.
+Native totals are 431 pass/three fail/29 not applicable/ten not checked/600 not
+selected. The same 66 unrelated containers remain running and no VM remains.
+The encrypted archive verified ten new objects and normal cleanup reclaimed
+8,487,366,656 allocated bytes. Current allocation is 76.167 GiB managed,
+29.880 GiB candidates and 138.207 GiB available. There are 457 committed archive
+objects, zero pending bytes, zero failed receipts and no VM disk.
+
+Source `ddda124cd98be5d6b17aad5d8cdf66229de1d5f3` is pending fresh runtime
+proof. It changes the GRUB generator rather than only its output, preserves the
+per-installation PBKDF2 hash, substitutes the non-login
+`wormhole_boot_admin`, rebuilds the installed BIOS configuration and verifies
+that the administrator is not an OS account. Thirteen focused tests pass. The
+next run must prove the selected GRUB rule and actual boot/readiness before this
+boundary closes.
+
+## RHEL authorized-account closure
 
 Runtime source `c944a8668e86979e38af673c5d81a9bf54d270a6` completed a fresh
 encrypted RHEL 10 installation in 519.709 seconds. The retained ARF had identified
@@ -16,14 +44,6 @@ pass/four fail/29 not applicable/ten not checked/600 not selected. VM cleanup
 passed and the same 66 unrelated containers remained running. The archive
 verified ten new objects and reclaimed 8,487,362,560 allocated bytes; no archive
 item or VM disk is pending.
-
-Source `2b3c16ba476c5d0c5f03467030b37c0422531923` is pending its fresh
-runtime proof. The next retained failure is exact: NSS enables DNS but the
-isolated direct-IP workload has no second resolver or declared DNS dependency.
-The documented local-only branch now uses NetworkManager `dns=none`, removes
-only the NSS `dns` token and keeps an empty resolver file. Twelve focused tests
-pass. Qualification stays false until a fresh install proves the native rule,
-post-reboot state and unchanged lab-service behavior.
 
 ## RHEL declared-banner tailoring closure
 

@@ -111,6 +111,22 @@ The archive verified ten new objects and cleanup reclaimed 8,487,362,560
 allocated bytes. No VM or pending archive object remains, and the same 66
 unrelated containers were preserved.
 
+Runtime source `77498b3a5934e3ee7cc538e30194e39b74e9eba1` then completed a
+fresh 525.220-second installation of the declared local-only resolution path.
+`network_configure_name_resolution` now passes while
+`networkmanager_dns_mode` remains passing. All hardened/controller checks,
+synchronized time, lab logging/audit, trusted SSH/Ansible, the 449-RPM SVD,
+read-only assessment and exact-owned cleanup pass. Native totals are 431 pass,
+three fail, 29 not applicable, ten not checked and 600 not selected. Source
+archival verified ten new objects and cleanup reclaimed 8,487,366,656 allocated
+bytes. Current allocation is 76.167 GiB managed, 29.880 GiB candidates and
+138.207 GiB available, with no VM or pending archive byte. Source
+`ddda124cd98be5d6b17aad5d8cdf66229de1d5f3` is the next unverified installed
+input: it preserves the per-installation GRUB PBKDF2 hash while replacing the
+prohibited default boot administrator in the generator and rebuilding the
+installed BIOS configuration. Thirteen focused tests pass; a fresh install is
+still required.
+
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
 terminal receipt whose immutable ownership journal was already finished: the
@@ -144,10 +160,10 @@ The [continuation](../handoff/CURRENT.md) and merged
 attempts, corrections and actual runtime attribution. The hardened run used
 different content and selected coverage from the older RHEL draft profile.
 
-The latest hardened RHEL audit records four selected failures covering GRUB
-administration, name resolution, SELinux sudo role elevation and SSSD
-certificate mapping. The historical chrony, kdump, SSH banner-path, declared
-banner-value and authorized-account failures now pass while time remains
+The latest hardened RHEL audit records three selected failures covering GRUB
+administration, SELinux sudo role elevation and SSSD certificate mapping. The
+historical chrony, kdump, SSH banner-path, declared banner-value,
+authorized-account and name-resolution failures now pass while time remains
 synchronized. Ten native checks need separate disposition.
 FIPS runtime mode passed, but module and operating-environment verification
 remains open. These conditions keep the lab release gate closed.

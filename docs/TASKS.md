@@ -41,14 +41,24 @@ totals are 430 pass/four fail/29 not applicable/ten not checked/600 not selected
 all hardened/controller checks, SVD, read-only assessment and cleanup pass. The
 archive verified ten objects and reclaimed 8,487,362,560 allocated bytes.
 
-Source `2b3c16ba476c5d0c5f03467030b37c0422531923` is the next focused
-candidate-input change. Retained OVAL evidence proves the isolated guest enables
-DNS lookup but lacks a second resolver. The declared workload uses direct-IP
-services and has no DNS dependency, so the documented local-only branch now
-sets NetworkManager `dns=none`, removes only the NSS `dns` token and installs an
-empty resolver file. Twelve focused hardening tests pass. A fresh installation
-must prove the native rule, effective post-reboot state and unchanged time/log/
-audit/controller behavior before closing it.
+Runtime source `77498b3a5934e3ee7cc538e30194e39b74e9eba1` completed a fresh
+525.220-second installation of source change `2b3c16b`. The pinned rule's
+local-only branch now passes without inventing a second DNS service:
+NetworkManager uses `dns=none`, NSS has no `dns` token and the resolver file is
+empty. `networkmanager_dns_mode`, synchronized time, lab logging/audit, all
+hardened/controller checks, trusted SSH/Ansible, 449-RPM SVD, read-only
+assessment and cleanup remain passing. Native totals are 431 pass/three fail/29
+not applicable/ten not checked/600 not selected. The encrypted archive verified
+ten objects and cleanup reclaimed 8,487,366,656 allocated bytes. No VM, pending
+archive byte or failed archive receipt remains.
+
+Source `ddda124cd98be5d6b17aad5d8cdf66229de1d5f3` is the next focused
+candidate-input change. It preserves Anaconda's per-installation PBKDF2 secret,
+changes the `/etc/grub.d/01_users` generator from the prohibited default
+administrator to the non-login `wormhole_boot_admin`, regenerates the installed
+BIOS configuration and verifies that the name is not an operating-system
+account. Thirteen focused hardening tests pass. A fresh installation must prove
+the native GRUB rule, actual boot/readiness and unchanged controller behavior.
 
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
