@@ -341,7 +341,7 @@ even when names differ.
 | `rhel_inputs` and `rhel_hardening` | Preserve the real DVD boot path and volume identity, use a declared separate installation seed, generate installation-time hardening, create the final identity and completion evidence, then reboot from the installed disk. | Generated output is not proof of installer consumption. Failure before account setup remains an installer/finalization failure rather than an SSH defect. |
 | `ubuntu_inputs`, `ubuntu_encryption`, `ubuntu_sandbox` | Bind the pinned offline payload and hardening template while keeping per-installation identity and unlock material outside published media. | A missing runtime dependency or unlock input is explicit. Acceptance cannot repair the guest into a pass. |
 | `vm_baseline.console_host_key` | Accept one complete final-host-key line inside a bounded installed-guest frame, tolerating unrelated concurrent boot output. | Missing or ambiguous framed identity blocks strict SSH. Unauthenticated key scanning is not a trust source. |
-| Helper readiness chain | Verify final account, installed-system completion, OS identity, mounted root, required security state, interpreter and privilege contract before Ansible readiness. | Port-open, installer SSH or authentication alone cannot start the full catalog. The first definitive readiness reason blocks dependent rows. |
+| Helper readiness chain | Verify final account, installed-system completion, OS identity, mounted root, readiness-critical security state, interpreter and privilege contract before Ansible readiness. Later functional and assessment checks retain their own gates. | Port-open, installer SSH or authentication alone cannot start the full catalog. The first definitive readiness reason blocks dependent rows. |
 
 The readiness algorithm is equivalent to this sanitized pseudocode.
 
@@ -353,7 +353,7 @@ while absolute deadline has useful work time:
         continue
     record final authentication
     check final identity, completed installation, installed OS and root disk
-    check the OS-specific privilege and security contract
+    check the OS-specific readiness and privilege contract
     if a definitive check fails:
         record that first failure
         block Ansible and the full catalog
@@ -368,8 +368,8 @@ while absolute deadline has useful work time:
 
 | Public component | Contract Terra should preserve |
 | --- | --- |
-| `lifecycle.Lifecycle` | Records observed provisioning, creation, initialization, configuration, hardening, reachability, host identity, final identity, interpreter, privilege and Ansible transitions. A failure keeps the earliest cause and blocks dependent checks. |
-| `pipeline_records.grid` and `validate_record` | Freeze every required component/case tuple before execution. Every tuple has a status, expected result, observed result, reason and evidence references. Missing output remains visible. |
+| `lifecycle.Lifecycle` | The container/reference path records observed provisioning, creation, initialization, configuration, hardening, reachability, host identity, final identity, interpreter, privilege and Ansible transitions. A failure keeps the earliest cause and blocks dependent checks. The VM controller has corresponding phase/check records rather than reusing this storage format. |
+| `pipeline_records.grid` and `validate_record` | The container/reference path freezes every required component/case tuple before execution. Every tuple has a status, expected result, observed result, reason and evidence references. Missing output remains visible. Transfer the accounting semantics into the receiving receipt, not the file format. |
 | `pipeline_records.decision` | Eligibility is derived only after structural completeness. Required nonpass rows, unknown outcomes, incomplete cleanup or absent evidence refuse the limited reference gate. Production eligibility remains false. |
 | JSON, text and JUnit renderers | Derive all views from the same canonical record. JUnit presentation does not determine the command's return value. Unique component/target/case identities prevent hidden duplicates. |
 
@@ -401,7 +401,7 @@ release acceptance, and neither should become a new orchestration framework.
 | `recovery.inspect_recovery` and `recover_run` | Use the original run, source, journal and lock after proving the old controller's state. Recovery allocates nothing new. | Missing evidence, source mismatch or unknown ownership blocks mutation. A recovered unknown run remains an unknown historical outcome. |
 | `storage.Store.observe`, preview, clean and lifecycle | Reconcile run manifests, active references, current candidates, evidence and exact filesystem allocation under the shared lock. | Active or unresolved references, uncertain evidence and required local inputs remain protected. Cleanup uses the same engine as preview. |
 | `storage_archive.preview`, queue, commit and restore | Archive only completed eligible content by cryptographic identity. Commit follows destination readback. Restore verifies exact bytes and local protections. | Offline or corrupt destination preserves the only local copy. No committed receipt means no local reclamation. |
-| `archive_client.Client` | Pull through the established private route, encrypt locally, verify decrypted stored bytes, commit receipt, and remove only abandoned exact staging files. | An interrupted transfer stays incomplete. Original transfer errors survive cleanup errors. Unrelated files and active handles are untouched. |
+| `archive_client.Client` | Pull through the established private route, encrypt locally, verify decrypted stored bytes, commit receipt, and remove only abandoned exact staging files. | An interrupted transfer stays incomplete. Original transfer errors survive cleanup errors. Unrelated files and handles visible to the Linux/WSL client are protected. |
 | `publication.publish_reference` | Snapshot a closed eligible file table, copy the exact tested bytes into a unique private release, verify it, and write completion last. | Failed, incomplete, changed, duplicate, wrong-scope or falsely production-eligible input is refused without overwriting a release. |
 
 ### Assessment and SVD
