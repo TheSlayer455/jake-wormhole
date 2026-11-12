@@ -44,6 +44,12 @@ cases and staged-export validation. A separate attempt from the Windows-linked
 worktree reproduced an unsupported WSL `.git`-pointer context failure; the clean
 Linux checkout and hosted branch workflow both pass.
 
+[PR 57](https://github.com/TheSlayer455/jake-wormhole/pull/57) merged the
+delivered source `b5bea05079eb5662ab54863489ed4a671b3692cb` as
+`f4cddeac41c54d91d341985bd94b465348c4c19a`. Both PR workflows and the
+[post-merge main workflow](https://github.com/TheSlayer455/jake-wormhole/actions/runs/43199704207)
+passed. No runtime claim is reattributed to this documentation/delivery revision.
+
 ## RHEL manual-control final-readiness diagnosis
 
 Source `a8263e900e10f04eab3f6e4f98e4a6d9fa26842b` implements one

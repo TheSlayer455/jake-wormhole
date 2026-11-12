@@ -38,6 +38,11 @@ identity to WSL because its `.git` pointer contains a Windows path; that
 unsupported-context failure was reproduced separately and is not counted as a
 source regression.
 
+[PR 57](https://github.com/TheSlayer455/jake-wormhole/pull/57) delivered the
+tested implementation as merge `f4cddeac41c54d91d341985bd94b465348c4c19a`.
+Both PR workflows and the [post-merge main workflow](https://github.com/TheSlayer455/jake-wormhole/actions/runs/43199704207)
+passed.
+
 ## Bounded Lightspeed tool decisions
 
 The canonical Terra brief now records one evidence-backed adoption order without
