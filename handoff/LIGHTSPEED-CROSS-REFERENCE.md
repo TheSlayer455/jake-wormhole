@@ -20,15 +20,18 @@ The implementation used for those actual runs is
 [21fb946831a451a93c970346855e2c2aec781fb0](https://github.com/TheSlayer455/jake-wormhole/commit/21fb946831a451a93c970346855e2c2aec781fb0).
 The later focused RHEL chrony/recovery runtime used
 [e3208237884acc53fb4821cdbc6dcb5e867e49e1](https://github.com/TheSlayer455/jake-wormhole/commit/e3208237884acc53fb4821cdbc6dcb5e867e49e1);
-delivery and merge revisions are pending. It does not relabel the earlier Ubuntu
-or two-OS receipts.
-The public report was tested at
-[31093e4c556081f4654af9e8d28b65255b33fe98](https://github.com/TheSlayer455/jake-wormhole/commit/31093e4c556081f4654af9e8d28b65255b33fe98)
+the final RHEL runtime/evidence closure used
+[239aad0e76d10d158dc08848648a85df9ef3dc9e](https://github.com/TheSlayer455/jake-wormhole/commit/239aad0e76d10d158dc08848648a85df9ef3dc9e).
+The strict release implementation was tested at
+[d8c9ef3d1d9341317856531d6b0132f5d81e25a1](https://github.com/TheSlayer455/jake-wormhole/commit/d8c9ef3d1d9341317856531d6b0132f5d81e25a1),
+delivered at
+[b5bea05079eb5662ab54863489ed4a671b3692cb](https://github.com/TheSlayer455/jake-wormhole/commit/b5bea05079eb5662ab54863489ed4a671b3692cb)
 and merged as
-[59fb4392e187efa08509abc6492bfe800564680e](https://github.com/TheSlayer455/jake-wormhole/commit/59fb4392e187efa08509abc6492bfe800564680e).
-[Post-merge source CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/42956234469)
-passed 1,002 tests with 12 explicit platform skips. Documentation changes after
-a runtime do not become that runtime's tested implementation.
+[f4cddeac41c54d91d341985bd94b465348c4c19a](https://github.com/TheSlayer455/jake-wormhole/commit/f4cddeac41c54d91d341985bd94b465348c4c19a).
+[Post-merge source CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/43199704207)
+passed 1,030 tests with 12 explicit platform/privilege skips and the 17-case
+parity/readback path. These later revisions do not relabel the earlier Ubuntu,
+two-OS or RHEL runtime receipts.
 
 | Included here | Purpose |
 | --- | --- |
