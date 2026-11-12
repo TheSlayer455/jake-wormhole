@@ -34,6 +34,18 @@ the same readiness trap and preserves the existing terminal marker. Fifteen
 focused tests pass. Run one fresh diagnostic installation; do not select a
 configuration fix until its retained marker names the failed group.
 
+The first diagnostic attempt was safely refused before allocation by the
+retention budget. Existing encrypted archive verification then reclaimed
+8,487,243,776 allocated bytes and left 76.606 GiB managed, 29.880 GiB candidates,
+137.768 GiB free, no VM disk and no pending archive byte. The unchanged retry
+installed all 449 packages, completed hardening and emitted
+`firewall-policy`. It never reached SSH; all dependent rows stayed blocked and
+assessment performed no repair because it did not run. Exact support/Terraform
+teardown passed and transient cleanup reclaimed 405,504 bytes. Source
+`5ed8d6cb3688f333e778511cb4d99cd85363b3b5` refines only the static marker across
+the six unchanged firewall assertions. Fifteen focused tests pass. One fresh
+diagnostic installation is next; correction still waits for the exact condition.
+
 ## RHEL selected-automated-rule closure
 
 Runtime source `4ac320ddb2d21ff3172d04b4cf33547c425c9490` completed a fresh

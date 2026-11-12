@@ -217,6 +217,17 @@ readiness-stage marker while retaining the existing terminal failure marker.
 Fifteen focused input tests pass. The next fresh attempt is diagnostic proof of
 the first failed assertion group, not permission to guess at a correction.
 
+That diagnostic source first stopped before allocation at the retention budget.
+The verified encrypted archive then reclaimed 8,487,243,776 allocated bytes and
+left 76.606 GiB managed, 29.880 GiB candidates and 137.768 GiB free, with no VM
+disk, pending archive byte or archive failure. The unchanged retry installed all
+449 packages and completed hardening, then its retained marker named
+`firewall-policy`. Final access and all dependent checks remained blocked,
+assessment did not run, exact-owned teardown passed and cleanup reclaimed
+405,504 transient bytes. Source `5ed8d6cb3688f333e778511cb4d99cd85363b3b5`
+now names each of the six firewall assertions; fifteen focused tests pass. The
+next fresh run must identify the exact firewall condition before correction.
+
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
 terminal receipt whose immutable ownership journal was already finished: the

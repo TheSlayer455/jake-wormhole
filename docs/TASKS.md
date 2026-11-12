@@ -137,6 +137,16 @@ to the existing failure marker without exposing observed values or changing the
 qualification gate. Fifteen focused input tests pass. Next: run one fresh guest,
 identify the actual failed assertion group, then correct only that condition.
 
+The first diagnostic allocation was correctly refused by the retention budget.
+Archive readback and exact-file cleanup reclaimed 8,487,243,776 allocated bytes;
+the unchanged retry then reached the retained `firewall-policy` marker after
+449 packages and completed hardening. Assessment remained blocked, exact-owned
+teardown passed and transient cleanup reclaimed 405,504 bytes. Source `5ed8d6c`
+splits only that static marker into default-zone, active-zone, interface, target,
+services and ports while leaving the checks and policy unchanged. Fifteen
+focused tests pass. Next: one fresh diagnostic installation, then the smallest
+correction to the named condition.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra
