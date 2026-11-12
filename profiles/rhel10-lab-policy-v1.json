@@ -21,7 +21,7 @@
     "upstream_rules": 1073,
     "selected_rules": 473
   },
-  "tailoring": {"excluded_rules": [], "parameters": {"login_banner_text": "^Wormhole private home lab\\. Authorized lab use only\\. Activity is monitored\\.$", "var_accounts_authorized_local_users_regex": "^(root|bin|daemon|adm|lp|sync|shutdown|halt|mail|operator|games|ftp|nobody|tss|systemd-coredump|dbus|polkitd|avahi|colord|rtkit|pipewire|clevis|sssd|geoclue|flatpak|setroubleshoot|fapolicyd|libstoragemgmt|systemd-oom|gdm|cockpit-ws|gnome-initial-setup|sshd|chrony|dnsmasq|postfix|tcpdump|admin|unbound|yggdrasil|yggdrasil-worker|lab\\.service)$"}, "owner_approved_exceptions": []},
+  "tailoring": {"excluded_rules": [], "parameters": {"login_banner_text": "^Wormhole private home lab\\. Authorized lab use only\\. Activity is monitored\\.$", "var_accounts_authorized_local_users_regex": "^(root|bin|daemon|adm|lp|sync|shutdown|halt|mail|operator|games|ftp|nobody|tss|systemd-coredump|dbus|polkitd|avahi|colord|rtkit|pipewire|clevis|sssd|geoclue|flatpak|setroubleshoot|fapolicyd|libstoragemgmt|systemd-oom|gdm|cockpit-ws|gnome-initial-setup|sshd|chrony|dnsmasq|postfix|tcpdump|admin|unbound|yggdrasil|yggdrasil-worker|lab\\.service)$", "var_networkmanager_dns_mode": "none"}, "owner_approved_exceptions": []},
   "requirements": {
     "all_selected_automated_rules_pass": true,
     "scanner_errors_allowed": 0,

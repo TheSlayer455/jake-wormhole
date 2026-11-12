@@ -84,6 +84,14 @@ class HardenedInputs(unittest.TestCase):
         self.assertLess(h.FINALIZE.index('oscap xccdf eval --remediate'),
                         h.FINALIZE.index("cat > /etc/chrony.conf <<'TIME'"))
 
+    def test_final_name_resolution_uses_the_declared_local_only_path(self):
+        self.assertIn("cat > /etc/NetworkManager/conf.d/90-wormhole-dns.conf <<'DNS'", h.FINALIZE)
+        self.assertIn('dns=none', h.FINALIZE)
+        self.assertIn('$i != "dns"', h.FINALIZE)
+        self.assertIn('install -m 0644 /dev/null /etc/resolv.conf', h.FINALIZE)
+        self.assertIn("NetworkManager --print-config | grep -qx 'dns=none'", h.READY)
+        self.assertIn('test ! -s /etc/resolv.conf', h.READY)
+
     def test_final_banner_uses_the_pinned_rule_path_after_remediation(self):
         self.assertIn("> /etc/issue\n", h.FINALIZE)
         self.assertIn("'Banner /etc/issue' > /etc/ssh/sshd_config.d/05-wormhole-banner.conf", h.FINALIZE)
@@ -149,7 +157,8 @@ class HardenedInputs(unittest.TestCase):
         self.assertFalse(policy['production_iso_eligible'])
         self.assertEqual(policy['tailoring'], {'excluded_rules': [],
             'parameters': {'login_banner_text': h.LAB_BANNER_REGEX,
-                'var_accounts_authorized_local_users_regex': h.LAB_AUTHORIZED_USERS_REGEX},
+                'var_accounts_authorized_local_users_regex': h.LAB_AUTHORIZED_USERS_REGEX,
+                'var_networkmanager_dns_mode': 'none'},
             'owner_approved_exceptions': []})
         self.assertEqual(policy['requirements']['independent_same_iso_installations'], 2)
         self.assertTrue(policy['unresolved_requirements'])

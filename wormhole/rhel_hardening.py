@@ -41,7 +41,8 @@ def tailoring_document():
     """Declare truthful lab values without changing rule selection."""
     tailoring = json.loads(POLICY.read_text())['tailoring']
     values = {'login_banner_text': LAB_BANNER_REGEX,
-        'var_accounts_authorized_local_users_regex': LAB_AUTHORIZED_USERS_REGEX}
+        'var_accounts_authorized_local_users_regex': LAB_AUTHORIZED_USERS_REGEX,
+        'var_networkmanager_dns_mode': 'none'}
     require(tailoring == {'excluded_rules': [], 'parameters': values,
         'owner_approved_exceptions': []}, 'unsupported_assessment_tailoring')
     x = '{http://checklists.nist.gov/xccdf/1.2}'
@@ -55,6 +56,8 @@ def tailoring_document():
         idref='xccdf_org.ssgproject.content_value_login_banner_text').text = LAB_BANNER_REGEX
     ET.SubElement(profile, x + 'set-value',
         idref='xccdf_org.ssgproject.content_value_var_accounts_authorized_local_users_regex').text = LAB_AUTHORIZED_USERS_REGEX
+    ET.SubElement(profile, x + 'set-value',
+        idref='xccdf_org.ssgproject.content_value_var_networkmanager_dns_mode').text = 'none'
     return ET.tostring(root, encoding='utf-8', xml_declaration=True)
 PACKAGES = '''@core
 python3
@@ -134,6 +137,9 @@ test "$(stat -c %a /home/lab.service/.ssh)" = 700
 test "$(stat -c %a /home/lab.service/.ssh/authorized_keys)" = 600
 test "$(stat -c %a /var/lib/wormhole)" = 755
 test -s /etc/wormhole-lab-ca.crt
+NetworkManager --print-config | grep -qx 'dns=none'
+awk '$1 == "hosts:" { found=1; for (i=2; i<=NF; i++) if ($i == "dns") exit 1 } END { if (!found) exit 1 }' /etc/nsswitch.conf
+test ! -s /etc/resolv.conf
 if ! test -f /etc/ssh/ssh_host_rsa_key; then
     ssh-keygen -q -t rsa -b 3072 -N '' -f /etc/ssh/ssh_host_rsa_key
 fi
@@ -199,6 +205,16 @@ driftfile /var/lib/chrony/drift
 makestep 1 -1
 rtcsync
 TIME
+install -d -m 0755 /etc/NetworkManager/conf.d
+cat > /etc/NetworkManager/conf.d/90-wormhole-dns.conf <<'DNS'
+[main]
+dns=none
+DNS
+awk '$1 == "hosts:" { printf "%s", $1; for (i=2; i<=NF; i++) if ($i != "dns") printf " %s", $i; printf "\n"; next } { print }' \
+    /etc/nsswitch.conf > /etc/nsswitch.conf.wormhole
+install -m 0644 /etc/nsswitch.conf.wormhole /etc/nsswitch.conf
+rm -f /etc/nsswitch.conf.wormhole /etc/resolv.conf
+install -m 0644 /dev/null /etc/resolv.conf
 cat > /etc/rsyslog.d/70-wormhole-remote.conf <<'LOG'
 global(DefaultNetstreamDriverCAFile="/etc/wormhole-lab-ca.crt")
 *.* action(type="omfwd" target="192.0.2.1" port="6514" protocol="tcp"
