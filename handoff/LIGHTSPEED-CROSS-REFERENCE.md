@@ -543,7 +543,7 @@ assertion of the precise execution time.
 | AC / 2026-11-12, runtime receipt date | [Authorized-account runtime at c944a86](https://github.com/TheSlayer455/jake-wormhole/commit/c944a8668e86979e38af673c5d81a9bf54d270a6) | One fresh encrypted RHEL 10 installation declared only the three locked package service identities and final Wormhole identity omitted by the pinned default. The native account rule passed without deleting accounts or excluding rules; all 1,073 outcomes, hardened/controller checks, read-only assessment and cleanup passed. |
 | NR / 2026-11-12, runtime receipt date | [Local-only name-resolution runtime at 77498b3](https://github.com/TheSlayer455/jake-wormhole/commit/77498b3a5934e3ee7cc538e30194e39b74e9eba1) | One fresh encrypted RHEL 10 installation used the pinned rule's truthful local-only branch rather than inventing a second DNS service. The name-resolution and NetworkManager rules, time/log/audit services, all hardened/controller checks, SVD, read-only assessment and cleanup passed; all 1,073 outcomes remain accounted. The encrypted archive verified ten objects and exact-file cleanup reclaimed 8,487,366,656 allocated bytes. |
 | G0 / 2026-11-12, failed diagnostic | [First GRUB draft at f611d95](https://github.com/TheSlayer455/jake-wormhole/commit/f611d951fb78059fc0cd25c27c049cd10a8378db) | The actual attempt installed all 449 packages, then failed in hardening because the draft expected PBKDF2 material in the wrong GRUB file shape. Readiness and dependent checks were blocked; exact-owned teardown completed and cleanup reclaimed 405,504 transient allocated bytes. This failed attempt is preserved and is not proof of the corrected input. |
-| GA / 2026-11-12, source proof pending runtime | [GRUB generator correction at 518691a](https://github.com/TheSlayer455/jake-wormhole/commit/518691acacf909c0e01624af2a31a561d7a33c28) | Review caught that the first draft expected a literal hash in the generator, while RHEL stores it separately and references `${GRUB2_PASSWORD}`. The corrected transform changes only the username, verifies the separate PBKDF2 material and rebuilds the installed BIOS configuration. Its regression uses the exact escaped-variable bytes extracted from the pinned RHEL 10 RPM; all 13 focused tests pass. No runtime or native-rule success is claimed until a fresh installation proves it. |
+| GA / 2026-11-12, runtime receipt date | [GRUB generator correction at 518691a](https://github.com/TheSlayer455/jake-wormhole/commit/518691acacf909c0e01624af2a31a561d7a33c28), [executed source at 7bfa09d](https://github.com/TheSlayer455/jake-wormhole/commit/7bfa09def373c32d2177d223fcf6d97b35289d28) | A fresh encrypted installation proved the corrected generator, preserved PBKDF2 material, actual boot, trusted SSH/Ansible, all hardened/controller checks, SVD and read-only assessment. The GRUB rule passes; 432 native passes/two failures remain, assessment performed no repair and exact-owned cleanup passed. |
 | S / 2026-10-31 checkpoint | [Retained SVD archival at f2a3d5c](https://github.com/TheSlayer455/jake-wormhole/blob/f2a3d5ca383a1fea9230a9d1225406ae1f9bde26/wormhole/storage_archive.py); [PR 45](https://github.com/TheSlayer455/jake-wormhole/pull/45) | 298 verified encrypted objects at that checkpoint; six additional SVD/build-manifest readbacks; local originals retained. This is not a live backlog count. |
 
 ## Verified mechanisms and boundaries
@@ -567,14 +567,14 @@ assertion of the precise execution time.
 
 ## Native outcomes and unresolved qualification
 
-| Native result | RHEL baseline R | Hardened RHEL H/E | Chrony C | Kdump/banner K | Tailored banner B | Accounts AC | Name resolution NR | Ubuntu U/D, each |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Pass | 172 | 425 | 427 | 428 | 429 | 430 | 431 | 210 |
-| Fail | 261 | 9 | 7 | 6 | 5 | 4 | 3 | 1 |
-| Not applicable | 56 | 29 | 29 | 29 | 29 | 29 | 29 | 14 |
-| Not checked | 9 | 10 | 10 | 10 | 10 | 10 | 10 | 5 |
-| Not selected | 450 | 600 | 600 | 600 | 600 | 600 | 600 | 409 |
-| Total | 948 | 1,073 | 1,073 | 1,073 | 1,073 | 1,073 | 1,073 | 639 |
+| Native result | RHEL baseline R | Hardened H/E | Chrony C | Kdump/banner K | Banner B | Accounts AC | DNS NR | GRUB GA | Ubuntu U/D, each |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Pass | 172 | 425 | 427 | 428 | 429 | 430 | 431 | 432 | 210 |
+| Fail | 261 | 9 | 7 | 6 | 5 | 4 | 3 | 2 | 1 |
+| Not applicable | 56 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 14 |
+| Not checked | 9 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 5 |
+| Not selected | 450 | 600 | 600 | 600 | 600 | 600 | 600 | 600 | 409 |
+| Total | 948 | 1,073 | 1,073 | 1,073 | 1,073 | 1,073 | 1,073 | 1,073 | 639 |
 
 R uses the DVD's pinned SCAP Security Guide 0.1.76 vendor-draft content; it does
 not prove alignment with a current released DISA benchmark. U uses OpenSCAP 1.4.6
@@ -610,13 +610,13 @@ The fresh C run closed the two historical chrony failures while preserving time
 synchronization. K then closed kdump and the SSH banner path, while exposing the
 separate declared-banner-value mismatch. B closed that value mismatch through a
 single declared XCCDF value, without changing rule selection. AC then closed the
-authorized-account mismatch, and NR closed the name-resolution finding without
-adding a fictitious resolver. These three selected automated failures remain. The
+authorized-account mismatch, NR closed the name-resolution finding without
+adding a fictitious resolver and GA closed the GRUB administrator finding in a
+fresh booted installation. These two selected automated failures remain. The
 names are public rule suffixes, not private configuration values.
 
 | Rule suffix | Open requirement |
 | --- | --- |
-| `grub2_admin_username` | Nondefault boot-loader administrator |
 | `selinux_context_elevation_for_sudo` | SELinux context elevation through sudo |
 | `sssd_enable_certmap` | SSSD certificate mapping |
 
@@ -643,7 +643,8 @@ administrator even though a valid per-installation PBKDF2 secret existed.
 changes the generator username independent of its password expression, verifies
 the separately stored PBKDF2 secret, uses the non-login
 `wormhole_boot_admin` and regenerates the installed BIOS configuration. Focused
-source tests pass; the rule and actual boot remain open pending a fresh install.
+source tests pass. GA proved the native rule, actual boot, final access and
+unchanged hardened/controller behavior in a fresh installation.
 
 The retained native objects established that the final kdump unit was inactive
 but loaded rather than masked, and that the post-remediation SSH drop-in used a

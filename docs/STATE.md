@@ -135,6 +135,16 @@ assessment rows were blocked. Exact-owned teardown passed and cleanup reclaimed
 405,504 transient allocated bytes. The failed attempt remains failed; it is not
 evidence for `518691a`.
 
+Runtime source `7bfa09def373c32d2177d223fcf6d97b35289d28` then completed a
+fresh 533.296-second installation of the corrected GRUB input. The native rule,
+installed-disk boot, encrypted cold start, trusted SSH/Ansible, all ten hardened
+and six controller checks, 449-RPM SVD, read-only assessment and exact teardown
+pass. Native totals are 432 pass, two fail, 29 not applicable, ten not checked
+and 600 not selected. Assessment performed no repair; cleanup reclaimed 405,504
+transient allocated bytes. The remaining selected failures are SELinux sudo
+context transition and SSSD certificate mapping. Archive reconciliation is
+pending for the retained candidate/evidence set.
+
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
 terminal receipt whose immutable ownership journal was already finished: the
@@ -168,11 +178,11 @@ The [continuation](../handoff/CURRENT.md) and merged
 attempts, corrections and actual runtime attribution. The hardened run used
 different content and selected coverage from the older RHEL draft profile.
 
-The latest hardened RHEL audit records three selected failures covering GRUB
-administration, SELinux sudo role elevation and SSSD certificate mapping. The
+The latest hardened RHEL audit records two selected failures covering SELinux
+sudo role elevation and SSSD certificate mapping. The
 historical chrony, kdump, SSH banner-path, declared banner-value,
-authorized-account and name-resolution failures now pass while time remains
-synchronized. Ten native checks need separate disposition.
+authorized-account, name-resolution and GRUB-administrator failures now pass
+while time remains synchronized. Ten native checks need separate disposition.
 FIPS runtime mode passed, but module and operating-environment verification
 remains open. These conditions keep the lab release gate closed.
 

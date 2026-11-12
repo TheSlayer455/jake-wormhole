@@ -1,6 +1,24 @@
 # Current handoff
 
-## RHEL local-only resolution closure and pending GRUB correction
+## RHEL GRUB-administrator closure
+
+Runtime source `7bfa09def373c32d2177d223fcf6d97b35289d28` completed a fresh
+encrypted RHEL 10 installation in 533.296 seconds. The correction changes the
+actual `/etc/grub.d/01_users` generator, preserves and separately verifies the
+per-installation PBKDF2 material, rebuilds the installed BIOS configuration and
+uses a non-login boot administrator. The guest completed installed-disk boot,
+encrypted wrong/missing/correct-key probes, final trusted SSH and real Ansible.
+
+`grub2_admin_username` now passes. All ten hardened and six controller checks,
+449-RPM SVD, complete native accounting and read-only assessment pass. Native
+totals are 432 pass/two fail/29 not applicable/ten not checked/600 not selected;
+the only selected failures are `selinux_context_elevation_for_sudo` and
+`sssd_enable_certmap`. The assessment receipt records no remediation. Exact
+Terraform/support teardown passed, cleanup reclaimed 405,504 transient allocated
+bytes and the same 66 unrelated containers remain running. Archive reconciliation
+for this retained candidate/evidence set is pending.
+
+## RHEL local-only resolution closure
 
 Runtime source `77498b3a5934e3ee7cc538e30194e39b74e9eba1` completed a fresh
 encrypted RHEL 10 installation in 525.220 seconds. The retained OVAL had proved
@@ -19,15 +37,6 @@ The encrypted archive verified ten new objects and normal cleanup reclaimed
 8,487,366,656 allocated bytes. Current allocation is 76.167 GiB managed,
 29.880 GiB candidates and 138.207 GiB available. There are 457 committed archive
 objects, zero pending bytes, zero failed receipts and no VM disk.
-
-Source `518691acacf909c0e01624af2a31a561d7a33c28` is pending fresh runtime
-proof. Independent review caught that the first draft expected a literal hash in
-the generator, while RHEL stores it in `user.cfg` and references
-`${GRUB2_PASSWORD}`. The corrected transform changes only the username, verifies
-the separate hash, rebuilds the installed BIOS configuration and verifies that
-the administrator is not an OS account. A realistic transform regression and
-all 13 focused tests pass. The next run must prove the selected GRUB rule and
-actual boot/readiness before this boundary closes.
 
 The diagnostic attempt already running from source `f611d95` reached all 449
 packages, then stopped in hardening with the retained installation-failure
@@ -124,9 +133,10 @@ deduplication then reclaimed 8,487,432,192 allocated bytes while preserving one
 canonical local candidate and its verified encrypted archive. Focused source
 verification passed 36 tests with one root-only skip across the affected files.
 
-The four current selected failures are `grub2_admin_username`,
-`network_configure_name_resolution`,
-`selinux_context_elevation_for_sudo` and `sssd_enable_certmap`. Ten native not-checked
+At that historical checkpoint the four selected failures were
+`grub2_admin_username`, `network_configure_name_resolution`,
+`selinux_context_elevation_for_sudo` and `sssd_enable_certmap`. The current run
+has closed the first two. Ten native not-checked
 rules, manual evidence, cryptographic module/operating-environment applicability
 and the RHEL evaluator/publisher remain open. Lab and production eligibility
 remain false. Ubuntu vendor integration still waits for private Pro entitlement.
@@ -223,13 +233,12 @@ grew about 200.7 MiB for the new evidence, while transient file cleanup reclaime
 
 RHEL's historical E run had nine automated failures. The fresh e320823 closure
 run resolved the two chrony rows; K resolved kdump and the SSH banner path, B
-resolved the banner value and AC resolved the account allowlist. These four
-public rule suffixes remain.
+resolved the banner value, AC resolved the account allowlist, NR resolved name
+resolution and GA resolved the GRUB administrator. These two public rule
+suffixes remain.
 
 | Rule | Observed requirement still failing |
 | --- | --- |
-| grub2_admin_username | Nondefault boot-loader administrator |
-| network_configure_name_resolution | Multiple configured DNS servers |
 | selinux_context_elevation_for_sudo | SELinux context elevation through sudo |
 | sssd_enable_certmap | SSSD certificate mapping |
 

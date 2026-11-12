@@ -67,6 +67,15 @@ retained `WORMHOLE_INSTALLATION_FAILED`; all readiness/validation results were
 blocked, Terraform/support cleanup completed and 405,504 transient allocated
 bytes were reclaimed. It remains failed and is not proof of `518691a`.
 
+Runtime source `7bfa09def373c32d2177d223fcf6d97b35289d28` then completed a
+fresh 533.296-second installation of the corrected input. The native GRUB rule,
+actual boot, encrypted cold start, trusted SSH/Ansible, all hardened/controller
+checks, 449-RPM SVD, complete read-only assessment and exact cleanup pass. Native
+totals are 432 pass/two fail/29 not applicable/ten not checked/600 not selected;
+only the SELinux sudo-transition and SSSD certificate-map rules remain selected
+failures. Assessment performed no repair and cleanup reclaimed 405,504 transient
+allocated bytes. Archive reconciliation is the next retention operation.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra
