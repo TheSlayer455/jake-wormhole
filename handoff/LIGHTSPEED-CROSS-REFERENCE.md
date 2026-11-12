@@ -614,6 +614,15 @@ public rule suffixes, not private configuration values.
 | `sshd_enable_warning_banner` | SSH warning banner |
 | `sssd_enable_certmap` | SSSD certificate mapping |
 
+The retained native objects established that the final kdump unit was inactive
+but loaded rather than masked, and that the post-remediation SSH drop-in
+overrode the required local warning-banner path with a different path. At
+[a947977](https://github.com/TheSlayer455/jake-wormhole/commit/a947977c541adc6309c436803cfb992f5da18e75), the
+installation inputs mask the already-disabled kdump unit and preserve the
+pinned `/etc/issue` banner after remediation. Focused source regressions pass;
+these two rules remain open here until one new empty-disk installation and
+native assessment prove the installed result.
+
 Ten native not-checked rules still need accountable rule-level evidence and
 disposition: `crypto_policy_not_overridden`, `encrypt_partitions`,
 `account_temp_expire_date`, `accounts_user_home_paths_only`,
