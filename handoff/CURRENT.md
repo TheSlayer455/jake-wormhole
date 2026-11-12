@@ -1,5 +1,23 @@
 # Current handoff
 
+## RHEL SSSD certificate-map applicability
+
+Source `85bfd5722e6f4e72f363ca8db9ee33aa7b51b5a8` records the exact lab
+authentication contract: run-scoped SSH public-key authentication followed by
+local password-required sudo. The
+[pinned `sssd_enable_certmap` definition](https://raw.githubusercontent.com/ComplianceAsCode/content/v0.1.82/linux_os/guide/services/sssd/sssd_enable_certmap/rule.yml)
+applies to
+PKI authentication, which this workload does not use. The frozen policy
+therefore deselects only that rule, records the machine-readable reason, keeps
+owner-approved exceptions empty and changes selected coverage from 473 to 472.
+The assessment reader requires the exact rule to be native `notselected`;
+count-only substitution cannot pass. The final-system observer also rejects any
+installed SSSD certificate-map section. Twenty focused cases pass.
+
+This is prospective source proof. A fresh empty-disk installation must bind the
+new policy/tailoring identities, retain all functional behavior and account for
+all 1,073 native outcomes before the selected-finding boundary is closed.
+
 ## RHEL SELinux sudo-transition closure
 
 Runtime source `3f128cb81d0139ac2584b86898753d79a8bd5ed4` completed a fresh
@@ -13,8 +31,11 @@ controller checks, 449-RPM SVD, complete native accounting and read-only
 assessment pass. Native totals are 433 pass/one fail/29 not applicable/ten not
 checked/600 not selected; `sssd_enable_certmap` is the only selected failure.
 Terraform/support teardown passed, cleanup reclaimed 405,504 transient allocated
-bytes and the same 66 unrelated containers remain running. Archive reconciliation
-for this retained candidate/evidence set is pending.
+bytes and the same 66 unrelated containers remain running. The workstation
+archive verified ten objects and exact-file cleanup reclaimed 8,487,362,560
+allocated bytes. Post-archive storage is 76.446 GiB managed/29.880 GiB
+candidates with 137.927 GiB filesystem headroom, 482 verified objects, no
+pending archive bytes and no VM disks.
 
 ## RHEL GRUB-administrator closure
 

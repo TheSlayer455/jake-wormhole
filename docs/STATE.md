@@ -162,7 +162,22 @@ SELinux transition rule passed. All 11 hardened and six controller checks,
 449-RPM SVD, complete read-only assessment and exact teardown pass. Native totals
 are 433 pass, one fail, 29 not applicable, ten not checked and 600 not selected.
 Cleanup reclaimed 405,504 transient allocated bytes; only SSSD certificate-map
-applicability remains a selected finding. Archive reconciliation is underway.
+applicability remains a selected finding. The workstation archive then verified
+ten objects and exact-file cleanup reclaimed 8,487,362,560 allocated bytes.
+Post-archive storage is 76.446 GiB managed/29.880 GiB candidates with 137.927
+GiB filesystem headroom, 482 verified objects and no pending archive bytes or
+VM disks.
+
+Source `85bfd5722e6f4e72f363ca8db9ee33aa7b51b5a8` records the declared
+non-PKI authentication contract in the frozen policy and deselects only
+`sssd_enable_certmap`. The pinned rule applies to PKI authentication; this lab
+uses a run-scoped SSH public key and local password-required sudo. The policy
+keeps owner-approved exceptions empty, reduces selected coverage from 473 to
+472 and requires the native result for that exact rule to be `notselected`.
+The functional observer also rejects an installed SSSD certificate-map section,
+binding the policy decision to final guest configuration. Twenty focused
+hardening/assessment cases pass. A fresh installation must still prove the new
+candidate, tailoring and complete 1,073-rule accounting.
 
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
@@ -197,8 +212,9 @@ The [continuation](../handoff/CURRENT.md) and merged
 attempts, corrections and actual runtime attribution. The hardened run used
 different content and selected coverage from the older RHEL draft profile.
 
-The latest hardened RHEL audit records one selected failure covering SSSD
-certificate mapping. The
+The latest executed hardened RHEL audit records one selected failure covering
+SSSD certificate mapping. Source `85bfd57` contains the prospective non-PKI
+applicability correction; it is not runtime proof. The
 historical chrony, kdump, SSH banner-path, declared banner-value,
 authorized-account, name-resolution, GRUB-administrator and SELinux sudo
 transition failures now pass

@@ -92,7 +92,18 @@ password-backed sudo/Ansible entered `sysadm_r:sysadm_t`; the native SELinux
 rule now passes. All 11 hardened/six controller checks, 449-RPM SVD, full native
 accounting, read-only assessment and cleanup pass. Native totals are 433 pass/
 one fail/29 not applicable/ten not checked/600 not selected. Cleanup reclaimed
-405,504 transient allocated bytes; archive reconciliation is underway.
+405,504 transient allocated bytes. The archive subsequently verified ten objects and exact-file cleanup reclaimed
+8,487,362,560 allocated bytes. Storage now records 76.446 GiB managed, 29.880
+GiB candidates, 137.927 GiB free, 482 verified archive objects, no pending
+archive bytes and no VM disks.
+
+Current source `85bfd5722e6f4e72f363ca8db9ee33aa7b51b5a8` makes the declared
+authentication contract explicit and deselects only `sssd_enable_certmap` as
+inapplicable because the lab does not use PKI authentication. No owner-approved
+exception is added. The hardened reader requires this exact rule to be native
+`notselected`, with 472 selected and all 1,073 rules accounted. A functional
+observation rejects an installed certificate-map section. Twenty focused cases
+pass. Production/policy +30/-11; tests +29/-9. Fresh installation proof is next.
 
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
