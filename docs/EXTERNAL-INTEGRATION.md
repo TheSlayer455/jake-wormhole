@@ -2,10 +2,12 @@
 
 Copy the entire [Terra execution brief](../handoff/LIGHTSPEED-CROSS-REFERENCE.md)
 into the authorized work chat. The brief combines the owner's operating directive,
-the immediate recovery sequence, verified Wormhole evidence and optional public
-source excerpts. Internal GitLab diagnostics and a sanitized external update
-serve separate purposes. Maintain the brief with original evidence, the existing
-source hygiene check and independent review of the public changes.
+the immediate recovery sequence, verified Wormhole evidence, a code-level
+implementation capsule and the required response schema. It is the complete
+initial Wormhole paste; Terra requests only genuinely missing work-side evidence.
+Internal GitLab diagnostics and a sanitized external update serve separate
+purposes. Maintain the brief with original evidence, the existing source hygiene
+check and independent review of the public changes.
 
 Use the effective remaining job and script time when launching remote work,
 with evidence, cleanup and transport reserves counted once. Resolve lifecycle

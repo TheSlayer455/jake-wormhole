@@ -42,11 +42,13 @@ lifecycle proof, lab qualification/publication and work-integration readiness ar
 separate outcomes. Pro must come only from the explicit owner-file provider;
 do not create accounts, purchase subscriptions or accept terms for the owner.
 
-The [Terra execution brief](handoff/LIGHTSPEED-CROSS-REFERENCE.md) is the single
-copy-ready Lightspeed prompt and verified Wormhole reference. Reconcile changed
-capabilities with original attributable evidence. Record source/runtime revisions,
-evidence dates and unresolved limits. Use the brief's safe-fact allowlist for
-portable prose and keep private work source and raw logs out of Wormhole.
+The [Terra execution brief](handoff/LIGHTSPEED-CROSS-REFERENCE.md) is the single,
+self-contained copy-ready Lightspeed prompt and verified Wormhole reference.
+Keep its owner directive, fast causal workflow, implementation capsule, current
+blockers and response contract together. Reconcile changed capabilities with
+original attributable evidence. Record source/runtime revisions, evidence dates
+and unresolved limits. Use the brief's safe-fact allowlist for portable prose and
+keep private work source and raw logs out of Wormhole.
 Before sharing a changed public brief, run the repository verifier and record
 independent review of the exact portable diff in the Wormhole PR. Heuristics have
 limited coverage. This publication check applies to Wormhole's portable brief.

@@ -1,5 +1,26 @@
 # Current handoff
 
+## Self-contained Terra handoff
+
+[PR 54](https://github.com/TheSlayer455/jake-wormhole/pull/54) makes
+`LIGHTSPEED-CROSS-REFERENCE.md` the complete initial Wormhole paste for Terra.
+It incorporates the owner's direct-development directive, quick causal tests,
+the current console-marker task, live internal logging, the 20-minute focused
+budget, expected-result and cascading-failure behavior, current RHEL/Ubuntu
+status, exact qualification blockers, storage disposition, source/API contracts,
+focused tests and the work-side response format. Terra should request only a
+genuinely missing private work observation, not another routine Wormhole file.
+
+The source/test increment changes no controller, installation input, candidate,
+runtime resource or qualification policy. Full clean-checkout verification at
+`4c37488` passed 1,004 tests with 12 explicit skips (1,016 total), repository and
+historical matrix verification, and all 17 controlled parity cases. Final precision source
+`4ce81a2` passed all five focused portable tests and repository hygiene. An
+independent read-only engineering/sanitization review checked the exact portable
+diff, identified three corrections and cleared the corrected result. No fresh VM
+or work-environment execution is claimed. Existing runtime remains attributed to
+`21fb946`; this handoff carries that evidence forward without relabeling it.
+
 ## Fresh two-OS acceptance with automatic cleanup
 
 Runtime source `21fb946831a451a93c970346855e2c2aec781fb0` completed one new

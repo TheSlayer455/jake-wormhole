@@ -1,8 +1,45 @@
-# Terra's Lightspeed execution brief and Wormhole evidence
+# Terra's complete Lightspeed execution brief and Wormhole reference
 
-Copy this entire file into Terra in the authorized work chat. It includes the
-owner directive, the immediate recovery task, and the verified Wormhole reference.
-The source links and file list are for optional follow-up pastes.
+Copy this entire file into Terra in the authorized work chat. This is the one
+portable Wormhole paste for the current Lightspeed investigation. It includes
+the owner's operating directive, the fast causal-debugging procedure, the
+current recovery task, the verified Wormhole control case, implementation and
+test contracts, exact qualification limits, and the response Terra must return.
+Terra should begin from this file without asking the owner to paste routine
+Wormhole documentation or source files.
+
+The public links are verification aids. They are not prerequisites for using
+the brief. If a later work-side question depends on a source detail that is not
+represented here, Terra must name the single missing function, contract or
+bounded private observation. It must not request a bulk repository export.
+
+## Bundle provenance and contents
+
+This bundle reconciles the latest fresh two-OS evidence recorded on public main.
+The implementation used for those actual runs is
+[21fb946831a451a93c970346855e2c2aec781fb0](https://github.com/TheSlayer455/jake-wormhole/commit/21fb946831a451a93c970346855e2c2aec781fb0).
+The public report was tested at
+[31093e4c556081f4654af9e8d28b65255b33fe98](https://github.com/TheSlayer455/jake-wormhole/commit/31093e4c556081f4654af9e8d28b65255b33fe98)
+and merged as
+[59fb4392e187efa08509abc6492bfe800564680e](https://github.com/TheSlayer455/jake-wormhole/commit/59fb4392e187efa08509abc6492bfe800564680e).
+[Post-merge source CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/42956234469)
+passed 1,002 tests with 12 explicit platform skips. Documentation changes after
+a runtime do not become that runtime's tested implementation.
+
+| Included here | Purpose |
+| --- | --- |
+| Owner directive | Removes agent-created approval and review gates while preserving actual enforced controls |
+| Fast verification loop | Tests one code, configuration or generated-input explanation before a full run |
+| Current Lightspeed case | Narrows the console-marker investigation and defines its real-run done-check |
+| Runtime behavior | Sets the 20-minute focused budget, live logging and first-failure rules |
+| Receipt contract | Prevents missing, blocked or secondary failures from disappearing |
+| Wormhole control case | Supplies source-pinned mechanisms, actual runtime outcomes and limits |
+| Implementation capsule | Describes the owning APIs, invariants, outputs and closest source regressions |
+| Qualification and storage state | Separates engineering success from release eligibility and records current cleanup proof |
+| Terra response contract | Produces one causal, sanitized work-side diagnosis and the next executable step |
+
+Terra must treat this as a technical reference, not authority to copy private
+work source into Wormhole or to replace the team's intended ISO behavior.
 
 ## Current owner directive for Lightspeed
 
@@ -26,6 +63,39 @@ Keep Terraform, the existing controller, candidate identity, the team's
 installation contract and strict host trust. Fix the smallest component that
 owns the observed defect. Preserve the existing authorized access and cleanup
 mechanisms. Keep review and reporting work proportional to the immediate repair.
+
+## Development simplicity and authority
+
+Do not add another controller, scheduler, state database, approval workflow,
+attestation service, generalized authentication subsystem, or defensive wrapper
+for this repair. Reuse Lightspeed's existing receipt, controller, Terraform
+ownership, remote relay, test catalog and release chain. A new layer is justified
+only after a demonstrated requirement cannot be met by the existing component.
+
+Direct work on main is the owner's chosen development workflow. Routine edits,
+focused tests, commits, pushes, disposable guests and exact-owned cleanup do not
+need a new conversational approval or pull request. A repository or server may
+still enforce a control. If it does, report the exact enforcement point and the
+blocked action instead of presenting an agent preference as policy.
+
+The next change must answer one causal question. Start from the first confirmed
+bad transition, change the component that owns that transition, and keep all
+unrelated inputs fixed. Extend the closest test. A normal repair usually needs a
+few distinct checks rather than a broad matrix. Run a full pipeline only after
+the cheap component proof passes and the next unresolved boundary requires it.
+
+Keep the following separations explicit throughout development.
+
+| Separate facts | Why they cannot be collapsed |
+| --- | --- |
+| Source is corrected / deployed input is corrected | The executing remote script, generated seed or embedded media may differ from the checkout |
+| Port is open / final identity is ready | An installer or restarting guest can expose a temporary service |
+| SSH authenticates / finalization is complete | A usable account can exist before the product state or hardening contract is complete |
+| Process is alive / operation is progressing | Liveness alone cannot reset a deadline or prove useful work |
+| Cleanup passes / deployment passes | Teardown is secondary evidence and cannot overwrite the original failure |
+| Scanner ran / findings are acceptable | Execution, coverage, policy acceptance and qualification are different decisions |
+| Artifact hash matches / artifact is current | Byte identity does not prove the intended inputs or policy revision |
+| Source tests pass / real installation passes | Fixtures cannot prove firmware boot, installer behavior, guest access or exact cleanup |
 
 ## Verify one change before running the pipeline
 
@@ -211,25 +281,154 @@ Wormhole's real ISO evidence is for RHEL 10 and Ubuntu 22.04. It does not establ
 RHEL 9 install behavior, work routing, private build behavior or qualification.
 Use the work controller and original contract to verify the receiving path.
 
-If Terra needs more public source, ask the owner for one relevant excerpt with
-its surrounding function and nearest test. Use the public Wormhole checkout
-and exact revision below. For example, run this in that checkout and paste the
-relevant excerpt.
+## Supplied Lightspeed comparison findings
 
-```sh
-git show 204720bc9047b4909c0b70cc15040bca4414ec5d:wormhole/vm_baseline.py
+The owner supplied a prior source comparison. Treat it as a work-side analysis,
+not as a fresh diagnosis of the latest attempt. It established these durable
+directions.
+
+- Historical failures accumulated at interfaces between media, installer,
+  Terraform inputs, guest identity, readiness, remote supervision, deadlines,
+  evidence and cleanup. The next defect still needs current attributable proof.
+- Terraform provisioning has worked. Wormhole's same-candidate native-libvirt
+  experiment did not justify another maintained backend. Keep Terraform and
+  repair the observed boundary around it.
+- Identity and bootstrap contracts have previously diverged. The final account,
+  host trust, privilege behavior and Ansible inputs must derive from the same
+  declared installation contract.
+- Installer identity can exist in several boot surfaces. Correct source text is
+  insufficient until the attached media or declared seed actually contains and
+  consumes the rendered change.
+- A source-level Terraform field mismatch can prevent allocation even when broad
+  syntax checks pass. Exercise the exact focused module path with the effective
+  input object.
+- Remote execution and the enclosing job previously had incompatible deadlines.
+  The current repair uses the effective remaining cutoff and one total budget.
+- Evidence transport is an independent boundary. Relay, archive, retrieval and
+  cleanup errors must remain secondary to an earlier deployment failure.
+- The supplied formal product catalog was empty. Map the team's existing approved
+  test definitions into stable cases. Do not invent replacement tests, and do
+  not let catalog work delay observation of the installer failure.
+- The approved assessment runtime and its inputs remain a separate downstream
+  dependency. Source-side integration code does not prove that assessment ran.
+
+The transferable Wormhole behavior is causal state and complete accounting.
+Its home topology, exact checks and local release authority are not replacements
+for the receiving system's distributed controls or product requirements.
+
+## Embedded Wormhole implementation capsule
+
+This capsule is the source context Terra needs for the first comparison. It is a
+behavioral projection of public code, not a second implementation. Function and
+class names are included so the receiving code can be compared by responsibility
+even when names differ.
+
+### Run, ownership and observable execution
+
+| Public component | Inputs and output | Invariant and failure behavior | Closest regression |
+| --- | --- | --- | --- |
+| `runs.Run` and atomic record helpers | A bounded workspace, immutable source identity and one run identifier produce private atomic records | Linked, misplaced, oversized, duplicate-key or source-mismatched state is refused. A document is never authority for an unobserved runtime mutation. | `test_runs.py` |
+| `vm_admission.VMLease` | Canonical shared root, run identifier and 40-character source revision produce an active VM ownership journal | Intent is persisted before mutation. Every domain, network, pool, disk, installer, seed, controller and filter has one exact identity. Finish is refused while any recorded resource remains pending. | `test_vm_foundation.py` |
+| `vm_baseline.status` | Existing run identifier returns durable phase, latest progress, checks, first failure, outcome, cleanup and observed supervisor state | Process liveness and progress age are reported separately. A stopped supervisor with no terminal record is unknown, not success. | `test_vm_foundation.py` |
+| `vm_baseline.execute` | Verified media, pinned Terraform, declared OS profile and optional reuse origin run the existing one-guest lifecycle | Launch acknowledgment precedes long work. Installed readiness, validation, evidence and teardown update the same bounded result. First failure and cleanup failure occupy separate fields. | `test_vm_foundation.py`, `test_rhel_hardening.py`, `test_ubuntu_helper.py` |
+| `execution_state.project` | Frozen plan plus observed initialization, readiness, lifecycle and validation records produce a progress projection | Current phase, last progress, readiness and terminal outcome are projections of evidence. They do not execute or repair a target. | `test_execution_state.py` |
+
+### Candidate, installation and readiness contracts
+
+| Public component | Contract Terra should compare | Failure meaning |
+| --- | --- | --- |
+| `candidate.input_identity`, `compare_inputs`, `validate_binding` | Base source, installed customization, configuration, packages or payloads, build tool and artifact bytes have distinct identities. Controller/test changes do not masquerade as installed-input changes. | A stale or mismatched candidate is refused before provisioning. A matching hash alone cannot prove current intended inputs. |
+| `rhel_inputs` and `rhel_hardening` | Preserve the real DVD boot path and volume identity, use a declared separate installation seed, generate installation-time hardening, create the final identity and completion evidence, then reboot from the installed disk. | Generated output is not proof of installer consumption. Failure before account setup remains an installer/finalization failure rather than an SSH defect. |
+| `ubuntu_inputs`, `ubuntu_encryption`, `ubuntu_sandbox` | Bind the pinned offline payload and hardening template while keeping per-installation identity and unlock material outside published media. | A missing runtime dependency or unlock input is explicit. Acceptance cannot repair the guest into a pass. |
+| `vm_baseline.console_host_key` | Accept one complete final-host-key line inside a bounded installed-guest frame, tolerating unrelated concurrent boot output. | Missing or ambiguous framed identity blocks strict SSH. Unauthenticated key scanning is not a trust source. |
+| Helper readiness chain | Verify final account, installed-system completion, OS identity, mounted root, readiness-critical security state, interpreter and privilege contract before Ansible readiness. Later functional and assessment checks retain their own gates. | Port-open, installer SSH or authentication alone cannot start the full catalog. The first definitive readiness reason blocks dependent rows. |
+
+The readiness algorithm is equivalent to this sanitized pseudocode.
+
+```text
+while absolute deadline has useful work time:
+    observe strict SSH with the framed final host identity
+    if transport is temporarily unavailable:
+        wait within the remaining allowance
+        continue
+    record final authentication
+    check final identity, completed installation, installed OS and root disk
+    check the OS-specific readiness and privilege contract
+    if a definitive check fails:
+        record that first failure
+        block Ansible and the full catalog
+        stop readiness waiting
+    run a real Ansible ping with the declared interpreter and privilege inputs
+    if it succeeds:
+        admit the frozen validation plan
+        break
 ```
 
-Use the source map to request the next excerpt only as needed. The owner can
-supply it even when chat cannot fetch public links.
+### Complete results and cascading-failure containment
 
-| Need | Public source and nearby tests |
+| Public component | Contract Terra should preserve |
 | --- | --- |
-| Collector, readiness, terminal result and cleanup | wormhole/vm_baseline.py, wormhole/vm_admission.py, wormhole/ubuntu_recovery.py and tests/test_vm_foundation.py |
-| RHEL installer and console unlock | wormhole/rhel_inputs.py, wormhole/rhel_hardening.py, wormhole/ubuntu_encryption.py, tests/test_rhel_hardening.py and tests/test_ubuntu_encryption.py |
-| Completed ISO intake and identity | wormhole/intake.py, wormhole/ubuntu_intake.py and tests/test_intake.py |
-| Installed inventory and assessment | wormhole/rhel_assessment.py, wormhole/ubuntu_runtime.py, tests/test_vm_foundation.py and tests/test_ubuntu_helper.py |
-| More context | docs/STATE.md, docs/ARCHITECTURE.md, docs/FIDELITY.md and handoff/CURRENT.md |
+| `lifecycle.Lifecycle` | The container/reference path records observed provisioning, creation, initialization, configuration, hardening, reachability, host identity, final identity, interpreter, privilege and Ansible transitions. A failure keeps the earliest cause and blocks dependent checks. The VM controller has corresponding phase/check records rather than reusing this storage format. |
+| `pipeline_records.grid` and `validate_record` | The container/reference path freezes every required component/case tuple before execution. Every tuple has a status, expected result, observed result, reason and evidence references. Missing output remains visible. Transfer the accounting semantics into the receiving receipt, not the file format. |
+| `pipeline_records.decision` | Eligibility is derived only after structural completeness. Required nonpass rows, unknown outcomes, incomplete cleanup or absent evidence refuse the limited reference gate. Production eligibility remains false. |
+| JSON, text and JUnit renderers | Derive all views from the same canonical record. JUnit presentation does not determine the command's return value. Unique component/target/case identities prevent hidden duplicates. |
+
+Use this failure propagation model inside Lightspeed's existing receipt.
+
+```text
+freeze expected rows
+execute the next admitted stage
+on its first definitive failure:
+    retain that stage, reason and evidence as the primary failure
+    mark every dependent expected row blocked with that dependency
+continue only independent evidence preservation and exact-owned teardown
+record relay, collection and teardown problems as secondary failures
+return the original failed outcome even when cleanup succeeds
+```
+
+A fixed release catalog and a lifecycle grid solve different problems. The grid
+shows whether the execution boundaries completed. The product catalog shows
+which required product behaviors were actually tested. Both must be complete for
+release acceptance, and neither should become a new orchestration framework.
+
+### Intake, recovery, cleanup and storage
+
+| Public component | Contract Terra should compare | Refusal behavior |
+| --- | --- | --- |
+| `intake.completed_delivery` | A bounded completion manifest appears last and names exact ISO bytes plus the declared installation contract. Ubuntu also binds its build manifest. | A filename alone, in-progress copy, changed bytes or unsupported contract is refused. |
+| `intake.register` | Independently copy and verify delivered bytes. Request identity covers ISO, contract, implementation, assessment content, policy, generation and scenario. | Duplicate notifications observe the existing request. Same filename with different bytes and explicit requalification form new identities. |
+| `intake.submit` and `scan` | Persist dispatch intent before calling the same foreground acceptance engine. Manual and periodic paths share registration and submission. | A terminal request returns its existing result. An unknown launch remains unknown. Prelaunch refusal can retry the same identity after its cause clears. |
+| `recovery.inspect_recovery` and `recover_run` | Use the original run, source, journal and lock after proving the old controller's state. Recovery allocates nothing new. | Missing evidence, source mismatch or unknown ownership blocks mutation. A recovered unknown run remains an unknown historical outcome. |
+| `storage.Store.observe`, preview, clean and lifecycle | Reconcile run manifests, active references, current candidates, evidence and exact filesystem allocation under the shared lock. | Active or unresolved references, uncertain evidence and required local inputs remain protected. Cleanup uses the same engine as preview. |
+| `storage_archive.preview`, queue, commit and restore | Archive only completed eligible content by cryptographic identity. Commit follows destination readback. Restore verifies exact bytes and local protections. | Offline or corrupt destination preserves the only local copy. No committed receipt means no local reclamation. |
+| `archive_client.Client` | Pull through the established private route, encrypt locally, verify decrypted stored bytes, commit receipt, and remove only abandoned exact staging files. | An interrupted transfer stays incomplete. Original transfer errors survive cleanup errors. Unrelated files and handles visible to the Linux/WSL client are protected. |
+| `publication.publish_reference` | Snapshot a closed eligible file table, copy the exact tested bytes into a unique private release, verify it, and write completion last. | Failed, incomplete, changed, duplicate, wrong-scope or falsely production-eligible input is refused without overwriting a release. |
+
+### Assessment and SVD
+
+`rhel_assessment.collect` validates the expected target, scanner execution,
+content identity and complete native coverage before writing the installed RPM
+SVD. `ubuntu_runtime.collect` retains the original XCCDF, ARF and readable report,
+then emits the bound observed inventory and qualification inputs. Native scanner
+statuses are never rewritten by supplemental manual evidence. Build inventory,
+installed inventory, scanner execution, coverage, policy acceptance and release
+qualification remain separate facts.
+
+The source map below is optional verification context. This bundle supplies the
+behavioral contract without another paste.
+
+| Responsibility | Public implementation | Focused source tests |
+| --- | --- | --- |
+| Run identity and bounded records | `wormhole/runs.py` | `tests/test_runs.py` |
+| Shared admission and exact VM ownership | `wormhole/admission.py`, `wormhole/vm_admission.py` | `tests/test_admission.py`, `tests/test_vm_foundation.py` |
+| One-guest execution, host-key framing and readiness | `wormhole/vm_baseline.py` | `tests/test_vm_foundation.py` |
+| Lifecycle projection and complete result grid | `wormhole/lifecycle.py`, `wormhole/execution_state.py`, `wormhole/pipeline_records.py` | `tests/test_lifecycle.py`, `tests/test_execution_state.py`, `tests/test_pipeline_records.py` |
+| RHEL installation and hardening | `wormhole/rhel_inputs.py`, `wormhole/rhel_hardening.py`, `wormhole/rhel_assessment.py` | `tests/test_rhel_hardening.py`, `tests/test_vm_foundation.py` |
+| Ubuntu installation and qualification | `wormhole/ubuntu_inputs.py`, `wormhole/ubuntu_runtime.py`, `wormhole/ubuntu_release.py` | `tests/test_ubuntu_helper.py`, `tests/test_ubuntu_reports.py`, `tests/test_ubuntu_release_readback.py` |
+| Completed-media intake | `wormhole/intake.py`, `wormhole/ubuntu_intake.py` | `tests/test_intake.py` |
+| Recovery and cleanup | `wormhole/recovery.py`, `wormhole/ubuntu_recovery.py`, `wormhole/storage.py` | `tests/test_recovery.py`, `tests/test_storage.py` |
+| Archive and exact restore | `wormhole/storage_archive.py`, `wormhole/archive_client.py` | `tests/test_storage.py`, `tests/test_archive_client.py` |
+| Publication | `wormhole/publication.py`, `wormhole/ubuntu_release.py` | `tests/test_publication.py`, `tests/test_ubuntu_reports.py`, `tests/test_ubuntu_release_readback.py` |
 
 For quick public examples, run these from the Wormhole checkout at the pinned
 revision. The first exercises the real console frame parser. The second calls
@@ -261,10 +460,14 @@ and private mapping inside work.
 
 ## Verified Wormhole reference
 
-This evidence snapshot carries forward the verified [two-OS delivery](https://github.com/TheSlayer455/jake-wormhole/pull/48).
-The public source pin for follow-up pastes is [204720bc9047b4909c0b70cc15040bca4414ec5d](https://github.com/TheSlayer455/jake-wormhole/commit/204720bc9047b4909c0b70cc15040bca4414ec5d).
-Each installation retains its own runtime revision. Engineering proof,
-lab qualification and work integration are separate outcomes.
+This snapshot reconciles the verified [two-OS delivery](https://github.com/TheSlayer455/jake-wormhole/pull/48),
+the automatic-cleanup implementation at
+[21fb946831a451a93c970346855e2c2aec781fb0](https://github.com/TheSlayer455/jake-wormhole/commit/21fb946831a451a93c970346855e2c2aec781fb0)
+and the fresh acceptance report in [PR 53](https://github.com/TheSlayer455/jake-wormhole/pull/53).
+The report is on public main at
+[59fb4392e187efa08509abc6492bfe800564680e](https://github.com/TheSlayer455/jake-wormhole/commit/59fb4392e187efa08509abc6492bfe800564680e).
+Each installation retains its own runtime revision. Engineering proof, lab
+qualification and work integration are separate outcomes.
 
 ## Evidence index
 
@@ -296,8 +499,8 @@ assertion of the precise execution time.
 | Ubuntu installer | [Ubuntu inputs](https://github.com/TheSlayer455/jake-wormhole/blob/a705e2be45979b0df8f4ac7178b43c95c4eb09d4/wormhole/ubuntu_inputs.py) bind versioned offline payloads and hardening with a declared private NoCloud seed. U installs Ubuntu 22.04.5 x86_64, completes first-boot finalization/hardening and required reboot. | Neither path is a universally self-contained ISO. Separate secrets/endpoints are declared dependencies; acceptance does not repair the guest into compliance. |
 | VM provisioning | [Shared VM lifecycle](https://github.com/TheSlayer455/jake-wormhole/blob/a705e2be45979b0df8f4ac7178b43c95c4eb09d4/wormhole/vm_baseline.py) uses Terraform/libvirt/KVM, empty disks, serial evidence and exact resource journals. One live acceptance guest; 8 GiB RAM/two vCPUs, RHEL 32 GiB disk or Ubuntu 64 GiB disk. | Ubuntu virtualization host, BIOS only. No UEFI/Secure Boot, enterprise scale, remote work-runner routing or arbitrary host compatibility claim. |
 | Readiness and trust | Controlled serial evidence supplies the installed guest's unique host key. Strict SSH verifies host identity and the intended final account, completed installation marker, OS and mounted root. Real Ansible verifies interpreter/privilege access from the designated helper. U also proves encrypted reboot/cold-start and wrong/missing unlock refusal. | Port-open or installer SSH cannot satisfy readiness. RHEL baseline privilege policy differs from Ubuntu's required password-based escalation; preserve each contract. |
-| Functional validation | U: 40/40 checks each, including real lab logging/audit/time, scoped trust/PAM, encryption and access probes. R: six controller checks, including Ansible and basic privileged smoke. L: authenticated but inaccessible completion marker immediately blocks four dependent checks. | R's six checks are not a full hardening catalog. Lab time/PKI/software-token tests do not establish external trusted time, government identity or physical-token assurance. |
-| SVD | Structured native Ansible inventory feeds readable and JSON SVDs. R: 413 RPM rows with native version/release/epoch/architecture; key headers separate. U: 638 packages, three Snaps and two payload entries. Build inventory remains distinct from installed inventory. Original row/readable-output readback passed. | Counts do not establish equivalent proprietary packages or business behavior. No package list is exported here. |
+| Functional validation | U: 40/40 checks each, including real lab logging/audit/time, scoped trust/PAM, encryption and access probes. H/E: 10/10 hardened and 6/6 controller checks, including encryption, FIPS mode, SELinux, audit, logging, time, reboot and Ansible. L: authenticated but inaccessible completion evidence immediately blocks dependent checks. | These are declared lab catalogs, not a proprietary product catalog. Lab time/PKI/software-token tests do not establish external trusted time, government identity or physical-token assurance. |
+| SVD | Structured native Ansible inventory feeds readable and JSON SVDs. H/E: 449 RPM rows with native version/release/epoch/architecture; key headers separate. U/E: 638 packages, three Snaps and two payload entries. Build inventory remains distinct from installed inventory. Original row/readable-output readback passed. | Counts do not establish equivalent proprietary packages or business behavior. No package list is exported here. |
 | Assessment | Both OSes retain actual OpenSCAP machine-readable and readable reports, scanner/content identity and every native outcome. Ubuntu supplements manual observations without rewriting scanner statuses. | Findings must satisfy the declared policy. Evaluate-STIG, Nessus and Ubuntu USG/FIPS execution remain unproven. |
 | Execution and recovery | L acknowledges actual admission/start, records observed phase/progress separately from liveness, and persists failure/unknown outcomes. Controlled interruption retained unknown state until stopped-process/ownership reconciliation. U's final pair finished automatically; compact terminal storage summaries reference full durable receipts. | Missing acknowledgment or observer loss requires reconciliation, not automatic duplicate launch. A recovered unknown attempt remains unknown, never successful. |
 | Cleanup | Terraform destroys exactly recorded resources after evidence collection; storage uses the shared admission/ownership lock. U/R/L verified temporary resource absence. Original operation errors survive cleanup errors. | No global prune, ambiguous-prefix deletion or deletion of unresolved evidence. Historical absence is not evidence of current host availability. |
@@ -345,6 +548,80 @@ findings, unresolved manual evidence and verification of cryptographic modules
 and their operating environment keep qualification pending. The different
 content in R and H prevents a direct finding-count comparison.
 
+### Exact current RHEL qualification blockers
+
+The fresh E run preserved these nine selected automated failures. The names are
+public rule suffixes, not private configuration values.
+
+| Rule suffix | Open requirement |
+| --- | --- |
+| `accounts_authorized_local_users` | Authorized local-account policy |
+| `grub2_admin_username` | Nondefault boot-loader administrator |
+| `network_configure_name_resolution` | Multiple declared name-resolution servers |
+| `selinux_context_elevation_for_sudo` | SELinux context elevation through sudo |
+| `service_kdump_disabled` | Disabled kdump |
+| `chronyd_client_only` | Client-only time synchronization |
+| `chronyd_no_chronyc_network` | No network chrony management |
+| `sshd_enable_warning_banner` | SSH warning banner |
+| `sssd_enable_certmap` | SSSD certificate mapping |
+
+Ten native not-checked rules still need accountable rule-level evidence and
+disposition: `crypto_policy_not_overridden`, `encrypt_partitions`,
+`account_temp_expire_date`, `accounts_user_home_paths_only`,
+`configure_firewalld_ports`, `configured_firewalld_default_deny`,
+`libreswan_approved_tunnels`, `ssh_keys_passphrase_protected`,
+`sssd_has_trust_anchor` and
+`auditd_audispd_configure_sufficiently_large_partition`. Encryption and FIPS
+functional checks provide bounded supplemental observations without rewriting
+native statuses. Cryptographic module identity, certification scope and the
+applicable operating environment remain unverified. Wormhole also lacks a
+completed RHEL lab release evaluator and exact-byte publisher. These are
+engineering tasks, not new owner approval requests.
+
+### Exact current Ubuntu qualification blockers
+
+The only selected automated failure is `is_fips_mode_enabled`. The explicit
+protected provider slot is empty. The minimum owner action is to place a
+legitimate Ubuntu Pro entitlement into that existing private owner-file provider
+using its documented local provisioning procedure. Do not put the value in chat.
+After that input exists, supported enrollment, package/content pinning, actual
+USG/FIPS execution, reboot, LUKS unlock, runtime verification, reassessment and
+a final matching installation pair remain engineering work.
+
+All five objective supplemental manual observations passed, while native
+not-checked statuses remain intact. Delegated trust review and frozen V2R7/V2R8
+mapping are complete. Physical-token hardware and another owner certificate
+review are not required home-lab actions. The publisher correctly returned
+`lab_policy_dependencies_pending` and created no release. Its prospective static
+policy/gate reconciliation remains engineering after vendor execution.
+
+Evaluate-STIG and Nessus have not run. An authorized supported package/interface
+is unavailable. They remain separate work-equivalence limitations under the
+current lab policies and cannot be represented by renaming OpenSCAP output.
+
+### Current cleanup and retained-storage state
+
+Fresh E execution reclaimed 7.905 GiB after RHEL and 2.130 GiB after Ubuntu
+through automatic exact-file cleanup. Verified archive reconciliation reclaimed
+another 964 KiB. Terraform separately destroyed both guest disks. The largest
+sampled physical disk allocations before teardown were 2.276 GiB and 5.353 GiB;
+those are lower-bound observations and are not added to the file-cleanup total.
+
+Final reconciliation found zero run-owned VM resources and stopped supervisors.
+All 66 unrelated running containers matched the pre-run set. Repeating cleanup
+reclaimed zero. Current retained managed storage is 83.473 GiB: 37.784 GiB of
+candidate cache, 9.874 GiB of source media, 22.402 GiB of required evidence,
+13.354 GiB of other protected state, 55.676 MiB of protected staging and
+3.820 MiB of historical reference-release bundles. Host filesystem availability
+was 131.340 GiB. The workstation archive held 407 encrypted objects occupying
+68.794 GiB, with no pending bytes, failed receipts or transfer staging.
+
+Managed retention grew about 200.7 MiB because the new native evidence is kept.
+That growth does not negate temporary cleanup. Protected active inputs, required
+evidence and uncertain historical state must remain. An archive receipt is not a
+qualification decision, and an unavailable archive tier cannot authorize deletion
+of the only verified local copy.
+
 ## Measurements and engineering lessons
 
 - U: about 666/669 seconds for each complete CLI, including about 26/28 seconds
@@ -387,7 +664,122 @@ require separate work-side evidence. Production eligibility is false.
 [Historical source CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/41257949098)
 [PR 48 source CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/42726826330)
 
+## Terra's required comparison and response
+
+Inspect the actual Lightspeed source and latest runtime evidence inside its
+authorized environment. Compare equivalent responsibilities rather than file
+names. Do not assume a Wormhole mechanism is missing until the receiving source
+and runtime prove that. Produce this matrix for the first unresolved boundary.
+
+| Field | Required content |
+| --- | --- |
+| Lifecycle stage | Candidate, media, installer, VM, readiness, validation, evidence, cleanup or release |
+| Wormhole mechanism | The verified method in this bundle |
+| Wormhole evidence | Runtime/source label from the evidence index and its scope |
+| Lightspeed mechanism | Actual observed equivalent in the authorized environment |
+| Lightspeed evidence | Source observation, cheap reproduction or current runtime fact |
+| Difference | The concrete functional mismatch, without ranking the projects |
+| Failure relevance | Proven cause, probable contributor or unrelated to the observed failure |
+| Recommended action | Keep, adapt, replace or investigate, preserving the owning contract |
+| Acceptance proof | The smallest cheap proof followed by the next real boundary it cannot cover |
+| Confidence | Proven, probable or unknown |
+
+Then return the following work-side response. Keep private operational evidence
+inside the work environment.
+
+### A. Executive finding
+
+Classify the current blocker as media/build, installer configuration, VM
+provisioning, final guest readiness, remote orchestration, evidence handling,
+release coverage or unknown pending evidence. State the classification in one
+sentence and cite the observed boundary.
+
+### B. Frozen case
+
+Record the controller revision, candidate identity, declared installation-input
+identity, attempt identity, evidence-file identity and current resource
+disposition. Keep useful nonsecret run identifiers, candidate identity,
+diagnostic paths, timestamps and exit status in the authorized work chat so the
+owner can correlate execution. Protect actual credentials, private keys, tokens
+and unlock material. Apply generalized identities only to the external update in
+section J.
+
+### C. First confirmed failing transition
+
+Name the last successful state, next expected state, observed result and the
+evidence category that proves the gap. Separate a current fact from a hypothesis.
+
+### D. Cheap causal reproduction
+
+Show the same component and input failing before the correction and succeeding
+after it. State what the test reaches and what it cannot prove. For the console
+case, confirm collector attachment, byte receipt, durable write and unchanged
+preflight read against the same evidence file.
+
+### E. Minimal repair
+
+Identify the smallest existing component and change. Explain which contract is
+preserved, which unrelated inputs stay frozen and why another abstraction is not
+needed.
+
+### F. Real acceptance proof
+
+Specify the one focused real run, its effective 20-minute total cutoff, evidence
+and cleanup reserve, expected first new boundary, live output and terminal
+done-check. Stop promptly on a definitive prerequisite failure.
+
+### G. Result accounting and resource disposition
+
+List expected, passed, failed, blocked, missing and error rows. Preserve primary
+and secondary failures. State whether the controller is active, stopped,
+terminal or unknown; report exact-owned guest cleanup separately. Never infer
+remote termination from an observer exit.
+
+### H. Product coverage and downstream blockers
+
+State whether the authoritative catalog has real cases and maps every required
+product check. List unavailable scanner or release dependencies separately.
+Do not treat unproven downstream work as another cause of the current installer
+failure.
+
+### I. Next executable chat step
+
+Give one coherent command group or patch for work WSL. Include working directory,
+read-only or mutating classification, preconditions, expected result, done-check
+and the smallest useful nonsecret output to paste back. Do not bundle speculative
+repairs.
+
+### J. Sanitized external update
+
+Only when the owner requests a portable update, replace private identifiers with
+functional roles such as **ansible control node** and **rhel kvm host**. Include
+the first boundary, generalized evidence, material change, observed result,
+timings where measured, resource disposition and next action. Exclude private
+names, addresses, accounts, paths, URLs, identifiers, exact timestamps, hashes,
+commands, source and raw logs. Confirm that the sanitized report contains none
+of those restricted details.
+
+## Portable-sharing checklist
+
+The Wormhole material in this file is selected from an explicit safe-fact set.
+It contains public code names and commits, public OS/tool names, aggregate
+outcomes, generalized role names and rounded or nonidentifying measurements.
+It intentionally excludes licensed media, credentials, reusable identity
+material, private runtime paths, private resource names, private network details,
+raw logs, package lists and work source.
+
+Before bringing a Lightspeed update back outside the authorized environment,
+read the report itself. Check headings, tables, captions and copied diagnostic
+text, not only prose. Heuristic pattern checks can catch obvious leaks but do not
+replace this review. If a restricted detail is technically important, explain
+its function generically and keep the original evidence private.
+
 ## Start here in Terra
 
-Return one read-only command group for work WSL to inspect the checkout and
-latest attempt. Use the returned evidence to choose the first no-VM check.
+This bundle is sufficient Wormhole context for the initial diagnosis. Do not ask
+the owner for another Wormhole file. Return one read-only command group for work
+WSL to inspect the current checkout, effective deployed collector/preflight code,
+latest attempt and exact resource disposition. The done-check is one correlated
+attempt with a known controller revision, candidate and installation-input
+identity, evidence file and active, terminal or unknown ownership state. Use that
+returned evidence to select the first no-VM causal check.

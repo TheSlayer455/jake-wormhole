@@ -36,7 +36,8 @@ runtime evidence remain private.
 For a current Lightspeed failure, copy the entire
 [Terra execution brief](handoff/LIGHTSPEED-CROSS-REFERENCE.md) into the authorized
 work chat. It includes the owner directive, the next recovery steps and the
-verified Wormhole reference, with public source pointers for follow-up pastes.
+verified Wormhole reference, implementation capsule, qualification limits and
+response contract in one self-contained paste.
 
 Completed ISO delivery supports the RHEL 10 BIOS baseline and Ubuntu 22.04
 hardened sandbox. Register it with
