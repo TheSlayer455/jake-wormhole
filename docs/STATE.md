@@ -121,11 +121,12 @@ three fail, 29 not applicable, ten not checked and 600 not selected. Source
 archival verified ten new objects and cleanup reclaimed 8,487,366,656 allocated
 bytes. Current allocation is 76.167 GiB managed, 29.880 GiB candidates and
 138.207 GiB available, with no VM or pending archive byte. Source
-`ddda124cd98be5d6b17aad5d8cdf66229de1d5f3` is the next unverified installed
-input: it preserves the per-installation GRUB PBKDF2 hash while replacing the
-prohibited default boot administrator in the generator and rebuilding the
-installed BIOS configuration. Thirteen focused tests pass; a fresh install is
-still required.
+`0ab3068de0d070c9a7a4fbf9aa23efe9feb80706` is the next unverified installed
+input. Review caught that the first draft expected a literal PBKDF2 hash in the
+generator, whereas RHEL references `${GRUB2_PASSWORD}` there and stores the hash
+in `user.cfg`. The corrected transform changes only the username, verifies the
+separate hash and rebuilds the BIOS configuration. A realistic transform
+regression and all 13 focused tests pass; a fresh install is still required.
 
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing

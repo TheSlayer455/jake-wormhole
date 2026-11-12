@@ -20,13 +20,14 @@ The encrypted archive verified ten new objects and normal cleanup reclaimed
 29.880 GiB candidates and 138.207 GiB available. There are 457 committed archive
 objects, zero pending bytes, zero failed receipts and no VM disk.
 
-Source `ddda124cd98be5d6b17aad5d8cdf66229de1d5f3` is pending fresh runtime
-proof. It changes the GRUB generator rather than only its output, preserves the
-per-installation PBKDF2 hash, substitutes the non-login
-`wormhole_boot_admin`, rebuilds the installed BIOS configuration and verifies
-that the administrator is not an OS account. Thirteen focused tests pass. The
-next run must prove the selected GRUB rule and actual boot/readiness before this
-boundary closes.
+Source `0ab3068de0d070c9a7a4fbf9aa23efe9feb80706` is pending fresh runtime
+proof. Independent review caught that the first draft expected a literal hash in
+the generator, while RHEL stores it in `user.cfg` and references
+`${GRUB2_PASSWORD}`. The corrected transform changes only the username, verifies
+the separate hash, rebuilds the installed BIOS configuration and verifies that
+the administrator is not an OS account. A realistic transform regression and
+all 13 focused tests pass. The next run must prove the selected GRUB rule and
+actual boot/readiness before this boundary closes.
 
 ## RHEL authorized-account closure
 

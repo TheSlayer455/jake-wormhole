@@ -52,13 +52,14 @@ not applicable/ten not checked/600 not selected. The encrypted archive verified
 ten objects and cleanup reclaimed 8,487,366,656 allocated bytes. No VM, pending
 archive byte or failed archive receipt remains.
 
-Source `ddda124cd98be5d6b17aad5d8cdf66229de1d5f3` is the next focused
-candidate-input change. It preserves Anaconda's per-installation PBKDF2 secret,
-changes the `/etc/grub.d/01_users` generator from the prohibited default
-administrator to the non-login `wormhole_boot_admin`, regenerates the installed
-BIOS configuration and verifies that the name is not an operating-system
-account. Thirteen focused hardening tests pass. A fresh installation must prove
-the native GRUB rule, actual boot/readiness and unchanged controller behavior.
+Source `0ab3068de0d070c9a7a4fbf9aa23efe9feb80706` is the next focused
+candidate-input change. Independent source review caught that the first draft
+expected a literal PBKDF2 hash in the GRUB generator, while RHEL stores the hash
+in `user.cfg` and references `${GRUB2_PASSWORD}`. The corrected transform changes
+only the username, verifies the separate hash, rebuilds the BIOS configuration
+and verifies that `wormhole_boot_admin` is not an OS account. A realistic
+transform regression and all 13 focused tests pass. Fresh installation proof
+remains required.
 
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
