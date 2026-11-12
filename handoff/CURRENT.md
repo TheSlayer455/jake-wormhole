@@ -57,6 +57,17 @@ static marker and maps any other output to `unexpected`; no configuration or
 qualification behavior changes. Fifteen focused tests pass. Run once to observe
 the actual enum, then correct the proven mismatch.
 
+The next fresh diagnostic, source `7d638ef8e9777c45723f739df36d500f660cf565`,
+emitted `firewall-target-query`: no target value was returned. The firewalld
+interface scopes target lookup to permanent configuration, while the observer
+called it as a runtime option. Source
+`6489604dac7fd8ba90595cd9bb30bc3a77e1c85d` adds `--permanent` in final
+readiness and the manual evidence collector. Existing runtime checks still prove
+the daemon, default/active zone, interface binding, services and absence of
+undeclared rules. No hardening requirement or firewall setting changed. Sixteen
+focused tests pass. Archive the retained diagnostic candidate, then run one fresh
+installation to prove final readiness and the complete ten-rule evidence record.
+
 ## RHEL selected-automated-rule closure
 
 Runtime source `4ac320ddb2d21ff3172d04b4cf33547c425c9490` completed a fresh

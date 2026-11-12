@@ -156,6 +156,15 @@ assessment stayed blocked, teardown passed and transient cleanup reclaimed
 Fifteen focused tests pass. Next: record that enum in one fresh run, then patch
 the owning installed configuration or expectation from evidence.
 
+Source `7d638ef` recorded `firewall-target-query`, proving the command itself
+failed before a target value existed. The supported target lookup is a permanent
+configuration query; both observers omitted `--permanent`. Source `6489604`
+corrects the existing readiness and manual collectors while retaining separate
+live daemon, active-zone, interface, services and undeclared-rule checks. It
+changes no firewall setting or policy. Sixteen focused cases pass. Next: archive
+the diagnostic candidate, run one fresh installation, and verify complete manual
+evidence plus unchanged native assessment/accounting.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra

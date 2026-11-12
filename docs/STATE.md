@@ -237,6 +237,16 @@ allowlists only the four documented target enums in the failure marker, retainin
 `unexpected` for anything else. Fifteen focused tests pass. It changes no
 firewall setting or gate; one more fresh diagnostic must record the actual enum.
 
+The fresh diagnostic at source `7d638ef8e9777c45723f739df36d500f660cf565`
+recorded `firewall-target-query`: the command failed before returning a value.
+The firewalld interface exposes target lookup through permanent configuration;
+the observer had omitted `--permanent`. Source
+`6489604dac7fd8ba90595cd9bb30bc3a77e1c85d` fixes that call in both final
+readiness and the manual evidence collector. Live daemon/default-zone/active-zone/
+interface/services/rule checks remain separate, so the correction weakens no
+policy. Sixteen focused hardening/collector cases pass. A fresh installation must
+now prove readiness, the ten manual dispositions and unchanged native outcomes.
+
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
 terminal receipt whose immutable ownership journal was already finished: the
