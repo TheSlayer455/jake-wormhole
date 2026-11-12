@@ -223,6 +223,15 @@ Merge `b8c1c1469febf809eaf9da5906e7d9f37457568a` and its post-merge main
 workflow passed. No runtime allocation or optional-tool installation belongs to
 this completed increment.
 
+Current tool-guidance follow-on: `6e49352` updates the same Terra paste rather
+than creating another research file. Native console evidence remains first;
+powered-off read-only libguestfs inspection and release-matched input/dependency
+checks are the next small experiments. Standalone `isotovideo` is conditional on
+an unresolved customer-installer interaction gap; full openQA and Packer stay out
+of the critical path. The Packer capability statement is corrected without
+adopting it. Six focused portable tests pass; no runtime claim or dependency was
+added.
+
 Current increment is `codex/WORM-001-terra-single-file-bundle`, [PR 54](https://github.com/TheSlayer455/jake-wormhole/pull/54).
 The existing Terra brief is now the complete initial copy/paste bundle. It
 contains the owner directive, fast causal workflow, current console case,

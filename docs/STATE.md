@@ -61,6 +61,17 @@ increment as `b8c1c1469febf809eaf9da5906e7d9f37457568a`; the
 [post-merge main workflow](https://github.com/TheSlayer455/jake-wormhole/actions/runs/43151556957)
 passed. The bounded decision is delivered without changing runtime evidence.
 
+Follow-on source `6e49352f5ab2a2271d648109972383130b0cbb91`
+keeps native serial/VNC first, then prioritizes explicit read-only libguestfs
+inspection of a stopped owned disk and release-matched installer/dependency
+preflight. Standalone os-autoinst through `isotovideo` is now a conditional
+unchanged-media interaction experiment; the full openQA platform remains
+deferred. The Packer boundary is corrected: it can drive a real ISO installation,
+but overlaps the existing lifecycle and normally produces a VM disk. xorriso and
+diffoscope remain bounded diagnostics. One existing structural regression was
+extended; six portable tests pass. No optional tool was installed or executed,
+and none became a qualification prerequisite.
+
 ## Self-contained Terra handoff
 
 [PR 54](https://github.com/TheSlayer455/jake-wormhole/pull/54) expands the existing
