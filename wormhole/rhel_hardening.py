@@ -131,7 +131,8 @@ logvol /var/tmp --vgname=system --name=vartmp --fstype=xfs --size=1024 --fsoptio
 
 READY = r'''#!/bin/bash
 set -euo pipefail
-trap 'printf "%s\n" WORMHOLE_FINALIZATION_FAILED > /dev/ttyS0' ERR
+failure_stage=system-contract
+trap 'rc=$?; printf "%s\n" "WORMHOLE_FINALIZATION_CHECK_FAILED ${failure_stage}" > /dev/ttyS0; printf "%s\n" WORMHOLE_FINALIZATION_FAILED > /dev/ttyS0; exit "$rc"' ERR
 . /etc/os-release
 test "$ID" = rhel
 test "$VERSION_ID" = 10.0
@@ -141,6 +142,7 @@ test "$(getenforce)" = Enforcing
 test -s /var/lib/wormhole/remediation-exit
 test -s /var/lib/wormhole/installation-boot-id
 test "$(cat /var/lib/wormhole/installation-boot-id)" != "$(cat /proc/sys/kernel/random/boot_id)"
+failure_stage=final-account
 test "$(getent passwd lab.service | cut -d: -f6)" = /home/lab.service
 test "$(stat -c %U /home/lab.service/.ssh/authorized_keys)" = lab.service
 test "$(stat -c %a /home/lab.service)" = 700
@@ -151,20 +153,24 @@ today=$(( $(date -u +%s) / 86400 ))
 test -n "$expiry" && test "$expiry" -gt "$today" && test "$expiry" -le $((today + 3))
 test "$(stat -c %a /var/lib/wormhole)" = 755
 test -s /etc/wormhole-lab-ca.crt
+failure_stage=boot-security
 grep -Eq '^[[:space:]]*set superusers="wormhole_boot_admin"$' /boot/grub2/grub.cfg
 grep -Fq 'password_pbkdf2 wormhole_boot_admin ${GRUB2_PASSWORD}' /boot/grub2/grub.cfg
 grep -Eq '^GRUB2_PASSWORD=grub\.pbkdf2\.' /boot/grub2/user.cfg
 ! getent passwd wormhole_boot_admin
 semanage login -l | awk '$1 == "lab.service" { found=1; if ($2 != "staff_u") exit 1 } END { if (!found) exit 1 }'
+failure_stage=network-policy
 NetworkManager --print-config | grep -qx 'dns=none'
 awk '$1 == "hosts:" { found=1; for (i=2; i<=NF; i++) if ($i == "dns") exit 1 } END { if (!found) exit 1 }' /etc/nsswitch.conf
 test ! -s /etc/resolv.conf
+failure_stage=firewall-policy
 test "$(firewall-cmd --get-default-zone)" = drop
 test "$(firewall-cmd --get-active-zones | awk '/^[^ ]/ { print $1 }')" = drop
 test -n "$(firewall-cmd --zone=drop --list-interfaces)"
 test "$(firewall-cmd --zone=drop --get-target)" = DROP
 test "$(firewall-cmd --zone=drop --list-services)" = ssh
 test -z "$(firewall-cmd --zone=drop --list-ports)"
+failure_stage=ssh-host
 if ! test -f /etc/ssh/ssh_host_rsa_key; then
     ssh-keygen -q -t rsa -b 3072 -N '' -f /etc/ssh/ssh_host_rsa_key
 fi
