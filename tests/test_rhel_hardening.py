@@ -91,6 +91,8 @@ class HardenedInputs(unittest.TestCase):
         tailoring = h.tailoring_document().decode()
         self.assertIn('id="' + h.LAB_PROFILE + '"', tailoring)
         self.assertIn('content_value_login_banner_text', tailoring)
+        self.assertIn('content_value_var_accounts_authorized_local_users_regex', tailoring)
+        self.assertIn(h.LAB_AUTHORIZED_USERS_REGEX, tailoring)
         self.assertNotIn(':select', tailoring)
 
     def test_final_kdump_unit_is_disabled_and_masked_after_remediation(self):
@@ -146,7 +148,9 @@ class HardenedInputs(unittest.TestCase):
         self.assertEqual(h.installation_contract()['policy_sha256'], h.sha256(h.POLICY))
         self.assertFalse(policy['production_iso_eligible'])
         self.assertEqual(policy['tailoring'], {'excluded_rules': [],
-            'parameters': {'login_banner_text': h.LAB_BANNER_REGEX}, 'owner_approved_exceptions': []})
+            'parameters': {'login_banner_text': h.LAB_BANNER_REGEX,
+                'var_accounts_authorized_local_users_regex': h.LAB_AUTHORIZED_USERS_REGEX},
+            'owner_approved_exceptions': []})
         self.assertEqual(policy['requirements']['independent_same_iso_installations'], 2)
         self.assertTrue(policy['unresolved_requirements'])
         self.assertIn('approved-evaluate-stig-package-and-supported-rhel10-execution', policy['external_work_equivalence_pending'])

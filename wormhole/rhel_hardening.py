@@ -26,15 +26,22 @@ PROFILE = 'xccdf_org.ssgproject.content_profile_stig'
 LAB_PROFILE = 'xccdf_org.wormhole_profile_rhel10_lab_stig'
 LAB_BANNER = 'Wormhole private home lab. Authorized lab use only. Activity is monitored.'
 LAB_BANNER_REGEX = r'^Wormhole private home lab\. Authorized lab use only\. Activity is monitored\.$'
+LAB_AUTHORIZED_USERS_REGEX = (
+    r'^(root|bin|daemon|adm|lp|sync|shutdown|halt|mail|operator|games|ftp|nobody|tss|'
+    r'systemd-coredump|dbus|polkitd|avahi|colord|rtkit|pipewire|clevis|sssd|geoclue|'
+    r'flatpak|setroubleshoot|fapolicyd|libstoragemgmt|systemd-oom|gdm|cockpit-ws|'
+    r'gnome-initial-setup|sshd|chrony|dnsmasq|postfix|tcpdump|admin|unbound|yggdrasil|'
+    r'yggdrasil-worker|lab\.service)$')
 CONTENT = {'release': '0.1.82', 'benchmark': 'RHEL 10 STIG V1R2',
            'sha256': CONTENT_SHA256, 'profile': PROFILE, 'rules': 1073, 'selected_rules': 473}
 BOOT_ARGS = 'fips=1 init_on_free=1 pti=on vsyscall=none page_poison=1 audit=1 audit_backlog_limit=8192'
 
 
 def tailoring_document():
-    """Declare the truthful lab banner value without changing rule selection."""
+    """Declare truthful lab values without changing rule selection."""
     tailoring = json.loads(POLICY.read_text())['tailoring']
-    values = {'login_banner_text': LAB_BANNER_REGEX}
+    values = {'login_banner_text': LAB_BANNER_REGEX,
+        'var_accounts_authorized_local_users_regex': LAB_AUTHORIZED_USERS_REGEX}
     require(tailoring == {'excluded_rules': [], 'parameters': values,
         'owner_approved_exceptions': []}, 'unsupported_assessment_tailoring')
     x = '{http://checklists.nist.gov/xccdf/1.2}'
@@ -42,10 +49,12 @@ def tailoring_document():
     ET.SubElement(root, x + 'benchmark', href='ssg-rhel10-ds.xml')
     ET.SubElement(root, x + 'version', time='2026-11-12T00:00:00Z').text = '1'
     profile = ET.SubElement(root, x + 'Profile', id=LAB_PROFILE, extends=PROFILE)
-    ET.SubElement(profile, x + 'title').text = 'Wormhole truthful home-lab notice'
-    ET.SubElement(profile, x + 'description').text = 'Unchanged upstream rule selection; only the declared local warning-banner value differs.'
+    ET.SubElement(profile, x + 'title').text = 'Wormhole declared home-lab values'
+    ET.SubElement(profile, x + 'description').text = 'Unchanged upstream rule selection; declared values cover the truthful warning banner and installed authorized accounts.'
     ET.SubElement(profile, x + 'set-value',
         idref='xccdf_org.ssgproject.content_value_login_banner_text').text = LAB_BANNER_REGEX
+    ET.SubElement(profile, x + 'set-value',
+        idref='xccdf_org.ssgproject.content_value_var_accounts_authorized_local_users_regex').text = LAB_AUTHORIZED_USERS_REGEX
     return ET.tostring(root, encoding='utf-8', xml_declaration=True)
 PACKAGES = '''@core
 python3
