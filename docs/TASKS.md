@@ -1,5 +1,22 @@
 # Minx work index
 
+RHEL release-gate increment: `618d89f` implements the existing-contract evaluator,
+pair comparison, exact-byte publisher and strict consumer readback. It binds
+native reports to their hashes and parser results, the executed build manifest,
+manual/SVD/boot identities and an internally consistent cryptographic OE record.
+Four focused release cases plus 33 adjacent cases pass; actual evaluation of the
+retained `239aad0` run also passed. The real candidate remains ineligible for
+exactly three reasons: authoritative RHEL 10 OE verification, a final matching
+pair after converged inputs, and positive exact-byte publication/readback. The
+publisher refused before creating output. `692b10d` adds the new safe evidence
+files to the existing archive lifecycle. The first pass safely stopped because
+the established operational checkout used the older allowlist; updating that
+clean checkout allowed normal recovery/commit. All 695 objects are committed,
+all nine expected records from the evaluated run are verified, and pending/
+failure counts are zero. Managed/candidate/free storage is 76.968/29.880/137.403
+GiB; no VM/controller/disk remains.
+Do not run the final pair until the OE/policy input can remain stable across it.
+
 Current qualification-closure increment:
 `codex/WORM-001-rhel-chrony-closure`. Runtime source
 `e3208237884acc53fb4821cdbc6dcb5e867e49e1` completed one fresh encrypted RHEL

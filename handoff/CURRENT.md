@@ -1,5 +1,41 @@
 # Current handoff
 
+## RHEL release evaluator and authoritative crypto boundary
+
+Tested source `618d89f3d5a1208b0193a235fc0834088ce719b3` adds one strict
+RHEL release module plus the reviewed public OE status record. The gate re-parses
+native XCCDF/ARF, binds native hashes, executed build manifest, manual evidence,
+installed SVD, boot identities and technical FIPS observations, requires a truly
+independent matching pair, copies exact candidate bytes, writes completion last
+and performs a closed-set consumer readback. Secret-bearing run files are not
+published. Four focused release tests and 33 adjacent RHEL/portable tests pass;
+independent read-only review found no remaining high/medium defect.
+
+The evaluator executed against the retained successful `239aad0` run. Its grid
+contains 462 pass, 640 skipped and three blocked results; native totals remain
+433/zero/29/10/601 and manual totals seven satisfied/three governed N/A. The
+publisher was then invoked through the real entry point and refused with
+`lab_policy_dependencies_pending` before creating a directory. Red Hat currently
+lists the RHEL 10 OpenSSL module as pending an operational-environment update and
+Kernel Crypto API, GnuTLS and NSS as implementation under test. NIST certificate
+5573 applies to listed RHEL 9 environments, not this RHEL 10 guest. Technical
+FIPS mode and exact installed module identities pass, but validated RHEL 10 OE
+applicability does not. Lab/production eligibility remain false. A final matching
+pair and positive publication wait for a stable satisfiable OE/policy input.
+
+Source `692b10daf6fefd1567ac5b901622659103a6e7f1` adds the resulting
+qualification, crypto, receipt, datastream and manual records to the existing
+encrypted archive allowlist. The first reconciliation safely refused because the
+established archive command used an older clean operational checkout; updating
+that checkout to `692b10d` corrected the proven compatibility boundary without
+changing transport or credentials. A later interruption left verified ciphertext
+and its receipt before the host commit; the existing commit operation completed
+that same object without recopy or overwrite. Reconciliation then completed: all
+695 objects are committed, all nine expected new release/native records are
+verified, and pending/failure counts are zero. Archive verified bytes total
+187.882 GiB. Managed/candidate/free storage is 76.968/29.880/137.403 GiB. No
+source was reclaimed without a commit; no VM/controller/disk remains.
+
 ## RHEL manual-control final-readiness diagnosis
 
 Source `a8263e900e10f04eab3f6e4f98e4a6d9fa26842b` implements one

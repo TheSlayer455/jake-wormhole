@@ -1,5 +1,34 @@
 # Current engineering state
 
+## RHEL evidence evaluator and strict release refusal
+
+Source `618d89f3d5a1208b0193a235fc0834088ce719b3` adds the bounded RHEL
+evaluator/publisher and a source-controlled authoritative operating-environment
+record. Four focused release tests and 33 adjacent RHEL/portable tests pass.
+Independent read-only review found and closed native-file, build-manifest,
+cryptographic-evidence and consumer-readback binding defects; no high/medium
+issue remains. Production code adds one RHEL release module and one evidence
+record, not another controller or publication framework.
+
+The evaluator then ran against the retained successful `239aad0` installation.
+It re-parsed and hash-bound the native datastream/XCCDF/ARF, build manifest,
+manual evidence, installed SVD and technical FIPS observations. It recorded 433
+pass, zero fail, 29 not applicable, ten not checked and 601 not selected; seven
+manual rows are satisfied and three governed not applicable. The complete
+release grid contains 462 pass, 640 skipped and three blocked rows. Current Red
+Hat/NIST status does not establish a validated RHEL 10 operating environment:
+OpenSSL is pending an OE update and Kernel Crypto API, GnuTLS and NSS are under
+test; certificate 5573 is RHEL 9-specific. The real publisher returned
+`lab_policy_dependencies_pending` and created no release. Lab and production
+eligibility remain false. Source `692b10d` extends the existing encrypted archive
+allowlist to retain these release/native records. The established operational
+checkout initially rejected a newly named object because it still ran the older
+allowlist; updating that clean checkout closed the compatibility boundary. All
+695 archive objects are now committed, including all nine expected records from
+the evaluated run, with zero pending bytes/failures. Managed storage is 76.968
+GiB, candidates 29.880 GiB and filesystem headroom 137.403 GiB. No VM/controller
+or VM disk remains.
+
 ## Bounded Lightspeed tool decisions
 
 The canonical Terra brief now records one evidence-backed adoption order without
