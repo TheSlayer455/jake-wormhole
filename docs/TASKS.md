@@ -4,8 +4,10 @@ Current increment is `codex/WORM-001-terra-tool-decisions`. Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra
 paste and links it from integration guidance. One focused test keeps all eight
 decisions present and preserves the rule that no optional tool is a prerequisite
-for the current installation repair. Remaining delivery work is full source and
-parity verification, independent portable-diff review, PR/CI and main verification.
+for the current installation repair. Clean-checkout repository/matrix checks,
+1,017 source tests with 12 skips and 17 parity cases passed at `5d58869`.
+Independent review found no blocking issue and its corrections are applied.
+Remaining delivery work is PR/CI and main verification.
 No runtime allocation or optional-tool installation belongs to this increment.
 
 Current increment is `codex/WORM-001-terra-single-file-bundle`, [PR 54](https://github.com/TheSlayer455/jake-wormhole/pull/54).

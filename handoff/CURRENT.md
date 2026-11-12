@@ -9,7 +9,9 @@ read-only physical-host research; approved S3 can be evaluated later; Packer and
 openQA remain deferred. None is claimed installed, runtime-proven or required for
 the current focused installation. The change adds no controller, dependency,
 candidate, VM run or qualification claim. Focused portable tests and repository
-hygiene passed; full delivery checks and independent review remain in progress.
+hygiene passed. Clean-checkout repository/matrix checks, 1,017 source tests with
+12 skips and all 17 parity cases passed at `5d58869`. Independent review found
+no blocking issue; its wording/status corrections are applied.
 
 ## Self-contained Terra handoff
 
