@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from uuid import uuid4
 
 from wormhole import rhel_hardening as h, rhel_inputs as baseline
@@ -34,7 +35,7 @@ class HardenedInputs(unittest.TestCase):
         self.assertIn('rootpw --lock', seed)
         self.assertIn('--iscrypted --password=grub.pbkdf2', seed)
         self.assertNotIn('NOPASSWD', h.FINALIZE)
-        self.assertIn('lab.service ALL=(ALL) ALL', h.FINALIZE)
+        self.assertIn('%wheel ALL=(ALL) TYPE=sysadm_t ROLE=sysadm_r ALL', h.FINALIZE)
         self.assertNotIn('PRIVATE KEY', seed)
         for changes in ({'public_key': 'ssh-ed25519 ' + 'A' * 68},
                         {'password_hash': 'plaintext'}, {'boot_hash': 'plaintext'}):
@@ -75,6 +76,99 @@ class HardenedInputs(unittest.TestCase):
         installer=self.seed().split('%post --nochroot',1)[1].split('%end',1)[0]
         self.assertNotIn('\ninstall ',installer) # RHEL10 stage2 omits coreutils install.
         self.assertIn('chmod 0644 /mnt/sysroot/etc/wormhole-lab-ca.crt',installer)
+
+    def test_final_chrony_configuration_preserves_client_only_controls_after_remediation(self):
+        chrony = h.FINALIZE.split("cat > /etc/chrony.conf <<'TIME'\n", 1)[1].split('\nTIME\n', 1)[0]
+        self.assertIn('server 192.0.2.1 port 12345 iburst minpoll 4 maxpoll 4', chrony)
+        self.assertEqual(chrony.splitlines().count('port 0'), 1)
+        self.assertEqual(chrony.splitlines().count('cmdport 0'), 1)
+        self.assertLess(h.FINALIZE.index('oscap xccdf eval --remediate'),
+                        h.FINALIZE.index("cat > /etc/chrony.conf <<'TIME'"))
+
+    def test_final_name_resolution_uses_the_declared_local_only_path(self):
+        self.assertIn("cat > /etc/NetworkManager/conf.d/90-wormhole-dns.conf <<'DNS'", h.FINALIZE)
+        self.assertIn('dns=none', h.FINALIZE)
+        self.assertIn('$i != "dns"', h.FINALIZE)
+        self.assertIn('install -m 0644 /dev/null /etc/resolv.conf', h.FINALIZE)
+        self.assertIn("NetworkManager --print-config | grep -qx 'dns=none'", h.READY)
+        self.assertIn('test ! -s /etc/resolv.conf', h.READY)
+
+    def test_final_account_expiry_and_drop_zone_are_installed_then_observed(self):
+        self.assertIn('WORMHOLE_FINALIZATION_CHECK_FAILED ${failure_stage}', h.READY)
+        for stage in ('final-account', 'boot-security', 'network-policy', 'ssh-host'):
+            self.assertIn('failure_stage=' + stage, h.READY)
+        self.assertIn('chage -E "$(date -u -d \'+2 days\' +%F)" lab.service', h.FINALIZE)
+        self.assertIn('test "$expiry" -gt "$today"', h.READY)
+        self.assertIn('firewall --enabled\n', self.seed())
+        self.assertNotIn('firewall --enabled --service=ssh', self.seed())
+        for command in ('firewall-offline-cmd --set-default-zone=drop',
+                        'firewall-offline-cmd --zone=drop --set-target=DROP',
+                        'firewall-offline-cmd --zone=drop --add-service=ssh'):
+            self.assertIn(command, h.FINALIZE)
+            self.assertLess(h.FINALIZE.index('oscap xccdf eval --remediate'), h.FINALIZE.index(command))
+        self.assertIn('firewall-cmd --permanent --zone=drop --get-target', h.READY)
+        self.assertNotIn('firewall-cmd --zone=drop --get-target', h.READY)
+        self.assertIn('firewall-cmd --zone=drop --list-services', h.READY)
+        for stage in ('default-zone', 'active-zone', 'interface', 'target', 'services', 'ports'):
+            self.assertIn('failure_stage=firewall-' + stage, h.READY)
+        self.assertIn('default|ACCEPT|DROP|REJECT', h.READY)
+        self.assertIn('failure_stage="firewall-target-${firewall_target}"', h.READY)
+
+    def test_final_banner_uses_the_pinned_rule_path_after_remediation(self):
+        self.assertIn("> /etc/issue\n", h.FINALIZE)
+        self.assertIn("'Banner /etc/issue' > /etc/ssh/sshd_config.d/05-wormhole-banner.conf", h.FINALIZE)
+        self.assertNotIn('Banner /etc/issue.net', h.FINALIZE)
+        tailoring = h.tailoring_document().decode()
+        self.assertIn('id="' + h.LAB_PROFILE + '"', tailoring)
+        self.assertIn('content_value_login_banner_text', tailoring)
+        self.assertIn('content_value_var_accounts_authorized_local_users_regex', tailoring)
+        self.assertIn(h.LAB_AUTHORIZED_USERS_REGEX, tailoring)
+        root = ET.fromstring(tailoring)
+        selects = list(root.iter('{http://checklists.nist.gov/xccdf/1.2}select'))
+        self.assertEqual([(row.get('idref'), row.get('selected')) for row in selects],
+                         [(h.SSSD_CERTMAP_RULE, 'false')])
+
+    def test_final_kdump_unit_is_disabled_and_masked_after_remediation(self):
+        self.assertIn('services --disabled=debug-shell,autofs,kdump', self.seed())
+        self.assertLess(h.FINALIZE.index('oscap xccdf eval --remediate'),
+                        h.FINALIZE.index('systemctl mask kdump.service'))
+
+    def test_final_grub_admin_changes_the_generator_and_rebuilds_the_config(self):
+        generator = r'''if [ -f \${prefix}/user.cfg ]; then
+  source \${prefix}/user.cfg
+  if [ -n "\${GRUB2_PASSWORD}" ]; then
+    set superusers="root"
+    export superusers
+    password_pbkdf2 root \${GRUB2_PASSWORD}
+  fi
+fi
+'''
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / '01_users'
+            path.write_text(generator)
+            start = h.FINALIZE.index('sed -Ei \\\n', h.FINALIZE.index("test -s /etc/grub.d/01_users"))
+            end = h.FINALIZE.index('/etc/grub.d/01_users', start) + len('/etc/grub.d/01_users')
+            transform = h.FINALIZE[start:end].replace('/etc/grub.d/01_users', str(path))
+            result = subprocess.run(['bash'], input='set -eu\n' + transform + '\n',
+                                    text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            changed = path.read_text()
+        self.assertIn('set superusers="wormhole_boot_admin"', changed)
+        self.assertIn(r'password_pbkdf2 wormhole_boot_admin \${GRUB2_PASSWORD}', changed)
+        self.assertNotIn('password_pbkdf2 root ', changed)
+        self.assertIn("grep -Eq '^GRUB2_PASSWORD=grub\\.pbkdf2\\.' /boot/grub2/user.cfg", h.FINALIZE)
+        self.assertIn('grub2-mkconfig -o /boot/grub2/grub.cfg', h.FINALIZE)
+        self.assertIn('! getent passwd wormhole_boot_admin', h.READY)
+
+    def test_final_admin_uses_passworded_selinux_role_transition(self):
+        self.assertLess(h.FINALIZE.index('oscap xccdf eval --remediate'),
+                        h.FINALIZE.index('usermod -Z staff_u lab.service'))
+        self.assertIn('%wheel ALL=(ALL) TYPE=sysadm_t ROLE=sysadm_r ALL', h.FINALIZE)
+        self.assertIn('Defaults:lab.service timestamp_timeout=0', h.FINALIZE)
+        self.assertIn('visudo -c', h.FINALIZE)
+        self.assertNotIn('lab.service ALL=(ALL) ALL', h.FINALIZE)
+        self.assertNotIn('NOPASSWD', h.FINALIZE)
+        self.assertIn('$2 != "staff_u"', h.READY)
 
     def test_reuse_binds_installed_recipe_and_refuses_baseline_or_modified_bytes(self):
         manifest = {'capability': h.CAPABILITY, 'source': baseline.RHEL,
@@ -123,7 +217,16 @@ class HardenedInputs(unittest.TestCase):
         self.assertEqual(policy['content']['selected_rules'], h.CONTENT['selected_rules'])
         self.assertEqual(h.installation_contract()['policy_sha256'], h.sha256(h.POLICY))
         self.assertFalse(policy['production_iso_eligible'])
-        self.assertEqual(policy['tailoring'], {'excluded_rules': [], 'owner_approved_exceptions': []})
+        self.assertEqual(policy['tailoring'], {'excluded_rules': [h.SSSD_CERTMAP_RULE],
+            'parameters': {'login_banner_text': h.LAB_BANNER_REGEX,
+                'var_accounts_authorized_local_users_regex': h.LAB_AUTHORIZED_USERS_REGEX,
+                'var_networkmanager_dns_mode': 'none'},
+            'owner_approved_exceptions': []})
+        self.assertEqual(policy['rule_applicability'], {
+            h.SSSD_CERTMAP_RULE: h.SSSD_CERTMAP_APPLICABILITY})
+        self.assertEqual(policy['manual_controls']['temporary_account_maximum_hours'], 72)
+        self.assertEqual(policy['manual_controls']['authorized_firewall_services'], ['ssh'])
+        self.assertEqual(policy['manual_controls']['audit_partition_minimum_bytes'], 10 * 1024**3)
         self.assertEqual(policy['requirements']['independent_same_iso_installations'], 2)
         self.assertTrue(policy['unresolved_requirements'])
         self.assertIn('approved-evaluate-stig-package-and-supported-rhel10-execution', policy['external_work_equivalence_pending'])

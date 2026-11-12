@@ -1,5 +1,212 @@
 # Minx work index
 
+RHEL release-gate increment: `618d89f` implements the existing-contract evaluator,
+pair comparison, exact-byte publisher and strict consumer readback. It binds
+native reports to their hashes and parser results, the executed build manifest,
+manual/SVD/boot identities and an internally consistent cryptographic OE record.
+Four focused release cases plus 33 adjacent cases pass; actual evaluation of the
+retained `239aad0` run also passed. The real candidate remains ineligible for
+exactly three reasons: authoritative RHEL 10 OE verification, a final matching
+pair after converged inputs, and positive exact-byte publication/readback. The
+publisher refused before creating output. `692b10d` adds the new safe evidence
+files to the existing archive lifecycle. The first pass safely stopped because
+the established operational checkout used the older allowlist; updating that
+clean checkout allowed normal recovery/commit. All 695 objects are committed,
+all nine expected records from the evaluated run are verified, and pending/
+failure counts are zero. Managed/candidate/free storage is 76.968/29.880/137.403
+GiB; no VM/controller/disk remains.
+Do not run the final pair until the OE/policy input can remain stable across it.
+Delivery verification at `d8c9ef3` passed repository/matrix checks, 1,030 source
+tests with 12 declared skips, and the complete 17-case parity/readback path in a
+fresh full-history Linux checkout. The next delivery action is the normal PR and
+post-merge main verification; it does not change the three qualification blockers.
+
+Current qualification-closure increment:
+`codex/WORM-001-rhel-chrony-closure`. Runtime source
+`e3208237884acc53fb4821cdbc6dcb5e867e49e1` completed one fresh encrypted RHEL
+10 installation after adding the pinned client-only and no-network-management
+chrony settings to the post-remediation final configuration. Both targeted rules
+now pass; the native delta is 427 pass/seven fail with all 1,073 outcomes
+accounted. Time synchronization, 10/10 hardened checks, 6/6 controller checks,
+trusted SSH/Ansible, SVD, no-remediation assessment, evidence retention and
+cleanup passed. A focused recovery correction also preserved an interrupted
+historical run as unknown while reclaiming 8,487,432,192 duplicate allocated
+bytes through the existing storage engine. That checkpoint retained seven
+native failures for the follow-on work below. No release is eligible yet.
+
+Follow-on runtime source `da63dc0a79b6b545f4fe7ef9c55cf9d9ac0b2be0`
+completed a fresh 517.715-second RHEL installation after the retained ARF proved
+the final kdump unit was unmasked and the SSH banner paths conflicted. Both
+targeted rules now pass; hardened/controller checks, synchronization, 449-RPM
+SVD, no-remediation assessment, evidence and cleanup also pass. Native totals
+are 428 pass/six fail/29 not applicable/ten not checked/600 not selected. The
+accurate home-lab notice exposed the separate `banner_etc_issue` default-value
+mismatch. This established the need for bounded tailoring rather than an
+inaccurate government-system banner.
+
+Runtime source `03d29868184bb711c78932eb1eea78e3f18b0ac3` completed that
+fresh installation in 513.436 seconds. The receipt binds the one-value XCCDF
+tailoring and records no assessment remediation. `banner_etc_issue` passes;
+both chrony rules, kdump, SSH banner, synchronized time, all hardened/controller
+checks, 449-RPM SVD, evidence and cleanup remain passing. Native totals are 429
+pass/five fail/29 not applicable/ten not checked/600 not selected. The existing
+encrypted archive verified the new candidate/evidence set and reclaimed
+8,487,366,656 allocated bytes, leaving no VM or pending archive object. That
+checkpoint retained five selected findings for the follow-on work below. No
+release is eligible.
+
+Runtime source `c944a8668e86979e38af673c5d81a9bf54d270a6` completed a fresh
+519.709-second installation of source change `ff881b1`. The account rule now
+passes without deleting accounts, excluding rules or changing selection. Native
+totals are 430 pass/four fail/29 not applicable/ten not checked/600 not selected;
+all hardened/controller checks, SVD, read-only assessment and cleanup pass. The
+archive verified ten objects and reclaimed 8,487,362,560 allocated bytes.
+
+Runtime source `77498b3a5934e3ee7cc538e30194e39b74e9eba1` completed a fresh
+525.220-second installation of source change `2b3c16b`. The pinned rule's
+local-only branch now passes without inventing a second DNS service:
+NetworkManager uses `dns=none`, NSS has no `dns` token and the resolver file is
+empty. `networkmanager_dns_mode`, synchronized time, lab logging/audit, all
+hardened/controller checks, trusted SSH/Ansible, 449-RPM SVD, read-only
+assessment and cleanup remain passing. Native totals are 431 pass/three fail/29
+not applicable/ten not checked/600 not selected. The encrypted archive verified
+ten objects and cleanup reclaimed 8,487,366,656 allocated bytes. No VM, pending
+archive byte or failed archive receipt remains.
+
+Source `518691acacf909c0e01624af2a31a561d7a33c28` is the next focused
+candidate-input change. Independent source review caught that the first draft
+expected a literal PBKDF2 hash in the GRUB generator, while RHEL stores the hash
+in `user.cfg` and references `${GRUB2_PASSWORD}`. The corrected transform changes
+only the username, verifies the separate hash, rebuilds the BIOS configuration
+and verifies that `wormhole_boot_admin` is not an OS account. A realistic
+transform regression and all 13 focused tests pass. Fresh installation proof
+remains required.
+
+The already-launched diagnostic attempt at source `f611d95` confirmed that the
+first draft fails in hardening after all 449 packages install. The console
+retained `WORMHOLE_INSTALLATION_FAILED`; all readiness/validation results were
+blocked, Terraform/support cleanup completed and 405,504 transient allocated
+bytes were reclaimed. It remains failed and is not proof of `518691a`.
+
+Runtime source `7bfa09def373c32d2177d223fcf6d97b35289d28` then completed a
+fresh 533.296-second installation of the corrected input. The native GRUB rule,
+actual boot, encrypted cold start, trusted SSH/Ansible, all hardened/controller
+checks, 449-RPM SVD, complete read-only assessment and exact cleanup pass. Native
+totals are 432 pass/two fail/29 not applicable/ten not checked/600 not selected;
+only the SELinux sudo-transition and SSSD certificate-map rules remain selected
+failures. Assessment performed no repair and cleanup reclaimed 405,504 transient
+allocated bytes. The encrypted archive verified ten objects and cleanup reclaimed
+8,487,362,560 additional allocated bytes. No VM, pending archive byte or failed
+receipt remains.
+
+Source `8d825f66c261d1d11e82f17c5f53377436650e3a` is the next focused
+installed-input change. It maps the final administrator to `staff_u`, replaces
+the unrestricted per-user sudo line with a password-required wheel transition
+to `sysadm_r:sysadm_t`, restores labels and validates the full sudo policy. The
+helper requires both the unprivileged `staff_r:staff_t` login context and the
+privileged `sysadm_r:sysadm_t` execution context. Fourteen focused cases pass.
+Production +12/-2; tests +16/-3. Fresh installation proof remains required.
+
+Runtime source `3f128cb81d0139ac2584b86898753d79a8bd5ed4` completed that fresh
+installation in 527.472 seconds. Actual SSH entered `staff_r:staff_t` and
+password-backed sudo/Ansible entered `sysadm_r:sysadm_t`; the native SELinux
+rule now passes. All 11 hardened/six controller checks, 449-RPM SVD, full native
+accounting, read-only assessment and cleanup pass. Native totals are 433 pass/
+one fail/29 not applicable/ten not checked/600 not selected. Cleanup reclaimed
+405,504 transient allocated bytes. The archive subsequently verified ten objects and exact-file cleanup reclaimed
+8,487,362,560 allocated bytes. Storage now records 76.446 GiB managed, 29.880
+GiB candidates, 137.927 GiB free, 482 verified archive objects, no pending
+archive bytes and no VM disks.
+
+Current source `85bfd5722e6f4e72f363ca8db9ee33aa7b51b5a8` makes the declared
+authentication contract explicit and deselects only `sssd_enable_certmap` as
+inapplicable because the lab does not use PKI authentication. No owner-approved
+exception is added. The hardened reader requires this exact rule to be native
+`notselected`, with 472 selected and all 1,073 rules accounted. A functional
+observation rejects an installed certificate-map section. Twenty focused cases
+pass. Production/policy +30/-11; tests +29/-9. Fresh installation proof is next.
+
+Runtime source `4ac320ddb2d21ff3172d04b4cf33547c425c9490` completed that proof
+in 493.897 seconds. The installed guest passed the final non-PKI observation,
+all 12 hardened/six controller checks, encrypted cold start, trusted SSH/Ansible,
+449-RPM SVD and exact teardown. Native totals are 433 pass/zero fail/29 not
+applicable/ten not checked/601 not selected; `sssd_enable_certmap` is the exact
+native `notselected` result, all 472 selected outcomes pass or are accounted,
+and assessment performed no remediation. Immediate cleanup reclaimed 405,504
+allocated bytes. The archive verified ten objects and exact-file cleanup
+reclaimed another 8,487,362,560 allocated bytes. Storage now records 76.565 GiB
+managed, 29.880 GiB candidates, 137.812 GiB free, 492 verified archive objects,
+no pending archive bytes and no VM disks.
+
+Current source `a8263e900e10f04eab3f6e4f98e4a6d9fa26842b` implements the
+ten-rule manual evidence contract. The collector is read-only and preserves
+native `notchecked`; it binds objective/governed dispositions to the exact run
+and rejects missing or changed native statuses. Installation now sets the
+per-run identity to expire in 48 hours and configures an active `DROP` zone with
+only SSH allowed. Independent read-only review added strict run/boot/policy
+identity checks and rejection of undeclared firewall rule classes. Twenty-one
+focused cases pass. Production/policy +200/-13; tests +63/-10. A fresh
+installation is required before these controls are closed.
+
+That first fresh attempt, at source `9ee8c4f`, reached 449/449 packages and
+`hardening-complete`, then failed final installed-system readiness before SSH.
+The console shows firewalld started; it does not show the exact assertion under
+the old marker. All dependent checks were blocked, assessment did not run,
+Terraform cleanup passed, 405,504 transient allocated bytes were reclaimed and
+no VM/controller remains. Diagnostic source `4552360` adds a static stage name
+to the existing failure marker without exposing observed values or changing the
+qualification gate. Fifteen focused input tests pass. Next: run one fresh guest,
+identify the actual failed assertion group, then correct only that condition.
+
+The first diagnostic allocation was correctly refused by the retention budget.
+Archive readback and exact-file cleanup reclaimed 8,487,243,776 allocated bytes;
+the unchanged retry then reached the retained `firewall-policy` marker after
+449 packages and completed hardening. Assessment remained blocked, exact-owned
+teardown passed and transient cleanup reclaimed 405,504 bytes. Source `5ed8d6c`
+splits only that static marker into default-zone, active-zone, interface, target,
+services and ports while leaving the checks and policy unchanged. Fifteen
+focused tests pass. Next: one fresh diagnostic installation, then the smallest
+correction to the named condition.
+
+The fresh source `1ecefaf` attempt narrowed the boundary again: default zone,
+active zone and interface binding pass; `firewall-target` is the first failed
+assertion. Package installation/hardening completed, dependent checks and
+assessment stayed blocked, teardown passed and transient cleanup reclaimed
+405,504 bytes. Source `705c3c1` emits only an allowlisted documented target enum
+(`default`, `ACCEPT`, `DROP`, `REJECT`) or `unexpected`; it changes no policy.
+Fifteen focused tests pass. Next: record that enum in one fresh run, then patch
+the owning installed configuration or expectation from evidence.
+
+Source `7d638ef` recorded `firewall-target-query`, proving the command itself
+failed before a target value existed. The supported target lookup is a permanent
+configuration query; both observers omitted `--permanent`. Source `6489604`
+corrects the existing readiness and manual collectors while retaining separate
+live daemon, active-zone, interface, services and undeclared-rule checks. It
+changes no firewall setting or policy. Sixteen focused cases pass. Next: archive
+the diagnostic candidate, run one fresh installation, and verify complete manual
+evidence plus unchanged native assessment/accounting.
+
+Runtime source `8ba4274` then completed a fresh 501.958-second installation:
+readiness, SSH/Ansible, all hardened/controller checks, encryption, 449-RPM SVD,
+read-only assessment and teardown passed. Native totals remain 433 pass/zero
+fail/29 not applicable/ten not checked/601 not selected. Manual evidence closed
+eight rows; both firewall rows were false because the observer parsed the real
+`drop (default)` display label as an invalid zone name. Source `0cbb4c1`
+normalizes the annotation and has an executable exact-output regression. Sixteen
+focused cases pass. Next: reuse the unchanged candidate for one fresh install,
+verify all ten manual rows, archive evidence and record final storage state.
+
+Runtime source `239aad0` completed the fresh collector proof in 489.836 seconds.
+All ten manual rows now close (seven satisfied, three governed N/A) while their
+native `notchecked` statuses remain unchanged. All lifecycle, SSH/Ansible,
+hardened/controller, encryption, SVD and read-only assessment checks pass; native
+totals remain 433/zero/29/10/601. VM cleanup reclaimed 405,504 bytes. Encrypted
+archival reclaimed another 8,487,362,560 bytes; storage is 76.967 GiB managed,
+29.880 GiB candidates, 137.404 GiB free, zero pending/failures and no VM disk.
+Next: implement the existing-contract RHEL evaluator/publisher; keep it refusing
+until cryptographic operating-environment evidence satisfies the frozen policy,
+then require a final independent same-candidate pair before positive publication.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra

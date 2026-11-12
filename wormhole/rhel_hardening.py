@@ -4,12 +4,14 @@ The ISO contains policy and code; the private seed supplies only per-run identit
 The LUKS secret arrives through the existing no-echo console protocol, not media.
 Remediation exit 2 records findings, never qualification. BIOS is the only profile.
 """
+import hashlib
 import ipaddress
 import json
 from pathlib import Path
 import re
 import shutil
 import subprocess
+import xml.etree.ElementTree as ET
 
 from . import rhel_inputs as baseline
 from .media_store import fingerprint, require
@@ -21,9 +23,53 @@ CAPABILITY = 'rhel-hardened-assessment-candidate-iso'
 POLICY = SOURCE_ROOT / 'profiles/rhel10-lab-policy-v1.json'
 CONTENT_SHA256 = '3a22f1f747ef7b895268b2da838f680b6a7ea421c5132d6ac4141d858afc60c6'
 PROFILE = 'xccdf_org.ssgproject.content_profile_stig'
+LAB_PROFILE = 'xccdf_org.wormhole_profile_rhel10_lab_stig'
+SSSD_CERTMAP_RULE = 'xccdf_org.ssgproject.content_rule_sssd_enable_certmap'
+AUTHENTICATION_CONTRACT = 'run-scoped-ssh-public-key-and-local-password-required-sudo'
+SSSD_CERTMAP_APPLICABILITY = {
+    'applicable': False,
+    'pki_based_authentication': False,
+    'authentication_contract': AUTHENTICATION_CONTRACT,
+    'reason': 'The declared lab workload does not use PKI authentication.'}
+LAB_BANNER = 'Wormhole private home lab. Authorized lab use only. Activity is monitored.'
+LAB_BANNER_REGEX = r'^Wormhole private home lab\. Authorized lab use only\. Activity is monitored\.$'
+LAB_AUTHORIZED_USERS_REGEX = (
+    r'^(root|bin|daemon|adm|lp|sync|shutdown|halt|mail|operator|games|ftp|nobody|tss|'
+    r'systemd-coredump|dbus|polkitd|avahi|colord|rtkit|pipewire|clevis|sssd|geoclue|'
+    r'flatpak|setroubleshoot|fapolicyd|libstoragemgmt|systemd-oom|gdm|cockpit-ws|'
+    r'gnome-initial-setup|sshd|chrony|dnsmasq|postfix|tcpdump|admin|unbound|yggdrasil|'
+    r'yggdrasil-worker|lab\.service)$')
 CONTENT = {'release': '0.1.82', 'benchmark': 'RHEL 10 STIG V1R2',
-           'sha256': CONTENT_SHA256, 'profile': PROFILE, 'rules': 1073, 'selected_rules': 473}
+           'sha256': CONTENT_SHA256, 'profile': PROFILE, 'rules': 1073, 'selected_rules': 472}
 BOOT_ARGS = 'fips=1 init_on_free=1 pti=on vsyscall=none page_poison=1 audit=1 audit_backlog_limit=8192'
+
+
+def tailoring_document():
+    """Declare truthful lab values and the workload's one inapplicable PKI rule."""
+    policy = json.loads(POLICY.read_text())
+    tailoring = policy['tailoring']
+    values = {'login_banner_text': LAB_BANNER_REGEX,
+        'var_accounts_authorized_local_users_regex': LAB_AUTHORIZED_USERS_REGEX,
+        'var_networkmanager_dns_mode': 'none'}
+    require(tailoring == {'excluded_rules': [SSSD_CERTMAP_RULE], 'parameters': values,
+        'owner_approved_exceptions': []}, 'unsupported_assessment_tailoring')
+    require(policy.get('rule_applicability') == {
+        SSSD_CERTMAP_RULE: SSSD_CERTMAP_APPLICABILITY}, 'unsupported_rule_applicability')
+    x = '{http://checklists.nist.gov/xccdf/1.2}'
+    root = ET.Element(x + 'Tailoring', id='xccdf_org.wormhole_tailoring_rhel10_lab')
+    ET.SubElement(root, x + 'benchmark', href='ssg-rhel10-ds.xml')
+    ET.SubElement(root, x + 'version', time='2026-11-12T00:00:00Z').text = '1'
+    profile = ET.SubElement(root, x + 'Profile', id=LAB_PROFILE, extends=PROFILE)
+    ET.SubElement(profile, x + 'title').text = 'Wormhole declared home-lab values and applicability'
+    ET.SubElement(profile, x + 'description').text = 'Declared values cover the truthful warning banner and installed authorized accounts; the PKI certificate-map rule is not selected because the declared workload does not use PKI authentication.'
+    ET.SubElement(profile, x + 'select', idref=SSSD_CERTMAP_RULE, selected='false')
+    ET.SubElement(profile, x + 'set-value',
+        idref='xccdf_org.ssgproject.content_value_login_banner_text').text = LAB_BANNER_REGEX
+    ET.SubElement(profile, x + 'set-value',
+        idref='xccdf_org.ssgproject.content_value_var_accounts_authorized_local_users_regex').text = LAB_AUTHORIZED_USERS_REGEX
+    ET.SubElement(profile, x + 'set-value',
+        idref='xccdf_org.ssgproject.content_value_var_networkmanager_dns_mode').text = 'none'
+    return ET.tostring(root, encoding='utf-8', xml_declaration=True)
 PACKAGES = '''@core
 python3
 shadow-utils
@@ -85,7 +131,8 @@ logvol /var/tmp --vgname=system --name=vartmp --fstype=xfs --size=1024 --fsoptio
 
 READY = r'''#!/bin/bash
 set -euo pipefail
-trap 'printf "%s\n" WORMHOLE_FINALIZATION_FAILED > /dev/ttyS0' ERR
+failure_stage=system-contract
+trap 'rc=$?; printf "%s\n" "WORMHOLE_FINALIZATION_CHECK_FAILED ${failure_stage}" > /dev/ttyS0; printf "%s\n" WORMHOLE_FINALIZATION_FAILED > /dev/ttyS0; exit "$rc"' ERR
 . /etc/os-release
 test "$ID" = rhel
 test "$VERSION_ID" = 10.0
@@ -95,13 +142,45 @@ test "$(getenforce)" = Enforcing
 test -s /var/lib/wormhole/remediation-exit
 test -s /var/lib/wormhole/installation-boot-id
 test "$(cat /var/lib/wormhole/installation-boot-id)" != "$(cat /proc/sys/kernel/random/boot_id)"
+failure_stage=final-account
 test "$(getent passwd lab.service | cut -d: -f6)" = /home/lab.service
 test "$(stat -c %U /home/lab.service/.ssh/authorized_keys)" = lab.service
 test "$(stat -c %a /home/lab.service)" = 700
 test "$(stat -c %a /home/lab.service/.ssh)" = 700
 test "$(stat -c %a /home/lab.service/.ssh/authorized_keys)" = 600
+expiry=$(getent shadow lab.service | cut -d: -f8)
+today=$(( $(date -u +%s) / 86400 ))
+test -n "$expiry" && test "$expiry" -gt "$today" && test "$expiry" -le $((today + 3))
 test "$(stat -c %a /var/lib/wormhole)" = 755
 test -s /etc/wormhole-lab-ca.crt
+failure_stage=boot-security
+grep -Eq '^[[:space:]]*set superusers="wormhole_boot_admin"$' /boot/grub2/grub.cfg
+grep -Fq 'password_pbkdf2 wormhole_boot_admin ${GRUB2_PASSWORD}' /boot/grub2/grub.cfg
+grep -Eq '^GRUB2_PASSWORD=grub\.pbkdf2\.' /boot/grub2/user.cfg
+! getent passwd wormhole_boot_admin
+semanage login -l | awk '$1 == "lab.service" { found=1; if ($2 != "staff_u") exit 1 } END { if (!found) exit 1 }'
+failure_stage=network-policy
+NetworkManager --print-config | grep -qx 'dns=none'
+awk '$1 == "hosts:" { found=1; for (i=2; i<=NF; i++) if ($i == "dns") exit 1 } END { if (!found) exit 1 }' /etc/nsswitch.conf
+test ! -s /etc/resolv.conf
+failure_stage=firewall-default-zone
+test "$(firewall-cmd --get-default-zone)" = drop
+failure_stage=firewall-active-zone
+test "$(firewall-cmd --get-active-zones | awk '/^[^ ]/ { print $1 }')" = drop
+failure_stage=firewall-interface
+test -n "$(firewall-cmd --zone=drop --list-interfaces)"
+failure_stage=firewall-target-query
+firewall_target=$(firewall-cmd --permanent --zone=drop --get-target)
+case "$firewall_target" in
+    default|ACCEPT|DROP|REJECT) failure_stage="firewall-target-${firewall_target}" ;;
+    *) failure_stage=firewall-target-unexpected ;;
+esac
+test "$firewall_target" = DROP
+failure_stage=firewall-services
+test "$(firewall-cmd --zone=drop --list-services)" = ssh
+failure_stage=firewall-ports
+test -z "$(firewall-cmd --zone=drop --list-ports)"
+failure_stage=ssh-host
 if ! test -f /etc/ssh/ssh_host_rsa_key; then
     ssh-keygen -q -t rsa -b 3072 -N '' -f /etc/ssh/ssh_host_rsa_key
 fi
@@ -123,7 +202,8 @@ sha256sum --check content.sha256
 install -d -m 0700 /var/lib/wormhole/install-assessment
 printf '%s\n' WORMHOLE_HARDENING_STARTED > /dev/ttyS0
 if timeout --signal=TERM --kill-after=15 900 oscap xccdf eval --remediate \
-    --profile xccdf_org.ssgproject.content_profile_stig \
+    --tailoring-file lab-tailoring.xml \
+    --profile xccdf_org.wormhole_profile_rhel10_lab_stig \
     --results /var/lib/wormhole/install-assessment/remediation-xccdf.xml \
     --results-arf /var/lib/wormhole/install-assessment/remediation-arf.xml \
     --report /var/lib/wormhole/install-assessment/remediation.html ssg-rhel10-ds.xml; then
@@ -137,14 +217,37 @@ case "$result" in
 esac
 test -s /var/lib/wormhole/install-assessment/remediation-xccdf.xml
 printf '%s\n' "$result" > /var/lib/wormhole/remediation-exit
+# The installer disables kdump, but the pinned rule also requires the final
+# installed unit to be masked while kexec-tools remains available.
+systemctl mask kdump.service
+# Keep Anaconda's per-installation PBKDF2 hash, but replace the default `root`
+# GRUB administrator in the generator and rebuild the installed BIOS config.
+test -s /etc/grub.d/01_users
+sed -Ei \
+    -e 's/^([[:space:]]*set superusers=)"root"$/\1"wormhole_boot_admin"/' \
+    -e 's/^([[:space:]]*password_pbkdf2[[:space:]]+)root([[:space:]]+)/\1wormhole_boot_admin\2/' \
+    /etc/grub.d/01_users
+grep -Eq '^[[:space:]]*set superusers="wormhole_boot_admin"$' /etc/grub.d/01_users
+grep -Fq 'password_pbkdf2 wormhole_boot_admin \${GRUB2_PASSWORD}' /etc/grub.d/01_users
+grep -Eq '^GRUB2_PASSWORD=grub\.pbkdf2\.' /boot/grub2/user.cfg
+grub2-mkconfig -o /boot/grub2/grub.cfg
+grep -Eq '^[[:space:]]*set superusers="wormhole_boot_admin"$' /boot/grub2/grub.cfg
+grep -Fq 'password_pbkdf2 wormhole_boot_admin ${GRUB2_PASSWORD}' /boot/grub2/grub.cfg
 # Complete the declared final-account contract after profile remediation. This
 # is installation code, never an acceptance-time repair or passwordless bypass.
+usermod -Z staff_u lab.service
+chage -E "$(date -u -d '+2 days' +%F)" lab.service
 chown -R lab.service:lab.service /home/lab.service
 chmod 0700 /home/lab.service /home/lab.service/.ssh
 chmod 0600 /home/lab.service/.ssh/authorized_keys
-printf '%s\n' 'lab.service ALL=(ALL) ALL' 'Defaults:lab.service timestamp_timeout=0' > /etc/sudoers.d/wormhole-lab
+printf '%s\n' '%wheel ALL=(ALL) TYPE=sysadm_t ROLE=sysadm_r ALL' 'Defaults:lab.service timestamp_timeout=0' > /etc/sudoers.d/wormhole-lab
 chmod 0440 /etc/sudoers.d/wormhole-lab
-visudo -cf /etc/sudoers.d/wormhole-lab
+visudo -c
+# The pinned manual control requires literal DROP, not firewalld's `default`
+# target. Keep SSH as the only declared exception for the controller path.
+firewall-offline-cmd --set-default-zone=drop
+firewall-offline-cmd --zone=drop --set-target=DROP
+firewall-offline-cmd --zone=drop --add-service=ssh
 cat > /etc/ssh/sshd_config.d/00-wormhole.conf <<'SSH'
 PermitRootLogin no
 PasswordAuthentication no
@@ -152,15 +255,27 @@ KbdInteractiveAuthentication no
 PubkeyAuthentication yes
 HostKey /etc/ssh/ssh_host_rsa_key
 SSH
-printf '%s\n' 'Wormhole private home lab. Authorized lab use only. Activity is monitored.' > /etc/issue.net
-printf '%s\n' 'Banner /etc/issue.net' > /etc/ssh/sshd_config.d/05-wormhole-banner.conf
+printf '%s\n' 'Wormhole private home lab. Authorized lab use only. Activity is monitored.' > /etc/issue
+printf '%s\n' 'Banner /etc/issue' > /etc/ssh/sshd_config.d/05-wormhole-banner.conf
 cat > /etc/chrony.conf <<'TIME'
 # Explicit lab host-clock source, not an authenticated external time authority.
 server 192.0.2.1 port 12345 iburst minpoll 4 maxpoll 4
+port 0
+cmdport 0
 driftfile /var/lib/chrony/drift
 makestep 1 -1
 rtcsync
 TIME
+install -d -m 0755 /etc/NetworkManager/conf.d
+cat > /etc/NetworkManager/conf.d/90-wormhole-dns.conf <<'DNS'
+[main]
+dns=none
+DNS
+awk '$1 == "hosts:" { printf "%s", $1; for (i=2; i<=NF; i++) if ($i != "dns") printf " %s", $i; printf "\n"; next } { print }' \
+    /etc/nsswitch.conf > /etc/nsswitch.conf.wormhole
+install -m 0644 /etc/nsswitch.conf.wormhole /etc/nsswitch.conf
+rm -f /etc/nsswitch.conf.wormhole /etc/resolv.conf
+install -m 0644 /dev/null /etc/resolv.conf
 cat > /etc/rsyslog.d/70-wormhole-remote.conf <<'LOG'
 global(DefaultNetstreamDriverCAFile="/etc/wormhole-lab-ca.crt")
 *.* action(type="omfwd" target="192.0.2.1" port="6514" protocol="tcp"
@@ -233,6 +348,7 @@ def prepare(content):
 
 
 def installation_contract():
+    tailoring = tailoring_document()
     return {'id': 'wormhole-rhel10-hardened-bios-seed-v1', 'release': '10.0',
         'architecture': 'x86_64', 'firmware': 'bios', 'seed_label': baseline.SEED_LABEL,
         'final_user': 'lab.service', 'sudo': 'password-required',
@@ -240,6 +356,7 @@ def installation_contract():
         'guest_memory_mib': 8192, 'guest_vcpus': 2, 'guest_disk_bytes': 32 * 1024**3,
         'content': dict(CONTENT), 'recipe_sha256': sha256(__file__),
         'policy_sha256': sha256(POLICY),
+        'tailoring_sha256': hashlib.sha256(tailoring).hexdigest(),
         'console_receiver_sha256': fingerprint(EARLY),
         'services': {'ca': 'run-seed-scoped', 'logging': 'existing-sandbox-tls',
                      'audit': 'existing-sandbox-ascii', 'time': 'lab-host-clock'},
@@ -278,7 +395,7 @@ rootpw --lock
 firstboot --disable
 skipx
 selinux --enforcing
-firewall --enabled --service=ssh
+firewall --enabled
 services --disabled=debug-shell,autofs,kdump --enabled=rsyslog,systemd-journald,firewalld,fapolicyd,chronyd,sshd,usbguard,auditd
 network --device={mac} --bindto=mac --bootproto=static --ip={address.ip} --netmask={address.netmask} --nodefroute --noipv6 --onboot=yes --activate --hostname=vm-{identifier[:8]}
 ignoredisk --only-use=vda
@@ -371,8 +488,11 @@ def build(source, destination, seed_dir, identifier, public_key, guest_address, 
         require(sha256(destination) == manifest['candidate_sha256'], 'candidate_copy_mismatch')
     else:
         payload = seed_dir / 'payload'; payload.mkdir(mode=0o700)
+        tailoring = tailoring_document()
         shutil.copyfile(content, payload / 'ssg-rhel10-ds.xml')
-        (payload / 'content.sha256').write_text(CONTENT_SHA256 + '  ssg-rhel10-ds.xml\n')
+        (payload / 'lab-tailoring.xml').write_bytes(tailoring)
+        (payload / 'content.sha256').write_text(CONTENT_SHA256 + '  ssg-rhel10-ds.xml\n'
+            + hashlib.sha256(tailoring).hexdigest() + '  lab-tailoring.xml\n')
         (payload / 'finalize.sh').write_text(FINALIZE)
         (payload / 'ready.sh').write_text(READY)
         (payload / 'install-contract.json').write_text(json.dumps(contract, sort_keys=True) + '\n')

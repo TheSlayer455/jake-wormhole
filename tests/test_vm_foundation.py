@@ -141,19 +141,34 @@ class RHELInputs(unittest.TestCase):
 class RHELAssessment(unittest.TestCase):
     def test_hardened_collector_binds_content_reboot_complete_findings_and_original_inventory(self):
         import base64,hashlib,io,tarfile
-        from wormhole import rhel_hardening as h
+        from wormhole import rhel_hardening as h, rhel_manual as rm
+        compile(rm.CODE,'<rhel-manual-observer>','exec')
+        parser={};exec(rm.ACTIVE_ZONE_PARSER,parser)
+        self.assertEqual(parser['parse_active_zones']('drop (default)\n  interfaces: ens2\n'),
+            {'drop':{'interfaces':['ens2']}})
+        self.assertIn("run('firewall-cmd','--permanent','--zone='+zone,'--get-target')", rm.CODE)
+        self.assertNotIn("run('firewall-cmd','--zone='+zone,'--get-target')", rm.CODE)
         result,receipt,inventory=RHELSVD().fixture();target='vm-'+result['run_id'][:8]
+        manual_rules=''.join('<Rule id="'+rule+'"/>' for rule in rm.MANUAL_RULES)
         content=('<Benchmark xmlns="'+ra.X[1:-1]+'"><version>0.1.82</version><Profile id="'+ra.PROFILE+'">'
             '<title>DISA STIG for Red Hat Enterprise Linux 10</title>'
             '<description>Checks align to Red Hat Enterprise Linux 10 V1R2.</description></Profile>'
-            '<Rule id="one"/><Rule id="two"/></Benchmark>').encode()
-        pinned={**h.CONTENT,'sha256':hashlib.sha256(content).hexdigest(),'rules':2,'selected_rules':2}
-        native=('<Benchmark xmlns="'+ra.X[1:-1]+'"><TestResult><profile idref="'+ra.PROFILE+'"/>'
+            '<Rule id="one"/><Rule id="two"/><Rule id="'+h.SSSD_CERTMAP_RULE+'"/>'+manual_rules+'</Benchmark>').encode()
+        pinned={**h.CONTENT,'sha256':hashlib.sha256(content).hexdigest(),'rules':13,'selected_rules':12}
+        manual_native=''.join('<rule-result idref="'+rule+'"><result>notchecked</result></rule-result>' for rule in rm.MANUAL_RULES)
+        native=('<Benchmark xmlns="'+ra.X[1:-1]+'"><TestResult><profile idref="'+h.LAB_PROFILE+'"/>'
             '<target>'+target+'</target><rule-result idref="one"><result>pass</result></rule-result>'
-            '<rule-result idref="two"><result>fail</result></rule-result></TestResult></Benchmark>').encode()
-        receipt.update(run_id=result['run_id'],target=target,content_sha256=pinned['sha256'],profile_id=ra.PROFILE,
-            scanner_exit=2,remediation_during_assessment=False,installation_boot_id=str(uuid4()))
-        result['build'].update(capability=h.CAPABILITY,assessment_content=pinned)
+            '<rule-result idref="two"><result>fail</result></rule-result>'
+            '<rule-result idref="'+h.SSSD_CERTMAP_RULE+'"><result>notselected</result></rule-result>'
+            +manual_native+'</TestResult></Benchmark>').encode()
+        receipt.update(run_id=result['run_id'],target=target,content_sha256=pinned['sha256'],profile_id=h.LAB_PROFILE,
+            scanner_exit=2,remediation_during_assessment=False,installation_boot_id=str(uuid4()),
+            tailoring_sha256=h.installation_contract()['tailoring_sha256'])
+        result['build'].update(capability=h.CAPABILITY,assessment_content=pinned,
+            policy_sha256=h.sha256(h.POLICY),installation_contract={
+                'tailoring_sha256':receipt['tailoring_sha256'],'policy_sha256':h.sha256(h.POLICY)})
+        result.update(hardened_checks=dict.fromkeys(ra.HARDENED_CHECKS,'pass'),offline_encryption={
+            'luks_magic_verified':True,'correct_key_accepted':True,'wrong_key_refused':True})
         files={name:b'synthetic output' for name in ra.FILES}
         files.update({'datastream.xml':content,'xccdf.xml':native,'arf.xml':native,'receipt.json':json.dumps(receipt).encode()})
         archive=io.BytesIO()
@@ -164,19 +179,47 @@ class RHELAssessment(unittest.TestCase):
         crypto={'openssl_providers':{'status':'observed','returncode':0,'stdout':'synthetic provider version',
             'stderr':'','truncated':False,'error':None},'virtualization':{'status':'error','returncode':1,
             'stdout':'none\n','stderr':'','truncated':False,'error':None}}
+        manual={'schema_version':'1.0','run_id':result['run_id'],'boot_id':receipt['boot_id'],'facts':{
+            'crypto_check':{'returncode':0,'output':'The configured policy matches the generated policy.\n','error':None},
+            'crypto_policy':{'returncode':0,'output':'FIPS\n','error':None},
+            'interactive_accounts':[{'name':'lab.service','uid':1000,'home':'/home/lab.service','shell':'/bin/bash',
+                'account_aging':{'returncode':0,'output':'Account expires : Nov 14, 2026\n','error':None},
+                'expiry_remaining_days':2,'unsafe_path_file_count':0}],
+            'client_private_key_count':0,
+            'firewall':{'state':{'returncode':0,'output':'running\n','error':None},
+                'default_zone':{'returncode':0,'output':'drop\n','error':None},
+                'active_zones':{'drop':{'interfaces':['eth0'],'target':{'returncode':0,'output':'DROP\n','error':None},
+                    'services':{'returncode':0,'output':'ssh\n','error':None},
+                    **{name:{'returncode':0,'output':'\n','error':None} for name in
+                       ('ports','protocols','source_ports','forward_ports','rich_rules')}}}},
+            'ipsec_connection_count':0,'sssd_certmap_count':0,
+            'audit_storage':{'source':{'returncode':0,'output':'/dev/mapper/system-varlogaudit\n','error':None},
+                'size':{'returncode':0,'output':str(10*1024**3)+'\n','error':None}}}}
         rows=inventory+[{'stage':'hardened-functional','returncode':1,'checks':checks,'crypto_runtime':crypto},
+            {'stage':'manual-observations','returncode':0,'output':json.dumps(manual),'diagnostic':''},
             {'stage':'assessment-archive','returncode':0,'sha256':hashlib.sha256(payload).hexdigest(),
              'archive_base64':base64.b64encode(payload).decode()}]
         with patch.object(h,'CONTENT',pinned),tempfile.TemporaryDirectory() as directory:
             summary=ra.collect(Path(directory),result,rows)
-            self.assertEqual(summary['native_counts'],{'pass':1,'fail':1})
+            self.assertEqual(summary['native_counts'],{'pass':1,'fail':1,'notselected':1,'notchecked':10})
             self.assertEqual(summary['content_version'],'0.1.82');self.assertEqual(summary['benchmark'],'RHEL 10 STIG V1R2')
-            self.assertEqual(summary['functional_counts'],{'pass':9,'fail':1})
+            self.assertEqual(summary['functional_counts'],{'pass':11,'fail':1})
             self.assertFalse(summary['all_functional_checks_pass']);self.assertFalse(summary['lab_iso_qualified'])
+            self.assertTrue(summary['manual_evidence_complete'])
             self.assertEqual(summary['crypto_runtime'],{**crypto,'kernel_release':{'status':'missing'}})
             self.assertIn('synthetic provider version',(Path(directory)/'assessment.txt').read_text())
             self.assertEqual(json.loads((Path(directory)/'installed-svd.json').read_text())['packages'][0]['epoch'],'2')
-            self.assertIn('All 2 rules accounted for',(Path(directory)/'assessment.txt').read_text())
+            self.assertIn('All 13 rules accounted for',(Path(directory)/'assessment.txt').read_text())
+        for fault,code in (('run','manual_observation_identity'),('boot','manual_observation_identity'),
+                           ('policy','manual_policy_identity')):
+            bad_manual=json.loads(json.dumps(manual));bad_result=json.loads(json.dumps(result))
+            if fault=='run':bad_manual['run_id']=str(uuid4())
+            elif fault=='boot':bad_manual['boot_id']=str(uuid4())
+            else:bad_result['build']['policy_sha256']='f'*64
+            bad_rows=[{**row,'output':json.dumps(bad_manual)} if row.get('stage')=='manual-observations' else row for row in rows]
+            with patch.object(h,'CONTENT',pinned),tempfile.TemporaryDirectory() as directory,self.assertRaises(RunError) as error:
+                ra.collect(Path(directory),bad_result,bad_rows)
+            self.assertEqual(error.exception.code,code)
         for changed in ({'assessment_content':{**pinned,'release':'other'}},{'capability':r.CAPABILITY}):
             with patch.object(h,'CONTENT',pinned),tempfile.TemporaryDirectory() as directory,self.assertRaises(RunError) as error:
                 ra.collect(Path(directory),{**result,'build':{**result['build'],**changed}},rows)
@@ -186,6 +229,8 @@ class RHELAssessment(unittest.TestCase):
                 expected_hash='a'*64)['content_sha256'],pinned['sha256'])
             with self.assertRaises(RunError):ra.read_results(content+b'changed',native,expected_target=target,scanner_exit=2,hardened=True)
             with self.assertRaises(RunError):ra.read_results(content,native.replace(b'>fail<',b'>notselected<'),expected_target=target,scanner_exit=2,hardened=True)
+            with self.assertRaises(RunError):ra.read_results(content,native.replace(
+                b'>notselected<', b'>pass<'),expected_target=target,scanner_exit=2,hardened=True)
         changed=content.replace(b'0.1.82',b'0.1.83')
         with patch.object(h,'CONTENT',{**pinned,'sha256':hashlib.sha256(changed).hexdigest()}),self.assertRaises(RunError) as metadata:
             ra.read_results(changed,native,expected_target=target,scanner_exit=2,hardened=True)
@@ -204,10 +249,23 @@ class RHELAssessment(unittest.TestCase):
             run.return_value=subprocess.CompletedProcess([],1,stdout='')
             with self.assertRaises(subprocess.CalledProcessError):service_active('auditd')
 
+    def test_hardened_probe_observes_the_declared_non_pki_contract(self):
+        namespace={}
+        exec(ra.HARDENED_PROBE.split('\nroot=',1)[0],namespace)
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);plain=root/'plain.conf';certmap=root/'certmap.conf'
+            plain.write_text('[sssd]\nservices = nss, pam\n')
+            certmap.write_text('[certmap/example.test/rule]\nmatchrule = <SAN>.*\n')
+            self.assertTrue(namespace['no_certmap']([plain]))
+            self.assertFalse(namespace['no_certmap']([plain,certmap]))
+
     def test_hardened_helper_preserves_failed_checks_collects_scan_and_never_puts_password_in_argv(self):
         import contextlib,io,subprocess,sys,time
         from types import SimpleNamespace
         compile(ra.HARDENED_AUDIT_CODE,'<hardened-helper>','exec')
+        self.assertIn('--tailoring-file /usr/local/share/wormhole/lab-tailoring.xml', ra.HARDENED_AUDIT_CODE)
+        self.assertIn("['staff_u','staff_r','staff_t']", ra.HARDENED_AUDIT_CODE)
+        self.assertIn("context('staff_u','sysadm_r','sysadm_t')", ra.HARDENED_PROBE)
         compile(ra.HARDENED_PROBE,'<read-only-guest-probe>','exec')
         self.assertNotIn('--remediate',ra.HARDENED_AUDIT_CODE)
         self.assertIn('/usr/share/xml/scap/ssg/content/',ra.RHEL_AUDIT_CODE)
@@ -219,8 +277,9 @@ class RHELAssessment(unittest.TestCase):
         def run(args,**kwargs):
             calls.append((args,kwargs));self.assertNotIn(secret,json.dumps(args))
             if len(calls)==1:return SimpleNamespace(returncode=1,stdout=b'',stderr=b'')
+            if len(calls)==2:return SimpleNamespace(returncode=0,stdout=b'staff_u:staff_r:staff_t:s0\n',stderr=b'')
             self.assertEqual(kwargs['input'],(secret+'\n').encode())
-            return SimpleNamespace(returncode=0,stdout=json.dumps({'checks':checks,'crypto_runtime':crypto}).encode() if len(calls)==2 else b'synthetic archive',stderr=b'')
+            return SimpleNamespace(returncode=0,stdout=json.dumps({'checks':checks,'crypto_runtime':crypto}).encode() if len(calls)==3 else b'synthetic archive',stderr=b'')
         output=io.StringIO()
         with patch.object(subprocess,'run',side_effect=run),contextlib.redirect_stdout(output),self.assertRaises(SystemExit) as stopped:
             exec(ra.HARDENED_AUDIT_CODE,{'c':{'address':'192.0.2.10','become_password':secret},'opts':[],
@@ -231,7 +290,7 @@ class RHELAssessment(unittest.TestCase):
         self.assertEqual(rows[0]['crypto_runtime'],crypto)
         self.assertTrue(any(row.get('stage')=='assessment-archive' for row in rows))
         self.assertEqual(rows[-1]['outcome'],'hardened-functional-failed')
-        self.assertEqual(len(calls),3)
+        self.assertEqual(len(calls),5)
         if sys.platform!='win32':
             namespace={};exec(ra.HARDENED_PROBE.split('\ndef encrypted(')[0],namespace)
             observe=namespace['crypto_observe']
@@ -417,6 +476,21 @@ class VMJournal(unittest.TestCase):
 
 @unittest.skipUnless(os.name=='posix','Linux supervisor process observations')
 class VMExecution(unittest.TestCase):
+    def test_finished_journal_terminalization_preserves_unknown_outcome_and_blocks_pending_checks(self):
+        from subprocess import CompletedProcess
+        from wormhole import ubuntu_recovery as recovery
+        value={'outcome':'running','checks':{'ready':'pass','validation':'pending'},'cleanup':'pending'}
+        observed=recovery.terminalize_reconciled(value)
+        self.assertEqual(observed['outcome'],'unknown')
+        self.assertEqual(observed['first_failure'],'supervisor_interrupted_without_terminal_result')
+        self.assertEqual(observed['checks'],{'ready':'pass','validation':'blocked'})
+        self.assertEqual(observed['cleanup'],'verified-absent-inputs-retained')
+        self.assertEqual(observed['recovery']['original_outcome'],'running')
+        with patch.object(recovery.subprocess,'run',return_value=CompletedProcess([],1)) as virsh:
+            self.assertFalse(recovery.network_filter_present('owned-filter'))
+        self.assertEqual(virsh.call_args.args[0],
+            ['virsh','-c','qemu:///system','nwfilter-dumpxml','owned-filter'])
+
     def test_hardened_recovery_recognizes_only_the_run_owned_support_service(self):
         from contextlib import nullcontext
         from subprocess import CompletedProcess

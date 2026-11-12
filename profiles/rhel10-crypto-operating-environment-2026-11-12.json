@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "evidence_date": "2026-11-12",
+  "declared_environment": {"os": "Red Hat Enterprise Linux 10.0", "architecture": "x86_64"},
+  "sources": [
+    "https://access.redhat.com/compliance/fips",
+    "https://csrc.nist.gov/projects/cryptographic-module-validation-program/modules-in-process/iut-list",
+    "https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/5573",
+    "https://csrc.nist.gov/CSRC/media/projects/cryptographic-module-validation-program/documents/security-policies/140sp5573.pdf"
+  ],
+  "modules": {
+    "openssl": {"status": "pending-operational-environment-update", "certificate": null, "red_hat_module_version": "3.0.7-395c1a240fbfffd8", "red_hat_package": "openssl-fips-provider-3.0.7-6.el10"},
+    "kernel_crypto_api": {"status": "implementation-under-test", "certificate": null},
+    "gnutls": {"status": "implementation-under-test", "certificate": null},
+    "nss": {"status": "implementation-under-test", "certificate": null}
+  },
+  "certificate_5573": {
+    "product": "Red Hat Enterprise Linux 9 - OpenSSL FIPS Provider",
+    "applies_to_declared_environment": false,
+    "reason": "The certificate security policy lists RHEL 9 operating environments and makes no validation claim for unlisted RHEL 10 environments."
+  },
+  "cryptographic_module_operational_environment_verified": false,
+  "decision": "blocked",
+  "limitation": "Observed RHEL 10 FIPS-mode operation and installed module identity do not establish CMVP validation for the declared RHEL 10 operating environment.",
+  "production_iso_eligible": false
+}

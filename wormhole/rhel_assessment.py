@@ -65,11 +65,12 @@ print(json.dumps({'final_authentication':True,'ansible_ready':True,'catalog_star
 
 
 HARDENED_CHECKS = ('password-required-sudo', 'fips-runtime-mode', 'selinux-enforcing',
+    'selinux-sudo-transition', 'non-pki-authentication-contract',
     'post-install-reboot', 'encrypted-filesystems', 'encrypted-swap', 'luks-pbkdf2',
     'audit-service', 'time-source-synchronized', 'logging-service')
 CRYPTO_OBSERVATIONS = ('openssl_providers', 'kernel_release', 'virtualization')
 HARDENED_PROBE = r'''
-import json,pathlib,resource,signal,subprocess,tempfile
+import json,pathlib,re,resource,signal,subprocess,tempfile
 def command(*args):
  return subprocess.run(args,capture_output=True,text=True,check=True,timeout=10).stdout.strip()
 def service_active(unit):
@@ -103,10 +104,17 @@ def filesystems():
 def swap():
  sources=command('swapon','--show=NAME','--noheadings').splitlines()
  return bool(sources) and all(encrypted(source) for source in sources)
+def context(user,role,domain):
+ return command('id','-Z').split(':')[:3]==[user,role,domain]
+def no_certmap(paths=None):
+ if paths is None:paths=[pathlib.Path('/etc/sssd/sssd.conf'),*pathlib.Path('/etc/sssd/conf.d').glob('*.conf')]
+ return not any(re.search(r'^\s*\[certmap/[^/]+/[^]]+\]\s*$',p.read_text(errors='replace'),re.MULTILINE) for p in paths if p.is_file())
 root=pathlib.Path('/var/lib/wormhole')
 observations={
  'fips-runtime-mode':lambda:pathlib.Path('/proc/sys/crypto/fips_enabled').read_text().strip()=='1' and command('update-crypto-policies','--show').split(':')[0]=='FIPS',
  'selinux-enforcing':lambda:command('getenforce')=='Enforcing',
+ 'selinux-sudo-transition':lambda:context('staff_u','sysadm_r','sysadm_t'),
+ 'non-pki-authentication-contract':no_certmap,
  'post-install-reboot':lambda:bool((root/'installation-boot-id').read_text().strip()) and (root/'installation-boot-id').read_text().strip()!=pathlib.Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
  'encrypted-filesystems':filesystems,'encrypted-swap':swap,
  'luks-pbkdf2':lambda:'pbkdf2' in command('cryptsetup','luksDump','/dev/vda3').lower(),
@@ -126,8 +134,10 @@ print(json.dumps({'checks':checks,'errors':errors,'crypto_runtime':crypto_runtim
 
 def hardened_audit_code():
     """Same native collector, fixed hardened content, stdin-only sudo secret."""
-    from .rhel_hardening import CONTENT
-    prefix = 'functional_probe=' + repr(HARDENED_PROBE) + '\nexpected_checks=' + repr(HARDENED_CHECKS) + '\n' + r'''
+    from .rhel_hardening import CONTENT, LAB_PROFILE
+    from .rhel_manual import CODE as MANUAL_PROBE
+    prefix = ('functional_probe=' + repr(HARDENED_PROBE) + '\nmanual_probe=' + repr(MANUAL_PROBE) +
+        '\nexpected_checks=' + repr(HARDENED_CHECKS) + '\n' + r'''
 import shlex
 password=c.pop('become_password')
 checks=dict.fromkeys(expected_checks)
@@ -135,6 +145,8 @@ remaining=deadline-time.monotonic()
 if remaining<=50:raise RuntimeError('assessment_deadline')
 r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'sudo -k -n true'],capture_output=True,timeout=min(15,remaining))
 checks['password-required-sudo']=r.returncode==1
+r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'/usr/bin/id -Z'],capture_output=True,timeout=min(15,remaining))
+login_context_ok=r.returncode==0 and r.stdout.decode(errors='replace').strip().split(':')[:3]==['staff_u','staff_r','staff_t']
 r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'sudo -S -p "" /usr/bin/python3 -c '+shlex.quote(functional_probe)],
  input=(password+'\n').encode(),capture_output=True,timeout=min(180,max(1,deadline-time.monotonic()-35)))
 errors={};crypto_runtime={}
@@ -143,20 +155,32 @@ if r.returncode==0:
   observed=json.loads(r.stdout)
   if set(observed['checks'])!=set(expected_checks)-{'password-required-sudo'}:raise ValueError('check inventory')
   checks.update(observed['checks']);errors=observed.get('errors',{});crypto_runtime=observed.get('crypto_runtime',{})
+  checks['selinux-sudo-transition']=login_context_ok and checks['selinux-sudo-transition'] is True
+  if not login_context_ok:errors['selinux-login-context']='unexpected-context'
  except (ValueError,KeyError,TypeError):errors={'observer':'invalid-result'}
 else:errors={'observer':'remote-observation-failed'}
 functional_ok=all(value is True for value in checks.values())
 print(json.dumps({'stage':'hardened-functional','returncode':0 if functional_ok else 1,
  'checks':checks,'errors':errors,'crypto_runtime':crypto_runtime}),flush=True)
-'''
+remaining=deadline-time.monotonic()
+r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'sudo -S -p "" /usr/bin/python3 -c '+shlex.quote(manual_probe)],
+ input=(password+'\n').encode(),capture_output=True,timeout=min(60,max(1,remaining-35)))
+manual_ok=r.returncode==0
+print(json.dumps({'stage':'manual-observations','returncode':r.returncode,
+ 'output':r.stdout.decode(errors='replace')[:65536],
+ 'diagnostic':r.stderr.decode(errors='replace')[-4096:]}),flush=True)
+''')
     code = RHEL_AUDIT_CODE.replace(CONTENT_SHA, CONTENT['sha256']).replace(
         '/usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml', '/usr/local/share/wormhole/ssg-rhel10-ds.xml')
+    code = code.replace(PROFILE, LAB_PROFILE).replace(
+        'oscap xccdf eval \\\n  --profile ' + LAB_PROFILE,
+        'oscap xccdf eval \\\n  --tailoring-file /usr/local/share/wormhole/lab-tailoring.xml \\\n  --profile ' + LAB_PROFILE)
     code = code.replace("'sudo -n /bin/bash -s'", "'sudo -S -p \"\" /bin/bash -c '+shlex.quote(audit.replace('@SECONDS@',str(int(remaining-30))))").replace(
         "input=audit.replace('@SECONDS@',str(int(remaining-30))).encode()",
         "input=(password+'\\n').encode()")
-    code = code.replace("'outcome':'baseline-passed'", "'outcome':'assessment-evidence-collected' if functional_ok else 'hardened-functional-failed'")
-    code = code.replace("'scanner_exit':int(sys.argv[1])", "'scanner_exit':int(sys.argv[1]),'remediation_during_assessment':False,'installation_boot_id':pathlib.Path('/var/lib/wormhole/installation-boot-id').read_text().strip()")
-    return prefix + code + '\nif not functional_ok:sys.exit(1)\n'
+    code = code.replace("'outcome':'baseline-passed'", "'outcome':'assessment-evidence-collected' if functional_ok and manual_ok else 'hardened-functional-failed'")
+    code = code.replace("'scanner_exit':int(sys.argv[1])", "'scanner_exit':int(sys.argv[1]),'remediation_during_assessment':False,'installation_boot_id':pathlib.Path('/var/lib/wormhole/installation-boot-id').read_text().strip(),'tailoring_sha256':hashlib.sha256(pathlib.Path('/usr/local/share/wormhole/lab-tailoring.xml').read_bytes()).hexdigest()")
+    return prefix + code + '\nif not functional_ok or not manual_ok:sys.exit(1)\n'
 
 
 HARDENED_AUDIT_CODE = hardened_audit_code()
@@ -165,8 +189,9 @@ HARDENED_AUDIT_CODE = hardened_audit_code()
 def read_results(content, native, *, expected_target, scanner_exit, expected_hash=CONTENT_SHA, expected_rules=948, hardened=False):
     """Fixture overrides are explicit; live content selection is capability-bound."""
     if hardened:
-        from .rhel_hardening import CONTENT
+        from .rhel_hardening import CONTENT, LAB_PROFILE, SSSD_CERTMAP_RULE
         expected_hash,expected_rules=CONTENT['sha256'],CONTENT['rules']
+    result_profile = LAB_PROFILE if hardened else PROFILE
     require(0 < len(content) <= 64 * 1024**2 and 0 < len(native) <= 64 * 1024**2, 'assessment_size')
     require(hashlib.sha256(content).hexdigest() == expected_hash, 'assessment_content_mismatch')
     root = ET.fromstring(content)
@@ -184,7 +209,7 @@ def read_results(content, native, *, expected_target, scanner_exit, expected_has
     require(len(results) == 1, 'assessment_testresult_count')
     result = results[0]
     profile = result.find(X + 'profile')
-    require(profile is not None and profile.get('idref') == PROFILE, 'assessment_profile_mismatch')
+    require(profile is not None and profile.get('idref') == result_profile, 'assessment_profile_mismatch')
     require(expected_target in [t.text for t in result.findall(X + 'target')], 'assessment_target_mismatch')
     observed = {}
     for row in result.findall(X + 'rule-result'):
@@ -195,7 +220,7 @@ def read_results(content, native, *, expected_target, scanner_exit, expected_has
     require(type(scanner_exit) is int and scanner_exit in {0, 2}, 'scanner_execution_failed')
     summary = {'schema_version': '1.0', 'capability': 'real-rhel-vendor-stig-baseline',
         'content_sha256': expected_hash, 'content_version': '0.1.76', 'content_status': 'draft',
-        'profile_id': PROFILE, 'target': expected_target, 'scanner_exit': scanner_exit,
+        'profile_id': result_profile, 'target': expected_target, 'scanner_exit': scanner_exit,
         'scanner_execution_completed': True, 'coverage_complete': True, 'upstream_rule_count': len(planned),
         'native_counts': dict(Counter(observed.values())),
         'rules': [{'rule_id': key, 'title': planned[key], 'native_status': status} for key, status in observed.items()],
@@ -203,6 +228,7 @@ def read_results(content, native, *, expected_target, scanner_exit, expected_has
         'limitation': 'DVD vendor draft anticipates RHEL 10 STIG; no released DISA benchmark alignment or hardening qualification.'}
     if hardened:
         require(sum(status!='notselected' for status in observed.values())==CONTENT['selected_rules'],'assessment_selected_coverage')
+        require(observed.get(SSSD_CERTMAP_RULE)=='notselected', 'assessment_rule_applicability')
         summary.update(capability='real-rhel-hardened-assessment',content_version=CONTENT['release'],
             content_status='upstream-versioned-profile',benchmark=CONTENT['benchmark'],
             limitation='Pinned ComplianceAsCode V1R2 assessment after installation hardening; findings and manual controls remain visible. FIPS mode is not proof of module certification or operational-environment applicability. Lab qualification and eligible ISO publication remain unproven.')
@@ -211,7 +237,7 @@ def read_results(content, native, *, expected_target, scanner_exit, expected_has
 
 def collect(run, result, rows):
     """Persist the fixed native bundle before the existing VM teardown."""
-    from .rhel_hardening import CAPABILITY, CONTENT
+    from .rhel_hardening import CAPABILITY, CONTENT, LAB_PROFILE
     build=result.get('build',{})
     hardened=build.get('capability')==CAPABILITY
     require(build.get('assessment_content')==CONTENT if hardened else 'assessment_content' not in build,
@@ -237,13 +263,17 @@ def collect(run, result, rows):
     require(names == FILES, 'assessment_native_files_missing')
     receipt = json.loads((out / 'receipt.json').read_text())
     target = 'vm-' + result['run_id'][:8]
+    expected_profile = LAB_PROFILE if hardened else PROFILE
     require(receipt.get('run_id') == result['run_id'] and receipt.get('target') == target and
-            receipt.get('content_sha256') == expected_hash and receipt.get('profile_id') == PROFILE, 'assessment_receipt_identity')
+            receipt.get('content_sha256') == expected_hash and receipt.get('profile_id') == expected_profile,
+            'assessment_receipt_identity')
     run_id(receipt.get('boot_id'))
     if hardened:
         run_id(receipt.get('installation_boot_id'))
         require(receipt.get('remediation_during_assessment') is False and
             receipt['installation_boot_id']!=receipt['boot_id'],'assessment_installed_reboot_unverified')
+        require(receipt.get('tailoring_sha256') ==
+            build.get('installation_contract',{}).get('tailoring_sha256'), 'assessment_tailoring_identity')
     content = (out / 'datastream.xml').read_bytes()
     summary = read_results(content, (out / 'xccdf.xml').read_bytes(), expected_target=target, scanner_exit=receipt.get('scanner_exit'),hardened=hardened)
     arf = read_results(content, (out / 'arf.xml').read_bytes(), expected_target=target, scanner_exit=receipt.get('scanner_exit'),hardened=hardened)
@@ -261,6 +291,14 @@ def collect(run, result, rows):
         summary['all_functional_checks_pass']=len(observations)==1 and set(checks)==set(HARDENED_CHECKS) and observations[0].get('returncode')==0 and all(row['status']=='pass' for row in summary['functional_results'])
         crypto=observations[0].get('crypto_runtime',{}) if len(observations)==1 else {}
         summary['crypto_runtime']={name:crypto.get(name,{'status':'missing'}) for name in CRYPTO_OBSERVATIONS}
+        manual=[row for row in rows if row.get('stage')=='manual-observations' and row.get('returncode')==0]
+        require(len(manual)==1, 'manual_evidence_missing')
+        try:raw=json.loads(manual[0].get('output',''))
+        except (TypeError,json.JSONDecodeError):require(False,'manual_observation_invalid')
+        from .rhel_manual import compile_evidence
+        evidence=compile_evidence(run,result,summary,raw)
+        summary['manual_evidence_complete']=evidence['all_required_manual_evidence_complete']
+        summary['manual_counts']=dict(Counter(row['disposition'] for row in evidence['objective_results'].values()))
     atomic_json(Path(run) / 'assessment.json', summary)
     title='RHEL 10 installation-hardened assessment (ComplianceAsCode 0.1.82, V1R2)' if hardened else 'RHEL 10 DVD vendor-STIG baseline (draft 0.1.76)'
     (Path(run) / 'assessment.txt').write_text(title+'\n'

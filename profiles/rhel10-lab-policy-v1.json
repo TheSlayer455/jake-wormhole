@@ -19,9 +19,13 @@
     "profile_id": "xccdf_org.ssgproject.content_profile_stig",
     "benchmark_label": "RHEL 10 STIG V1R2",
     "upstream_rules": 1073,
-    "selected_rules": 473
+    "selected_rules": 472
   },
-  "tailoring": {"excluded_rules": [], "owner_approved_exceptions": []},
+  "tailoring": {"excluded_rules": ["xccdf_org.ssgproject.content_rule_sssd_enable_certmap"], "parameters": {"login_banner_text": "^Wormhole private home lab\\. Authorized lab use only\\. Activity is monitored\\.$", "var_accounts_authorized_local_users_regex": "^(root|bin|daemon|adm|lp|sync|shutdown|halt|mail|operator|games|ftp|nobody|tss|systemd-coredump|dbus|polkitd|avahi|colord|rtkit|pipewire|clevis|sssd|geoclue|flatpak|setroubleshoot|fapolicyd|libstoragemgmt|systemd-oom|gdm|cockpit-ws|gnome-initial-setup|sshd|chrony|dnsmasq|postfix|tcpdump|admin|unbound|yggdrasil|yggdrasil-worker|lab\\.service)$", "var_networkmanager_dns_mode": "none"}, "owner_approved_exceptions": []},
+  "rule_applicability": {
+    "xccdf_org.ssgproject.content_rule_sssd_enable_certmap": {"applicable": false, "pki_based_authentication": false, "authentication_contract": "run-scoped-ssh-public-key-and-local-password-required-sudo", "reason": "The declared lab workload does not use PKI authentication."}
+  },
+  "manual_controls": {"final_service_identity": "lab.service", "temporary_accounts": ["lab.service"], "temporary_account_maximum_hours": 72, "authorized_firewall_services": ["ssh"], "audit_partition_minimum_bytes": 10737418240, "pki_based_authentication": false, "government_or_production_approval_claimed": false},
   "requirements": {
     "all_selected_automated_rules_pass": true,
     "scanner_errors_allowed": 0,
@@ -51,8 +55,7 @@
     "authorized-nessus-execution"
   ],
   "unresolved_requirements": [
-    "cryptographic-module-and-operational-environment-verification",
-    "rule-level-manual-evidence"
+    "cryptographic-module-and-operational-environment-verification"
   ],
   "production_iso_eligible": false
 }

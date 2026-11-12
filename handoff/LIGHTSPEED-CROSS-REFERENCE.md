@@ -18,6 +18,10 @@ bounded private observation. It must not request a bulk repository export.
 This bundle reconciles the latest fresh two-OS evidence recorded on public main.
 The implementation used for those actual runs is
 [21fb946831a451a93c970346855e2c2aec781fb0](https://github.com/TheSlayer455/jake-wormhole/commit/21fb946831a451a93c970346855e2c2aec781fb0).
+The later focused RHEL chrony/recovery runtime used
+[e3208237884acc53fb4821cdbc6dcb5e867e49e1](https://github.com/TheSlayer455/jake-wormhole/commit/e3208237884acc53fb4821cdbc6dcb5e867e49e1);
+delivery and merge revisions are pending. It does not relabel the earlier Ubuntu
+or two-OS receipts.
 The public report was tested at
 [31093e4c556081f4654af9e8d28b65255b33fe98](https://github.com/TheSlayer455/jake-wormhole/commit/31093e4c556081f4654af9e8d28b65255b33fe98)
 and merged as
@@ -473,7 +477,7 @@ behavioral contract without another paste.
 | Completed-media intake | `wormhole/intake.py`, `wormhole/ubuntu_intake.py` | `tests/test_intake.py` |
 | Recovery and cleanup | `wormhole/recovery.py`, `wormhole/ubuntu_recovery.py`, `wormhole/storage.py` | `tests/test_recovery.py`, `tests/test_storage.py` |
 | Archive and exact restore | `wormhole/storage_archive.py`, `wormhole/archive_client.py` | `tests/test_storage.py`, `tests/test_archive_client.py` |
-| Publication | `wormhole/publication.py`, `wormhole/ubuntu_release.py` | `tests/test_publication.py`, `tests/test_ubuntu_reports.py`, `tests/test_ubuntu_release_readback.py` |
+| Publication | `wormhole/publication.py`, `wormhole/ubuntu_release.py`, `wormhole/rhel_release.py` | `tests/test_publication.py`, `tests/test_ubuntu_reports.py`, `tests/test_ubuntu_release_readback.py`, `tests/test_rhel_release.py` |
 
 For quick public examples, run these from the Wormhole checkout at the pinned
 revision. The first exercises the real console frame parser. The second calls
@@ -533,6 +537,20 @@ assertion of the precise execution time.
 | A / 2026-10-31 checkpoint | [Archive client at b881127](https://github.com/TheSlayer455/jake-wormhole/blob/b881127296ea9b2bc23dbde523b1c0a8b9021842/wormhole/archive_client.py); [failure-test revision](https://github.com/TheSlayer455/jake-wormhole/commit/61f91d9d29c4ceec5ec75e782bf0e6ecb4185668); [recorded storage proof](https://github.com/TheSlayer455/jake-wormhole/blob/56ca6fdb9f174c7649c27e2b778c67ca94849962/docs/STATE.md) | Real workstation archive, destination readback, eligible local deletion and exact-byte restore of a probe and historical ISO; actual unavailable/interrupted/corrupt transfer refusal. |
 | E / 2026-11-10, runtime test date | [Runtime at 21fb946](https://github.com/TheSlayer455/jake-wormhole/commit/21fb946831a451a93c970346855e2c2aec781fb0) | One new fresh encrypted installation per OS using verified reused media. RHEL passed 10 hardened and six controller checks with 449 RPMs; Ubuntu passed 40 with 638 packages, three Snaps and two payloads. Native totals matched H and U/D. Automatic file cleanup reclaimed 7.905/2.130 GiB respectively, separately from disk destruction. Archived evidence reconciled, no owned resources, no qualified ISO. |
 | T / 2026-11-10, runtime test date | [Client cleanup](https://github.com/TheSlayer455/jake-wormhole/blob/461b113cfe91b261eb65a69e3779680203f1ad8e/wormhole/archive_client.py) and [restore staging](https://github.com/TheSlayer455/jake-wormhole/blob/461b113cfe91b261eb65a69e3779680203f1ad8e/wormhole/storage_archive.py) | Existing workstation and host cleanup reclaimed 32 MiB temporary files on each system. An existing 6 MiB archived probe restored exactly and was reclaimed after verified readback; no new encrypted object or VM. Repeat host cleanup reclaimed zero and unrelated containers were preserved. |
+| C / 2026-11-11, runtime receipt date | [Chrony and recovery correction at e320823](https://github.com/TheSlayer455/jake-wormhole/commit/e3208237884acc53fb4821cdbc6dcb5e867e49e1) | One fresh encrypted RHEL 10 installation preserved the declared lab time source and synchronization while the selected client-only and no-network-management rules passed. All 1,073 native outcomes were accounted for; assessment performed no remediation; hardened/controller checks, evidence retention and exact-owned cleanup passed. A finished-journal recovery retained an interrupted workload as unknown and reclaimed only duplicate candidate storage. |
+| K / 2026-11-12, runtime receipt date | [Kdump and banner-path runtime at da63dc0](https://github.com/TheSlayer455/jake-wormhole/commit/da63dc0a79b6b545f4fe7ef9c55cf9d9ac0b2be0) | One fresh encrypted RHEL 10 installation passed the final masked-kdump and SSH banner-path rules, every hardened/controller check, SVD, full native accounting, no-remediation assessment and cleanup. The honest local banner exposed a separate upstream-default value mismatch, so eligibility remains false. |
+| B / 2026-11-12, runtime receipt date | [Declared banner tailoring runtime at 03d2986](https://github.com/TheSlayer455/jake-wormhole/commit/03d29868184bb711c78932eb1eea78e3f18b0ac3) | One fresh encrypted RHEL 10 installation used a one-value XCCDF tailoring for the truthful lab banner. The receipt binds those exact tailoring bytes; the banner rule and all previously closed chrony/kdump/SSH-banner rules pass, assessment performed no remediation, all hardened/controller checks and cleanup passed, and all 1,073 native outcomes remain accounted. |
+| AC / 2026-11-12, runtime receipt date | [Authorized-account runtime at c944a86](https://github.com/TheSlayer455/jake-wormhole/commit/c944a8668e86979e38af673c5d81a9bf54d270a6) | One fresh encrypted RHEL 10 installation declared only the three locked package service identities and final Wormhole identity omitted by the pinned default. The native account rule passed without deleting accounts or excluding rules; all 1,073 outcomes, hardened/controller checks, read-only assessment and cleanup passed. |
+| NR / 2026-11-12, runtime receipt date | [Local-only name-resolution runtime at 77498b3](https://github.com/TheSlayer455/jake-wormhole/commit/77498b3a5934e3ee7cc538e30194e39b74e9eba1) | One fresh encrypted RHEL 10 installation used the pinned rule's truthful local-only branch rather than inventing a second DNS service. The name-resolution and NetworkManager rules, time/log/audit services, all hardened/controller checks, SVD, read-only assessment and cleanup passed; all 1,073 outcomes remain accounted. The encrypted archive verified ten objects and exact-file cleanup reclaimed 8,487,366,656 allocated bytes. |
+| G0 / 2026-11-12, failed diagnostic | [First GRUB draft at f611d95](https://github.com/TheSlayer455/jake-wormhole/commit/f611d951fb78059fc0cd25c27c049cd10a8378db) | The actual attempt installed all 449 packages, then failed in hardening because the draft expected PBKDF2 material in the wrong GRUB file shape. Readiness and dependent checks were blocked; exact-owned teardown completed and cleanup reclaimed 405,504 transient allocated bytes. This failed attempt is preserved and is not proof of the corrected input. |
+| GA / 2026-11-12, runtime receipt date | [GRUB generator correction at 518691a](https://github.com/TheSlayer455/jake-wormhole/commit/518691acacf909c0e01624af2a31a561d7a33c28), [executed source at 7bfa09d](https://github.com/TheSlayer455/jake-wormhole/commit/7bfa09def373c32d2177d223fcf6d97b35289d28) | A fresh encrypted installation proved the corrected generator, preserved PBKDF2 material, actual boot, trusted SSH/Ansible, all hardened/controller checks, SVD and read-only assessment. The GRUB rule passes; 432 native passes/two failures remain, assessment performed no repair and exact-owned cleanup passed. Ten archive objects were verified and 8,487,362,560 allocated bytes reclaimed. |
+| SA / 2026-11-12, runtime receipt date | [SELinux sudo transition at 8d825f6](https://github.com/TheSlayer455/jake-wormhole/commit/8d825f66c261d1d11e82f17c5f53377436650e3a), [executed source at 3f128cb](https://github.com/TheSlayer455/jake-wormhole/commit/3f128cb81d0139ac2584b86898753d79a8bd5ed4) | A fresh encrypted installation proved trusted SSH in `staff_r:staff_t`, password-backed sudo/Ansible in `sysadm_r:sysadm_t`, all 11 hardened/six controller checks, SVD and read-only assessment. The native SELinux rule passes; 433 native passes/one failure remain and exact-owned cleanup passed. Ten archive objects were verified and 8,487,362,560 allocated bytes reclaimed. |
+| CM / 2026-11-12, runtime receipt date | [Certificate-map applicability at 85bfd57](https://github.com/TheSlayer455/jake-wormhole/commit/85bfd5722e6f4e72f363ca8db9ee33aa7b51b5a8), [executed source at 4ac320d](https://github.com/TheSlayer455/jake-wormhole/commit/4ac320ddb2d21ff3172d04b4cf33547c425c9490) | A fresh encrypted installation proved the final non-PKI configuration, strict key SSH, password-backed sudo/Ansible, all 12 hardened/six controller checks, SVD and read-only assessment. The exact rule is native `notselected`; 433 rules pass, none fail, all 1,073 outcomes are accounted and exact-owned cleanup passed. Ten archive objects were verified and 8,487,362,560 allocated bytes reclaimed. |
+| ME / 2026-11-12, source proof pending runtime | [Manual evidence implementation at f10e0e0](https://github.com/TheSlayer455/jake-wormhole/commit/f10e0e03c597464c0fc4b3f10f3239e97d0d2f1c), [identity correction at a8263e9](https://github.com/TheSlayer455/jake-wormhole/commit/a8263e900e10f04eab3f6e4f98e4a6d9fa26842b) | One read-only observer covers the exact ten native `notchecked` rules without rewriting them. Installation inputs now set a 48-hour service-identity expiry and a literal `DROP` zone with SSH as its sole exception. Evidence is bound to the guest run/boot and built policy; all undeclared firewall rule classes are rejected. It cannot assert an owner exception or government/production approval. Twenty-one focused cases pass; fresh guest proof remains required. |
+| MD / 2026-11-12, failed runtime and correction pending fresh proof | [Named readiness-stage marker at 4552360](https://github.com/TheSlayer455/jake-wormhole/commit/4552360c38bc3da40d8b56977feadbbf88b0a54f), [firewall assertion refinement at 5ed8d6c](https://github.com/TheSlayer455/jake-wormhole/commit/5ed8d6cb3688f333e778511cb4d99cd85363b3b5), [safe target observation at 705c3c1](https://github.com/TheSlayer455/jake-wormhole/commit/705c3c152b79937387b261352b1c7abf08967c90), [query correction at 6489604](https://github.com/TheSlayer455/jake-wormhole/commit/6489604dac7fd8ba90595cd9bb30bc3a77e1c85d) | Fresh diagnostics proved default zone, active zone and interface binding passed, then the target query itself failed before returning a value. The observer had invoked a permanent-only target operation without `--permanent`; both readiness and manual collection now use the supported call while separate live firewall checks remain. No policy was weakened. Dependent validation stayed blocked, exact cleanup passed and no guest remains. Sixteen focused cases pass; fresh installation proof of the correction remains required. |
+| MR / 2026-11-12, runtime receipt and manual-evidence closure | [Initial lifecycle source at 8ba4274](https://github.com/TheSlayer455/jake-wormhole/commit/8ba42740da296aa6428b2602f7ec37bb06578b4e), [active-zone parser correction at 0cbb4c1](https://github.com/TheSlayer455/jake-wormhole/commit/0cbb4c18fb078f10e791de43e05be2f74a3e68ae), [fresh proof at 239aad0](https://github.com/TheSlayer455/jake-wormhole/commit/239aad0e76d10d158dc08848648a85df9ef3dc9e) | The first fresh run passed the complete lifecycle with zero native failures but exposed the annotated-zone parser defect. The correction then passed a second fresh installation: all ten native manual rows are now bound and complete (seven objective satisfied, three governed N/A) without rewriting their scanner statuses or adding an exception. All hardened/controller checks, encryption, SVD, read-only assessment and cleanup pass. Encrypted archival reclaimed the retained candidate/evidence; no guest or pending archive item remains. Lab release is still blocked by cryptographic operating-environment evidence, its evaluator/publisher and a final same-candidate pair after converged inputs, not by manual controls. |
+| RG / 2026-11-12, real retained-evidence evaluation | [Strict RHEL release gate at 618d89f](https://github.com/TheSlayer455/jake-wormhole/commit/618d89f3d5a1208b0193a235fc0834088ce719b3), [release-evidence retention at 692b10d](https://github.com/TheSlayer455/jake-wormhole/commit/692b10daf6fefd1567ac5b901622659103a6e7f1) | The gate re-parsed and hash-bound the retained native XCCDF/ARF, build, manual, SVD and technical FIPS evidence. The grid records 462 pass, 640 skipped and three blocked results. Red Hat/NIST status does not verify this RHEL 10 OE; the exact publisher refused before output creation. Synthetic positive publication tests prove only gate mechanics, exact-byte copy, completion-last and consumer tamper/refusal behavior. The archive verified all nine new records; all 695 objects are committed with zero pending/failures and no guest/disk/controller. Production eligibility stays false. |
+| DV / 2026-11-12, delivery verification | [Verified branch at d8c9ef3](https://github.com/TheSlayer455/jake-wormhole/commit/d8c9ef3d1d9341317856531d6b0132f5d81e25a1) | A fresh full-history Linux checkout passed repository hygiene, the historical evidence index, all 1,030 source tests with 12 declared platform/privilege skips, all 17 controlled parity cases and staged-export readback. This verifies the public implementation and portable handoff; it does not replace the real RHEL runtime receipt or close RG's three release blockers. |
 | S / 2026-10-31 checkpoint | [Retained SVD archival at f2a3d5c](https://github.com/TheSlayer455/jake-wormhole/blob/f2a3d5ca383a1fea9230a9d1225406ae1f9bde26/wormhole/storage_archive.py); [PR 45](https://github.com/TheSlayer455/jake-wormhole/pull/45) | 298 verified encrypted objects at that checkpoint; six additional SVD/build-manifest readbacks; local originals retained. This is not a live backlog count. |
 
 ## Verified mechanisms and boundaries
@@ -540,30 +558,30 @@ assertion of the precise execution time.
 | Lifecycle | Implementation and actual proof | Transfer limitation |
 | --- | --- | --- |
 | Media and candidates | Streaming chunk reconstruction verifies source integrity. Installed-input fingerprints govern candidate reuse; unchanged bytes can serve new attempts without rebuilding. U verifies identical candidate/contract across two independent installations. | Hash identity alone does not prove freshness, qualification or team intent. Controller/report-only changes differ from installed-input changes. |
-| RHEL installer | R preserves the DVD BIOS boot machinery and uses a separate Kickstart seed. H applies pinned hardening during installation and validates the resulting system after reboot. The powered-off check verified LUKS acceptance of the correct key and refusal of wrong and missing keys. | BIOS lab profiles. The receiving team owns its installation contract. H still has open assessment findings and cryptographic validation requirements. |
+| RHEL installer | R preserves the DVD BIOS boot machinery and uses a separate Kickstart seed. H applies pinned hardening during installation and validates the resulting system after reboot. The powered-off check verified LUKS acceptance of the correct key and refusal of wrong and missing keys. | BIOS lab profiles. The receiving team owns its installation contract. H has no selected native failure, but cryptographic operating-environment and release requirements remain open. |
 | Ubuntu installer | [Ubuntu inputs](https://github.com/TheSlayer455/jake-wormhole/blob/a705e2be45979b0df8f4ac7178b43c95c4eb09d4/wormhole/ubuntu_inputs.py) bind versioned offline payloads and hardening with a declared private NoCloud seed. U installs Ubuntu 22.04.5 x86_64, completes first-boot finalization/hardening and required reboot. | Neither path is a universally self-contained ISO. Separate secrets/endpoints are declared dependencies; acceptance does not repair the guest into compliance. |
 | VM provisioning | [Shared VM lifecycle](https://github.com/TheSlayer455/jake-wormhole/blob/a705e2be45979b0df8f4ac7178b43c95c4eb09d4/wormhole/vm_baseline.py) uses Terraform/libvirt/KVM, empty disks, serial evidence and exact resource journals. One live acceptance guest; 8 GiB RAM/two vCPUs, RHEL 32 GiB disk or Ubuntu 64 GiB disk. | Ubuntu virtualization host, BIOS only. No UEFI/Secure Boot, enterprise scale, remote work-runner routing or arbitrary host compatibility claim. |
 | Readiness and trust | Controlled serial evidence supplies the installed guest's unique host key. Strict SSH verifies host identity and the intended final account, completed installation marker, OS and mounted root. Real Ansible verifies interpreter/privilege access from the designated helper. U also proves encrypted reboot/cold-start and wrong/missing unlock refusal. | Port-open or installer SSH cannot satisfy readiness. RHEL baseline privilege policy differs from Ubuntu's required password-based escalation; preserve each contract. |
 | Functional validation | U: 40/40 checks each, including real lab logging/audit/time, scoped trust/PAM, encryption and access probes. H/E: 10/10 hardened and 6/6 controller checks, including encryption, FIPS mode, SELinux, audit, logging, time, reboot and Ansible. L: authenticated but inaccessible completion evidence immediately blocks dependent checks. | These are declared lab catalogs, not a proprietary product catalog. Lab time/PKI/software-token tests do not establish external trusted time, government identity or physical-token assurance. |
 | SVD | Structured native Ansible inventory feeds readable and JSON SVDs. H/E: 449 RPM rows with native version/release/epoch/architecture; key headers separate. U/E: 638 packages, three Snaps and two payload entries. Build inventory remains distinct from installed inventory. Original row/readable-output readback passed. | Counts do not establish equivalent proprietary packages or business behavior. No package list is exported here. |
 | Assessment | Both OSes retain actual OpenSCAP machine-readable and readable reports, scanner/content identity and every native outcome. Ubuntu supplements manual observations without rewriting scanner statuses. | Findings must satisfy the declared policy. Evaluate-STIG, Nessus and Ubuntu USG/FIPS execution remain unproven. |
-| Execution and recovery | L acknowledges actual admission/start, records observed phase/progress separately from liveness, and persists failure/unknown outcomes. Controlled interruption retained unknown state until stopped-process/ownership reconciliation. U's final pair finished automatically; compact terminal storage summaries reference full durable receipts. | Missing acknowledgment or observer loss requires reconciliation, not automatic duplicate launch. A recovered unknown attempt remains unknown, never successful. |
+| Execution and recovery | L acknowledges actual admission/start, records observed phase/progress separately from liveness, and persists failure/unknown outcomes. Controlled interruption retained unknown state until stopped-process/ownership reconciliation. C also proves recovery when the immutable resource journal finished before the terminal result was written: exact absence was reobserved and the workload stayed unknown. U's final pair finished automatically; compact terminal storage summaries reference full durable receipts. | Missing acknowledgment or observer loss requires reconciliation, not automatic duplicate launch. A recovered unknown attempt remains unknown, never successful. |
 | Cleanup | Terraform destroys exactly recorded resources after evidence collection; storage uses the shared admission/ownership lock. U/R/L verified temporary resource absence. Original operation errors survive cleanup errors. | No global prune, ambiguous-prefix deletion or deletion of unresolved evidence. Historical absence is not evidence of current host availability. |
 | Completed-ISO intake | I and D verify an explicit completion manifest, protected bytes, actual size/hash and a declared contract. They use the same dispatcher and fresh seed. D also binds the build manifest and verifies the embedded Ubuntu payload. | Evidence covers RHEL 10 BIOS baseline and Ubuntu 22.04 hardened sandbox. Periodic monitoring was exercised on RHEL and removed afterward. Other producer contracts need their own evidence. |
 | Intake identity and retries | I proves no second active VM on duplicate notification/restart. Real-file source fixtures prove same filename/new bytes, changed assessment identity and explicit retry create distinct requests. | Those identity fixtures are not additional VM experiments. Deduplication must not permanently prevent legitimate requalification. |
 | Storage/archive | A/S/T extend existing storage receipts: workstation-initiated strict SSH, age encryption, actual decrypted destination hash/size verification, durable commit before eligible local reclamation, explicit verified restore. Active disks/state/credentials/journals stay local. Offline/pending data is retained; admission can refuse new work. | Real archive/restore and failure tests, not a proposal or localhost-only copy. A limited periodic task was installed and exercised at the checkpoint; current availability is not asserted. Retention is not a proven independent backup or key-loss recovery policy. |
-| Gates/publication | [Ubuntu gate/publisher](https://github.com/TheSlayer455/jake-wormhole/blob/a705e2be45979b0df8f4ac7178b43c95c4eb09d4/wormhole/ubuntu_release.py) requires complete bound results, matching independent installations and declared policy. U's normal publication attempt was refused for pending dependencies with no release created. | Positive ISO-publication integrity fixtures are source tests only. No lab-qualified ISO publication is proven. Historical container-reference publication is a separate capability. Production eligibility remains false. |
+| Gates/publication | The [Ubuntu gate/publisher](https://github.com/TheSlayer455/jake-wormhole/blob/a705e2be45979b0df8f4ac7178b43c95c4eb09d4/wormhole/ubuntu_release.py) and [RHEL gate/publisher](https://github.com/TheSlayer455/jake-wormhole/blob/618d89f3d5a1208b0193a235fc0834088ce719b3/wormhole/rhel_release.py) require complete bound results, matching independent installations and declared policy. Both real pending-policy publication attempts were refused before a release was created. RHEL consumer readback also binds native hashes, build/manual/SVD/boot/OE identities and the exact ISO. | Positive ISO-publication integrity fixtures are source tests only. No lab-qualified ISO publication is proven. Historical container-reference publication is a separate capability. Production eligibility remains false. |
 
 ## Native outcomes and unresolved qualification
 
-| Native result | RHEL baseline R | Hardened RHEL H | Ubuntu U and D, each |
-| --- | ---: | ---: | ---: |
-| Pass | 172 | 425 | 210 |
-| Fail | 261 | 9 | 1 |
-| Not applicable | 56 | 29 | 14 |
-| Not checked | 9 | 10 | 5 |
-| Not selected | 450 | 600 | 409 |
-| Total | 948 | 1,073 | 639 |
+| Native result | RHEL R | Hardened H/E | Chrony C | Kdump K | Banner B | Accounts AC | DNS NR | GRUB GA | SELinux SA | Certmap CM | Ubuntu U/D |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Pass | 172 | 425 | 427 | 428 | 429 | 430 | 431 | 432 | 433 | 433 | 210 |
+| Fail | 261 | 9 | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 | 1 |
+| Not applicable | 56 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 29 | 14 |
+| Not checked | 9 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 5 |
+| Not selected | 450 | 600 | 600 | 600 | 600 | 600 | 600 | 600 | 600 | 601 | 409 |
+| Total | 948 | 1,073 | 1,073 | 1,073 | 1,073 | 1,073 | 1,073 | 1,073 | 1,073 | 1,073 | 639 |
 
 R uses the DVD's pinned SCAP Security Guide 0.1.76 vendor-draft content; it does
 not prove alignment with a current released DISA benchmark. U uses OpenSCAP 1.4.6
@@ -588,40 +606,104 @@ unverified. Historical policy/results have not been rewritten.
 Evaluate-STIG has not run on either OS: an authorized official package, included
 support documentation and permitted invocation remain unavailable. Nessus has no
 verified runtime execution here. No alternative scan can satisfy those claims.
-H uses ComplianceAsCode 0.1.82 and its pinned RHEL V1R2 profile. The native
-findings, unresolved manual evidence and verification of cryptographic modules
-and their operating environment keep qualification pending. The different
-content in R and H prevents a direct finding-count comparison.
+H uses ComplianceAsCode 0.1.82 and its pinned RHEL V1R2 profile. Its fresh
+runtime result is 433 pass, zero fail, 29 not applicable, ten not checked and
+601 not selected; all 1,073 native outcomes are accounted. The ten manual rows
+also have complete supplemental evidence without changing their scanner status.
+Cryptographic module/operating-environment verification and the release gate
+still keep qualification pending. The different content in R and H prevents a
+direct finding-count comparison.
 
 ### Exact current RHEL qualification blockers
 
-The fresh E run preserved these nine selected automated failures. The names are
-public rule suffixes, not private configuration values.
+The fresh C run closed the two historical chrony failures while preserving time
+synchronization. K then closed kdump and the SSH banner path, while exposing the
+separate declared-banner-value mismatch. B closed that value mismatch through a
+single declared XCCDF value, without changing rule selection. AC then closed the
+authorized-account mismatch, NR closed the name-resolution finding without
+adding a fictitious resolver, GA closed the GRUB administrator finding and SA
+proved the SELinux sudo transition behavior. CM then closed the final selected
+automated boundary through a declared and observed non-PKI contract. No selected
+automated failure remains. The historical
+names are public rule suffixes, not private configuration values.
 
-| Rule suffix | Open requirement |
-| --- | --- |
-| `accounts_authorized_local_users` | Authorized local-account policy |
-| `grub2_admin_username` | Nondefault boot-loader administrator |
-| `network_configure_name_resolution` | Multiple declared name-resolution servers |
-| `selinux_context_elevation_for_sudo` | SELinux context elevation through sudo |
-| `service_kdump_disabled` | Disabled kdump |
-| `chronyd_client_only` | Client-only time synchronization |
-| `chronyd_no_chronyc_network` | No network chrony management |
-| `sshd_enable_warning_banner` | SSH warning banner |
-| `sssd_enable_certmap` | SSSD certificate mapping |
+CM is the applicability correction for that last selected row. The
+pinned rule applies to PKI authentication, while the declared lab contract uses
+a run-scoped SSH public key and local password-required sudo. CM adds no
+exception and does not claim a scanner pass: it requires native `notselected`
+for exactly this rule, rejects an installed certificate-map section and
+preserves complete rule accounting. A fresh installation proved those conditions
+without weakening strict SSH or password-backed sudo/Ansible.
 
-Ten native not-checked rules still need accountable rule-level evidence and
-disposition: `crypto_policy_not_overridden`, `encrypt_partitions`,
+ME is the verified ten-rule manual evidence boundary. It keeps native
+`notchecked` outcomes intact and records separate objective or governed
+not-applicable evidence. Its two installation changes address observed source
+gaps—account expiry and literal firewalld `DROP`—rather than remediating during
+acceptance. Fresh runtime source `239aad0` proved all ten dispositions (seven
+objective satisfied and three governed not applicable), with no exception and
+all lifecycle, inventory, assessment and cleanup checks still passing.
+
+SA replaced the
+unrestricted per-user sudo input, restores the mapped user's labels, validates
+the complete sudo policy and adds an actual pre/post transition observation. Its
+fresh guest established trusted SSH, password-backed Ansible become,
+`staff_r:staff_t` login, `sysadm_r:sysadm_t` sudo execution and the native rule
+result.
+
+The retained B objects showed that the account rule's RHEL 10 default allowlist
+omits three locked service identities belonging to installed packages and the
+declared final Wormhole service identity. Source
+[ff881b1](https://github.com/TheSlayer455/jake-wormhole/commit/ff881b11cbb6184adbdb398d787979c06912edee)
+adds only those four identities to the existing XCCDF value; it does not delete
+accounts, exclude the rule or change rule selection. Focused generated-input
+tests passed. AC's fresh installation proved the native result while preserving
+authentication, inventory, assessment and cleanup.
+
+The isolated guest enabled DNS lookup but had no second resolver or declared
+DNS dependency. Source
+[2b3c16b](https://github.com/TheSlayer455/jake-wormhole/commit/2b3c16ba476c5d0c5f03467030b37c0422531923)
+implements the pinned rule's documented local-only branch using NetworkManager
+`dns=none`, NSS without the `dns` token and an empty resolver file. It does not
+invent duplicate DNS servers. NR proved the native rule and unchanged
+post-reboot lab-service behavior in a fresh installation.
+
+The retained GRUB OVAL evidence found Anaconda's default `root` boot-loader
+administrator even though a valid per-installation PBKDF2 secret existed.
+[518691a](https://github.com/TheSlayer455/jake-wormhole/commit/518691acacf909c0e01624af2a31a561d7a33c28)
+changes the generator username independent of its password expression, verifies
+the separately stored PBKDF2 secret, uses the non-login
+`wormhole_boot_admin` and regenerates the installed BIOS configuration. Focused
+source tests pass. GA proved the native rule, actual boot, final access and
+unchanged hardened/controller behavior in a fresh installation.
+
+The retained native objects established that the final kdump unit was inactive
+but loaded rather than masked, and that the post-remediation SSH drop-in used a
+different banner path. [a947977](https://github.com/TheSlayer455/jake-wormhole/commit/a947977c541adc6309c436803cfb992f5da18e75)
+corrected both installation inputs, and K proved both native rules pass. K also
+proved that hard-coding the accurate lab notice after remediation cannot satisfy
+the upstream profile's different default banner expression. That distinct rule
+was addressed in source at
+[e28b6bf](https://github.com/TheSlayer455/jake-wormhole/commit/e28b6bfa2e1dd765240b36f47b836bdb924894fe)
+by a single declared XCCDF value used for both installation remediation and the
+read-only audit. It changes no rule selection and grants no exception. The rule
+passed in B's fresh empty-disk installation; its receipt binds the tailoring
+bytes and records no assessment remediation.
+
+Ten native not-checked rules retain accountable rule-level evidence and
+disposition without being rewritten as scanner passes: `crypto_policy_not_overridden`, `encrypt_partitions`,
 `account_temp_expire_date`, `accounts_user_home_paths_only`,
 `configure_firewalld_ports`, `configured_firewalld_default_deny`,
 `libreswan_approved_tunnels`, `ssh_keys_passphrase_protected`,
 `sssd_has_trust_anchor` and
 `auditd_audispd_configure_sufficiently_large_partition`. Encryption and FIPS
 functional checks provide bounded supplemental observations without rewriting
-native statuses. Cryptographic module identity, certification scope and the
-applicable operating environment remain unverified. Wormhole also lacks a
-completed RHEL lab release evaluator and exact-byte publisher. These are
-engineering tasks, not new owner approval requests.
+native statuses. All ten rows are complete. Technical FIPS runtime and exact
+installed module identities are bound; certification scope and the applicable
+RHEL 10 operating environment remain unverified. The RHEL evaluator/publisher is
+implemented and ran against the real retained evidence. Its real publication
+attempt refused before output creation. A final same-candidate pair and positive
+exact-byte publication/readback remain downstream of a stable satisfiable OE and
+policy input; source-only positive fixtures do not satisfy that release proof.
 
 ### Exact current Ubuntu qualification blockers
 
@@ -660,6 +742,19 @@ candidate cache, 9.874 GiB of source media, 22.402 GiB of required evidence,
 3.820 MiB of historical reference-release bundles. Host filesystem availability
 was 131.340 GiB. The workstation archive held 407 encrypted objects occupying
 68.794 GiB, with no pending bytes, failed receipts or transfer staging.
+
+C later recovered a finished-journal/missing-result inconsistency without
+inventing success. The normal storage engine reclaimed 8,487,432,192 allocated
+duplicate bytes while retaining a canonical local candidate and verified archive.
+Its fresh RHEL run reclaimed another 405,504 transient allocated bytes. Current
+managed storage is 83.594 GiB, including a 37.784 GiB candidate cache, with
+130.785 GiB host filesystem availability. All 66 unrelated running containers
+matched the pre-run set.
+
+NR's archive then verified ten additional encrypted objects and exact-file
+cleanup reclaimed 8,487,366,656 allocated bytes. Current allocation is 76.167
+GiB managed, 29.880 GiB candidates and 138.207 GiB available, with 457 committed
+archive objects, zero pending bytes, zero failed receipts and no VM disk.
 
 Managed retention grew about 200.7 MiB because the new native evidence is kept.
 That growth does not negate temporary cleanup. Protected active inputs, required

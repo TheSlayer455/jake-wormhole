@@ -11,8 +11,25 @@ import xml.etree.ElementTree as ET
 from . import vm_baseline as vm
 from .admission import CANONICAL_INFRASTRUCTURE_ROOT
 from .runs import atomic_json, read_json, run_id, workspace_path, now
-from .vm_admission import VMLease, require
+from .vm_admission import VMLease, require, validate_record
 from .vm_inputs import sha256, terraform_config
+
+
+def terminalize_reconciled(result):
+    """Preserve an interrupted workload as unknown after exact resources are absent."""
+    result['recovery']={'state':'stopped-and-cleaned','at':now(),'original_outcome':result['outcome']}
+    if result['outcome']=='running':
+        result.update(outcome='unknown',error_category='supervisor_interrupted_without_terminal_result')
+        result.setdefault('first_failure',result['error_category'])
+        if 'checks' in result:result['checks']={k:'blocked' if v=='pending' else v for k,v in result['checks'].items()}
+    result['cleanup']='verified-absent-inputs-retained'
+    result.setdefault('finished_at',now())
+    return result
+
+
+def network_filter_present(name):
+    return subprocess.run(['virsh','-c','qemu:///system','nwfilter-dumpxml',name],
+        capture_output=True,text=True,timeout=10).returncode==0
 
 
 def recover(identifier, terraform=None):
@@ -43,6 +60,43 @@ def recover(identifier, terraform=None):
     if isolated:expected.add(('network_filter',name+'-isolation'))
     def virsh(*args):
         return subprocess.check_output(['virsh','-c','qemu:///system',*args],timeout=10,text=True)
+    history=CANONICAL_INFRASTRUCTURE_ROOT/'vm-history'/(identifier+'.json')
+    if history.exists():
+        # A supervisor can disappear after the immutable ownership journal was
+        # finished but before result.json was terminalized. Reobserve every exact
+        # resource; never resume a finished lease or reinterpret it as success.
+        journal=validate_record(read_json(history))
+        require(journal['run_id']==identifier and journal['source_revision']==result['source_revision'] and
+                journal['state']=='finished' and {(x['kind'],x['identity']) for x in journal['resources']}<=expected,
+                'recovery_ownership_mismatch')
+        for item in journal['resources']:
+            kind,identity,outcome=item['kind'],item['identity'],item['outcome']
+            require(outcome!='pending','recovery_ownership_mismatch')
+            if kind in {'controller_container','support_container'}:
+                require(subprocess.run(['docker','inspect',identity],capture_output=True,text=True,timeout=10).returncode!=0,
+                        'recovery_resource_present')
+            elif kind=='domain':require(identity not in set(virsh('list','--all','--name').split()),'recovery_resource_present')
+            elif kind=='network':require(identity not in set(virsh('net-list','--all','--name').split()),'recovery_resource_present')
+            elif kind=='pool':require(identity not in set(virsh('pool-list','--all','--name').split()),'recovery_resource_present')
+            elif kind=='network_filter':require(not network_filter_present(identity),'recovery_resource_present')
+            elif kind=='disk':require(not Path(identity).exists(),'recovery_resource_present')
+            elif kind in {'installer_iso','seed_iso'}:
+                require(Path(identity).is_file() if outcome=='retained-input' else not Path(identity).exists(),
+                        'recovery_input_disposition_mismatch')
+        terminalize_reconciled(result)
+        atomic_json(run/'result.json',result)
+        try:
+            from .storage import Store
+            store=Store()
+            with store.locked():receipt=store.clean_held(current=identifier)
+            result['storage_cleanup']={**{key:receipt[key] for key in ('schema_version','operation_id','state','at','actions',
+                'unlinked_allocated_bytes','filesystem_available_delta_bytes','cache_budget_exceeded','retention_budget_exceeded')},
+                'receipt':'storage-operations/'+receipt['operation_id']+'.json'}
+            if receipt['retention_budget_exceeded']:result['storage_cleanup_error']='storage_retention_budget'
+        except Exception as error:
+            result['storage_cleanup_error']=getattr(error,'code',type(error).__name__)
+        atomic_json(run/'result.json',result)
+        return result
     with VMLease.resume(CANONICAL_INFRASTRUCTURE_ROOT,identifier,result['source_revision']) as lease:
         require({(x['kind'],x['identity']) for x in lease.record['resources']}<=expected,'recovery_ownership_mismatch')
         for helper in [name+'-controller']+([name+'-services'] if support else []):
@@ -106,13 +160,7 @@ def recover(identifier, terraform=None):
                 lease.reconciled(item['kind'],item['identity'],
                     retained_input=item['kind'] in {'installer_iso','seed_iso'} and Path(item['identity']).is_file())
         lease.finish()
-        result['recovery']={'state':'stopped-and-cleaned','at':now(),'original_outcome':result['outcome']}
-        if result['outcome']=='running':
-            result.update(outcome='unknown',error_category='supervisor_interrupted_without_terminal_result')
-            result.setdefault('first_failure',result['error_category'])
-            if 'checks' in result:result['checks']={k:'blocked' if v=='pending' else v for k,v in result['checks'].items()}
-        result['cleanup']='verified-absent-inputs-retained'
-        result.setdefault('finished_at',now())
+        terminalize_reconciled(result)
         atomic_json(run/'result.json',result)
         try:
             from .ubuntu_runtime import report

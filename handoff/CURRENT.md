@@ -1,5 +1,338 @@
 # Current handoff
 
+## RHEL release evaluator and authoritative crypto boundary
+
+Tested source `618d89f3d5a1208b0193a235fc0834088ce719b3` adds one strict
+RHEL release module plus the reviewed public OE status record. The gate re-parses
+native XCCDF/ARF, binds native hashes, executed build manifest, manual evidence,
+installed SVD, boot identities and technical FIPS observations, requires a truly
+independent matching pair, copies exact candidate bytes, writes completion last
+and performs a closed-set consumer readback. Secret-bearing run files are not
+published. Four focused release tests and 33 adjacent RHEL/portable tests pass;
+independent read-only review found no remaining high/medium defect.
+
+The evaluator executed against the retained successful `239aad0` run. Its grid
+contains 462 pass, 640 skipped and three blocked results; native totals remain
+433/zero/29/10/601 and manual totals seven satisfied/three governed N/A. The
+publisher was then invoked through the real entry point and refused with
+`lab_policy_dependencies_pending` before creating a directory. Red Hat currently
+lists the RHEL 10 OpenSSL module as pending an operational-environment update and
+Kernel Crypto API, GnuTLS and NSS as implementation under test. NIST certificate
+5573 applies to listed RHEL 9 environments, not this RHEL 10 guest. Technical
+FIPS mode and exact installed module identities pass, but validated RHEL 10 OE
+applicability does not. Lab/production eligibility remain false. A final matching
+pair and positive publication wait for a stable satisfiable OE/policy input.
+
+Source `692b10daf6fefd1567ac5b901622659103a6e7f1` adds the resulting
+qualification, crypto, receipt, datastream and manual records to the existing
+encrypted archive allowlist. The first reconciliation safely refused because the
+established archive command used an older clean operational checkout; updating
+that checkout to `692b10d` corrected the proven compatibility boundary without
+changing transport or credentials. A later interruption left verified ciphertext
+and its receipt before the host commit; the existing commit operation completed
+that same object without recopy or overwrite. Reconciliation then completed: all
+695 objects are committed, all nine expected new release/native records are
+verified, and pending/failure counts are zero. Archive verified bytes total
+187.882 GiB. Managed/candidate/free storage is 76.968/29.880/137.403 GiB. No
+source was reclaimed without a commit; no VM/controller/disk remains.
+
+The delivery-boundary revision is
+`d8c9ef3d1d9341317856531d6b0132f5d81e25a1`. A fresh full-history Linux
+checkout passed repository hygiene, the historical evidence index, all 1,030
+source tests (12 explicit platform/privilege skips), all 17 controlled parity
+cases and staged-export validation. A separate attempt from the Windows-linked
+worktree reproduced an unsupported WSL `.git`-pointer context failure; the clean
+Linux checkout and hosted branch workflow both pass.
+
+## RHEL manual-control final-readiness diagnosis
+
+Source `a8263e900e10f04eab3f6e4f98e4a6d9fa26842b` implements one
+read-only observer for the exact ten native `notchecked` rules. Native statuses
+remain unchanged; the controller binds objective or governed-not-applicable
+evidence to the run, candidate, policy, content and tailoring identities. No
+exception or government/production approval is asserted.
+
+Two confirmed installed-state gaps are corrected after remediation: the
+per-installation service identity expires in 48 hours, and the active firewalld
+zone uses literal `DROP` with SSH as its sole exception. The observer also
+checks generated crypto policy, LUKS evidence, interactive paths, IPsec absence,
+guest client-key absence, non-PKI SSSD state and the dedicated encrypted 10 GiB
+audit volume. Twenty-one focused hardening/assessment cases pass. Fresh runtime
+evidence is required; the latest executed run predates these inputs.
+
+Independent read-only review found and corrected pre-runtime identity gaps: the
+record now verifies guest run/boot identity and both built policy hashes before
+binding facts. The SSH-only firewall claim additionally requires successful,
+empty rich-rule, protocol, source-port and forward-port queries. Focused negative
+cases reject changed run, boot and policy identities.
+
+The first fresh attempt at source `9ee8c4f334d221ba0c7dc52e070a6c45d9fe497e`
+installed all 449 packages and completed hardening, then failed the final
+readiness script before SSH. Retained console evidence proves firewalld had
+started but the existing marker cannot distinguish the new account and firewall
+assertions. Assessment correctly did not run; all dependent rows are blocked,
+exact Terraform cleanup passed, 405,504 transient allocated bytes were reclaimed
+and no controller or Wormhole VM remains. Source
+`4552360c38bc3da40d8b56977feadbbf88b0a54f` adds static nonsecret stage names to
+the same readiness trap and preserves the existing terminal marker. Fifteen
+focused tests pass. Run one fresh diagnostic installation; do not select a
+configuration fix until its retained marker names the failed group.
+
+The first diagnostic attempt was safely refused before allocation by the
+retention budget. Existing encrypted archive verification then reclaimed
+8,487,243,776 allocated bytes and left 76.606 GiB managed, 29.880 GiB candidates,
+137.768 GiB free, no VM disk and no pending archive byte. The unchanged retry
+installed all 449 packages, completed hardening and emitted
+`firewall-policy`. It never reached SSH; all dependent rows stayed blocked and
+assessment performed no repair because it did not run. Exact support/Terraform
+teardown passed and transient cleanup reclaimed 405,504 bytes. Source
+`5ed8d6cb3688f333e778511cb4d99cd85363b3b5` refines only the static marker across
+the six unchanged firewall assertions. Fifteen focused tests pass. One fresh
+diagnostic installation is next; correction still waits for the exact condition.
+
+Runtime source `1ecefafecfedfecac7b57dbeac478b3bcc4e8705` completed package
+installation and hardening again. Its marker proves default-zone, active-zone and
+interface binding pass; `firewall-target` is the first failed assertion. All
+dependent rows and assessment remained blocked, teardown passed and cleanup
+reclaimed 405,504 bytes. Official RHEL/firewalld interfaces document only
+`default`, `ACCEPT`, `DROP` and `REJECT`. Source
+`705c3c152b79937387b261352b1c7abf08967c90` allows only those values into the
+static marker and maps any other output to `unexpected`; no configuration or
+qualification behavior changes. Fifteen focused tests pass. Run once to observe
+the actual enum, then correct the proven mismatch.
+
+The next fresh diagnostic, source `7d638ef8e9777c45723f739df36d500f660cf565`,
+emitted `firewall-target-query`: no target value was returned. The firewalld
+interface scopes target lookup to permanent configuration, while the observer
+called it as a runtime option. Source
+`6489604dac7fd8ba90595cd9bb30bc3a77e1c85d` adds `--permanent` in final
+readiness and the manual evidence collector. Existing runtime checks still prove
+the daemon, default/active zone, interface binding, services and absence of
+undeclared rules. No hardening requirement or firewall setting changed. Sixteen
+focused tests pass. Archive the retained diagnostic candidate, then run one fresh
+installation to prove final readiness and the complete ten-rule evidence record.
+
+Runtime source `8ba42740da296aa6428b2602f7ec37bb06578b4e` completed a fresh
+501.958-second installation. Final readiness, strict SSH, password-required
+Ansible, all 12 hardened/six controller checks, encrypted cold start, 449-RPM
+SVD, native assessment and exact teardown passed. Native results are 433 pass,
+zero fail, 29 not applicable, ten not checked and 601 not selected. Eight manual
+rows were complete. RHEL 10 returned the active zone label `drop (default)`; the
+collector used that whole label as the query name, leaving the two firewall rows
+false despite the independent live readiness checks passing. Source
+`0cbb4c18fb078f10e791de43e05be2f74a3e68ae` normalizes the display annotation
+to `drop` and tests the exact observed shape. Candidate/hardening inputs are
+unchanged. Sixteen focused tests pass; run one fresh candidate-reuse installation
+to close all ten manual rows, then archive and remeasure storage.
+
+Runtime source `239aad0e76d10d158dc08848648a85df9ef3dc9e` completed that
+fresh proof in 489.836 seconds. All ten manual rows are complete: seven objective
+`satisfied`, three policy-governed `not-applicable`, native `notchecked` preserved
+and no exception. Final readiness, trusted SSH, password-required Ansible, all 12
+hardened/six controller checks, encryption, 449-RPM SVD and read-only assessment
+pass; native totals remain 433 pass/zero fail/29 not applicable/ten not checked/
+601 not selected. Exact cleanup reclaimed 405,504 bytes. The encrypted archive
+then verified the evidence and reclaimed 8,487,362,560 allocated bytes. Storage
+is 76.967 GiB managed, 29.880 GiB candidates and 137.404 GiB free, with 532
+verified objects, zero pending bytes/failures and no VM disk. RHEL engineering
+lifecycle/manual evidence is closed. Lab release remains pending cryptographic
+operating-environment evidence, the unfinished evaluator/publisher and a final
+independent same-candidate pair after the converged inputs.
+
+## RHEL selected-automated-rule closure
+
+Runtime source `4ac320ddb2d21ff3172d04b4cf33547c425c9490` completed a fresh
+493.897-second empty-disk installation of the policy introduced at `85bfd57`.
+That policy records the exact lab authentication contract: run-scoped SSH
+public-key authentication followed by local password-required sudo. The
+[pinned `sssd_enable_certmap` definition](https://raw.githubusercontent.com/ComplianceAsCode/content/v0.1.82/linux_os/guide/services/sssd/sssd_enable_certmap/rule.yml)
+applies to
+PKI authentication, which this workload does not use. The frozen policy
+therefore deselects only that rule, records the machine-readable reason, keeps
+owner-approved exceptions empty and changes selected coverage from 473 to 472.
+The final guest contained no certificate-map section while strict key SSH and
+password-required sudo/Ansible remained functional. The exact rule is native
+`notselected`; native totals are 433 pass/zero fail/29 not applicable/ten not
+checked/601 not selected. All 472 selected and all 1,073 upstream outcomes are
+accounted, all 12 hardened/six controller checks and 449-RPM SVD pass, assessment
+performed no remediation, and exact teardown passed. Immediate cleanup reclaimed
+405,504 allocated bytes. The archive verified ten objects and exact-file cleanup
+reclaimed another 8,487,362,560 allocated bytes. Storage now records 76.565 GiB
+managed, 29.880 GiB candidates, 137.812 GiB free, 492 verified archive objects,
+no pending archive bytes and no VM disks.
+
+## RHEL SELinux sudo-transition closure
+
+Runtime source `3f128cb81d0139ac2584b86898753d79a8bd5ed4` completed a fresh
+encrypted RHEL 10 installation in 527.472 seconds. The final administrator was
+mapped to `staff_u`; actual trusted SSH entered `staff_r:staff_t`, and the
+password-backed sudo/Ansible operation executed in `sysadm_r:sysadm_t`. This is
+behavioral evidence in addition to the native scanner result.
+
+`selinux_context_elevation_for_sudo` now passes. All 11 hardened and six
+controller checks, 449-RPM SVD, complete native accounting and read-only
+assessment pass. Native totals are 433 pass/one fail/29 not applicable/ten not
+checked/600 not selected; `sssd_enable_certmap` is the only selected failure.
+Terraform/support teardown passed, cleanup reclaimed 405,504 transient allocated
+bytes and the same 66 unrelated containers remain running. The workstation
+archive verified ten objects and exact-file cleanup reclaimed 8,487,362,560
+allocated bytes. Post-archive storage is 76.446 GiB managed/29.880 GiB
+candidates with 137.927 GiB filesystem headroom, 482 verified objects, no
+pending archive bytes and no VM disks.
+
+## RHEL GRUB-administrator closure
+
+Runtime source `7bfa09def373c32d2177d223fcf6d97b35289d28` completed a fresh
+encrypted RHEL 10 installation in 533.296 seconds. The correction changes the
+actual `/etc/grub.d/01_users` generator, preserves and separately verifies the
+per-installation PBKDF2 material, rebuilds the installed BIOS configuration and
+uses a non-login boot administrator. The guest completed installed-disk boot,
+encrypted wrong/missing/correct-key probes, final trusted SSH and real Ansible.
+
+`grub2_admin_username` now passes. All ten hardened and six controller checks,
+449-RPM SVD, complete native accounting and read-only assessment pass. Native
+totals are 432 pass/two fail/29 not applicable/ten not checked/600 not selected;
+the only selected failures are `selinux_context_elevation_for_sudo` and
+`sssd_enable_certmap`. The assessment receipt records no remediation. Exact
+Terraform/support teardown passed, cleanup reclaimed 405,504 transient allocated
+bytes and the same 66 unrelated containers remain running. Archive reconciliation
+verified ten objects and reclaimed 8,487,362,560 additional allocated bytes.
+Current allocation is 76.326 GiB managed, 29.880 GiB candidates and 138.047 GiB
+available. There are 472 committed archive objects and zero VM disks, pending
+archive bytes or failed receipts.
+
+Source `8d825f66c261d1d11e82f17c5f53377436650e3a` is the next unverified
+installed input. It maps the final administrator to `staff_u`, replaces the
+unrestricted user sudo line with a password-required wheel transition to
+`sysadm_r:sysadm_t`, restores home labels and validates the full sudo policy.
+The helper requires the actual SSH login context `staff_r:staff_t` and actual
+sudo execution context `sysadm_r:sysadm_t`. Fourteen focused cases pass. A
+fresh run must still prove access, Ansible become, the behavioral transition
+and the native rule.
+
+## RHEL local-only resolution closure
+
+Runtime source `77498b3a5934e3ee7cc538e30194e39b74e9eba1` completed a fresh
+encrypted RHEL 10 installation in 525.220 seconds. The retained OVAL had proved
+that the isolated direct-IP workload enabled DNS but had no second resolver or
+declared DNS service. Source `2b3c16b` uses the pinned rule's documented
+local-only branch: NetworkManager `dns=none`, NSS without the `dns` token and an
+empty resolver file. It does not fabricate a second DNS server.
+
+`network_configure_name_resolution` now passes and
+`networkmanager_dns_mode` remains passing. All ten hardened checks, six
+controller checks, synchronized time, lab logging/audit, trusted SSH/Ansible,
+449-RPM SVD, complete native accounting, read-only assessment and cleanup pass.
+Native totals are 431 pass/three fail/29 not applicable/ten not checked/600 not
+selected. The same 66 unrelated containers remain running and no VM remains.
+The encrypted archive verified ten new objects and normal cleanup reclaimed
+8,487,366,656 allocated bytes. Current allocation is 76.167 GiB managed,
+29.880 GiB candidates and 138.207 GiB available. There are 457 committed archive
+objects, zero pending bytes, zero failed receipts and no VM disk.
+
+The diagnostic attempt already running from source `f611d95` reached all 449
+packages, then stopped in hardening with the retained installation-failure
+marker. Final readiness, Ansible, functionals, inventory and assessment were
+correctly blocked. Terraform/support teardown passed and cleanup reclaimed
+405,504 transient allocated bytes. That attempt remains failed and provides no
+runtime success claim for `518691a`.
+
+## RHEL authorized-account closure
+
+Runtime source `c944a8668e86979e38af673c5d81a9bf54d270a6` completed a fresh
+encrypted RHEL 10 installation in 519.709 seconds. The retained ARF had identified
+three locked identities belonging to installed packages and the declared final
+service identity as the only false rows under the pinned account allowlist.
+Source `ff881b1` declares exactly those four authorized identities. It deletes no
+account, excludes no rule and changes no selection.
+
+`accounts_authorized_local_users` now passes. All ten hardened checks, six
+controller checks, synchronized time, trusted SSH/Ansible, 449-RPM SVD, complete
+native accounting and no-remediation assessment pass. Native totals are 430
+pass/four fail/29 not applicable/ten not checked/600 not selected. VM cleanup
+passed and the same 66 unrelated containers remained running. The archive
+verified ten new objects and reclaimed 8,487,362,560 allocated bytes; no archive
+item or VM disk is pending.
+
+## RHEL declared-banner tailoring closure
+
+Runtime source `03d29868184bb711c78932eb1eea78e3f18b0ac3` completed a fresh
+encrypted RHEL 10 installation in 513.436 seconds. Source change `e28b6bf`
+declares the accurate home-lab notice through the pinned XCCDF
+`login_banner_text` value for both installation remediation and the read-only
+audit. It changes no selected rule and grants no exception. The native receipt
+binds the tailoring digest and explicitly records no assessment remediation.
+
+`banner_etc_issue`, both chrony controls, masked kdump and the SSH banner rule
+pass. All ten hardened checks, all six controller checks, synchronized time,
+encrypted cold start, trusted SSH/Ansible, 449-RPM SVD and complete native
+accounting pass. Native totals changed from 428 pass/six fail to 429 pass/five
+fail, with 29 not applicable, ten not checked and 600 not selected. Exact-owned
+VM cleanup passed and the same 66 unrelated containers remained running.
+
+The encrypted workstation archive verified ten new objects and normal cleanup
+reclaimed 8,487,366,656 allocated bytes. There are no pending archive bytes or
+VM disks. Current managed allocation is 75.928 GiB, candidate allocation is
+29.880 GiB and filesystem availability is 138.449 GiB. That checkpoint retained
+five selected findings. Ten native not-checked requirements, manual and
+cryptographic operating-environment evidence, and the RHEL evaluator/publisher
+also remain open. Ubuntu vendor integration still waits for private Pro entitlement.
+
+## RHEL kdump/banner-path closure and separate lab-banner finding
+
+Runtime source `da63dc0a79b6b545f4fe7ef9c55cf9d9ac0b2be0` completed a fresh
+encrypted RHEL 10 installation in 517.715 seconds. Retained native objects had
+shown an inactive but unmasked kdump unit and conflicting SSH banner paths. The
+installation input now masks the disabled unit after remediation and points SSH
+at `/etc/issue`; `service_kdump_disabled` and `sshd_enable_warning_banner` both
+pass. Trusted SSH/Ansible, all hardened/controller checks, synchronized time,
+449-RPM SVD, full native accounting, no-remediation assessment, evidence
+retention and exact-owned cleanup passed. The same 66 unrelated containers were
+preserved.
+
+Native totals changed from 427 pass/seven fail to 428 pass/six fail. The net
+gain is one because writing the accurate home-lab notice to `/etc/issue`
+exposed the separate `banner_etc_issue` rule's upstream default value, which is
+an inaccurate government-system notice for this environment. Qualification
+remains false. The next bounded correction is a declared banner-value tailoring
+input, not replacement with false text. One new candidate and evidence set now
+await the existing encrypted archive lifecycle.
+
+## RHEL chrony closure and finished-journal recovery
+
+Runtime source `e3208237884acc53fb4821cdbc6dcb5e867e49e1` completed a fresh
+encrypted RHEL 10 installation in 483.964 seconds. The installed-input change
+adds `port 0` and `cmdport 0` to the final chrony configuration that is written
+after OpenSCAP installation remediation. The declared lab time source remains
+configured and synchronized. Native results changed from 425 pass/nine fail to
+427 pass/seven fail; both `chronyd_client_only` and
+`chronyd_no_chronyc_network` now pass. All 1,073 native outcomes remain present
+and the assessment receipt records no remediation.
+
+The run passed trusted final SSH, real Ansible, all six controller checks, all
+ten hardened checks, the 449-RPM SVD, encrypted cold start and exact-owned
+cleanup. Its post-run storage cleanup reclaimed 405,504 allocated bytes. No
+owned VM resource remained and the same 66 unrelated containers were preserved.
+Current storage is 83.594 GiB managed, including a 37.784 GiB candidate cache,
+with 130.785 GiB filesystem availability.
+
+The first attempt stopped before allocation at the retention budget. A confirmed
+historical inconsistency had a finished immutable ownership journal but a stale
+`running` result. The existing recovery component now reobserves exact resource
+absence and terminalizes that record as `unknown`, never success. Its first
+failure is `supervisor_interrupted_without_terminal_result`; normal storage
+deduplication then reclaimed 8,487,432,192 allocated bytes while preserving one
+canonical local candidate and its verified encrypted archive. Focused source
+verification passed 36 tests with one root-only skip across the affected files.
+
+At that historical checkpoint the four selected failures were
+`grub2_admin_username`, `network_configure_name_resolution`,
+`selinux_context_elevation_for_sudo` and `sssd_enable_certmap`. The current run
+has closed the first two. Ten native not-checked
+rules, manual evidence, cryptographic module/operating-environment applicability
+and the RHEL evaluator/publisher remain open. Lab and production eligibility
+remain false. Ubuntu vendor integration still waits for private Pro entitlement.
+
 ## Bounded optional-tool decisions
 
 At `205835d`, the existing single-file Terra handoff adds a small adoption table
@@ -90,18 +423,15 @@ grew about 200.7 MiB for the new evidence, while transient file cleanup reclaime
 
 ### Remaining qualification work
 
-RHEL's nine observed automated failures have these public rule suffixes.
+RHEL's historical E run had nine automated failures. The fresh e320823 closure
+run resolved the two chrony rows; K resolved kdump and the SSH banner path, B
+resolved the banner value, AC resolved the account allowlist, NR resolved name
+resolution and GA resolved the GRUB administrator. These two public rule
+suffixes remain.
 
 | Rule | Observed requirement still failing |
 | --- | --- |
-| accounts_authorized_local_users | Authorized local accounts |
-| grub2_admin_username | Nondefault boot-loader administrator |
-| network_configure_name_resolution | Multiple configured DNS servers |
 | selinux_context_elevation_for_sudo | SELinux context elevation through sudo |
-| service_kdump_disabled | Disabled kdump |
-| chronyd_client_only | Chrony client-only operation |
-| chronyd_no_chronyc_network | Disabled network management of chrony |
-| sshd_enable_warning_banner | SSH warning banner |
 | sssd_enable_certmap | SSSD certificate mapping |
 
 The ten native not-checked rules still need accountable rule-level evidence
