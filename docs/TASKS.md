@@ -52,7 +52,7 @@ not applicable/ten not checked/600 not selected. The encrypted archive verified
 ten objects and cleanup reclaimed 8,487,366,656 allocated bytes. No VM, pending
 archive byte or failed archive receipt remains.
 
-Source `0ab3068de0d070c9a7a4fbf9aa23efe9feb80706` is the next focused
+Source `518691acacf909c0e01624af2a31a561d7a33c28` is the next focused
 candidate-input change. Independent source review caught that the first draft
 expected a literal PBKDF2 hash in the GRUB generator, while RHEL stores the hash
 in `user.cfg` and references `${GRUB2_PASSWORD}`. The corrected transform changes
@@ -65,7 +65,7 @@ The already-launched diagnostic attempt at source `f611d95` confirmed that the
 first draft fails in hardening after all 449 packages install. The console
 retained `WORMHOLE_INSTALLATION_FAILED`; all readiness/validation results were
 blocked, Terraform/support cleanup completed and 405,504 transient allocated
-bytes were reclaimed. It remains failed and is not proof of `0ab3068`.
+bytes were reclaimed. It remains failed and is not proof of `518691a`.
 
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at

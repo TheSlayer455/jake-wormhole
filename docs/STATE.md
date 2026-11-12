@@ -121,7 +121,7 @@ three fail, 29 not applicable, ten not checked and 600 not selected. Source
 archival verified ten new objects and cleanup reclaimed 8,487,366,656 allocated
 bytes. Current allocation is 76.167 GiB managed, 29.880 GiB candidates and
 138.207 GiB available, with no VM or pending archive byte. Source
-`0ab3068de0d070c9a7a4fbf9aa23efe9feb80706` is the next unverified installed
+`518691acacf909c0e01624af2a31a561d7a33c28` is the next unverified installed
 input. Review caught that the first draft expected a literal PBKDF2 hash in the
 generator, whereas RHEL references `${GRUB2_PASSWORD}` there and stores the hash
 in `user.cfg`. The corrected transform changes only the username, verifies the
@@ -133,7 +133,7 @@ installed packages and then failed in hardening, exactly as the generator-shape
 review predicted. All final readiness, Ansible, functional, inventory and
 assessment rows were blocked. Exact-owned teardown passed and cleanup reclaimed
 405,504 transient allocated bytes. The failed attempt remains failed; it is not
-evidence for `0ab3068`.
+evidence for `518691a`.
 
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing

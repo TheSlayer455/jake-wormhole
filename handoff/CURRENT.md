@@ -20,7 +20,7 @@ The encrypted archive verified ten new objects and normal cleanup reclaimed
 29.880 GiB candidates and 138.207 GiB available. There are 457 committed archive
 objects, zero pending bytes, zero failed receipts and no VM disk.
 
-Source `0ab3068de0d070c9a7a4fbf9aa23efe9feb80706` is pending fresh runtime
+Source `518691acacf909c0e01624af2a31a561d7a33c28` is pending fresh runtime
 proof. Independent review caught that the first draft expected a literal hash in
 the generator, while RHEL stores it in `user.cfg` and references
 `${GRUB2_PASSWORD}`. The corrected transform changes only the username, verifies
@@ -34,7 +34,7 @@ packages, then stopped in hardening with the retained installation-failure
 marker. Final readiness, Ansible, functionals, inventory and assessment were
 correctly blocked. Terraform/support teardown passed and cleanup reclaimed
 405,504 transient allocated bytes. That attempt remains failed and provides no
-runtime success claim for `0ab3068`.
+runtime success claim for `518691a`.
 
 ## RHEL authorized-account closure
 
