@@ -546,6 +546,7 @@ assertion of the precise execution time.
 | GA / 2026-11-12, runtime receipt date | [GRUB generator correction at 518691a](https://github.com/TheSlayer455/jake-wormhole/commit/518691acacf909c0e01624af2a31a561d7a33c28), [executed source at 7bfa09d](https://github.com/TheSlayer455/jake-wormhole/commit/7bfa09def373c32d2177d223fcf6d97b35289d28) | A fresh encrypted installation proved the corrected generator, preserved PBKDF2 material, actual boot, trusted SSH/Ansible, all hardened/controller checks, SVD and read-only assessment. The GRUB rule passes; 432 native passes/two failures remain, assessment performed no repair and exact-owned cleanup passed. Ten archive objects were verified and 8,487,362,560 allocated bytes reclaimed. |
 | SA / 2026-11-12, runtime receipt date | [SELinux sudo transition at 8d825f6](https://github.com/TheSlayer455/jake-wormhole/commit/8d825f66c261d1d11e82f17c5f53377436650e3a), [executed source at 3f128cb](https://github.com/TheSlayer455/jake-wormhole/commit/3f128cb81d0139ac2584b86898753d79a8bd5ed4) | A fresh encrypted installation proved trusted SSH in `staff_r:staff_t`, password-backed sudo/Ansible in `sysadm_r:sysadm_t`, all 11 hardened/six controller checks, SVD and read-only assessment. The native SELinux rule passes; 433 native passes/one failure remain and exact-owned cleanup passed. Ten archive objects were verified and 8,487,362,560 allocated bytes reclaimed. |
 | CM / 2026-11-12, runtime receipt date | [Certificate-map applicability at 85bfd57](https://github.com/TheSlayer455/jake-wormhole/commit/85bfd5722e6f4e72f363ca8db9ee33aa7b51b5a8), [executed source at 4ac320d](https://github.com/TheSlayer455/jake-wormhole/commit/4ac320ddb2d21ff3172d04b4cf33547c425c9490) | A fresh encrypted installation proved the final non-PKI configuration, strict key SSH, password-backed sudo/Ansible, all 12 hardened/six controller checks, SVD and read-only assessment. The exact rule is native `notselected`; 433 rules pass, none fail, all 1,073 outcomes are accounted and exact-owned cleanup passed. Ten archive objects were verified and 8,487,362,560 allocated bytes reclaimed. |
+| ME / 2026-11-12, source proof pending runtime | [Manual evidence implementation at f10e0e0](https://github.com/TheSlayer455/jake-wormhole/commit/f10e0e03c597464c0fc4b3f10f3239e97d0d2f1c) | One read-only observer covers the exact ten native `notchecked` rules without rewriting them. Installation inputs now set a 48-hour service-identity expiry and a literal `DROP` zone with SSH as its sole exception. Evidence is identity-bound and cannot assert an owner exception or government/production approval. Twenty-one focused cases pass; fresh guest proof remains required. |
 | S / 2026-10-31 checkpoint | [Retained SVD archival at f2a3d5c](https://github.com/TheSlayer455/jake-wormhole/blob/f2a3d5ca383a1fea9230a9d1225406ae1f9bde26/wormhole/storage_archive.py); [PR 45](https://github.com/TheSlayer455/jake-wormhole/pull/45) | 298 verified encrypted objects at that checkpoint; six additional SVD/build-manifest readbacks; local originals retained. This is not a live backlog count. |
 
 ## Verified mechanisms and boundaries
@@ -626,6 +627,12 @@ exception and does not claim a scanner pass: it requires native `notselected`
 for exactly this rule, rejects an installed certificate-map section and
 preserves complete rule accounting. A fresh installation proved those conditions
 without weakening strict SSH or password-backed sudo/Ansible.
+
+ME is the prospective ten-rule manual evidence boundary. It keeps native
+`notchecked` outcomes intact and records separate objective or governed
+not-applicable evidence. Its two installation changes address observed source
+gaps—account expiry and literal firewalld `DROP`—rather than remediating during
+acceptance. The previous CM run cannot prove ME; a fresh installation is next.
 
 SA replaced the
 unrestricted per-user sudo input, restores the mapped user's labels, validates

@@ -1,5 +1,21 @@
 # Current handoff
 
+## RHEL manual-control evidence pending runtime
+
+Source `f10e0e03c597464c0fc4b3f10f3239e97d0d2f1c` implements one
+read-only observer for the exact ten native `notchecked` rules. Native statuses
+remain unchanged; the controller binds objective or governed-not-applicable
+evidence to the run, candidate, policy, content and tailoring identities. No
+exception or government/production approval is asserted.
+
+Two confirmed installed-state gaps are corrected after remediation: the
+per-installation service identity expires in 48 hours, and the active firewalld
+zone uses literal `DROP` with SSH as its sole exception. The observer also
+checks generated crypto policy, LUKS evidence, interactive paths, IPsec absence,
+guest client-key absence, non-PKI SSSD state and the dedicated encrypted 10 GiB
+audit volume. Twenty-one focused hardening/assessment cases pass. Fresh runtime
+evidence is required; the latest executed run predates these inputs.
+
 ## RHEL selected-automated-rule closure
 
 Runtime source `4ac320ddb2d21ff3172d04b4cf33547c425c9490` completed a fresh

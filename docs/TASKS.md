@@ -117,6 +117,14 @@ reclaimed another 8,487,362,560 allocated bytes. Storage now records 76.565 GiB
 managed, 29.880 GiB candidates, 137.812 GiB free, 492 verified archive objects,
 no pending archive bytes and no VM disks.
 
+Current source `f10e0e03c597464c0fc4b3f10f3239e97d0d2f1c` implements the
+ten-rule manual evidence contract. The collector is read-only and preserves
+native `notchecked`; it binds objective/governed dispositions to the exact run
+and rejects missing or changed native statuses. Installation now sets the
+per-run identity to expire in 48 hours and configures an active `DROP` zone with
+only SSH allowed. Twenty-one focused cases pass. Production/policy +173/-7;
+tests +44/-7. A fresh installation is required before these controls are closed.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra
