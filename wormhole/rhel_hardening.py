@@ -191,7 +191,7 @@ sed -Ei \
     -e 's/^([[:space:]]*password_pbkdf2[[:space:]]+)root([[:space:]]+)/\1wormhole_boot_admin\2/' \
     /etc/grub.d/01_users
 grep -Eq '^[[:space:]]*set superusers="wormhole_boot_admin"$' /etc/grub.d/01_users
-grep -Fq 'password_pbkdf2 wormhole_boot_admin ${GRUB2_PASSWORD}' /etc/grub.d/01_users
+grep -Fq 'password_pbkdf2 wormhole_boot_admin \${GRUB2_PASSWORD}' /etc/grub.d/01_users
 grep -Eq '^GRUB2_PASSWORD=grub\.pbkdf2\.' /boot/grub2/user.cfg
 grub2-mkconfig -o /boot/grub2/grub.cfg
 grep -Eq '^[[:space:]]*set superusers="wormhole_boot_admin"$' /boot/grub2/grub.cfg

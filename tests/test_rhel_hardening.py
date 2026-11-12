@@ -109,12 +109,12 @@ class HardenedInputs(unittest.TestCase):
                         h.FINALIZE.index('systemctl mask kdump.service'))
 
     def test_final_grub_admin_changes_the_generator_and_rebuilds_the_config(self):
-        generator = '''if [ -f ${prefix}/user.cfg ]; then
-  source ${prefix}/user.cfg
-  if [ -n "${GRUB2_PASSWORD}" ]; then
+        generator = r'''if [ -f \${prefix}/user.cfg ]; then
+  source \${prefix}/user.cfg
+  if [ -n "\${GRUB2_PASSWORD}" ]; then
     set superusers="root"
     export superusers
-    password_pbkdf2 root ${GRUB2_PASSWORD}
+    password_pbkdf2 root \${GRUB2_PASSWORD}
   fi
 fi
 '''
@@ -129,7 +129,7 @@ fi
             self.assertEqual(result.returncode, 0, result.stderr)
             changed = path.read_text()
         self.assertIn('set superusers="wormhole_boot_admin"', changed)
-        self.assertIn('password_pbkdf2 wormhole_boot_admin ${GRUB2_PASSWORD}', changed)
+        self.assertIn(r'password_pbkdf2 wormhole_boot_admin \${GRUB2_PASSWORD}', changed)
         self.assertNotIn('password_pbkdf2 root ', changed)
         self.assertIn("grep -Eq '^GRUB2_PASSWORD=grub\\.pbkdf2\\.' /boot/grub2/user.cfg", h.FINALIZE)
         self.assertIn('grub2-mkconfig -o /boot/grub2/grub.cfg', h.FINALIZE)
