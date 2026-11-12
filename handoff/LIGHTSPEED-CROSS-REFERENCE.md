@@ -539,6 +539,7 @@ assertion of the precise execution time.
 | T / 2026-11-10, runtime test date | [Client cleanup](https://github.com/TheSlayer455/jake-wormhole/blob/461b113cfe91b261eb65a69e3779680203f1ad8e/wormhole/archive_client.py) and [restore staging](https://github.com/TheSlayer455/jake-wormhole/blob/461b113cfe91b261eb65a69e3779680203f1ad8e/wormhole/storage_archive.py) | Existing workstation and host cleanup reclaimed 32 MiB temporary files on each system. An existing 6 MiB archived probe restored exactly and was reclaimed after verified readback; no new encrypted object or VM. Repeat host cleanup reclaimed zero and unrelated containers were preserved. |
 | C / 2026-11-11, runtime receipt date | [Chrony and recovery correction at e320823](https://github.com/TheSlayer455/jake-wormhole/commit/e3208237884acc53fb4821cdbc6dcb5e867e49e1) | One fresh encrypted RHEL 10 installation preserved the declared lab time source and synchronization while the selected client-only and no-network-management rules passed. All 1,073 native outcomes were accounted for; assessment performed no remediation; hardened/controller checks, evidence retention and exact-owned cleanup passed. A finished-journal recovery retained an interrupted workload as unknown and reclaimed only duplicate candidate storage. |
 | K / 2026-11-12, runtime receipt date | [Kdump and banner-path runtime at da63dc0](https://github.com/TheSlayer455/jake-wormhole/commit/da63dc0a79b6b545f4fe7ef9c55cf9d9ac0b2be0) | One fresh encrypted RHEL 10 installation passed the final masked-kdump and SSH banner-path rules, every hardened/controller check, SVD, full native accounting, no-remediation assessment and cleanup. The honest local banner exposed a separate upstream-default value mismatch, so eligibility remains false. |
+| B / 2026-11-12, runtime receipt date | [Declared banner tailoring runtime at 03d2986](https://github.com/TheSlayer455/jake-wormhole/commit/03d29868184bb711c78932eb1eea78e3f18b0ac3) | One fresh encrypted RHEL 10 installation used a one-value XCCDF tailoring for the truthful lab banner. The receipt binds those exact tailoring bytes; the banner rule and all previously closed chrony/kdump/SSH-banner rules pass, assessment performed no remediation, all hardened/controller checks and cleanup passed, and all 1,073 native outcomes remain accounted. |
 | S / 2026-10-31 checkpoint | [Retained SVD archival at f2a3d5c](https://github.com/TheSlayer455/jake-wormhole/blob/f2a3d5ca383a1fea9230a9d1225406ae1f9bde26/wormhole/storage_archive.py); [PR 45](https://github.com/TheSlayer455/jake-wormhole/pull/45) | 298 verified encrypted objects at that checkpoint; six additional SVD/build-manifest readbacks; local originals retained. This is not a live backlog count. |
 
 ## Verified mechanisms and boundaries
@@ -562,14 +563,14 @@ assertion of the precise execution time.
 
 ## Native outcomes and unresolved qualification
 
-| Native result | RHEL baseline R | Hardened RHEL H/E | Chrony closure C | Kdump/banner K | Ubuntu U and D, each |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Pass | 172 | 425 | 427 | 428 | 210 |
-| Fail | 261 | 9 | 7 | 6 | 1 |
-| Not applicable | 56 | 29 | 29 | 29 | 14 |
-| Not checked | 9 | 10 | 10 | 10 | 5 |
-| Not selected | 450 | 600 | 600 | 600 | 409 |
-| Total | 948 | 1,073 | 1,073 | 1,073 | 639 |
+| Native result | RHEL baseline R | Hardened RHEL H/E | Chrony closure C | Kdump/banner K | Tailored banner B | Ubuntu U and D, each |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Pass | 172 | 425 | 427 | 428 | 429 | 210 |
+| Fail | 261 | 9 | 7 | 6 | 5 | 1 |
+| Not applicable | 56 | 29 | 29 | 29 | 29 | 14 |
+| Not checked | 9 | 10 | 10 | 10 | 10 | 5 |
+| Not selected | 450 | 600 | 600 | 600 | 600 | 409 |
+| Total | 948 | 1,073 | 1,073 | 1,073 | 1,073 | 639 |
 
 R uses the DVD's pinned SCAP Security Guide 0.1.76 vendor-draft content; it does
 not prove alignment with a current released DISA benchmark. U uses OpenSCAP 1.4.6
@@ -603,13 +604,14 @@ content in R and H prevents a direct finding-count comparison.
 
 The fresh C run closed the two historical chrony failures while preserving time
 synchronization. K then closed kdump and the SSH banner path, while exposing the
-separate declared-banner-value mismatch. These six selected automated failures
-remain. The names are public rule suffixes, not private configuration values.
+separate declared-banner-value mismatch. B closed that value mismatch through a
+single declared XCCDF value, without changing rule selection. These five
+selected automated failures remain. The names are public rule suffixes, not
+private configuration values.
 
 | Rule suffix | Open requirement |
 | --- | --- |
 | `accounts_authorized_local_users` | Authorized local-account policy |
-| `banner_etc_issue` | Truthful declared local warning-banner value |
 | `grub2_admin_username` | Nondefault boot-loader administrator |
 | `network_configure_name_resolution` | Multiple declared name-resolution servers |
 | `selinux_context_elevation_for_sudo` | SELinux context elevation through sudo |
@@ -621,12 +623,12 @@ different banner path. [a947977](https://github.com/TheSlayer455/jake-wormhole/c
 corrected both installation inputs, and K proved both native rules pass. K also
 proved that hard-coding the accurate lab notice after remediation cannot satisfy
 the upstream profile's different default banner expression. That distinct rule
-is addressed in source at
+was addressed in source at
 [e28b6bf](https://github.com/TheSlayer455/jake-wormhole/commit/e28b6bfa2e1dd765240b36f47b836bdb924894fe)
 by a single declared XCCDF value used for both installation remediation and the
 read-only audit. It changes no rule selection and grants no exception. The rule
-stays open until a fresh empty-disk installation proves the tailored native
-result and the receipt binds the tailoring bytes.
+passed in B's fresh empty-disk installation; its receipt binds the tailoring
+bytes and records no assessment remediation.
 
 Ten native not-checked rules still need accountable rule-level evidence and
 disposition: `crypto_policy_not_overridden`, `encrypt_partitions`,

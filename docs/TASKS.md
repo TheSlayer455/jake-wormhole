@@ -10,9 +10,8 @@ accounted. Time synchronization, 10/10 hardened checks, 6/6 controller checks,
 trusted SSH/Ansible, SVD, no-remediation assessment, evidence retention and
 cleanup passed. A focused recovery correction also preserved an interrupted
 historical run as unknown while reclaiming 8,487,432,192 duplicate allocated
-bytes through the existing storage engine. Next: diagnose the seven retained
-native failures from this run's ARF, then complete manual/crypto evidence and the
-RHEL evaluator/publisher. No release is eligible yet.
+bytes through the existing storage engine. That checkpoint retained seven
+native failures for the follow-on work below. No release is eligible yet.
 
 Follow-on runtime source `da63dc0a79b6b545f4fe7ef9c55cf9d9ac0b2be0`
 completed a fresh 517.715-second RHEL installation after the retained ARF proved
@@ -21,8 +20,19 @@ targeted rules now pass; hardened/controller checks, synchronization, 449-RPM
 SVD, no-remediation assessment, evidence and cleanup also pass. Native totals
 are 428 pass/six fail/29 not applicable/ten not checked/600 not selected. The
 accurate home-lab notice exposed the separate `banner_etc_issue` default-value
-mismatch. Next: declare that value through bounded tailoring and verify it in a
-fresh native audit; do not restore an inaccurate government-system banner.
+mismatch. This established the need for bounded tailoring rather than an
+inaccurate government-system banner.
+
+Runtime source `03d29868184bb711c78932eb1eea78e3f18b0ac3` completed that
+fresh installation in 513.436 seconds. The receipt binds the one-value XCCDF
+tailoring and records no assessment remediation. `banner_etc_issue` passes;
+both chrony rules, kdump, SSH banner, synchronized time, all hardened/controller
+checks, 449-RPM SVD, evidence and cleanup remain passing. Native totals are 429
+pass/five fail/29 not applicable/ten not checked/600 not selected. The existing
+encrypted archive verified the new candidate/evidence set and reclaimed
+8,487,366,656 allocated bytes, leaving no VM or pending archive object. Next:
+resolve the remaining five selected findings and ten governed not-checked
+requirements, then finish the RHEL evaluator/publisher. No release is eligible.
 
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at

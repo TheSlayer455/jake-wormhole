@@ -88,13 +88,27 @@ text written to `/etc/issue` exposed a separate `banner_etc_issue` variable
 mismatch, so this attempt remains ineligible and the next correction is bounded
 to declared assessment tailoring rather than restoring an inaccurate default.
 
+Runtime source `03d29868184bb711c78932eb1eea78e3f18b0ac3` then completed a
+fresh 513.436-second empty-disk installation of candidate inputs containing the
+declared lab-banner tailoring. The tailoring changes only
+`login_banner_text`; it changes no selected rule and grants no exception. The
+native receipt binds the tailoring digest and records no remediation during the
+assessment. `banner_etc_issue`, both chrony rules, masked kdump and the SSH
+banner rule pass. All hardened/controller checks, synchronized time, encrypted
+cold start, trusted SSH/Ansible, 449-RPM SVD, complete evidence and cleanup also
+pass. Native totals are now 429 pass, five fail, 29 not applicable, ten not
+checked and 600 not selected. The encrypted archive verified ten new objects
+and normal cleanup reclaimed 8,487,366,656 allocated bytes; no VM remains and
+all 66 unrelated containers were preserved.
+
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
 terminal receipt whose immutable ownership journal was already finished: the
 workload remains `unknown`, the first failure is retained, and normal storage
 deduplication reclaimed 8,487,432,192 allocated bytes while preserving one local
-canonical candidate and the encrypted archive. Current storage is 83.594 GiB
-managed, 37.784 GiB candidate cache and 130.785 GiB filesystem availability.
+canonical candidate and the encrypted archive. After the latest verified archive
+transaction, current storage is 75.928 GiB managed, 29.880 GiB candidate cache
+and 138.449 GiB filesystem availability.
 The explicit Pro slot remains empty.
 
 | Required boundary | Status | Next proof or external dependency |
@@ -120,10 +134,10 @@ The [continuation](../handoff/CURRENT.md) and merged
 attempts, corrections and actual runtime attribution. The hardened run used
 different content and selected coverage from the older RHEL draft profile.
 
-The latest hardened RHEL audit records six selected failures covering local
+The latest hardened RHEL audit records five selected failures covering local
 account authorization, GRUB administration, name resolution, SELinux sudo role
-elevation, the local banner value and SSSD certificate mapping. The historical
-chrony, kdump and SSH banner-path failures now pass while time remains
+elevation and SSSD certificate mapping. The historical chrony, kdump, SSH
+banner-path and declared banner-value failures now pass while time remains
 synchronized. Ten native checks need separate disposition.
 FIPS runtime mode passed, but module and operating-environment verification
 remains open. These conditions keep the lab release gate closed.

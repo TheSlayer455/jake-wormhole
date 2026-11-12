@@ -1,5 +1,29 @@
 # Current handoff
 
+## RHEL declared-banner tailoring closure
+
+Runtime source `03d29868184bb711c78932eb1eea78e3f18b0ac3` completed a fresh
+encrypted RHEL 10 installation in 513.436 seconds. Source change `e28b6bf`
+declares the accurate home-lab notice through the pinned XCCDF
+`login_banner_text` value for both installation remediation and the read-only
+audit. It changes no selected rule and grants no exception. The native receipt
+binds the tailoring digest and explicitly records no assessment remediation.
+
+`banner_etc_issue`, both chrony controls, masked kdump and the SSH banner rule
+pass. All ten hardened checks, all six controller checks, synchronized time,
+encrypted cold start, trusted SSH/Ansible, 449-RPM SVD and complete native
+accounting pass. Native totals changed from 428 pass/six fail to 429 pass/five
+fail, with 29 not applicable, ten not checked and 600 not selected. Exact-owned
+VM cleanup passed and the same 66 unrelated containers remained running.
+
+The encrypted workstation archive verified ten new objects and normal cleanup
+reclaimed 8,487,366,656 allocated bytes. There are no pending archive bytes or
+VM disks. Current managed allocation is 75.928 GiB, candidate allocation is
+29.880 GiB and filesystem availability is 138.449 GiB. Qualification remains
+false: five selected findings, ten native not-checked requirements, manual and
+cryptographic operating-environment evidence, and the RHEL evaluator/publisher
+remain open. Ubuntu vendor integration still waits for private Pro entitlement.
+
 ## RHEL kdump/banner-path closure and separate lab-banner finding
 
 Runtime source `da63dc0a79b6b545f4fe7ef9c55cf9d9ac0b2be0` completed a fresh
@@ -47,10 +71,9 @@ deduplication then reclaimed 8,487,432,192 allocated bytes while preserving one
 canonical local candidate and its verified encrypted archive. Focused source
 verification passed 36 tests with one root-only skip across the affected files.
 
-The seven current selected failures are `accounts_authorized_local_users`,
+The five current selected failures are `accounts_authorized_local_users`,
 `grub2_admin_username`, `network_configure_name_resolution`,
-`selinux_context_elevation_for_sudo`, `service_kdump_disabled`,
-`sshd_enable_warning_banner` and `sssd_enable_certmap`. Ten native not-checked
+`selinux_context_elevation_for_sudo` and `sssd_enable_certmap`. Ten native not-checked
 rules, manual evidence, cryptographic module/operating-environment applicability
 and the RHEL evaluator/publisher remain open. Lab and production eligibility
 remain false. Ubuntu vendor integration still waits for private Pro entitlement.
@@ -146,7 +169,9 @@ grew about 200.7 MiB for the new evidence, while transient file cleanup reclaime
 ### Remaining qualification work
 
 RHEL's historical E run had nine automated failures. The fresh e320823 closure
-run resolved the two chrony rows; these seven public rule suffixes remain.
+run resolved the two chrony rows; K resolved kdump and the SSH banner path, and
+B resolved the separately exposed banner-value mismatch. These five public rule
+suffixes remain.
 
 | Rule | Observed requirement still failing |
 | --- | --- |
@@ -154,8 +179,6 @@ run resolved the two chrony rows; these seven public rule suffixes remain.
 | grub2_admin_username | Nondefault boot-loader administrator |
 | network_configure_name_resolution | Multiple configured DNS servers |
 | selinux_context_elevation_for_sudo | SELinux context elevation through sudo |
-| service_kdump_disabled | Disabled kdump |
-| sshd_enable_warning_banner | SSH warning banner |
 | sssd_enable_certmap | SSSD certificate mapping |
 
 The ten native not-checked rules still need accountable rule-level evidence
