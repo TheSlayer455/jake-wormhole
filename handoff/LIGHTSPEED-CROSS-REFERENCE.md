@@ -621,8 +621,12 @@ different banner path. [a947977](https://github.com/TheSlayer455/jake-wormhole/c
 corrected both installation inputs, and K proved both native rules pass. K also
 proved that hard-coding the accurate lab notice after remediation cannot satisfy
 the upstream profile's different default banner expression. That distinct rule
-stays open until the same lab value is declared through bounded assessment
-tailoring and a fresh audit proves the result.
+is addressed in source at
+[e28b6bf](https://github.com/TheSlayer455/jake-wormhole/commit/e28b6bfa2e1dd765240b36f47b836bdb924894fe)
+by a single declared XCCDF value used for both installation remediation and the
+read-only audit. It changes no rule selection and grants no exception. The rule
+stays open until a fresh empty-disk installation proves the tailored native
+result and the receipt binds the tailoring bytes.
 
 Ten native not-checked rules still need accountable rule-level evidence and
 disposition: `crypto_policy_not_overridden`, `encrypt_partitions`,
