@@ -47,7 +47,7 @@ from VM disk destruction. Final managed storage is 83.473 GiB with a 37.784 GiB
 candidate cache. New evidence is retained and encrypted archival is reconciled.
 See the [current run report and exact blockers](../handoff/CURRENT.md#fresh-two-os-acceptance-with-automatic-cleanup).
 
-RHEL still has nine automated findings, ten native manual statuses and unresolved
+The latest RHEL run has six automated findings, ten native manual statuses and unresolved
 module/environment verification, plus its release evaluator/publisher engineering
 gap. Ubuntu still needs a privately supplied legitimate Pro entitlement followed
 by actual vendor execution and reassessment. Its five supplemental manual
@@ -76,6 +76,17 @@ after the chrony correction. It passed all hardened/controller checks, produced
 427 pass, seven fail, 29 not applicable, ten not checked and 600 not selected
 native results, and performed no assessment repair. Exact-owned cleanup passed
 with no VM resources left and the same 66 unrelated containers.
+
+Runtime source `da63dc0a79b6b545f4fe7ef9c55cf9d9ac0b2be0` then completed
+another fresh empty-disk installation in 517.715 seconds. The final kdump unit
+was masked and the SSH banner path was corrected after installation remediation;
+both targeted native rules now pass. All hardened/controller checks, time
+synchronization, trusted SSH/Ansible, 449-RPM SVD, no-remediation assessment,
+evidence retention and exact cleanup passed. Native totals are 428 pass, six
+fail, 29 not applicable, ten not checked and 600 not selected. The honest lab
+text written to `/etc/issue` exposed a separate `banner_etc_issue` variable
+mismatch, so this attempt remains ineligible and the next correction is bounded
+to declared assessment tailoring rather than restoring an inaccurate default.
 
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
@@ -109,11 +120,11 @@ The [continuation](../handoff/CURRENT.md) and merged
 attempts, corrections and actual runtime attribution. The hardened run used
 different content and selected coverage from the older RHEL draft profile.
 
-The latest hardened RHEL audit records seven selected failures covering local
+The latest hardened RHEL audit records six selected failures covering local
 account authorization, GRUB administration, name resolution, SELinux sudo role
-elevation, kdump, the SSH warning banner and SSSD certificate mapping. The prior
-two chrony failures are retained historically; both now pass while the declared
-lab source remains synchronized. Ten native checks need separate disposition.
+elevation, the local banner value and SSSD certificate mapping. The historical
+chrony, kdump and SSH banner-path failures now pass while time remains
+synchronized. Ten native checks need separate disposition.
 FIPS runtime mode passed, but module and operating-environment verification
 remains open. These conditions keep the lab release gate closed.
 

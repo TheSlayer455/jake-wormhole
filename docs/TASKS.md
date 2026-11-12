@@ -14,6 +14,16 @@ bytes through the existing storage engine. Next: diagnose the seven retained
 native failures from this run's ARF, then complete manual/crypto evidence and the
 RHEL evaluator/publisher. No release is eligible yet.
 
+Follow-on runtime source `da63dc0a79b6b545f4fe7ef9c55cf9d9ac0b2be0`
+completed a fresh 517.715-second RHEL installation after the retained ARF proved
+the final kdump unit was unmasked and the SSH banner paths conflicted. Both
+targeted rules now pass; hardened/controller checks, synchronization, 449-RPM
+SVD, no-remediation assessment, evidence and cleanup also pass. Native totals
+are 428 pass/six fail/29 not applicable/ten not checked/600 not selected. The
+accurate home-lab notice exposed the separate `banner_etc_issue` default-value
+mismatch. Next: declare that value through bounded tailoring and verify it in a
+fresh native audit; do not restore an inaccurate government-system banner.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra

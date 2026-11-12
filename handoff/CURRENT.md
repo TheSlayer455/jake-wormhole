@@ -1,5 +1,25 @@
 # Current handoff
 
+## RHEL kdump/banner-path closure and separate lab-banner finding
+
+Runtime source `da63dc0a79b6b545f4fe7ef9c55cf9d9ac0b2be0` completed a fresh
+encrypted RHEL 10 installation in 517.715 seconds. Retained native objects had
+shown an inactive but unmasked kdump unit and conflicting SSH banner paths. The
+installation input now masks the disabled unit after remediation and points SSH
+at `/etc/issue`; `service_kdump_disabled` and `sshd_enable_warning_banner` both
+pass. Trusted SSH/Ansible, all hardened/controller checks, synchronized time,
+449-RPM SVD, full native accounting, no-remediation assessment, evidence
+retention and exact-owned cleanup passed. The same 66 unrelated containers were
+preserved.
+
+Native totals changed from 427 pass/seven fail to 428 pass/six fail. The net
+gain is one because writing the accurate home-lab notice to `/etc/issue`
+exposed the separate `banner_etc_issue` rule's upstream default value, which is
+an inaccurate government-system notice for this environment. Qualification
+remains false. The next bounded correction is a declared banner-value tailoring
+input, not replacement with false text. One new candidate and evidence set now
+await the existing encrypted archive lifecycle.
+
 ## RHEL chrony closure and finished-journal recovery
 
 Runtime source `e3208237884acc53fb4821cdbc6dcb5e867e49e1` completed a fresh
