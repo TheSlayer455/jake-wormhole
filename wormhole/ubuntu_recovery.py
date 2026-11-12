@@ -27,6 +27,11 @@ def terminalize_reconciled(result):
     return result
 
 
+def network_filter_present(name):
+    return subprocess.run(['virsh','-c','qemu:///system','nwfilter-dumpxml',name],
+        capture_output=True,text=True,timeout=10).returncode==0
+
+
 def recover(identifier, terraform=None):
     require(os.geteuid()==0,'runtime_owner_required')
     identifier=run_id(identifier)
@@ -73,7 +78,7 @@ def recover(identifier, terraform=None):
             elif kind=='domain':require(identity not in set(virsh('list','--all','--name').split()),'recovery_resource_present')
             elif kind=='network':require(identity not in set(virsh('net-list','--all','--name').split()),'recovery_resource_present')
             elif kind=='pool':require(identity not in set(virsh('pool-list','--all','--name').split()),'recovery_resource_present')
-            elif kind=='network_filter':require(identity not in set(virsh('nwfilter-list','--name').split()),'recovery_resource_present')
+            elif kind=='network_filter':require(not network_filter_present(identity),'recovery_resource_present')
             elif kind=='disk':require(not Path(identity).exists(),'recovery_resource_present')
             elif kind in {'installer_iso','seed_iso'}:
                 require(Path(identity).is_file() if outcome=='retained-input' else not Path(identity).exists(),
