@@ -34,6 +34,14 @@ encrypted archive verified the new candidate/evidence set and reclaimed
 resolve the remaining five selected findings and ten governed not-checked
 requirements, then finish the RHEL evaluator/publisher. No release is eligible.
 
+Source `ff881b11cbb6184adbdb398d787979c06912edee` is the next focused
+candidate-input change. Retained native objects proved the local-account rule
+rejects three locked package service identities plus the declared final service
+identity because the pinned default allowlist omits them. The existing XCCDF
+value now adds only those four authorized identities; no rule is excluded and no
+account is deleted. Eleven focused hardening tests pass. A fresh installation is
+required before closing the rule or changing the current 429/5 runtime result.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra

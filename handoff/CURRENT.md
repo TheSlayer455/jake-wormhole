@@ -24,6 +24,14 @@ false: five selected findings, ten native not-checked requirements, manual and
 cryptographic operating-environment evidence, and the RHEL evaluator/publisher
 remain open. Ubuntu vendor integration still waits for private Pro entitlement.
 
+Source `ff881b11cbb6184adbdb398d787979c06912edee` is pending its fresh
+runtime proof. The retained ARF identifies three locked package service accounts
+and the declared final service identity as the four false rows under the pinned
+default account allowlist. The existing tailoring now declares exactly those
+four authorized identities. It changes no selected rule, deletes no account and
+adds no exception. Eleven focused hardening tests pass; the current runtime
+finding remains open until another empty-disk installation proves the native row.
+
 ## RHEL kdump/banner-path closure and separate lab-banner finding
 
 Runtime source `da63dc0a79b6b545f4fe7ef9c55cf9d9ac0b2be0` completed a fresh

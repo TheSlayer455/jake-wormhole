@@ -617,6 +617,15 @@ private configuration values.
 | `selinux_context_elevation_for_sudo` | SELinux context elevation through sudo |
 | `sssd_enable_certmap` | SSSD certificate mapping |
 
+The retained B objects show that the account rule's RHEL 10 default allowlist
+omits three locked service identities belonging to installed packages and the
+declared final Wormhole service identity. Source
+[ff881b1](https://github.com/TheSlayer455/jake-wormhole/commit/ff881b11cbb6184adbdb398d787979c06912edee)
+adds only those four identities to the existing XCCDF value; it does not delete
+accounts, exclude the rule or change rule selection. Focused generated-input
+tests pass. The rule remains open until a fresh installation proves the native
+result and preserves authentication, inventory, assessment and cleanup.
+
 The retained native objects established that the final kdump unit was inactive
 but loaded rather than masked, and that the post-remediation SSH drop-in used a
 different banner path. [a947977](https://github.com/TheSlayer455/jake-wormhole/commit/a947977c541adc6309c436803cfb992f5da18e75)
