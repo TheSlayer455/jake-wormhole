@@ -1,5 +1,22 @@
 # Current engineering state
 
+## Self-contained Terra handoff
+
+[PR 54](https://github.com/TheSlayer455/jake-wormhole/pull/54) expands the existing
+canonical brief into one self-contained initial paste. The file now carries the
+owner's work-side authority, causal A/B procedure, current marker case, 20-minute
+focused budget, live-log and first-failure rules, complete-result semantics,
+current two-OS evidence and blockers, storage disposition, a code-level contract
+capsule and Terra's response schema. Public links are optional verification.
+
+The substantive portable source at `4c37488` passed repository/evidence checks,
+1,016 source tests with 12 explicit skips and all 17 controlled parity cases.
+Five focused portable tests passed after the final precision edit at `4ce81a2`.
+Independent read-only engineering/sanitization review found and closed three
+issues, then cleared the exact portable diff with no apparent confidential
+content. This milestone has no new VM run or qualification claim; runtime remains
+at `21fb946` and the public acceptance report remains attributed to `31093e4`.
+
 ## Fresh real runs after storage delivery
 
 Both supported OSes completed fresh sequential installations at main

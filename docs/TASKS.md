@@ -1,6 +1,16 @@
 # Minx work index
 
-Current increment is `codex/WORM-001-two-os-cleanup-acceptance`. The fresh
+Current increment is `codex/WORM-001-terra-single-file-bundle`, [PR 54](https://github.com/TheSlayer455/jake-wormhole/pull/54).
+The existing Terra brief is now the complete initial copy/paste bundle. It
+contains the owner directive, fast causal workflow, current console case,
+20-minute budget, live logging, expected-result accounting, verified runtime
+reference, implementation capsule, exact qualification/storage state and a
+sanitized response schema. Terra no longer needs routine follow-up Wormhole
+file pastes. This is a documentation and focused structural-test increment;
+no runtime code, installed input or qualification policy changed.
+
+Completed execution-report increment was `codex/WORM-001-two-os-cleanup-acceptance`.
+The fresh
 RHEL/Ubuntu executions at main `21fb946`, per-run cleanup, archive readback,
 repeatability and final reconciliation are complete. Preserve the
 [current measured results and remaining qualification work](../handoff/CURRENT.md#fresh-two-os-acceptance-with-automatic-cleanup).
