@@ -205,6 +205,18 @@ empty rich-rule, protocol, source-port and forward-port verification before the
 runtime attempt; those corrections and negative identity regressions are in the
 same source.
 
+A fresh attempt at source `9ee8c4f334d221ba0c7dc52e070a6c45d9fe497e`
+installed all 449 packages and completed hardening, then failed the final
+installed-system readiness script before SSH. The retained console proves that
+firewalld had started, but the old failure marker does not identify which new
+account/firewall assertion failed. Assessment did not start; every dependent
+row is blocked, exact-owned Terraform cleanup passed and 405,504 transient
+allocated bytes were reclaimed. No controller or Wormhole VM remains. Source
+`4552360c38bc3da40d8b56977feadbbf88b0a54f` adds only a static, nonsecret
+readiness-stage marker while retaining the existing terminal failure marker.
+Fifteen focused input tests pass. The next fresh attempt is diagnostic proof of
+the first failed assertion group, not permission to guess at a correction.
+
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
 terminal receipt whose immutable ownership journal was already finished: the

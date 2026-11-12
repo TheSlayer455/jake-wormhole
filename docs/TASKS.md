@@ -127,6 +127,16 @@ identity checks and rejection of undeclared firewall rule classes. Twenty-one
 focused cases pass. Production/policy +200/-13; tests +63/-10. A fresh
 installation is required before these controls are closed.
 
+That first fresh attempt, at source `9ee8c4f`, reached 449/449 packages and
+`hardening-complete`, then failed final installed-system readiness before SSH.
+The console shows firewalld started; it does not show the exact assertion under
+the old marker. All dependent checks were blocked, assessment did not run,
+Terraform cleanup passed, 405,504 transient allocated bytes were reclaimed and
+no VM/controller remains. Diagnostic source `4552360` adds a static stage name
+to the existing failure marker without exposing observed values or changing the
+qualification gate. Fifteen focused input tests pass. Next: run one fresh guest,
+identify the actual failed assertion group, then correct only that condition.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra

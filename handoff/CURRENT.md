@@ -1,6 +1,6 @@
 # Current handoff
 
-## RHEL manual-control evidence pending runtime
+## RHEL manual-control final-readiness diagnosis
 
 Source `a8263e900e10f04eab3f6e4f98e4a6d9fa26842b` implements one
 read-only observer for the exact ten native `notchecked` rules. Native statuses
@@ -21,6 +21,18 @@ record now verifies guest run/boot identity and both built policy hashes before
 binding facts. The SSH-only firewall claim additionally requires successful,
 empty rich-rule, protocol, source-port and forward-port queries. Focused negative
 cases reject changed run, boot and policy identities.
+
+The first fresh attempt at source `9ee8c4f334d221ba0c7dc52e070a6c45d9fe497e`
+installed all 449 packages and completed hardening, then failed the final
+readiness script before SSH. Retained console evidence proves firewalld had
+started but the existing marker cannot distinguish the new account and firewall
+assertions. Assessment correctly did not run; all dependent rows are blocked,
+exact Terraform cleanup passed, 405,504 transient allocated bytes were reclaimed
+and no controller or Wormhole VM remains. Source
+`4552360c38bc3da40d8b56977feadbbf88b0a54f` adds static nonsecret stage names to
+the same readiness trap and preserves the existing terminal marker. Fifteen
+focused tests pass. Run one fresh diagnostic installation; do not select a
+configuration fix until its retained marker names the failed group.
 
 ## RHEL selected-automated-rule closure
 
