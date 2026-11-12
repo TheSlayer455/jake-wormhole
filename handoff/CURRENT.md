@@ -1,22 +1,26 @@
 # Current handoff
 
-## RHEL SSSD certificate-map applicability
+## RHEL selected-automated-rule closure
 
-Source `85bfd5722e6f4e72f363ca8db9ee33aa7b51b5a8` records the exact lab
-authentication contract: run-scoped SSH public-key authentication followed by
-local password-required sudo. The
+Runtime source `4ac320ddb2d21ff3172d04b4cf33547c425c9490` completed a fresh
+493.897-second empty-disk installation of the policy introduced at `85bfd57`.
+That policy records the exact lab authentication contract: run-scoped SSH
+public-key authentication followed by local password-required sudo. The
 [pinned `sssd_enable_certmap` definition](https://raw.githubusercontent.com/ComplianceAsCode/content/v0.1.82/linux_os/guide/services/sssd/sssd_enable_certmap/rule.yml)
 applies to
 PKI authentication, which this workload does not use. The frozen policy
 therefore deselects only that rule, records the machine-readable reason, keeps
 owner-approved exceptions empty and changes selected coverage from 473 to 472.
-The assessment reader requires the exact rule to be native `notselected`;
-count-only substitution cannot pass. The final-system observer also rejects any
-installed SSSD certificate-map section. Twenty focused cases pass.
-
-This is prospective source proof. A fresh empty-disk installation must bind the
-new policy/tailoring identities, retain all functional behavior and account for
-all 1,073 native outcomes before the selected-finding boundary is closed.
+The final guest contained no certificate-map section while strict key SSH and
+password-required sudo/Ansible remained functional. The exact rule is native
+`notselected`; native totals are 433 pass/zero fail/29 not applicable/ten not
+checked/601 not selected. All 472 selected and all 1,073 upstream outcomes are
+accounted, all 12 hardened/six controller checks and 449-RPM SVD pass, assessment
+performed no remediation, and exact teardown passed. Immediate cleanup reclaimed
+405,504 allocated bytes. The archive verified ten objects and exact-file cleanup
+reclaimed another 8,487,362,560 allocated bytes. Storage now records 76.565 GiB
+managed, 29.880 GiB candidates, 137.812 GiB free, 492 verified archive objects,
+no pending archive bytes and no VM disks.
 
 ## RHEL SELinux sudo-transition closure
 

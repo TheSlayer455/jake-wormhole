@@ -105,6 +105,18 @@ exception is added. The hardened reader requires this exact rule to be native
 observation rejects an installed certificate-map section. Twenty focused cases
 pass. Production/policy +30/-11; tests +29/-9. Fresh installation proof is next.
 
+Runtime source `4ac320ddb2d21ff3172d04b4cf33547c425c9490` completed that proof
+in 493.897 seconds. The installed guest passed the final non-PKI observation,
+all 12 hardened/six controller checks, encrypted cold start, trusted SSH/Ansible,
+449-RPM SVD and exact teardown. Native totals are 433 pass/zero fail/29 not
+applicable/ten not checked/601 not selected; `sssd_enable_certmap` is the exact
+native `notselected` result, all 472 selected outcomes pass or are accounted,
+and assessment performed no remediation. Immediate cleanup reclaimed 405,504
+allocated bytes. The archive verified ten objects and exact-file cleanup
+reclaimed another 8,487,362,560 allocated bytes. Storage now records 76.565 GiB
+managed, 29.880 GiB candidates, 137.812 GiB free, 492 verified archive objects,
+no pending archive bytes and no VM disks.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra

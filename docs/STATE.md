@@ -179,6 +179,18 @@ binding the policy decision to final guest configuration. Twenty focused
 hardening/assessment cases pass. A fresh installation must still prove the new
 candidate, tailoring and complete 1,073-rule accounting.
 
+Runtime source `4ac320ddb2d21ff3172d04b4cf33547c425c9490` then completed a
+fresh 493.897-second empty-disk installation. The final non-PKI observation,
+all 12 hardened and six controller checks, 449-RPM SVD, trusted SSH/Ansible,
+encrypted cold start and exact teardown pass. The exact rule is native
+`notselected`; totals are 433 pass, zero fail, 29 not applicable, ten not
+checked and 601 not selected. All 472 selected and all 1,073 upstream outcomes
+are accounted, and the assessment receipt records no remediation. Immediate
+transient cleanup reclaimed 405,504 allocated bytes. The archive verified ten
+objects and exact-file cleanup reclaimed another 8,487,362,560 allocated bytes.
+Storage now records 76.565 GiB managed, 29.880 GiB candidates, 137.812 GiB free,
+492 verified archive objects, no pending archive bytes and no VM disks.
+
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
 terminal receipt whose immutable ownership journal was already finished: the
@@ -212,9 +224,8 @@ The [continuation](../handoff/CURRENT.md) and merged
 attempts, corrections and actual runtime attribution. The hardened run used
 different content and selected coverage from the older RHEL draft profile.
 
-The latest executed hardened RHEL audit records one selected failure covering
-SSSD certificate mapping. Source `85bfd57` contains the prospective non-PKI
-applicability correction; it is not runtime proof. The
+The latest executed hardened RHEL audit records no selected automated failure.
+The
 historical chrony, kdump, SSH banner-path, declared banner-value,
 authorized-account, name-resolution, GRUB-administrator and SELinux sudo
 transition failures now pass
