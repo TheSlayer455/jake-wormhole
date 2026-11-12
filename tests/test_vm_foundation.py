@@ -211,6 +211,8 @@ class RHELAssessment(unittest.TestCase):
         from types import SimpleNamespace
         compile(ra.HARDENED_AUDIT_CODE,'<hardened-helper>','exec')
         self.assertIn('--tailoring-file /usr/local/share/wormhole/lab-tailoring.xml', ra.HARDENED_AUDIT_CODE)
+        self.assertIn("['staff_u','staff_r','staff_t']", ra.HARDENED_AUDIT_CODE)
+        self.assertIn("context('staff_u','sysadm_r','sysadm_t')", ra.HARDENED_PROBE)
         compile(ra.HARDENED_PROBE,'<read-only-guest-probe>','exec')
         self.assertNotIn('--remediate',ra.HARDENED_AUDIT_CODE)
         self.assertIn('/usr/share/xml/scap/ssg/content/',ra.RHEL_AUDIT_CODE)

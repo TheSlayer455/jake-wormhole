@@ -145,6 +145,13 @@ transient allocated bytes. The remaining selected failures are SELinux sudo
 context transition and SSSD certificate mapping. Archive reconciliation is
 pending for the retained candidate/evidence set.
 
+Source `8d825f66c261d1d11e82f17c5f53377436650e3a` is the next unverified
+installed input. It maps the final administrator to `staff_u`, uses a
+password-required wheel sudo rule with `ROLE=sysadm_r TYPE=sysadm_t`, restores
+home labels and verifies both pre-sudo and post-sudo contexts through actual
+SSH. Fourteen focused cases pass. No native-rule or access success is claimed
+until a fresh installation runs this input.
+
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
 terminal receipt whose immutable ownership journal was already finished: the

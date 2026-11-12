@@ -76,6 +76,14 @@ only the SELinux sudo-transition and SSSD certificate-map rules remain selected
 failures. Assessment performed no repair and cleanup reclaimed 405,504 transient
 allocated bytes. Archive reconciliation is the next retention operation.
 
+Source `8d825f66c261d1d11e82f17c5f53377436650e3a` is the next focused
+installed-input change. It maps the final administrator to `staff_u`, replaces
+the unrestricted per-user sudo line with a password-required wheel transition
+to `sysadm_r:sysadm_t`, restores labels and validates the full sudo policy. The
+helper requires both the unprivileged `staff_r:staff_t` login context and the
+privileged `sysadm_r:sysadm_t` execution context. Fourteen focused cases pass.
+Production +12/-2; tests +16/-3. Fresh installation proof remains required.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra

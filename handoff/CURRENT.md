@@ -18,6 +18,15 @@ Terraform/support teardown passed, cleanup reclaimed 405,504 transient allocated
 bytes and the same 66 unrelated containers remain running. Archive reconciliation
 for this retained candidate/evidence set is pending.
 
+Source `8d825f66c261d1d11e82f17c5f53377436650e3a` is the next unverified
+installed input. It maps the final administrator to `staff_u`, replaces the
+unrestricted user sudo line with a password-required wheel transition to
+`sysadm_r:sysadm_t`, restores home labels and validates the full sudo policy.
+The helper requires the actual SSH login context `staff_r:staff_t` and actual
+sudo execution context `sysadm_r:sysadm_t`. Fourteen focused cases pass. A
+fresh run must still prove access, Ansible become, the behavioral transition
+and the native rule.
+
 ## RHEL local-only resolution closure
 
 Runtime source `77498b3a5934e3ee7cc538e30194e39b74e9eba1` completed a fresh
