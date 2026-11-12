@@ -138,7 +138,8 @@ test "$(stat -c %a /home/lab.service/.ssh/authorized_keys)" = 600
 test "$(stat -c %a /var/lib/wormhole)" = 755
 test -s /etc/wormhole-lab-ca.crt
 grep -Eq '^[[:space:]]*set superusers="wormhole_boot_admin"$' /boot/grub2/grub.cfg
-grep -Eq '^[[:space:]]*password_pbkdf2[[:space:]]+wormhole_boot_admin[[:space:]]+grub\.pbkdf2\.' /boot/grub2/grub.cfg
+grep -Fq 'password_pbkdf2 wormhole_boot_admin ${GRUB2_PASSWORD}' /boot/grub2/grub.cfg
+grep -Eq '^GRUB2_PASSWORD=grub\.pbkdf2\.' /boot/grub2/user.cfg
 ! getent passwd wormhole_boot_admin
 NetworkManager --print-config | grep -qx 'dns=none'
 awk '$1 == "hosts:" { found=1; for (i=2; i<=NF; i++) if ($i == "dns") exit 1 } END { if (!found) exit 1 }' /etc/nsswitch.conf
@@ -187,13 +188,14 @@ systemctl mask kdump.service
 test -s /etc/grub.d/01_users
 sed -Ei \
     -e 's/^([[:space:]]*set superusers=)"root"$/\1"wormhole_boot_admin"/' \
-    -e 's/^([[:space:]]*password_pbkdf2[[:space:]]+)root([[:space:]]+grub\.pbkdf2\.)/\1wormhole_boot_admin\2/' \
+    -e 's/^([[:space:]]*password_pbkdf2[[:space:]]+)root([[:space:]]+)/\1wormhole_boot_admin\2/' \
     /etc/grub.d/01_users
 grep -Eq '^[[:space:]]*set superusers="wormhole_boot_admin"$' /etc/grub.d/01_users
-grep -Eq '^[[:space:]]*password_pbkdf2[[:space:]]+wormhole_boot_admin[[:space:]]+grub\.pbkdf2\.' /etc/grub.d/01_users
+grep -Fq 'password_pbkdf2 wormhole_boot_admin ${GRUB2_PASSWORD}' /etc/grub.d/01_users
+grep -Eq '^GRUB2_PASSWORD=grub\.pbkdf2\.' /boot/grub2/user.cfg
 grub2-mkconfig -o /boot/grub2/grub.cfg
 grep -Eq '^[[:space:]]*set superusers="wormhole_boot_admin"$' /boot/grub2/grub.cfg
-grep -Eq '^[[:space:]]*password_pbkdf2[[:space:]]+wormhole_boot_admin[[:space:]]+grub\.pbkdf2\.' /boot/grub2/grub.cfg
+grep -Fq 'password_pbkdf2 wormhole_boot_admin ${GRUB2_PASSWORD}' /boot/grub2/grub.cfg
 # Complete the declared final-account contract after profile remediation. This
 # is installation code, never an acceptance-time repair or passwordless bypass.
 chown -R lab.service:lab.service /home/lab.service

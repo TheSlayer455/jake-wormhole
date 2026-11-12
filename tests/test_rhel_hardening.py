@@ -109,12 +109,31 @@ class HardenedInputs(unittest.TestCase):
                         h.FINALIZE.index('systemctl mask kdump.service'))
 
     def test_final_grub_admin_changes_the_generator_and_rebuilds_the_config(self):
-        self.assertIn("/etc/grub.d/01_users", h.FINALIZE)
-        self.assertIn('set superusers=)"root"', h.FINALIZE)
-        self.assertIn('wormhole_boot_admin', h.FINALIZE)
+        generator = '''if [ -f ${prefix}/user.cfg ]; then
+  source ${prefix}/user.cfg
+  if [ -n "${GRUB2_PASSWORD}" ]; then
+    set superusers="root"
+    export superusers
+    password_pbkdf2 root ${GRUB2_PASSWORD}
+  fi
+fi
+'''
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / '01_users'
+            path.write_text(generator)
+            start = h.FINALIZE.index('sed -Ei \\\n', h.FINALIZE.index("test -s /etc/grub.d/01_users"))
+            end = h.FINALIZE.index('/etc/grub.d/01_users', start) + len('/etc/grub.d/01_users')
+            transform = h.FINALIZE[start:end].replace('/etc/grub.d/01_users', str(path))
+            result = subprocess.run(['bash'], input='set -eu\n' + transform + '\n',
+                                    text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            changed = path.read_text()
+        self.assertIn('set superusers="wormhole_boot_admin"', changed)
+        self.assertIn('password_pbkdf2 wormhole_boot_admin ${GRUB2_PASSWORD}', changed)
+        self.assertNotIn('password_pbkdf2 root ', changed)
+        self.assertIn("grep -Eq '^GRUB2_PASSWORD=grub\\.pbkdf2\\.' /boot/grub2/user.cfg", h.FINALIZE)
         self.assertIn('grub2-mkconfig -o /boot/grub2/grub.cfg', h.FINALIZE)
         self.assertIn('! getent passwd wormhole_boot_admin', h.READY)
-        self.assertNotIn('password_pbkdf2 root grub.pbkdf2', h.FINALIZE)
 
     def test_reuse_binds_installed_recipe_and_refuses_baseline_or_modified_bytes(self):
         manifest = {'capability': h.CAPABILITY, 'source': baseline.RHEL,
