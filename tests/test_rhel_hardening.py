@@ -108,6 +108,14 @@ class HardenedInputs(unittest.TestCase):
         self.assertLess(h.FINALIZE.index('oscap xccdf eval --remediate'),
                         h.FINALIZE.index('systemctl mask kdump.service'))
 
+    def test_final_grub_admin_changes_the_generator_and_rebuilds_the_config(self):
+        self.assertIn("/etc/grub.d/01_users", h.FINALIZE)
+        self.assertIn('set superusers=)"root"', h.FINALIZE)
+        self.assertIn('wormhole_boot_admin', h.FINALIZE)
+        self.assertIn('grub2-mkconfig -o /boot/grub2/grub.cfg', h.FINALIZE)
+        self.assertIn('! getent passwd wormhole_boot_admin', h.READY)
+        self.assertNotIn('password_pbkdf2 root grub.pbkdf2', h.FINALIZE)
+
     def test_reuse_binds_installed_recipe_and_refuses_baseline_or_modified_bytes(self):
         manifest = {'capability': h.CAPABILITY, 'source': baseline.RHEL,
                     'candidate_sha256': 'a' * 64, 'installed_input_fingerprint': 'b' * 64}
