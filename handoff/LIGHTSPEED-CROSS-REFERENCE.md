@@ -402,7 +402,7 @@ release acceptance, and neither should become a new orchestration framework.
 | `storage.Store.observe`, preview, clean and lifecycle | Reconcile run manifests, active references, current candidates, evidence and exact filesystem allocation under the shared lock. | Active or unresolved references, uncertain evidence and required local inputs remain protected. Cleanup uses the same engine as preview. |
 | `storage_archive.preview`, queue, commit and restore | Archive only completed eligible content by cryptographic identity. Commit follows destination readback. Restore verifies exact bytes and local protections. | Offline or corrupt destination preserves the only local copy. No committed receipt means no local reclamation. |
 | `archive_client.Client` | Pull through the established private route, encrypt locally, verify decrypted stored bytes, commit receipt, and remove only abandoned exact staging files. | An interrupted transfer stays incomplete. Original transfer errors survive cleanup errors. Unrelated files and active handles are untouched. |
-| `publication.publish_reference` | Snapshot a closed eligible file table, copy the exact tested bytes into a unique private release, verify it, and write completion last. | Failed, incomplete, changed, duplicate or production-ineligible input is refused without overwriting a release. |
+| `publication.publish_reference` | Snapshot a closed eligible file table, copy the exact tested bytes into a unique private release, verify it, and write completion last. | Failed, incomplete, changed, duplicate, wrong-scope or falsely production-eligible input is refused without overwriting a release. |
 
 ### Assessment and SVD
 
@@ -424,11 +424,11 @@ behavioral contract without another paste.
 | One-guest execution, host-key framing and readiness | `wormhole/vm_baseline.py` | `tests/test_vm_foundation.py` |
 | Lifecycle projection and complete result grid | `wormhole/lifecycle.py`, `wormhole/execution_state.py`, `wormhole/pipeline_records.py` | `tests/test_lifecycle.py`, `tests/test_execution_state.py`, `tests/test_pipeline_records.py` |
 | RHEL installation and hardening | `wormhole/rhel_inputs.py`, `wormhole/rhel_hardening.py`, `wormhole/rhel_assessment.py` | `tests/test_rhel_hardening.py`, `tests/test_vm_foundation.py` |
-| Ubuntu installation and qualification | `wormhole/ubuntu_inputs.py`, `wormhole/ubuntu_runtime.py`, `wormhole/ubuntu_release.py` | `tests/test_ubuntu_helper.py`, `tests/test_ubuntu_release.py` |
+| Ubuntu installation and qualification | `wormhole/ubuntu_inputs.py`, `wormhole/ubuntu_runtime.py`, `wormhole/ubuntu_release.py` | `tests/test_ubuntu_helper.py`, `tests/test_ubuntu_reports.py`, `tests/test_ubuntu_release_readback.py` |
 | Completed-media intake | `wormhole/intake.py`, `wormhole/ubuntu_intake.py` | `tests/test_intake.py` |
 | Recovery and cleanup | `wormhole/recovery.py`, `wormhole/ubuntu_recovery.py`, `wormhole/storage.py` | `tests/test_recovery.py`, `tests/test_storage.py` |
 | Archive and exact restore | `wormhole/storage_archive.py`, `wormhole/archive_client.py` | `tests/test_storage.py`, `tests/test_archive_client.py` |
-| Publication | `wormhole/publication.py`, `wormhole/ubuntu_release.py` | `tests/test_publication.py`, `tests/test_ubuntu_release.py` |
+| Publication | `wormhole/publication.py`, `wormhole/ubuntu_release.py` | `tests/test_publication.py`, `tests/test_ubuntu_reports.py`, `tests/test_ubuntu_release_readback.py` |
 
 For quick public examples, run these from the Wormhole checkout at the pinned
 revision. The first exercises the real console frame parser. The second calls
@@ -698,8 +698,11 @@ sentence and cite the observed boundary.
 
 Record the controller revision, candidate identity, declared installation-input
 identity, attempt identity, evidence-file identity and current resource
-disposition privately. In the chat response, confirm only that they were bound
-to one attempt. Do not expose restricted values.
+disposition. Keep useful nonsecret run identifiers, candidate identity,
+diagnostic paths, timestamps and exit status in the authorized work chat so the
+owner can correlate execution. Protect actual credentials, private keys, tokens
+and unlock material. Apply generalized identities only to the external update in
+section J.
 
 ### C. First confirmed failing transition
 

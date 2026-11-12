@@ -36,6 +36,10 @@ class PortableHandoff(unittest.TestCase):
             self.assertNotIn(phrase, lowered)
         local_links = re.findall(r'\[[^]]+\]\((?!https://github\.com/TheSlayer455/jake-wormhole)[^)]+\)', document)
         self.assertEqual(local_links, [])
+        source_references = set(re.findall(r'`((?:tests|wormhole)/[A-Za-z0-9_./-]+\.py)`', document))
+        self.assertTrue(source_references)
+        for reference in source_references:
+            self.assertTrue((ROOT / reference).is_file(), reference)
 
     def test_primary_brief_contains_required_terra_contract(self):
         document = (ROOT / PRIMARY).read_text()
