@@ -110,6 +110,8 @@ class HardenedInputs(unittest.TestCase):
         self.assertIn('firewall-cmd --zone=drop --list-services', h.READY)
         for stage in ('default-zone', 'active-zone', 'interface', 'target', 'services', 'ports'):
             self.assertIn('failure_stage=firewall-' + stage, h.READY)
+        self.assertIn('default|ACCEPT|DROP|REJECT', h.READY)
+        self.assertIn('failure_stage="firewall-target-${firewall_target}"', h.READY)
 
     def test_final_banner_uses_the_pinned_rule_path_after_remediation(self):
         self.assertIn("> /etc/issue\n", h.FINALIZE)

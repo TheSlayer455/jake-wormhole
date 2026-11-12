@@ -169,8 +169,13 @@ failure_stage=firewall-active-zone
 test "$(firewall-cmd --get-active-zones | awk '/^[^ ]/ { print $1 }')" = drop
 failure_stage=firewall-interface
 test -n "$(firewall-cmd --zone=drop --list-interfaces)"
-failure_stage=firewall-target
-test "$(firewall-cmd --zone=drop --get-target)" = DROP
+failure_stage=firewall-target-query
+firewall_target=$(firewall-cmd --zone=drop --get-target)
+case "$firewall_target" in
+    default|ACCEPT|DROP|REJECT) failure_stage="firewall-target-${firewall_target}" ;;
+    *) failure_stage=firewall-target-unexpected ;;
+esac
+test "$firewall_target" = DROP
 failure_stage=firewall-services
 test "$(firewall-cmd --zone=drop --list-services)" = ssh
 failure_stage=firewall-ports
