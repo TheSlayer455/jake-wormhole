@@ -143,7 +143,10 @@ pass. Native totals are 432 pass, two fail, 29 not applicable, ten not checked
 and 600 not selected. Assessment performed no repair; cleanup reclaimed 405,504
 transient allocated bytes. The remaining selected failures are SELinux sudo
 context transition and SSSD certificate mapping. Archive reconciliation is
-pending for the retained candidate/evidence set.
+complete: ten objects were verified and cleanup reclaimed 8,487,362,560
+additional allocated bytes. Current allocation is 76.326 GiB managed,
+29.880 GiB candidates and 138.047 GiB available, with zero VM disks, pending
+archive bytes or failed receipts.
 
 Source `8d825f66c261d1d11e82f17c5f53377436650e3a` is the next unverified
 installed input. It maps the final administrator to `staff_u`, uses a

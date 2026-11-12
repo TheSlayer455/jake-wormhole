@@ -16,7 +16,10 @@ the only selected failures are `selinux_context_elevation_for_sudo` and
 `sssd_enable_certmap`. The assessment receipt records no remediation. Exact
 Terraform/support teardown passed, cleanup reclaimed 405,504 transient allocated
 bytes and the same 66 unrelated containers remain running. Archive reconciliation
-for this retained candidate/evidence set is pending.
+verified ten objects and reclaimed 8,487,362,560 additional allocated bytes.
+Current allocation is 76.326 GiB managed, 29.880 GiB candidates and 138.047 GiB
+available. There are 472 committed archive objects and zero VM disks, pending
+archive bytes or failed receipts.
 
 Source `8d825f66c261d1d11e82f17c5f53377436650e3a` is the next unverified
 installed input. It maps the final administrator to `staff_u`, replaces the

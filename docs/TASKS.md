@@ -74,7 +74,9 @@ checks, 449-RPM SVD, complete read-only assessment and exact cleanup pass. Nativ
 totals are 432 pass/two fail/29 not applicable/ten not checked/600 not selected;
 only the SELinux sudo-transition and SSSD certificate-map rules remain selected
 failures. Assessment performed no repair and cleanup reclaimed 405,504 transient
-allocated bytes. Archive reconciliation is the next retention operation.
+allocated bytes. The encrypted archive verified ten objects and cleanup reclaimed
+8,487,362,560 additional allocated bytes. No VM, pending archive byte or failed
+receipt remains.
 
 Source `8d825f66c261d1d11e82f17c5f53377436650e3a` is the next focused
 installed-input change. It maps the final administrator to `staff_u`, replaces
