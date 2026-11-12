@@ -163,12 +163,17 @@ failure_stage=network-policy
 NetworkManager --print-config | grep -qx 'dns=none'
 awk '$1 == "hosts:" { found=1; for (i=2; i<=NF; i++) if ($i == "dns") exit 1 } END { if (!found) exit 1 }' /etc/nsswitch.conf
 test ! -s /etc/resolv.conf
-failure_stage=firewall-policy
+failure_stage=firewall-default-zone
 test "$(firewall-cmd --get-default-zone)" = drop
+failure_stage=firewall-active-zone
 test "$(firewall-cmd --get-active-zones | awk '/^[^ ]/ { print $1 }')" = drop
+failure_stage=firewall-interface
 test -n "$(firewall-cmd --zone=drop --list-interfaces)"
+failure_stage=firewall-target
 test "$(firewall-cmd --zone=drop --get-target)" = DROP
+failure_stage=firewall-services
 test "$(firewall-cmd --zone=drop --list-services)" = ssh
+failure_stage=firewall-ports
 test -z "$(firewall-cmd --zone=drop --list-ports)"
 failure_stage=ssh-host
 if ! test -f /etc/ssh/ssh_host_rsa_key; then

@@ -95,8 +95,7 @@ class HardenedInputs(unittest.TestCase):
 
     def test_final_account_expiry_and_drop_zone_are_installed_then_observed(self):
         self.assertIn('WORMHOLE_FINALIZATION_CHECK_FAILED ${failure_stage}', h.READY)
-        for stage in ('final-account', 'boot-security', 'network-policy',
-                      'firewall-policy', 'ssh-host'):
+        for stage in ('final-account', 'boot-security', 'network-policy', 'ssh-host'):
             self.assertIn('failure_stage=' + stage, h.READY)
         self.assertIn('chage -E "$(date -u -d \'+2 days\' +%F)" lab.service', h.FINALIZE)
         self.assertIn('test "$expiry" -gt "$today"', h.READY)
@@ -109,6 +108,8 @@ class HardenedInputs(unittest.TestCase):
             self.assertLess(h.FINALIZE.index('oscap xccdf eval --remediate'), h.FINALIZE.index(command))
         self.assertIn('firewall-cmd --zone=drop --get-target', h.READY)
         self.assertIn('firewall-cmd --zone=drop --list-services', h.READY)
+        for stage in ('default-zone', 'active-zone', 'interface', 'target', 'services', 'ports'):
+            self.assertIn('failure_stage=firewall-' + stage, h.READY)
 
     def test_final_banner_uses_the_pinned_rule_path_after_remediation(self):
         self.assertIn("> /etc/issue\n", h.FINALIZE)
