@@ -10,7 +10,8 @@ current two-OS evidence and blockers, storage disposition, a code-level contract
 capsule and Terra's response schema. Public links are optional verification.
 
 The substantive portable source at `4c37488` passed repository/evidence checks,
-1,016 source tests with 12 explicit skips and all 17 controlled parity cases.
+1,004 source tests with 12 explicit skips (1,016 total) and all 17 controlled
+parity cases.
 Five focused portable tests passed after the final precision edit at `4ce81a2`.
 Independent read-only engineering/sanitization review found and closed three
 issues, then cleared the exact portable diff with no apparent confidential

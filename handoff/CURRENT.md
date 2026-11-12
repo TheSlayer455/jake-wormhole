@@ -13,8 +13,8 @@ genuinely missing private work observation, not another routine Wormhole file.
 
 The source/test increment changes no controller, installation input, candidate,
 runtime resource or qualification policy. Full clean-checkout verification at
-`4c37488` passed 1,016 tests with 12 explicit skips, repository and historical
-matrix verification, and all 17 controlled parity cases. Final precision source
+`4c37488` passed 1,004 tests with 12 explicit skips (1,016 total), repository and
+historical matrix verification, and all 17 controlled parity cases. Final precision source
 `4ce81a2` passed all five focused portable tests and repository hygiene. An
 independent read-only engineering/sanitization review checked the exact portable
 diff, identified three corrections and cleared the corrected result. No fresh VM
