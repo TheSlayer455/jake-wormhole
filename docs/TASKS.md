@@ -1,5 +1,19 @@
 # Minx work index
 
+Current qualification-closure increment:
+`codex/WORM-001-rhel-chrony-closure`. Runtime source
+`e3208237884acc53fb4821cdbc6dcb5e867e49e1` completed one fresh encrypted RHEL
+10 installation after adding the pinned client-only and no-network-management
+chrony settings to the post-remediation final configuration. Both targeted rules
+now pass; the native delta is 427 pass/seven fail with all 1,073 outcomes
+accounted. Time synchronization, 10/10 hardened checks, 6/6 controller checks,
+trusted SSH/Ansible, SVD, no-remediation assessment, evidence retention and
+cleanup passed. A focused recovery correction also preserved an interrupted
+historical run as unknown while reclaiming 8,487,432,192 duplicate allocated
+bytes through the existing storage engine. Next: diagnose the seven retained
+native failures from this run's ARF, then complete manual/crypto evidence and the
+RHEL evaluator/publisher. No release is eligible yet.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra

@@ -1,5 +1,40 @@
 # Current handoff
 
+## RHEL chrony closure and finished-journal recovery
+
+Runtime source `e3208237884acc53fb4821cdbc6dcb5e867e49e1` completed a fresh
+encrypted RHEL 10 installation in 483.964 seconds. The installed-input change
+adds `port 0` and `cmdport 0` to the final chrony configuration that is written
+after OpenSCAP installation remediation. The declared lab time source remains
+configured and synchronized. Native results changed from 425 pass/nine fail to
+427 pass/seven fail; both `chronyd_client_only` and
+`chronyd_no_chronyc_network` now pass. All 1,073 native outcomes remain present
+and the assessment receipt records no remediation.
+
+The run passed trusted final SSH, real Ansible, all six controller checks, all
+ten hardened checks, the 449-RPM SVD, encrypted cold start and exact-owned
+cleanup. Its post-run storage cleanup reclaimed 405,504 allocated bytes. No
+owned VM resource remained and the same 66 unrelated containers were preserved.
+Current storage is 83.594 GiB managed, including a 37.784 GiB candidate cache,
+with 130.785 GiB filesystem availability.
+
+The first attempt stopped before allocation at the retention budget. A confirmed
+historical inconsistency had a finished immutable ownership journal but a stale
+`running` result. The existing recovery component now reobserves exact resource
+absence and terminalizes that record as `unknown`, never success. Its first
+failure is `supervisor_interrupted_without_terminal_result`; normal storage
+deduplication then reclaimed 8,487,432,192 allocated bytes while preserving one
+canonical local candidate and its verified encrypted archive. Focused source
+verification passed 36 tests with one root-only skip across the affected files.
+
+The seven current selected failures are `accounts_authorized_local_users`,
+`grub2_admin_username`, `network_configure_name_resolution`,
+`selinux_context_elevation_for_sudo`, `service_kdump_disabled`,
+`sshd_enable_warning_banner` and `sssd_enable_certmap`. Ten native not-checked
+rules, manual evidence, cryptographic module/operating-environment applicability
+and the RHEL evaluator/publisher remain open. Lab and production eligibility
+remain false. Ubuntu vendor integration still waits for private Pro entitlement.
+
 ## Bounded optional-tool decisions
 
 At `205835d`, the existing single-file Terra handoff adds a small adoption table
@@ -90,7 +125,8 @@ grew about 200.7 MiB for the new evidence, while transient file cleanup reclaime
 
 ### Remaining qualification work
 
-RHEL's nine observed automated failures have these public rule suffixes.
+RHEL's historical E run had nine automated failures. The fresh e320823 closure
+run resolved the two chrony rows; these seven public rule suffixes remain.
 
 | Rule | Observed requirement still failing |
 | --- | --- |
@@ -99,8 +135,6 @@ RHEL's nine observed automated failures have these public rule suffixes.
 | network_configure_name_resolution | Multiple configured DNS servers |
 | selinux_context_elevation_for_sudo | SELinux context elevation through sudo |
 | service_kdump_disabled | Disabled kdump |
-| chronyd_client_only | Chrony client-only operation |
-| chronyd_no_chronyc_network | Disabled network management of chrony |
 | sshd_enable_warning_banner | SSH warning banner |
 | sssd_enable_certmap | SSSD certificate mapping |
 

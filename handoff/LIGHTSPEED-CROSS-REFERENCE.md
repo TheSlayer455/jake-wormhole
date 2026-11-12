@@ -18,6 +18,10 @@ bounded private observation. It must not request a bulk repository export.
 This bundle reconciles the latest fresh two-OS evidence recorded on public main.
 The implementation used for those actual runs is
 [21fb946831a451a93c970346855e2c2aec781fb0](https://github.com/TheSlayer455/jake-wormhole/commit/21fb946831a451a93c970346855e2c2aec781fb0).
+The later focused RHEL chrony/recovery runtime used
+[e3208237884acc53fb4821cdbc6dcb5e867e49e1](https://github.com/TheSlayer455/jake-wormhole/commit/e3208237884acc53fb4821cdbc6dcb5e867e49e1);
+delivery and merge revisions are pending. It does not relabel the earlier Ubuntu
+or two-OS receipts.
 The public report was tested at
 [31093e4c556081f4654af9e8d28b65255b33fe98](https://github.com/TheSlayer455/jake-wormhole/commit/31093e4c556081f4654af9e8d28b65255b33fe98)
 and merged as
@@ -533,6 +537,7 @@ assertion of the precise execution time.
 | A / 2026-10-31 checkpoint | [Archive client at b881127](https://github.com/TheSlayer455/jake-wormhole/blob/b881127296ea9b2bc23dbde523b1c0a8b9021842/wormhole/archive_client.py); [failure-test revision](https://github.com/TheSlayer455/jake-wormhole/commit/61f91d9d29c4ceec5ec75e782bf0e6ecb4185668); [recorded storage proof](https://github.com/TheSlayer455/jake-wormhole/blob/56ca6fdb9f174c7649c27e2b778c67ca94849962/docs/STATE.md) | Real workstation archive, destination readback, eligible local deletion and exact-byte restore of a probe and historical ISO; actual unavailable/interrupted/corrupt transfer refusal. |
 | E / 2026-11-10, runtime test date | [Runtime at 21fb946](https://github.com/TheSlayer455/jake-wormhole/commit/21fb946831a451a93c970346855e2c2aec781fb0) | One new fresh encrypted installation per OS using verified reused media. RHEL passed 10 hardened and six controller checks with 449 RPMs; Ubuntu passed 40 with 638 packages, three Snaps and two payloads. Native totals matched H and U/D. Automatic file cleanup reclaimed 7.905/2.130 GiB respectively, separately from disk destruction. Archived evidence reconciled, no owned resources, no qualified ISO. |
 | T / 2026-11-10, runtime test date | [Client cleanup](https://github.com/TheSlayer455/jake-wormhole/blob/461b113cfe91b261eb65a69e3779680203f1ad8e/wormhole/archive_client.py) and [restore staging](https://github.com/TheSlayer455/jake-wormhole/blob/461b113cfe91b261eb65a69e3779680203f1ad8e/wormhole/storage_archive.py) | Existing workstation and host cleanup reclaimed 32 MiB temporary files on each system. An existing 6 MiB archived probe restored exactly and was reclaimed after verified readback; no new encrypted object or VM. Repeat host cleanup reclaimed zero and unrelated containers were preserved. |
+| C / 2026-11-11, runtime receipt date | [Chrony and recovery correction at e320823](https://github.com/TheSlayer455/jake-wormhole/commit/e3208237884acc53fb4821cdbc6dcb5e867e49e1) | One fresh encrypted RHEL 10 installation preserved the declared lab time source and synchronization while the selected client-only and no-network-management rules passed. All 1,073 native outcomes were accounted for; assessment performed no remediation; hardened/controller checks, evidence retention and exact-owned cleanup passed. A finished-journal recovery retained an interrupted workload as unknown and reclaimed only duplicate candidate storage. |
 | S / 2026-10-31 checkpoint | [Retained SVD archival at f2a3d5c](https://github.com/TheSlayer455/jake-wormhole/blob/f2a3d5ca383a1fea9230a9d1225406ae1f9bde26/wormhole/storage_archive.py); [PR 45](https://github.com/TheSlayer455/jake-wormhole/pull/45) | 298 verified encrypted objects at that checkpoint; six additional SVD/build-manifest readbacks; local originals retained. This is not a live backlog count. |
 
 ## Verified mechanisms and boundaries
@@ -547,7 +552,7 @@ assertion of the precise execution time.
 | Functional validation | U: 40/40 checks each, including real lab logging/audit/time, scoped trust/PAM, encryption and access probes. H/E: 10/10 hardened and 6/6 controller checks, including encryption, FIPS mode, SELinux, audit, logging, time, reboot and Ansible. L: authenticated but inaccessible completion evidence immediately blocks dependent checks. | These are declared lab catalogs, not a proprietary product catalog. Lab time/PKI/software-token tests do not establish external trusted time, government identity or physical-token assurance. |
 | SVD | Structured native Ansible inventory feeds readable and JSON SVDs. H/E: 449 RPM rows with native version/release/epoch/architecture; key headers separate. U/E: 638 packages, three Snaps and two payload entries. Build inventory remains distinct from installed inventory. Original row/readable-output readback passed. | Counts do not establish equivalent proprietary packages or business behavior. No package list is exported here. |
 | Assessment | Both OSes retain actual OpenSCAP machine-readable and readable reports, scanner/content identity and every native outcome. Ubuntu supplements manual observations without rewriting scanner statuses. | Findings must satisfy the declared policy. Evaluate-STIG, Nessus and Ubuntu USG/FIPS execution remain unproven. |
-| Execution and recovery | L acknowledges actual admission/start, records observed phase/progress separately from liveness, and persists failure/unknown outcomes. Controlled interruption retained unknown state until stopped-process/ownership reconciliation. U's final pair finished automatically; compact terminal storage summaries reference full durable receipts. | Missing acknowledgment or observer loss requires reconciliation, not automatic duplicate launch. A recovered unknown attempt remains unknown, never successful. |
+| Execution and recovery | L acknowledges actual admission/start, records observed phase/progress separately from liveness, and persists failure/unknown outcomes. Controlled interruption retained unknown state until stopped-process/ownership reconciliation. C also proves recovery when the immutable resource journal finished before the terminal result was written: exact absence was reobserved and the workload stayed unknown. U's final pair finished automatically; compact terminal storage summaries reference full durable receipts. | Missing acknowledgment or observer loss requires reconciliation, not automatic duplicate launch. A recovered unknown attempt remains unknown, never successful. |
 | Cleanup | Terraform destroys exactly recorded resources after evidence collection; storage uses the shared admission/ownership lock. U/R/L verified temporary resource absence. Original operation errors survive cleanup errors. | No global prune, ambiguous-prefix deletion or deletion of unresolved evidence. Historical absence is not evidence of current host availability. |
 | Completed-ISO intake | I and D verify an explicit completion manifest, protected bytes, actual size/hash and a declared contract. They use the same dispatcher and fresh seed. D also binds the build manifest and verifies the embedded Ubuntu payload. | Evidence covers RHEL 10 BIOS baseline and Ubuntu 22.04 hardened sandbox. Periodic monitoring was exercised on RHEL and removed afterward. Other producer contracts need their own evidence. |
 | Intake identity and retries | I proves no second active VM on duplicate notification/restart. Real-file source fixtures prove same filename/new bytes, changed assessment identity and explicit retry create distinct requests. | Those identity fixtures are not additional VM experiments. Deduplication must not permanently prevent legitimate requalification. |
@@ -556,14 +561,14 @@ assertion of the precise execution time.
 
 ## Native outcomes and unresolved qualification
 
-| Native result | RHEL baseline R | Hardened RHEL H | Ubuntu U and D, each |
-| --- | ---: | ---: | ---: |
-| Pass | 172 | 425 | 210 |
-| Fail | 261 | 9 | 1 |
-| Not applicable | 56 | 29 | 14 |
-| Not checked | 9 | 10 | 5 |
-| Not selected | 450 | 600 | 409 |
-| Total | 948 | 1,073 | 639 |
+| Native result | RHEL baseline R | Hardened RHEL H/E | Chrony closure C | Ubuntu U and D, each |
+| --- | ---: | ---: | ---: | ---: |
+| Pass | 172 | 425 | 427 | 210 |
+| Fail | 261 | 9 | 7 | 1 |
+| Not applicable | 56 | 29 | 29 | 14 |
+| Not checked | 9 | 10 | 10 | 5 |
+| Not selected | 450 | 600 | 600 | 409 |
+| Total | 948 | 1,073 | 1,073 | 639 |
 
 R uses the DVD's pinned SCAP Security Guide 0.1.76 vendor-draft content; it does
 not prove alignment with a current released DISA benchmark. U uses OpenSCAP 1.4.6
@@ -595,7 +600,8 @@ content in R and H prevents a direct finding-count comparison.
 
 ### Exact current RHEL qualification blockers
 
-The fresh E run preserved these nine selected automated failures. The names are
+The fresh C run closed the two historical chrony failures while preserving time
+synchronization. These seven selected automated failures remain. The names are
 public rule suffixes, not private configuration values.
 
 | Rule suffix | Open requirement |
@@ -605,8 +611,6 @@ public rule suffixes, not private configuration values.
 | `network_configure_name_resolution` | Multiple declared name-resolution servers |
 | `selinux_context_elevation_for_sudo` | SELinux context elevation through sudo |
 | `service_kdump_disabled` | Disabled kdump |
-| `chronyd_client_only` | Client-only time synchronization |
-| `chronyd_no_chronyc_network` | No network chrony management |
 | `sshd_enable_warning_banner` | SSH warning banner |
 | `sssd_enable_certmap` | SSSD certificate mapping |
 
@@ -660,6 +664,14 @@ candidate cache, 9.874 GiB of source media, 22.402 GiB of required evidence,
 3.820 MiB of historical reference-release bundles. Host filesystem availability
 was 131.340 GiB. The workstation archive held 407 encrypted objects occupying
 68.794 GiB, with no pending bytes, failed receipts or transfer staging.
+
+C later recovered a finished-journal/missing-result inconsistency without
+inventing success. The normal storage engine reclaimed 8,487,432,192 allocated
+duplicate bytes while retaining a canonical local candidate and verified archive.
+Its fresh RHEL run reclaimed another 405,504 transient allocated bytes. Current
+managed storage is 83.594 GiB, including a 37.784 GiB candidate cache, with
+130.785 GiB host filesystem availability. All 66 unrelated running containers
+matched the pre-run set.
 
 Managed retention grew about 200.7 MiB because the new native evidence is kept.
 That growth does not negate temporary cleanup. Protected active inputs, required

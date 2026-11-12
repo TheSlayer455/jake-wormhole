@@ -70,11 +70,21 @@ media/evidence and completed encrypted archives remain protected.
 
 Resumed from `3a4b909` under the November 7 completion assignment. Preserve the
 historical evidence below. PASS means the stated boundary has proof, not that a
-downstream release is qualified. November 9 reconciliation found both journals
-finished and no owned VM or controller. Storage measured 83.277 GiB managed,
-37.784 GiB candidate cache and 131.629 GiB filesystem availability. The archive
-has 361 committed and 30 pending objects, including a newly verified copy of
-the repeat's installed inventory. The explicit Pro slot is empty.
+downstream release is qualified. Runtime source
+`e3208237884acc53fb4821cdbc6dcb5e867e49e1` completed a fresh RHEL installation
+after the chrony correction. It passed all hardened/controller checks, produced
+427 pass, seven fail, 29 not applicable, ten not checked and 600 not selected
+native results, and performed no assessment repair. Exact-owned cleanup passed
+with no VM resources left and the same 66 unrelated containers.
+
+A preceding admission attempt correctly stopped before allocation when the
+candidate budget was exceeded. The existing recovery path now handles a missing
+terminal receipt whose immutable ownership journal was already finished: the
+workload remains `unknown`, the first failure is retained, and normal storage
+deduplication reclaimed 8,487,432,192 allocated bytes while preserving one local
+canonical candidate and the encrypted archive. Current storage is 83.594 GiB
+managed, 37.784 GiB candidate cache and 130.785 GiB filesystem availability.
+The explicit Pro slot remains empty.
 
 | Required boundary | Status | Next proof or external dependency |
 | --- | --- | --- |
@@ -84,7 +94,7 @@ the repeat's installed inventory. The explicit Pro slot is empty.
 | RHEL hardened/encrypted engineering lifecycle | PASS | Fresh d6dfaf3 and 4980aa0 ran identical ISO bytes on independent disks. Both passed ten hardened checks, trusted SSH/Ansible, 449-package SVD, native audit and cleanup |
 | Final matching installation pairs | PASS for engineering | RHEL's pair and Ubuntu's non-Pro build/intake comparison match. The vendor-enabled Ubuntu qualification pair remains blocked |
 | Completed-media intake | PASS for both tested contracts | RHEL baseline proven at 0a6acb5; Ubuntu hardened sandbox intake at 9a19b53 passed 40/40 and terminal replay deduplicated |
-| Failure/recovery | PASS for existing paths | Exercise changed boundary without relabeling unknown historical outcomes |
+| Failure/recovery | PASS for existing paths | Finished-journal receipt recovery is proven at e320823; unknown remained unknown and the canonical candidate/evidence were retained |
 | Lab qualification and eligible exact-byte publication | BLOCKED | Required technical/policy evidence, then real positive publisher/readback |
 | Archive/restore and automatic cleanup | PASS | Exact RHEL ISO and console restores, verified obsolete-candidate reclamation, duplicate cleanup and protected interrupted evidence |
 | Work-integration readiness | PASS for maintained reference | Update reviewed sanitized facts after new runtime milestones; no work compatibility claim |
@@ -99,12 +109,13 @@ The [continuation](../handoff/CURRENT.md) and merged
 attempts, corrections and actual runtime attribution. The hardened run used
 different content and selected coverage from the older RHEL draft profile.
 
-The completed hardened RHEL audit still records nine selected failures covering
-local account authorization, GRUB administration, name resolution, SELinux sudo
-role elevation, kdump, two chrony exposure settings, the SSH warning banner and
-SSSD certificate mapping. Ten native checks need separate disposition. FIPS
-runtime mode passed, but module and operating-environment verification remains
-open. These conditions keep the lab release gate closed.
+The latest hardened RHEL audit records seven selected failures covering local
+account authorization, GRUB administration, name resolution, SELinux sudo role
+elevation, kdump, the SSH warning banner and SSSD certificate mapping. The prior
+two chrony failures are retained historically; both now pass while the declared
+lab source remains synchronized. Ten native checks need separate disposition.
+FIPS runtime mode passed, but module and operating-environment verification
+remains open. These conditions keep the lab release gate closed.
 
 ## Portable cross-reference deliverable
 
