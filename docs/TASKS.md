@@ -30,17 +30,25 @@ both chrony rules, kdump, SSH banner, synchronized time, all hardened/controller
 checks, 449-RPM SVD, evidence and cleanup remain passing. Native totals are 429
 pass/five fail/29 not applicable/ten not checked/600 not selected. The existing
 encrypted archive verified the new candidate/evidence set and reclaimed
-8,487,366,656 allocated bytes, leaving no VM or pending archive object. Next:
-resolve the remaining five selected findings and ten governed not-checked
-requirements, then finish the RHEL evaluator/publisher. No release is eligible.
+8,487,366,656 allocated bytes, leaving no VM or pending archive object. That
+checkpoint retained five selected findings for the follow-on work below. No
+release is eligible.
 
-Source `ff881b11cbb6184adbdb398d787979c06912edee` is the next focused
-candidate-input change. Retained native objects proved the local-account rule
-rejects three locked package service identities plus the declared final service
-identity because the pinned default allowlist omits them. The existing XCCDF
-value now adds only those four authorized identities; no rule is excluded and no
-account is deleted. Eleven focused hardening tests pass. A fresh installation is
-required before closing the rule or changing the current 429/5 runtime result.
+Runtime source `c944a8668e86979e38af673c5d81a9bf54d270a6` completed a fresh
+519.709-second installation of source change `ff881b1`. The account rule now
+passes without deleting accounts, excluding rules or changing selection. Native
+totals are 430 pass/four fail/29 not applicable/ten not checked/600 not selected;
+all hardened/controller checks, SVD, read-only assessment and cleanup pass. The
+archive verified ten objects and reclaimed 8,487,362,560 allocated bytes.
+
+Source `2b3c16ba476c5d0c5f03467030b37c0422531923` is the next focused
+candidate-input change. Retained OVAL evidence proves the isolated guest enables
+DNS lookup but lacks a second resolver. The declared workload uses direct-IP
+services and has no DNS dependency, so the documented local-only branch now
+sets NetworkManager `dns=none`, removes only the NSS `dns` token and installs an
+empty resolver file. Twelve focused hardening tests pass. A fresh installation
+must prove the native rule, effective post-reboot state and unchanged time/log/
+audit/controller behavior before closing it.
 
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at

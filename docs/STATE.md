@@ -101,14 +101,24 @@ checked and 600 not selected. The encrypted archive verified ten new objects
 and normal cleanup reclaimed 8,487,366,656 allocated bytes; no VM remains and
 all 66 unrelated containers were preserved.
 
+Runtime source `c944a8668e86979e38af673c5d81a9bf54d270a6` then completed a
+fresh 519.709-second installation with the exact authorized-account value from
+source `ff881b1`. The previously failing account rule passes; the remaining
+native totals are 430 pass, four fail, 29 not applicable, ten not checked and
+600 not selected. Final authentication, password-required Ansible, every
+hardened/controller check, 449-RPM SVD, read-only assessment and VM cleanup pass.
+The archive verified ten new objects and cleanup reclaimed 8,487,362,560
+allocated bytes. No VM or pending archive object remains, and the same 66
+unrelated containers were preserved.
+
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
 terminal receipt whose immutable ownership journal was already finished: the
 workload remains `unknown`, the first failure is retained, and normal storage
 deduplication reclaimed 8,487,432,192 allocated bytes while preserving one local
 canonical candidate and the encrypted archive. After the latest verified archive
-transaction, current storage is 75.928 GiB managed, 29.880 GiB candidate cache
-and 138.449 GiB filesystem availability.
+transaction, current storage is 76.047 GiB managed, 29.880 GiB candidate cache
+and 138.327 GiB filesystem availability.
 The explicit Pro slot remains empty.
 
 | Required boundary | Status | Next proof or external dependency |
@@ -134,10 +144,10 @@ The [continuation](../handoff/CURRENT.md) and merged
 attempts, corrections and actual runtime attribution. The hardened run used
 different content and selected coverage from the older RHEL draft profile.
 
-The latest hardened RHEL audit records five selected failures covering local
-account authorization, GRUB administration, name resolution, SELinux sudo role
-elevation and SSSD certificate mapping. The historical chrony, kdump, SSH
-banner-path and declared banner-value failures now pass while time remains
+The latest hardened RHEL audit records four selected failures covering GRUB
+administration, name resolution, SELinux sudo role elevation and SSSD
+certificate mapping. The historical chrony, kdump, SSH banner-path, declared
+banner-value and authorized-account failures now pass while time remains
 synchronized. Ten native checks need separate disposition.
 FIPS runtime mode passed, but module and operating-environment verification
 remains open. These conditions keep the lab release gate closed.

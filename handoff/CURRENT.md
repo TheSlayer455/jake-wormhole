@@ -1,5 +1,30 @@
 # Current handoff
 
+## RHEL authorized-account closure and pending local-only resolution
+
+Runtime source `c944a8668e86979e38af673c5d81a9bf54d270a6` completed a fresh
+encrypted RHEL 10 installation in 519.709 seconds. The retained ARF had identified
+three locked identities belonging to installed packages and the declared final
+service identity as the only false rows under the pinned account allowlist.
+Source `ff881b1` declares exactly those four authorized identities. It deletes no
+account, excludes no rule and changes no selection.
+
+`accounts_authorized_local_users` now passes. All ten hardened checks, six
+controller checks, synchronized time, trusted SSH/Ansible, 449-RPM SVD, complete
+native accounting and no-remediation assessment pass. Native totals are 430
+pass/four fail/29 not applicable/ten not checked/600 not selected. VM cleanup
+passed and the same 66 unrelated containers remained running. The archive
+verified ten new objects and reclaimed 8,487,362,560 allocated bytes; no archive
+item or VM disk is pending.
+
+Source `2b3c16ba476c5d0c5f03467030b37c0422531923` is pending its fresh
+runtime proof. The next retained failure is exact: NSS enables DNS but the
+isolated direct-IP workload has no second resolver or declared DNS dependency.
+The documented local-only branch now uses NetworkManager `dns=none`, removes
+only the NSS `dns` token and keeps an empty resolver file. Twelve focused tests
+pass. Qualification stays false until a fresh install proves the native rule,
+post-reboot state and unchanged lab-service behavior.
+
 ## RHEL declared-banner tailoring closure
 
 Runtime source `03d29868184bb711c78932eb1eea78e3f18b0ac3` completed a fresh
@@ -19,18 +44,10 @@ VM cleanup passed and the same 66 unrelated containers remained running.
 The encrypted workstation archive verified ten new objects and normal cleanup
 reclaimed 8,487,366,656 allocated bytes. There are no pending archive bytes or
 VM disks. Current managed allocation is 75.928 GiB, candidate allocation is
-29.880 GiB and filesystem availability is 138.449 GiB. Qualification remains
-false: five selected findings, ten native not-checked requirements, manual and
+29.880 GiB and filesystem availability is 138.449 GiB. That checkpoint retained
+five selected findings. Ten native not-checked requirements, manual and
 cryptographic operating-environment evidence, and the RHEL evaluator/publisher
-remain open. Ubuntu vendor integration still waits for private Pro entitlement.
-
-Source `ff881b11cbb6184adbdb398d787979c06912edee` is pending its fresh
-runtime proof. The retained ARF identifies three locked package service accounts
-and the declared final service identity as the four false rows under the pinned
-default account allowlist. The existing tailoring now declares exactly those
-four authorized identities. It changes no selected rule, deletes no account and
-adds no exception. Eleven focused hardening tests pass; the current runtime
-finding remains open until another empty-disk installation proves the native row.
+also remain open. Ubuntu vendor integration still waits for private Pro entitlement.
 
 ## RHEL kdump/banner-path closure and separate lab-banner finding
 
@@ -79,8 +96,8 @@ deduplication then reclaimed 8,487,432,192 allocated bytes while preserving one
 canonical local candidate and its verified encrypted archive. Focused source
 verification passed 36 tests with one root-only skip across the affected files.
 
-The five current selected failures are `accounts_authorized_local_users`,
-`grub2_admin_username`, `network_configure_name_resolution`,
+The four current selected failures are `grub2_admin_username`,
+`network_configure_name_resolution`,
 `selinux_context_elevation_for_sudo` and `sssd_enable_certmap`. Ten native not-checked
 rules, manual evidence, cryptographic module/operating-environment applicability
 and the RHEL evaluator/publisher remain open. Lab and production eligibility
@@ -177,13 +194,12 @@ grew about 200.7 MiB for the new evidence, while transient file cleanup reclaime
 ### Remaining qualification work
 
 RHEL's historical E run had nine automated failures. The fresh e320823 closure
-run resolved the two chrony rows; K resolved kdump and the SSH banner path, and
-B resolved the separately exposed banner-value mismatch. These five public rule
-suffixes remain.
+run resolved the two chrony rows; K resolved kdump and the SSH banner path, B
+resolved the banner value and AC resolved the account allowlist. These four
+public rule suffixes remain.
 
 | Rule | Observed requirement still failing |
 | --- | --- |
-| accounts_authorized_local_users | Authorized local accounts |
 | grub2_admin_username | Nondefault boot-loader administrator |
 | network_configure_name_resolution | Multiple configured DNS servers |
 | selinux_context_elevation_for_sudo | SELinux context elevation through sudo |

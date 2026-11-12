@@ -540,6 +540,7 @@ assertion of the precise execution time.
 | C / 2026-11-11, runtime receipt date | [Chrony and recovery correction at e320823](https://github.com/TheSlayer455/jake-wormhole/commit/e3208237884acc53fb4821cdbc6dcb5e867e49e1) | One fresh encrypted RHEL 10 installation preserved the declared lab time source and synchronization while the selected client-only and no-network-management rules passed. All 1,073 native outcomes were accounted for; assessment performed no remediation; hardened/controller checks, evidence retention and exact-owned cleanup passed. A finished-journal recovery retained an interrupted workload as unknown and reclaimed only duplicate candidate storage. |
 | K / 2026-11-12, runtime receipt date | [Kdump and banner-path runtime at da63dc0](https://github.com/TheSlayer455/jake-wormhole/commit/da63dc0a79b6b545f4fe7ef9c55cf9d9ac0b2be0) | One fresh encrypted RHEL 10 installation passed the final masked-kdump and SSH banner-path rules, every hardened/controller check, SVD, full native accounting, no-remediation assessment and cleanup. The honest local banner exposed a separate upstream-default value mismatch, so eligibility remains false. |
 | B / 2026-11-12, runtime receipt date | [Declared banner tailoring runtime at 03d2986](https://github.com/TheSlayer455/jake-wormhole/commit/03d29868184bb711c78932eb1eea78e3f18b0ac3) | One fresh encrypted RHEL 10 installation used a one-value XCCDF tailoring for the truthful lab banner. The receipt binds those exact tailoring bytes; the banner rule and all previously closed chrony/kdump/SSH-banner rules pass, assessment performed no remediation, all hardened/controller checks and cleanup passed, and all 1,073 native outcomes remain accounted. |
+| AC / 2026-11-12, runtime receipt date | [Authorized-account runtime at c944a86](https://github.com/TheSlayer455/jake-wormhole/commit/c944a8668e86979e38af673c5d81a9bf54d270a6) | One fresh encrypted RHEL 10 installation declared only the three locked package service identities and final Wormhole identity omitted by the pinned default. The native account rule passed without deleting accounts or excluding rules; all 1,073 outcomes, hardened/controller checks, read-only assessment and cleanup passed. |
 | S / 2026-10-31 checkpoint | [Retained SVD archival at f2a3d5c](https://github.com/TheSlayer455/jake-wormhole/blob/f2a3d5ca383a1fea9230a9d1225406ae1f9bde26/wormhole/storage_archive.py); [PR 45](https://github.com/TheSlayer455/jake-wormhole/pull/45) | 298 verified encrypted objects at that checkpoint; six additional SVD/build-manifest readbacks; local originals retained. This is not a live backlog count. |
 
 ## Verified mechanisms and boundaries
@@ -563,14 +564,14 @@ assertion of the precise execution time.
 
 ## Native outcomes and unresolved qualification
 
-| Native result | RHEL baseline R | Hardened RHEL H/E | Chrony closure C | Kdump/banner K | Tailored banner B | Ubuntu U and D, each |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Pass | 172 | 425 | 427 | 428 | 429 | 210 |
-| Fail | 261 | 9 | 7 | 6 | 5 | 1 |
-| Not applicable | 56 | 29 | 29 | 29 | 29 | 14 |
-| Not checked | 9 | 10 | 10 | 10 | 10 | 5 |
-| Not selected | 450 | 600 | 600 | 600 | 600 | 409 |
-| Total | 948 | 1,073 | 1,073 | 1,073 | 1,073 | 639 |
+| Native result | RHEL baseline R | Hardened RHEL H/E | Chrony closure C | Kdump/banner K | Tailored banner B | Authorized accounts AC | Ubuntu U and D, each |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Pass | 172 | 425 | 427 | 428 | 429 | 430 | 210 |
+| Fail | 261 | 9 | 7 | 6 | 5 | 4 | 1 |
+| Not applicable | 56 | 29 | 29 | 29 | 29 | 29 | 14 |
+| Not checked | 9 | 10 | 10 | 10 | 10 | 10 | 5 |
+| Not selected | 450 | 600 | 600 | 600 | 600 | 600 | 409 |
+| Total | 948 | 1,073 | 1,073 | 1,073 | 1,073 | 1,073 | 639 |
 
 R uses the DVD's pinned SCAP Security Guide 0.1.76 vendor-draft content; it does
 not prove alignment with a current released DISA benchmark. U uses OpenSCAP 1.4.6
@@ -605,26 +606,34 @@ content in R and H prevents a direct finding-count comparison.
 The fresh C run closed the two historical chrony failures while preserving time
 synchronization. K then closed kdump and the SSH banner path, while exposing the
 separate declared-banner-value mismatch. B closed that value mismatch through a
-single declared XCCDF value, without changing rule selection. These five
-selected automated failures remain. The names are public rule suffixes, not
-private configuration values.
+single declared XCCDF value, without changing rule selection. AC then closed the
+authorized-account mismatch. These four selected automated failures remain. The
+names are public rule suffixes, not private configuration values.
 
 | Rule suffix | Open requirement |
 | --- | --- |
-| `accounts_authorized_local_users` | Authorized local-account policy |
 | `grub2_admin_username` | Nondefault boot-loader administrator |
 | `network_configure_name_resolution` | Multiple declared name-resolution servers |
 | `selinux_context_elevation_for_sudo` | SELinux context elevation through sudo |
 | `sssd_enable_certmap` | SSSD certificate mapping |
 
-The retained B objects show that the account rule's RHEL 10 default allowlist
+The retained B objects showed that the account rule's RHEL 10 default allowlist
 omits three locked service identities belonging to installed packages and the
 declared final Wormhole service identity. Source
 [ff881b1](https://github.com/TheSlayer455/jake-wormhole/commit/ff881b11cbb6184adbdb398d787979c06912edee)
 adds only those four identities to the existing XCCDF value; it does not delete
 accounts, exclude the rule or change rule selection. Focused generated-input
-tests pass. The rule remains open until a fresh installation proves the native
-result and preserves authentication, inventory, assessment and cleanup.
+tests passed. AC's fresh installation proved the native result while preserving
+authentication, inventory, assessment and cleanup.
+
+The next retained failure is similarly exact: the isolated guest enables DNS
+lookup but has no second resolver or declared DNS dependency. Source
+[2b3c16b](https://github.com/TheSlayer455/jake-wormhole/commit/2b3c16ba476c5d0c5f03467030b37c0422531923)
+implements the pinned rule's documented local-only branch using NetworkManager
+`dns=none`, NSS without the `dns` token and an empty resolver file. It does not
+invent duplicate DNS servers. Twelve focused tests pass; the rule remains open
+until a fresh installation proves post-reboot state and unchanged lab-service
+behavior.
 
 The retained native objects established that the final kdump unit was inactive
 but loaded rather than masked, and that the post-remediation SSH drop-in used a
