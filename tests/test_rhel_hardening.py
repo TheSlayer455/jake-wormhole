@@ -34,7 +34,7 @@ class HardenedInputs(unittest.TestCase):
         self.assertIn('rootpw --lock', seed)
         self.assertIn('--iscrypted --password=grub.pbkdf2', seed)
         self.assertNotIn('NOPASSWD', h.FINALIZE)
-        self.assertIn('lab.service ALL=(ALL) ALL', h.FINALIZE)
+        self.assertIn('%wheel ALL=(ALL) TYPE=sysadm_t ROLE=sysadm_r ALL', h.FINALIZE)
         self.assertNotIn('PRIVATE KEY', seed)
         for changes in ({'public_key': 'ssh-ed25519 ' + 'A' * 68},
                         {'password_hash': 'plaintext'}, {'boot_hash': 'plaintext'}):
@@ -134,6 +134,16 @@ fi
         self.assertIn("grep -Eq '^GRUB2_PASSWORD=grub\\.pbkdf2\\.' /boot/grub2/user.cfg", h.FINALIZE)
         self.assertIn('grub2-mkconfig -o /boot/grub2/grub.cfg', h.FINALIZE)
         self.assertIn('! getent passwd wormhole_boot_admin', h.READY)
+
+    def test_final_admin_uses_passworded_selinux_role_transition(self):
+        self.assertLess(h.FINALIZE.index('oscap xccdf eval --remediate'),
+                        h.FINALIZE.index('usermod -Z staff_u lab.service'))
+        self.assertIn('%wheel ALL=(ALL) TYPE=sysadm_t ROLE=sysadm_r ALL', h.FINALIZE)
+        self.assertIn('Defaults:lab.service timestamp_timeout=0', h.FINALIZE)
+        self.assertIn('visudo -c', h.FINALIZE)
+        self.assertNotIn('lab.service ALL=(ALL) ALL', h.FINALIZE)
+        self.assertNotIn('NOPASSWD', h.FINALIZE)
+        self.assertIn('$2 != "staff_u"', h.READY)
 
     def test_reuse_binds_installed_recipe_and_refuses_baseline_or_modified_bytes(self):
         manifest = {'capability': h.CAPABILITY, 'source': baseline.RHEL,

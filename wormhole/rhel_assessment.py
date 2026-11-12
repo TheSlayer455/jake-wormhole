@@ -65,6 +65,7 @@ print(json.dumps({'final_authentication':True,'ansible_ready':True,'catalog_star
 
 
 HARDENED_CHECKS = ('password-required-sudo', 'fips-runtime-mode', 'selinux-enforcing',
+    'selinux-sudo-transition',
     'post-install-reboot', 'encrypted-filesystems', 'encrypted-swap', 'luks-pbkdf2',
     'audit-service', 'time-source-synchronized', 'logging-service')
 CRYPTO_OBSERVATIONS = ('openssl_providers', 'kernel_release', 'virtualization')
@@ -103,10 +104,13 @@ def filesystems():
 def swap():
  sources=command('swapon','--show=NAME','--noheadings').splitlines()
  return bool(sources) and all(encrypted(source) for source in sources)
+def context(user,role,domain):
+ return command('id','-Z').split(':')[:3]==[user,role,domain]
 root=pathlib.Path('/var/lib/wormhole')
 observations={
  'fips-runtime-mode':lambda:pathlib.Path('/proc/sys/crypto/fips_enabled').read_text().strip()=='1' and command('update-crypto-policies','--show').split(':')[0]=='FIPS',
  'selinux-enforcing':lambda:command('getenforce')=='Enforcing',
+ 'selinux-sudo-transition':lambda:context('staff_u','sysadm_r','sysadm_t'),
  'post-install-reboot':lambda:bool((root/'installation-boot-id').read_text().strip()) and (root/'installation-boot-id').read_text().strip()!=pathlib.Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
  'encrypted-filesystems':filesystems,'encrypted-swap':swap,
  'luks-pbkdf2':lambda:'pbkdf2' in command('cryptsetup','luksDump','/dev/vda3').lower(),
@@ -135,6 +139,8 @@ remaining=deadline-time.monotonic()
 if remaining<=50:raise RuntimeError('assessment_deadline')
 r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'sudo -k -n true'],capture_output=True,timeout=min(15,remaining))
 checks['password-required-sudo']=r.returncode==1
+r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'/usr/bin/id -Z'],capture_output=True,timeout=min(15,remaining))
+login_context_ok=r.returncode==0 and r.stdout.decode(errors='replace').strip().split(':')[:3]==['staff_u','staff_r','staff_t']
 r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'sudo -S -p "" /usr/bin/python3 -c '+shlex.quote(functional_probe)],
  input=(password+'\n').encode(),capture_output=True,timeout=min(180,max(1,deadline-time.monotonic()-35)))
 errors={};crypto_runtime={}
@@ -143,6 +149,8 @@ if r.returncode==0:
   observed=json.loads(r.stdout)
   if set(observed['checks'])!=set(expected_checks)-{'password-required-sudo'}:raise ValueError('check inventory')
   checks.update(observed['checks']);errors=observed.get('errors',{});crypto_runtime=observed.get('crypto_runtime',{})
+  checks['selinux-sudo-transition']=login_context_ok and checks['selinux-sudo-transition'] is True
+  if not login_context_ok:errors['selinux-login-context']='unexpected-context'
  except (ValueError,KeyError,TypeError):errors={'observer':'invalid-result'}
 else:errors={'observer':'remote-observation-failed'}
 functional_ok=all(value is True for value in checks.values())

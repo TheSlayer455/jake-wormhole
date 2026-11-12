@@ -222,8 +222,9 @@ class RHELAssessment(unittest.TestCase):
         def run(args,**kwargs):
             calls.append((args,kwargs));self.assertNotIn(secret,json.dumps(args))
             if len(calls)==1:return SimpleNamespace(returncode=1,stdout=b'',stderr=b'')
+            if len(calls)==2:return SimpleNamespace(returncode=0,stdout=b'staff_u:staff_r:staff_t:s0\n',stderr=b'')
             self.assertEqual(kwargs['input'],(secret+'\n').encode())
-            return SimpleNamespace(returncode=0,stdout=json.dumps({'checks':checks,'crypto_runtime':crypto}).encode() if len(calls)==2 else b'synthetic archive',stderr=b'')
+            return SimpleNamespace(returncode=0,stdout=json.dumps({'checks':checks,'crypto_runtime':crypto}).encode() if len(calls)==3 else b'synthetic archive',stderr=b'')
         output=io.StringIO()
         with patch.object(subprocess,'run',side_effect=run),contextlib.redirect_stdout(output),self.assertRaises(SystemExit) as stopped:
             exec(ra.HARDENED_AUDIT_CODE,{'c':{'address':'192.0.2.10','become_password':secret},'opts':[],
@@ -234,7 +235,7 @@ class RHELAssessment(unittest.TestCase):
         self.assertEqual(rows[0]['crypto_runtime'],crypto)
         self.assertTrue(any(row.get('stage')=='assessment-archive' for row in rows))
         self.assertEqual(rows[-1]['outcome'],'hardened-functional-failed')
-        self.assertEqual(len(calls),3)
+        self.assertEqual(len(calls),4)
         if sys.platform!='win32':
             namespace={};exec(ra.HARDENED_PROBE.split('\ndef encrypted(')[0],namespace)
             observe=namespace['crypto_observe']

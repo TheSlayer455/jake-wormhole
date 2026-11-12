@@ -141,6 +141,7 @@ grep -Eq '^[[:space:]]*set superusers="wormhole_boot_admin"$' /boot/grub2/grub.c
 grep -Fq 'password_pbkdf2 wormhole_boot_admin ${GRUB2_PASSWORD}' /boot/grub2/grub.cfg
 grep -Eq '^GRUB2_PASSWORD=grub\.pbkdf2\.' /boot/grub2/user.cfg
 ! getent passwd wormhole_boot_admin
+semanage login -l | awk '$1 == "lab.service" { found=1; if ($2 != "staff_u") exit 1 } END { if (!found) exit 1 }'
 NetworkManager --print-config | grep -qx 'dns=none'
 awk '$1 == "hosts:" { found=1; for (i=2; i<=NF; i++) if ($i == "dns") exit 1 } END { if (!found) exit 1 }' /etc/nsswitch.conf
 test ! -s /etc/resolv.conf
@@ -198,12 +199,13 @@ grep -Eq '^[[:space:]]*set superusers="wormhole_boot_admin"$' /boot/grub2/grub.c
 grep -Fq 'password_pbkdf2 wormhole_boot_admin ${GRUB2_PASSWORD}' /boot/grub2/grub.cfg
 # Complete the declared final-account contract after profile remediation. This
 # is installation code, never an acceptance-time repair or passwordless bypass.
+usermod -Z staff_u lab.service
 chown -R lab.service:lab.service /home/lab.service
 chmod 0700 /home/lab.service /home/lab.service/.ssh
 chmod 0600 /home/lab.service/.ssh/authorized_keys
-printf '%s\n' 'lab.service ALL=(ALL) ALL' 'Defaults:lab.service timestamp_timeout=0' > /etc/sudoers.d/wormhole-lab
+printf '%s\n' '%wheel ALL=(ALL) TYPE=sysadm_t ROLE=sysadm_r ALL' 'Defaults:lab.service timestamp_timeout=0' > /etc/sudoers.d/wormhole-lab
 chmod 0440 /etc/sudoers.d/wormhole-lab
-visudo -cf /etc/sudoers.d/wormhole-lab
+visudo -c
 cat > /etc/ssh/sshd_config.d/00-wormhole.conf <<'SSH'
 PermitRootLogin no
 PasswordAuthentication no
