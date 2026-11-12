@@ -1,5 +1,18 @@
 # Current handoff
 
+## Bounded optional-tool decisions
+
+At `205835d`, the existing single-file Terra handoff adds a small adoption table
+and gate. Existing libvirt console evidence stays first. Cockpit is conditional;
+Goss and `mkksiso` require measured replacement experiments; KVM Pilot is optional
+read-only physical-host research; approved S3 can be evaluated later; Packer and
+openQA remain deferred. None is claimed installed, runtime-proven or required for
+the current focused installation. The change adds no controller, dependency,
+candidate, VM run or qualification claim. Focused portable tests and repository
+hygiene passed. Clean-checkout repository/matrix checks, 1,017 source tests with
+12 skips and all 17 parity cases passed at `5d58869`. Independent review found
+no blocking issue; its wording/status corrections are applied.
+
 ## Self-contained Terra handoff
 
 [PR 54](https://github.com/TheSlayer455/jake-wormhole/pull/54) makes

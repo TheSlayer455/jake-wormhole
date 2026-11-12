@@ -54,6 +54,14 @@ and job timeouts, retain command/environment artifacts privately, and verify
 remote state after cancellation. Runner process success cannot replace required
 event/result coverage or a qualification decision.
 
+The canonical Terra brief also records the current optional-tool decisions.
+Use native libvirt serial/VNC evidence now; inspect Cockpit Machines only when it
+is already authorized; keep Goss and Lorax `mkksiso` to bounded replacement
+experiments; reserve KVM Pilot for an explicitly read-only physical-host
+visibility trial; and evaluate approved S3 storage later. Packer and openQA are
+deferred. None of these tools is installed or runtime-proven by Wormhole, and
+none is a prerequisite for repairing the current installation boundary.
+
 Existing lost-controller admission/recovery and partial-publication tests remain
 useful evidence. There is no mutable current-release pointer to race today.
 Exact-revision queued builds and new component-to-test mapping are separate,

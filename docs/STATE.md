@@ -1,5 +1,19 @@
 # Current engineering state
 
+## Bounded Lightspeed tool decisions
+
+The canonical Terra brief now records one evidence-backed adoption order without
+turning optional tools into prerequisites. Native libvirt serial/VNC remains the
+immediate diagnostic path. Cockpit Machines is conditional on existing approval;
+Goss and Lorax `mkksiso` are bounded replacement experiments; KVM Pilot is limited
+to an explicitly read-only physical-host visibility trial; S3 is later storage
+work; Packer and openQA are deferred. Tested source `205835d` changes portable
+documentation and one focused structural regression only. It does not establish
+that any optional tool was installed or executed in Wormhole or Lightspeed.
+Clean-checkout repository/matrix verification, 1,017 source tests with 12 skips
+and all 17 controlled parity cases passed at `5d58869`. Independent read-only
+review found no blocking issue and its wording/status corrections are applied.
+
 ## Self-contained Terra handoff
 
 [PR 54](https://github.com/TheSlayer455/jake-wormhole/pull/54) expands the existing
