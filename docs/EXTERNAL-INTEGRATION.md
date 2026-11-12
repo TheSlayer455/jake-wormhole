@@ -56,11 +56,20 @@ event/result coverage or a qualification decision.
 
 The canonical Terra brief also records the current optional-tool decisions.
 Use native libvirt serial/VNC evidence now; inspect Cockpit Machines only when it
-is already authorized; keep Goss and Lorax `mkksiso` to bounded replacement
-experiments; reserve KVM Pilot for an explicitly read-only physical-host
-visibility trial; and evaluate approved S3 storage later. Packer and openQA are
-deferred. None of these tools is installed or runtime-proven by Wormhole, and
-none is a prerequisite for repairing the current installation boundary.
+is already authorized. Next, evaluate explicit read-only
+[libguestfs](https://libguestfs.org/) inspection of one powered-off owned disk,
+then release-matched Kickstart/autoinstall validators and exact-repository
+dependency closure. If unchanged customer-installer interaction remains the
+measured gap, pilot standalone
+[os-autoinst](https://github.com/os-autoinst/os-autoinst) through `isotovideo`;
+do not deploy the full openQA platform first or let Terraform own the same guest.
+Keep Goss and Lorax `mkksiso` to bounded replacement experiments, xorriso and
+diffoscope to on-demand diagnostics, KVM Pilot to optional read-only physical-host
+research, and approved S3 storage to later artifact work. Packer can automate a
+real ISO installation, but remains deferred because it overlaps the existing
+lifecycle and normally produces a VM disk. None of these tools is installed or
+runtime-proven by Wormhole, and none is a prerequisite for repairing the current
+installation boundary.
 
 Existing lost-controller admission/recovery and partial-publication tests remain
 useful evidence. There is no mutable current-release pointer to race today.

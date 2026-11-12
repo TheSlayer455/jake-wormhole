@@ -356,6 +356,17 @@ portable decision as `b8c1c1469febf809eaf9da5906e7d9f37457568a`, and
 [post-merge main CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/43151556957)
 passed. Runtime evidence remains attributed to its original revisions.
 
+Source `6e49352f5ab2a2271d648109972383130b0cbb91` updates that same
+single-file brief with the next evidence-backed shortlist. Native console capture
+still comes first. libguestfs is limited to explicit read-only inspection of a
+powered-off owned disk or consistent snapshot; release-matched Kickstart,
+autoinstall, repository-closure and generated-helper checks are cheap preflight,
+not installation proof. Standalone `isotovideo` may own one isolated experiment
+VM only if unchanged-customer-media interaction remains the measured gap. Full
+openQA, Packer and physical-host tooling remain outside the critical path. No
+tool was installed or runtime-tested by this documentation change. Six focused
+portable tests pass.
+
 ## Self-contained Terra handoff
 
 [PR 54](https://github.com/TheSlayer455/jake-wormhole/pull/54) makes
