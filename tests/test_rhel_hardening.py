@@ -76,6 +76,14 @@ class HardenedInputs(unittest.TestCase):
         self.assertNotIn('\ninstall ',installer) # RHEL10 stage2 omits coreutils install.
         self.assertIn('chmod 0644 /mnt/sysroot/etc/wormhole-lab-ca.crt',installer)
 
+    def test_final_chrony_configuration_preserves_client_only_controls_after_remediation(self):
+        chrony = h.FINALIZE.split("cat > /etc/chrony.conf <<'TIME'\n", 1)[1].split('\nTIME\n', 1)[0]
+        self.assertIn('server 192.0.2.1 port 12345 iburst minpoll 4 maxpoll 4', chrony)
+        self.assertEqual(chrony.splitlines().count('port 0'), 1)
+        self.assertEqual(chrony.splitlines().count('cmdport 0'), 1)
+        self.assertLess(h.FINALIZE.index('oscap xccdf eval --remediate'),
+                        h.FINALIZE.index("cat > /etc/chrony.conf <<'TIME'"))
+
     def test_reuse_binds_installed_recipe_and_refuses_baseline_or_modified_bytes(self):
         manifest = {'capability': h.CAPABILITY, 'source': baseline.RHEL,
                     'candidate_sha256': 'a' * 64, 'installed_input_fingerprint': 'b' * 64}

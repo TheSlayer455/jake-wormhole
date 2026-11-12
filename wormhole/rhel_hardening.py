@@ -157,6 +157,8 @@ printf '%s\n' 'Banner /etc/issue.net' > /etc/ssh/sshd_config.d/05-wormhole-banne
 cat > /etc/chrony.conf <<'TIME'
 # Explicit lab host-clock source, not an authenticated external time authority.
 server 192.0.2.1 port 12345 iburst minpoll 4 maxpoll 4
+port 0
+cmdport 0
 driftfile /var/lib/chrony/drift
 makestep 1 -1
 rtcsync
