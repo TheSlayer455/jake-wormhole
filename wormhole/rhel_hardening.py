@@ -137,6 +137,9 @@ case "$result" in
 esac
 test -s /var/lib/wormhole/install-assessment/remediation-xccdf.xml
 printf '%s\n' "$result" > /var/lib/wormhole/remediation-exit
+# The installer disables kdump, but the pinned rule also requires the final
+# installed unit to be masked while kexec-tools remains available.
+systemctl mask kdump.service
 # Complete the declared final-account contract after profile remediation. This
 # is installation code, never an acceptance-time repair or passwordless bypass.
 chown -R lab.service:lab.service /home/lab.service
@@ -152,8 +155,8 @@ KbdInteractiveAuthentication no
 PubkeyAuthentication yes
 HostKey /etc/ssh/ssh_host_rsa_key
 SSH
-printf '%s\n' 'Wormhole private home lab. Authorized lab use only. Activity is monitored.' > /etc/issue.net
-printf '%s\n' 'Banner /etc/issue.net' > /etc/ssh/sshd_config.d/05-wormhole-banner.conf
+printf '%s\n' 'Wormhole private home lab. Authorized lab use only. Activity is monitored.' > /etc/issue
+printf '%s\n' 'Banner /etc/issue' > /etc/ssh/sshd_config.d/05-wormhole-banner.conf
 cat > /etc/chrony.conf <<'TIME'
 # Explicit lab host-clock source, not an authenticated external time authority.
 server 192.0.2.1 port 12345 iburst minpoll 4 maxpoll 4

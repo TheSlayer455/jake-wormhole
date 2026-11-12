@@ -84,6 +84,16 @@ class HardenedInputs(unittest.TestCase):
         self.assertLess(h.FINALIZE.index('oscap xccdf eval --remediate'),
                         h.FINALIZE.index("cat > /etc/chrony.conf <<'TIME'"))
 
+    def test_final_banner_uses_the_pinned_rule_path_after_remediation(self):
+        self.assertIn("> /etc/issue\n", h.FINALIZE)
+        self.assertIn("'Banner /etc/issue' > /etc/ssh/sshd_config.d/05-wormhole-banner.conf", h.FINALIZE)
+        self.assertNotIn('Banner /etc/issue.net', h.FINALIZE)
+
+    def test_final_kdump_unit_is_disabled_and_masked_after_remediation(self):
+        self.assertIn('services --disabled=debug-shell,autofs,kdump', self.seed())
+        self.assertLess(h.FINALIZE.index('oscap xccdf eval --remediate'),
+                        h.FINALIZE.index('systemctl mask kdump.service'))
+
     def test_reuse_binds_installed_recipe_and_refuses_baseline_or_modified_bytes(self):
         manifest = {'capability': h.CAPABILITY, 'source': baseline.RHEL,
                     'candidate_sha256': 'a' * 64, 'installed_input_fingerprint': 'b' * 64}
