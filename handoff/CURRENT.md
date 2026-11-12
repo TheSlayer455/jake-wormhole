@@ -2,7 +2,7 @@
 
 ## RHEL manual-control evidence pending runtime
 
-Source `f10e0e03c597464c0fc4b3f10f3239e97d0d2f1c` implements one
+Source `a8263e900e10f04eab3f6e4f98e4a6d9fa26842b` implements one
 read-only observer for the exact ten native `notchecked` rules. Native statuses
 remain unchanged; the controller binds objective or governed-not-applicable
 evidence to the run, candidate, policy, content and tailoring identities. No
@@ -15,6 +15,12 @@ checks generated crypto policy, LUKS evidence, interactive paths, IPsec absence,
 guest client-key absence, non-PKI SSSD state and the dedicated encrypted 10 GiB
 audit volume. Twenty-one focused hardening/assessment cases pass. Fresh runtime
 evidence is required; the latest executed run predates these inputs.
+
+Independent read-only review found and corrected pre-runtime identity gaps: the
+record now verifies guest run/boot identity and both built policy hashes before
+binding facts. The SSH-only firewall claim additionally requires successful,
+empty rich-rule, protocol, source-port and forward-port queries. Focused negative
+cases reject changed run, boot and policy identities.
 
 ## RHEL selected-automated-rule closure
 

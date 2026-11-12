@@ -191,7 +191,7 @@ objects and exact-file cleanup reclaimed another 8,487,362,560 allocated bytes.
 Storage now records 76.565 GiB managed, 29.880 GiB candidates, 137.812 GiB free,
 492 verified archive objects, no pending archive bytes and no VM disks.
 
-Source `f10e0e03c597464c0fc4b3f10f3239e97d0d2f1c` adds one bounded,
+Source `a8263e900e10f04eab3f6e4f98e4a6d9fa26842b` adds one bounded,
 read-only manual-control observer for the exact ten native `notchecked` rules.
 It preserves those scanner statuses, binds evidence to the run/candidate/policy/
 content/tailoring identities and records `satisfied` or governed
@@ -200,6 +200,10 @@ the per-run service identity within 48 hours and configures a literal `DROP`
 firewalld zone with SSH as its only exception after remediation. Twenty-one
 focused hardening/assessment cases pass. This is source proof only until a fresh
 guest produces the bound manual-evidence record.
+Read-only review required and received explicit run/boot/policy binding plus
+empty rich-rule, protocol, source-port and forward-port verification before the
+runtime attempt; those corrections and negative identity regressions are in the
+same source.
 
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
