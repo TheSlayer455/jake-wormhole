@@ -126,7 +126,7 @@ print(json.dumps({'checks':checks,'errors':errors,'crypto_runtime':crypto_runtim
 
 def hardened_audit_code():
     """Same native collector, fixed hardened content, stdin-only sudo secret."""
-    from .rhel_hardening import CONTENT
+    from .rhel_hardening import CONTENT, LAB_PROFILE
     prefix = 'functional_probe=' + repr(HARDENED_PROBE) + '\nexpected_checks=' + repr(HARDENED_CHECKS) + '\n' + r'''
 import shlex
 password=c.pop('become_password')
@@ -151,11 +151,14 @@ print(json.dumps({'stage':'hardened-functional','returncode':0 if functional_ok 
 '''
     code = RHEL_AUDIT_CODE.replace(CONTENT_SHA, CONTENT['sha256']).replace(
         '/usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml', '/usr/local/share/wormhole/ssg-rhel10-ds.xml')
+    code = code.replace(PROFILE, LAB_PROFILE).replace(
+        'oscap xccdf eval \\\n  --profile ' + LAB_PROFILE,
+        'oscap xccdf eval \\\n  --tailoring-file /usr/local/share/wormhole/lab-tailoring.xml \\\n  --profile ' + LAB_PROFILE)
     code = code.replace("'sudo -n /bin/bash -s'", "'sudo -S -p \"\" /bin/bash -c '+shlex.quote(audit.replace('@SECONDS@',str(int(remaining-30))))").replace(
         "input=audit.replace('@SECONDS@',str(int(remaining-30))).encode()",
         "input=(password+'\\n').encode()")
     code = code.replace("'outcome':'baseline-passed'", "'outcome':'assessment-evidence-collected' if functional_ok else 'hardened-functional-failed'")
-    code = code.replace("'scanner_exit':int(sys.argv[1])", "'scanner_exit':int(sys.argv[1]),'remediation_during_assessment':False,'installation_boot_id':pathlib.Path('/var/lib/wormhole/installation-boot-id').read_text().strip()")
+    code = code.replace("'scanner_exit':int(sys.argv[1])", "'scanner_exit':int(sys.argv[1]),'remediation_during_assessment':False,'installation_boot_id':pathlib.Path('/var/lib/wormhole/installation-boot-id').read_text().strip(),'tailoring_sha256':hashlib.sha256(pathlib.Path('/usr/local/share/wormhole/lab-tailoring.xml').read_bytes()).hexdigest()")
     return prefix + code + '\nif not functional_ok:sys.exit(1)\n'
 
 
@@ -165,8 +168,9 @@ HARDENED_AUDIT_CODE = hardened_audit_code()
 def read_results(content, native, *, expected_target, scanner_exit, expected_hash=CONTENT_SHA, expected_rules=948, hardened=False):
     """Fixture overrides are explicit; live content selection is capability-bound."""
     if hardened:
-        from .rhel_hardening import CONTENT
+        from .rhel_hardening import CONTENT, LAB_PROFILE
         expected_hash,expected_rules=CONTENT['sha256'],CONTENT['rules']
+    result_profile = LAB_PROFILE if hardened else PROFILE
     require(0 < len(content) <= 64 * 1024**2 and 0 < len(native) <= 64 * 1024**2, 'assessment_size')
     require(hashlib.sha256(content).hexdigest() == expected_hash, 'assessment_content_mismatch')
     root = ET.fromstring(content)
@@ -184,7 +188,7 @@ def read_results(content, native, *, expected_target, scanner_exit, expected_has
     require(len(results) == 1, 'assessment_testresult_count')
     result = results[0]
     profile = result.find(X + 'profile')
-    require(profile is not None and profile.get('idref') == PROFILE, 'assessment_profile_mismatch')
+    require(profile is not None and profile.get('idref') == result_profile, 'assessment_profile_mismatch')
     require(expected_target in [t.text for t in result.findall(X + 'target')], 'assessment_target_mismatch')
     observed = {}
     for row in result.findall(X + 'rule-result'):
@@ -195,7 +199,7 @@ def read_results(content, native, *, expected_target, scanner_exit, expected_has
     require(type(scanner_exit) is int and scanner_exit in {0, 2}, 'scanner_execution_failed')
     summary = {'schema_version': '1.0', 'capability': 'real-rhel-vendor-stig-baseline',
         'content_sha256': expected_hash, 'content_version': '0.1.76', 'content_status': 'draft',
-        'profile_id': PROFILE, 'target': expected_target, 'scanner_exit': scanner_exit,
+        'profile_id': result_profile, 'target': expected_target, 'scanner_exit': scanner_exit,
         'scanner_execution_completed': True, 'coverage_complete': True, 'upstream_rule_count': len(planned),
         'native_counts': dict(Counter(observed.values())),
         'rules': [{'rule_id': key, 'title': planned[key], 'native_status': status} for key, status in observed.items()],
@@ -211,7 +215,7 @@ def read_results(content, native, *, expected_target, scanner_exit, expected_has
 
 def collect(run, result, rows):
     """Persist the fixed native bundle before the existing VM teardown."""
-    from .rhel_hardening import CAPABILITY, CONTENT
+    from .rhel_hardening import CAPABILITY, CONTENT, LAB_PROFILE
     build=result.get('build',{})
     hardened=build.get('capability')==CAPABILITY
     require(build.get('assessment_content')==CONTENT if hardened else 'assessment_content' not in build,
@@ -237,13 +241,17 @@ def collect(run, result, rows):
     require(names == FILES, 'assessment_native_files_missing')
     receipt = json.loads((out / 'receipt.json').read_text())
     target = 'vm-' + result['run_id'][:8]
+    expected_profile = LAB_PROFILE if hardened else PROFILE
     require(receipt.get('run_id') == result['run_id'] and receipt.get('target') == target and
-            receipt.get('content_sha256') == expected_hash and receipt.get('profile_id') == PROFILE, 'assessment_receipt_identity')
+            receipt.get('content_sha256') == expected_hash and receipt.get('profile_id') == expected_profile,
+            'assessment_receipt_identity')
     run_id(receipt.get('boot_id'))
     if hardened:
         run_id(receipt.get('installation_boot_id'))
         require(receipt.get('remediation_during_assessment') is False and
             receipt['installation_boot_id']!=receipt['boot_id'],'assessment_installed_reboot_unverified')
+        require(receipt.get('tailoring_sha256') ==
+            build.get('installation_contract',{}).get('tailoring_sha256'), 'assessment_tailoring_identity')
     content = (out / 'datastream.xml').read_bytes()
     summary = read_results(content, (out / 'xccdf.xml').read_bytes(), expected_target=target, scanner_exit=receipt.get('scanner_exit'),hardened=hardened)
     arf = read_results(content, (out / 'arf.xml').read_bytes(), expected_target=target, scanner_exit=receipt.get('scanner_exit'),hardened=hardened)

@@ -21,7 +21,7 @@
     "upstream_rules": 1073,
     "selected_rules": 473
   },
-  "tailoring": {"excluded_rules": [], "owner_approved_exceptions": []},
+  "tailoring": {"excluded_rules": [], "parameters": {"login_banner_text": "^Wormhole private home lab\\. Authorized lab use only\\. Activity is monitored\\.$"}, "owner_approved_exceptions": []},
   "requirements": {
     "all_selected_automated_rules_pass": true,
     "scanner_errors_allowed": 0,

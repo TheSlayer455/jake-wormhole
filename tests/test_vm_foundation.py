@@ -148,12 +148,14 @@ class RHELAssessment(unittest.TestCase):
             '<description>Checks align to Red Hat Enterprise Linux 10 V1R2.</description></Profile>'
             '<Rule id="one"/><Rule id="two"/></Benchmark>').encode()
         pinned={**h.CONTENT,'sha256':hashlib.sha256(content).hexdigest(),'rules':2,'selected_rules':2}
-        native=('<Benchmark xmlns="'+ra.X[1:-1]+'"><TestResult><profile idref="'+ra.PROFILE+'"/>'
+        native=('<Benchmark xmlns="'+ra.X[1:-1]+'"><TestResult><profile idref="'+h.LAB_PROFILE+'"/>'
             '<target>'+target+'</target><rule-result idref="one"><result>pass</result></rule-result>'
             '<rule-result idref="two"><result>fail</result></rule-result></TestResult></Benchmark>').encode()
-        receipt.update(run_id=result['run_id'],target=target,content_sha256=pinned['sha256'],profile_id=ra.PROFILE,
-            scanner_exit=2,remediation_during_assessment=False,installation_boot_id=str(uuid4()))
-        result['build'].update(capability=h.CAPABILITY,assessment_content=pinned)
+        receipt.update(run_id=result['run_id'],target=target,content_sha256=pinned['sha256'],profile_id=h.LAB_PROFILE,
+            scanner_exit=2,remediation_during_assessment=False,installation_boot_id=str(uuid4()),
+            tailoring_sha256=h.installation_contract()['tailoring_sha256'])
+        result['build'].update(capability=h.CAPABILITY,assessment_content=pinned,
+            installation_contract={'tailoring_sha256':receipt['tailoring_sha256']})
         files={name:b'synthetic output' for name in ra.FILES}
         files.update({'datastream.xml':content,'xccdf.xml':native,'arf.xml':native,'receipt.json':json.dumps(receipt).encode()})
         archive=io.BytesIO()
@@ -208,6 +210,7 @@ class RHELAssessment(unittest.TestCase):
         import contextlib,io,subprocess,sys,time
         from types import SimpleNamespace
         compile(ra.HARDENED_AUDIT_CODE,'<hardened-helper>','exec')
+        self.assertIn('--tailoring-file /usr/local/share/wormhole/lab-tailoring.xml', ra.HARDENED_AUDIT_CODE)
         compile(ra.HARDENED_PROBE,'<read-only-guest-probe>','exec')
         self.assertNotIn('--remediate',ra.HARDENED_AUDIT_CODE)
         self.assertIn('/usr/share/xml/scap/ssg/content/',ra.RHEL_AUDIT_CODE)

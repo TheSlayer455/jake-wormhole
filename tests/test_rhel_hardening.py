@@ -88,6 +88,10 @@ class HardenedInputs(unittest.TestCase):
         self.assertIn("> /etc/issue\n", h.FINALIZE)
         self.assertIn("'Banner /etc/issue' > /etc/ssh/sshd_config.d/05-wormhole-banner.conf", h.FINALIZE)
         self.assertNotIn('Banner /etc/issue.net', h.FINALIZE)
+        tailoring = h.tailoring_document().decode()
+        self.assertIn('id="' + h.LAB_PROFILE + '"', tailoring)
+        self.assertIn('content_value_login_banner_text', tailoring)
+        self.assertNotIn(':select', tailoring)
 
     def test_final_kdump_unit_is_disabled_and_masked_after_remediation(self):
         self.assertIn('services --disabled=debug-shell,autofs,kdump', self.seed())
@@ -141,7 +145,8 @@ class HardenedInputs(unittest.TestCase):
         self.assertEqual(policy['content']['selected_rules'], h.CONTENT['selected_rules'])
         self.assertEqual(h.installation_contract()['policy_sha256'], h.sha256(h.POLICY))
         self.assertFalse(policy['production_iso_eligible'])
-        self.assertEqual(policy['tailoring'], {'excluded_rules': [], 'owner_approved_exceptions': []})
+        self.assertEqual(policy['tailoring'], {'excluded_rules': [],
+            'parameters': {'login_banner_text': h.LAB_BANNER_REGEX}, 'owner_approved_exceptions': []})
         self.assertEqual(policy['requirements']['independent_same_iso_installations'], 2)
         self.assertTrue(policy['unresolved_requirements'])
         self.assertIn('approved-evaluate-stig-package-and-supported-rhel10-execution', policy['external_work_equivalence_pending'])

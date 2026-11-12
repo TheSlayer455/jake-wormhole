@@ -4,12 +4,14 @@ The ISO contains policy and code; the private seed supplies only per-run identit
 The LUKS secret arrives through the existing no-echo console protocol, not media.
 Remediation exit 2 records findings, never qualification. BIOS is the only profile.
 """
+import hashlib
 import ipaddress
 import json
 from pathlib import Path
 import re
 import shutil
 import subprocess
+import xml.etree.ElementTree as ET
 
 from . import rhel_inputs as baseline
 from .media_store import fingerprint, require
@@ -21,9 +23,30 @@ CAPABILITY = 'rhel-hardened-assessment-candidate-iso'
 POLICY = SOURCE_ROOT / 'profiles/rhel10-lab-policy-v1.json'
 CONTENT_SHA256 = '3a22f1f747ef7b895268b2da838f680b6a7ea421c5132d6ac4141d858afc60c6'
 PROFILE = 'xccdf_org.ssgproject.content_profile_stig'
+LAB_PROFILE = 'xccdf_org.wormhole_profile_rhel10_lab_stig'
+LAB_BANNER = 'Wormhole private home lab. Authorized lab use only. Activity is monitored.'
+LAB_BANNER_REGEX = r'^Wormhole private home lab\. Authorized lab use only\. Activity is monitored\.$'
 CONTENT = {'release': '0.1.82', 'benchmark': 'RHEL 10 STIG V1R2',
            'sha256': CONTENT_SHA256, 'profile': PROFILE, 'rules': 1073, 'selected_rules': 473}
 BOOT_ARGS = 'fips=1 init_on_free=1 pti=on vsyscall=none page_poison=1 audit=1 audit_backlog_limit=8192'
+
+
+def tailoring_document():
+    """Declare the truthful lab banner value without changing rule selection."""
+    tailoring = json.loads(POLICY.read_text())['tailoring']
+    values = {'login_banner_text': LAB_BANNER_REGEX}
+    require(tailoring == {'excluded_rules': [], 'parameters': values,
+        'owner_approved_exceptions': []}, 'unsupported_assessment_tailoring')
+    x = '{http://checklists.nist.gov/xccdf/1.2}'
+    root = ET.Element(x + 'Tailoring', id='xccdf_org.wormhole_tailoring_rhel10_lab')
+    ET.SubElement(root, x + 'benchmark', href='ssg-rhel10-ds.xml')
+    ET.SubElement(root, x + 'version', time='2026-11-12T00:00:00Z').text = '1'
+    profile = ET.SubElement(root, x + 'Profile', id=LAB_PROFILE, extends=PROFILE)
+    ET.SubElement(profile, x + 'title').text = 'Wormhole truthful home-lab notice'
+    ET.SubElement(profile, x + 'description').text = 'Unchanged upstream rule selection; only the declared local warning-banner value differs.'
+    ET.SubElement(profile, x + 'set-value',
+        idref='xccdf_org.ssgproject.content_value_login_banner_text').text = LAB_BANNER_REGEX
+    return ET.tostring(root, encoding='utf-8', xml_declaration=True)
 PACKAGES = '''@core
 python3
 shadow-utils
@@ -123,7 +146,8 @@ sha256sum --check content.sha256
 install -d -m 0700 /var/lib/wormhole/install-assessment
 printf '%s\n' WORMHOLE_HARDENING_STARTED > /dev/ttyS0
 if timeout --signal=TERM --kill-after=15 900 oscap xccdf eval --remediate \
-    --profile xccdf_org.ssgproject.content_profile_stig \
+    --tailoring-file lab-tailoring.xml \
+    --profile xccdf_org.wormhole_profile_rhel10_lab_stig \
     --results /var/lib/wormhole/install-assessment/remediation-xccdf.xml \
     --results-arf /var/lib/wormhole/install-assessment/remediation-arf.xml \
     --report /var/lib/wormhole/install-assessment/remediation.html ssg-rhel10-ds.xml; then
@@ -238,6 +262,7 @@ def prepare(content):
 
 
 def installation_contract():
+    tailoring = tailoring_document()
     return {'id': 'wormhole-rhel10-hardened-bios-seed-v1', 'release': '10.0',
         'architecture': 'x86_64', 'firmware': 'bios', 'seed_label': baseline.SEED_LABEL,
         'final_user': 'lab.service', 'sudo': 'password-required',
@@ -245,6 +270,7 @@ def installation_contract():
         'guest_memory_mib': 8192, 'guest_vcpus': 2, 'guest_disk_bytes': 32 * 1024**3,
         'content': dict(CONTENT), 'recipe_sha256': sha256(__file__),
         'policy_sha256': sha256(POLICY),
+        'tailoring_sha256': hashlib.sha256(tailoring).hexdigest(),
         'console_receiver_sha256': fingerprint(EARLY),
         'services': {'ca': 'run-seed-scoped', 'logging': 'existing-sandbox-tls',
                      'audit': 'existing-sandbox-ascii', 'time': 'lab-host-clock'},
@@ -376,8 +402,11 @@ def build(source, destination, seed_dir, identifier, public_key, guest_address, 
         require(sha256(destination) == manifest['candidate_sha256'], 'candidate_copy_mismatch')
     else:
         payload = seed_dir / 'payload'; payload.mkdir(mode=0o700)
+        tailoring = tailoring_document()
         shutil.copyfile(content, payload / 'ssg-rhel10-ds.xml')
-        (payload / 'content.sha256').write_text(CONTENT_SHA256 + '  ssg-rhel10-ds.xml\n')
+        (payload / 'lab-tailoring.xml').write_bytes(tailoring)
+        (payload / 'content.sha256').write_text(CONTENT_SHA256 + '  ssg-rhel10-ds.xml\n'
+            + hashlib.sha256(tailoring).hexdigest() + '  lab-tailoring.xml\n')
         (payload / 'finalize.sh').write_text(FINALIZE)
         (payload / 'ready.sh').write_text(READY)
         (payload / 'install-contract.json').write_text(json.dumps(contract, sort_keys=True) + '\n')
