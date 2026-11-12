@@ -61,6 +61,12 @@ and verifies that `wormhole_boot_admin` is not an OS account. A realistic
 transform regression and all 13 focused tests pass. Fresh installation proof
 remains required.
 
+The already-launched diagnostic attempt at source `f611d95` confirmed that the
+first draft fails in hardening after all 449 packages install. The console
+retained `WORMHOLE_INSTALLATION_FAILED`; all readiness/validation results were
+blocked, Terraform/support cleanup completed and 405,504 transient allocated
+bytes were reclaimed. It remains failed and is not proof of `0ab3068`.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra

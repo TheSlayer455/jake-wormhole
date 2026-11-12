@@ -128,6 +128,13 @@ in `user.cfg`. The corrected transform changes only the username, verifies the
 separate hash and rebuilds the BIOS configuration. A realistic transform
 regression and all 13 focused tests pass; a fresh install is still required.
 
+The diagnostic attempt already running at source `f611d95` reached 449/449
+installed packages and then failed in hardening, exactly as the generator-shape
+review predicted. All final readiness, Ansible, functional, inventory and
+assessment rows were blocked. Exact-owned teardown passed and cleanup reclaimed
+405,504 transient allocated bytes. The failed attempt remains failed; it is not
+evidence for `0ab3068`.
+
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
 terminal receipt whose immutable ownership journal was already finished: the

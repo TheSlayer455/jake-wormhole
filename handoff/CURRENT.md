@@ -29,6 +29,13 @@ the administrator is not an OS account. A realistic transform regression and
 all 13 focused tests pass. The next run must prove the selected GRUB rule and
 actual boot/readiness before this boundary closes.
 
+The diagnostic attempt already running from source `f611d95` reached all 449
+packages, then stopped in hardening with the retained installation-failure
+marker. Final readiness, Ansible, functionals, inventory and assessment were
+correctly blocked. Terraform/support teardown passed and cleanup reclaimed
+405,504 transient allocated bytes. That attempt remains failed and provides no
+runtime success claim for `0ab3068`.
+
 ## RHEL authorized-account closure
 
 Runtime source `c944a8668e86979e38af673c5d81a9bf54d270a6` completed a fresh
