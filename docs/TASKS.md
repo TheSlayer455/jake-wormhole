@@ -1,5 +1,13 @@
 # Minx work index
 
+Current increment is `codex/WORM-001-terra-tool-decisions`. Tested content at
+`205835d` adds the bounded tool-adoption decision to the existing single Terra
+paste and links it from integration guidance. One focused test keeps all eight
+decisions present and preserves the rule that no optional tool is a prerequisite
+for the current installation repair. Remaining delivery work is full source and
+parity verification, independent portable-diff review, PR/CI and main verification.
+No runtime allocation or optional-tool installation belongs to this increment.
+
 Current increment is `codex/WORM-001-terra-single-file-bundle`, [PR 54](https://github.com/TheSlayer455/jake-wormhole/pull/54).
 The existing Terra brief is now the complete initial copy/paste bundle. It
 contains the owner directive, fast causal workflow, current console case,
