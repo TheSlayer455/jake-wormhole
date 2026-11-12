@@ -20,8 +20,18 @@ SUFFIXES = (
     'auditd_audispd_configure_sufficiently_large_partition')
 MANUAL_RULES = tuple(PREFIX + suffix for suffix in SUFFIXES)
 
+ACTIVE_ZONE_PARSER = r'''
+def parse_active_zones(output):
+ zones={};current=None
+ for line in output.splitlines():
+  if line and not line[0].isspace():current=line.split()[0];zones[current]={'interfaces':[]}
+  elif current and line.strip().startswith('interfaces:'):zones[current]['interfaces']=line.split(':',1)[1].split()
+ return zones
+'''
+
 CODE = r'''
 import json,os,pathlib,pwd,re,subprocess,time
+''' + ACTIVE_ZONE_PARSER + r'''
 def run(*args):
  try:r=subprocess.run(args,capture_output=True,text=True,timeout=10,env=dict(os.environ,LC_ALL='C'))
  except Exception as error:return {'returncode':None,'output':'','error':type(error).__name__}
@@ -52,11 +62,8 @@ for item in pwd.getpwall():
  except (IndexError,TypeError,ValueError):pass
  accounts.append({'name':item.pw_name,'uid':item.pw_uid,'home':item.pw_dir,'shell':item.pw_shell,
   'account_aging':aging,'expiry_remaining_days':remaining,'unsafe_path_file_count':len(unsafe)})
-active=run('firewall-cmd','--get-active-zones');zones={};current=None
-if active['returncode']==0:
- for line in active['output'].splitlines():
-  if line and not line[0].isspace():current=line.strip();zones[current]={'interfaces':[]}
-  elif current and line.strip().startswith('interfaces:'):zones[current]['interfaces']=line.split(':',1)[1].split()
+active=run('firewall-cmd','--get-active-zones')
+zones=parse_active_zones(active['output']) if active['returncode']==0 else {}
 for zone in zones:
  zones[zone].update(target=run('firewall-cmd','--permanent','--zone='+zone,'--get-target'),
   services=run('firewall-cmd','--zone='+zone,'--list-services'),

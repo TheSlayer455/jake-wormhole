@@ -143,6 +143,9 @@ class RHELAssessment(unittest.TestCase):
         import base64,hashlib,io,tarfile
         from wormhole import rhel_hardening as h, rhel_manual as rm
         compile(rm.CODE,'<rhel-manual-observer>','exec')
+        parser={};exec(rm.ACTIVE_ZONE_PARSER,parser)
+        self.assertEqual(parser['parse_active_zones']('drop (default)\n  interfaces: ens2\n'),
+            {'drop':{'interfaces':['ens2']}})
         self.assertIn("run('firewall-cmd','--permanent','--zone='+zone,'--get-target')", rm.CODE)
         self.assertNotIn("run('firewall-cmd','--zone='+zone,'--get-target')", rm.CODE)
         result,receipt,inventory=RHELSVD().fixture();target='vm-'+result['run_id'][:8]
