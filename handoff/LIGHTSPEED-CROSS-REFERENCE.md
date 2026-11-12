@@ -32,6 +32,11 @@ and merged as
 passed 1,030 tests with 12 explicit platform/privilege skips and the 17-case
 parity/readback path. These later revisions do not relabel the earlier Ubuntu,
 two-OS or RHEL runtime receipts.
+The earlier single-file bundle assembly was tested at
+[31093e4c556081f4654af9e8d28b65255b33fe98](https://github.com/TheSlayer455/jake-wormhole/commit/31093e4c556081f4654af9e8d28b65255b33fe98)
+and merged as
+[59fb4392e187efa08509abc6492bfe800564680e](https://github.com/TheSlayer455/jake-wormhole/commit/59fb4392e187efa08509abc6492bfe800564680e);
+those are historical document-delivery pins, not runtime evidence.
 
 | Included here | Purpose |
 | --- | --- |
