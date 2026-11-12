@@ -93,6 +93,19 @@ class HardenedInputs(unittest.TestCase):
         self.assertIn("NetworkManager --print-config | grep -qx 'dns=none'", h.READY)
         self.assertIn('test ! -s /etc/resolv.conf', h.READY)
 
+    def test_final_account_expiry_and_drop_zone_are_installed_then_observed(self):
+        self.assertIn('chage -E "$(date -u -d \'+2 days\' +%F)" lab.service', h.FINALIZE)
+        self.assertIn('test "$expiry" -gt "$today"', h.READY)
+        self.assertIn('firewall --enabled\n', self.seed())
+        self.assertNotIn('firewall --enabled --service=ssh', self.seed())
+        for command in ('firewall-offline-cmd --set-default-zone=drop',
+                        'firewall-offline-cmd --zone=drop --set-target=DROP',
+                        'firewall-offline-cmd --zone=drop --add-service=ssh'):
+            self.assertIn(command, h.FINALIZE)
+            self.assertLess(h.FINALIZE.index('oscap xccdf eval --remediate'), h.FINALIZE.index(command))
+        self.assertIn('firewall-cmd --zone=drop --get-target', h.READY)
+        self.assertIn('firewall-cmd --zone=drop --list-services', h.READY)
+
     def test_final_banner_uses_the_pinned_rule_path_after_remediation(self):
         self.assertIn("> /etc/issue\n", h.FINALIZE)
         self.assertIn("'Banner /etc/issue' > /etc/ssh/sshd_config.d/05-wormhole-banner.conf", h.FINALIZE)
@@ -203,6 +216,9 @@ fi
             'owner_approved_exceptions': []})
         self.assertEqual(policy['rule_applicability'], {
             h.SSSD_CERTMAP_RULE: h.SSSD_CERTMAP_APPLICABILITY})
+        self.assertEqual(policy['manual_controls']['temporary_account_maximum_hours'], 72)
+        self.assertEqual(policy['manual_controls']['authorized_firewall_services'], ['ssh'])
+        self.assertEqual(policy['manual_controls']['audit_partition_minimum_bytes'], 10 * 1024**3)
         self.assertEqual(policy['requirements']['independent_same_iso_installations'], 2)
         self.assertTrue(policy['unresolved_requirements'])
         self.assertIn('approved-evaluate-stig-package-and-supported-rhel10-execution', policy['external_work_equivalence_pending'])

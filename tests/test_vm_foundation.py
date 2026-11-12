@@ -141,23 +141,28 @@ class RHELInputs(unittest.TestCase):
 class RHELAssessment(unittest.TestCase):
     def test_hardened_collector_binds_content_reboot_complete_findings_and_original_inventory(self):
         import base64,hashlib,io,tarfile
-        from wormhole import rhel_hardening as h
+        from wormhole import rhel_hardening as h, rhel_manual as rm
+        compile(rm.CODE,'<rhel-manual-observer>','exec')
         result,receipt,inventory=RHELSVD().fixture();target='vm-'+result['run_id'][:8]
+        manual_rules=''.join('<Rule id="'+rule+'"/>' for rule in rm.MANUAL_RULES)
         content=('<Benchmark xmlns="'+ra.X[1:-1]+'"><version>0.1.82</version><Profile id="'+ra.PROFILE+'">'
             '<title>DISA STIG for Red Hat Enterprise Linux 10</title>'
             '<description>Checks align to Red Hat Enterprise Linux 10 V1R2.</description></Profile>'
-            '<Rule id="one"/><Rule id="two"/><Rule id="'+h.SSSD_CERTMAP_RULE+'"/></Benchmark>').encode()
-        pinned={**h.CONTENT,'sha256':hashlib.sha256(content).hexdigest(),'rules':3,'selected_rules':2}
+            '<Rule id="one"/><Rule id="two"/><Rule id="'+h.SSSD_CERTMAP_RULE+'"/>'+manual_rules+'</Benchmark>').encode()
+        pinned={**h.CONTENT,'sha256':hashlib.sha256(content).hexdigest(),'rules':13,'selected_rules':12}
+        manual_native=''.join('<rule-result idref="'+rule+'"><result>notchecked</result></rule-result>' for rule in rm.MANUAL_RULES)
         native=('<Benchmark xmlns="'+ra.X[1:-1]+'"><TestResult><profile idref="'+h.LAB_PROFILE+'"/>'
             '<target>'+target+'</target><rule-result idref="one"><result>pass</result></rule-result>'
             '<rule-result idref="two"><result>fail</result></rule-result>'
             '<rule-result idref="'+h.SSSD_CERTMAP_RULE+'"><result>notselected</result></rule-result>'
-            '</TestResult></Benchmark>').encode()
+            +manual_native+'</TestResult></Benchmark>').encode()
         receipt.update(run_id=result['run_id'],target=target,content_sha256=pinned['sha256'],profile_id=h.LAB_PROFILE,
             scanner_exit=2,remediation_during_assessment=False,installation_boot_id=str(uuid4()),
             tailoring_sha256=h.installation_contract()['tailoring_sha256'])
         result['build'].update(capability=h.CAPABILITY,assessment_content=pinned,
             installation_contract={'tailoring_sha256':receipt['tailoring_sha256']})
+        result.update(hardened_checks=dict.fromkeys(ra.HARDENED_CHECKS,'pass'),offline_encryption={
+            'luks_magic_verified':True,'correct_key_accepted':True,'wrong_key_refused':True})
         files={name:b'synthetic output' for name in ra.FILES}
         files.update({'datastream.xml':content,'xccdf.xml':native,'arf.xml':native,'receipt.json':json.dumps(receipt).encode()})
         archive=io.BytesIO()
@@ -168,19 +173,35 @@ class RHELAssessment(unittest.TestCase):
         crypto={'openssl_providers':{'status':'observed','returncode':0,'stdout':'synthetic provider version',
             'stderr':'','truncated':False,'error':None},'virtualization':{'status':'error','returncode':1,
             'stdout':'none\n','stderr':'','truncated':False,'error':None}}
+        manual={'schema_version':'1.0','facts':{
+            'crypto_check':{'returncode':0,'output':'The configured policy matches the generated policy.\n','error':None},
+            'crypto_policy':{'returncode':0,'output':'FIPS\n','error':None},
+            'interactive_accounts':[{'name':'lab.service','uid':1000,'home':'/home/lab.service','shell':'/bin/bash',
+                'account_aging':{'returncode':0,'output':'Account expires : Nov 14, 2026\n','error':None},
+                'expiry_remaining_days':2,'unsafe_path_file_count':0}],
+            'client_private_key_count':0,
+            'firewall':{'state':{'returncode':0,'output':'running\n','error':None},
+                'default_zone':{'returncode':0,'output':'drop\n','error':None},
+                'active_zones':{'drop':{'interfaces':['eth0'],'target':{'returncode':0,'output':'DROP\n','error':None},
+                    'services':{'returncode':0,'output':'ssh\n','error':None},'ports':{'returncode':0,'output':'\n','error':None}}}},
+            'ipsec_connection_count':0,'sssd_certmap_count':0,
+            'audit_storage':{'source':{'returncode':0,'output':'/dev/mapper/system-varlogaudit\n','error':None},
+                'size':{'returncode':0,'output':str(10*1024**3)+'\n','error':None}}}}
         rows=inventory+[{'stage':'hardened-functional','returncode':1,'checks':checks,'crypto_runtime':crypto},
+            {'stage':'manual-observations','returncode':0,'output':json.dumps(manual),'diagnostic':''},
             {'stage':'assessment-archive','returncode':0,'sha256':hashlib.sha256(payload).hexdigest(),
              'archive_base64':base64.b64encode(payload).decode()}]
         with patch.object(h,'CONTENT',pinned),tempfile.TemporaryDirectory() as directory:
             summary=ra.collect(Path(directory),result,rows)
-            self.assertEqual(summary['native_counts'],{'pass':1,'fail':1,'notselected':1})
+            self.assertEqual(summary['native_counts'],{'pass':1,'fail':1,'notselected':1,'notchecked':10})
             self.assertEqual(summary['content_version'],'0.1.82');self.assertEqual(summary['benchmark'],'RHEL 10 STIG V1R2')
             self.assertEqual(summary['functional_counts'],{'pass':11,'fail':1})
             self.assertFalse(summary['all_functional_checks_pass']);self.assertFalse(summary['lab_iso_qualified'])
+            self.assertTrue(summary['manual_evidence_complete'])
             self.assertEqual(summary['crypto_runtime'],{**crypto,'kernel_release':{'status':'missing'}})
             self.assertIn('synthetic provider version',(Path(directory)/'assessment.txt').read_text())
             self.assertEqual(json.loads((Path(directory)/'installed-svd.json').read_text())['packages'][0]['epoch'],'2')
-            self.assertIn('All 3 rules accounted for',(Path(directory)/'assessment.txt').read_text())
+            self.assertIn('All 13 rules accounted for',(Path(directory)/'assessment.txt').read_text())
         for changed in ({'assessment_content':{**pinned,'release':'other'}},{'capability':r.CAPABILITY}):
             with patch.object(h,'CONTENT',pinned),tempfile.TemporaryDirectory() as directory,self.assertRaises(RunError) as error:
                 ra.collect(Path(directory),{**result,'build':{**result['build'],**changed}},rows)
@@ -251,7 +272,7 @@ class RHELAssessment(unittest.TestCase):
         self.assertEqual(rows[0]['crypto_runtime'],crypto)
         self.assertTrue(any(row.get('stage')=='assessment-archive' for row in rows))
         self.assertEqual(rows[-1]['outcome'],'hardened-functional-failed')
-        self.assertEqual(len(calls),4)
+        self.assertEqual(len(calls),5)
         if sys.platform!='win32':
             namespace={};exec(ra.HARDENED_PROBE.split('\ndef encrypted(')[0],namespace)
             observe=namespace['crypto_observe']

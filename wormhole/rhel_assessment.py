@@ -135,7 +135,9 @@ print(json.dumps({'checks':checks,'errors':errors,'crypto_runtime':crypto_runtim
 def hardened_audit_code():
     """Same native collector, fixed hardened content, stdin-only sudo secret."""
     from .rhel_hardening import CONTENT, LAB_PROFILE
-    prefix = 'functional_probe=' + repr(HARDENED_PROBE) + '\nexpected_checks=' + repr(HARDENED_CHECKS) + '\n' + r'''
+    from .rhel_manual import CODE as MANUAL_PROBE
+    prefix = ('functional_probe=' + repr(HARDENED_PROBE) + '\nmanual_probe=' + repr(MANUAL_PROBE) +
+        '\nexpected_checks=' + repr(HARDENED_CHECKS) + '\n' + r'''
 import shlex
 password=c.pop('become_password')
 checks=dict.fromkeys(expected_checks)
@@ -160,7 +162,14 @@ else:errors={'observer':'remote-observation-failed'}
 functional_ok=all(value is True for value in checks.values())
 print(json.dumps({'stage':'hardened-functional','returncode':0 if functional_ok else 1,
  'checks':checks,'errors':errors,'crypto_runtime':crypto_runtime}),flush=True)
-'''
+remaining=deadline-time.monotonic()
+r=subprocess.run(['ssh',*opts,'lab.service@'+c['address'],'sudo -S -p "" /usr/bin/python3 -c '+shlex.quote(manual_probe)],
+ input=(password+'\n').encode(),capture_output=True,timeout=min(60,max(1,remaining-35)))
+manual_ok=r.returncode==0
+print(json.dumps({'stage':'manual-observations','returncode':r.returncode,
+ 'output':r.stdout.decode(errors='replace')[:65536],
+ 'diagnostic':r.stderr.decode(errors='replace')[-4096:]}),flush=True)
+''')
     code = RHEL_AUDIT_CODE.replace(CONTENT_SHA, CONTENT['sha256']).replace(
         '/usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml', '/usr/local/share/wormhole/ssg-rhel10-ds.xml')
     code = code.replace(PROFILE, LAB_PROFILE).replace(
@@ -169,9 +178,9 @@ print(json.dumps({'stage':'hardened-functional','returncode':0 if functional_ok 
     code = code.replace("'sudo -n /bin/bash -s'", "'sudo -S -p \"\" /bin/bash -c '+shlex.quote(audit.replace('@SECONDS@',str(int(remaining-30))))").replace(
         "input=audit.replace('@SECONDS@',str(int(remaining-30))).encode()",
         "input=(password+'\\n').encode()")
-    code = code.replace("'outcome':'baseline-passed'", "'outcome':'assessment-evidence-collected' if functional_ok else 'hardened-functional-failed'")
+    code = code.replace("'outcome':'baseline-passed'", "'outcome':'assessment-evidence-collected' if functional_ok and manual_ok else 'hardened-functional-failed'")
     code = code.replace("'scanner_exit':int(sys.argv[1])", "'scanner_exit':int(sys.argv[1]),'remediation_during_assessment':False,'installation_boot_id':pathlib.Path('/var/lib/wormhole/installation-boot-id').read_text().strip(),'tailoring_sha256':hashlib.sha256(pathlib.Path('/usr/local/share/wormhole/lab-tailoring.xml').read_bytes()).hexdigest()")
-    return prefix + code + '\nif not functional_ok:sys.exit(1)\n'
+    return prefix + code + '\nif not functional_ok or not manual_ok:sys.exit(1)\n'
 
 
 HARDENED_AUDIT_CODE = hardened_audit_code()
@@ -282,6 +291,14 @@ def collect(run, result, rows):
         summary['all_functional_checks_pass']=len(observations)==1 and set(checks)==set(HARDENED_CHECKS) and observations[0].get('returncode')==0 and all(row['status']=='pass' for row in summary['functional_results'])
         crypto=observations[0].get('crypto_runtime',{}) if len(observations)==1 else {}
         summary['crypto_runtime']={name:crypto.get(name,{'status':'missing'}) for name in CRYPTO_OBSERVATIONS}
+        manual=[row for row in rows if row.get('stage')=='manual-observations' and row.get('returncode')==0]
+        require(len(manual)==1, 'manual_evidence_missing')
+        try:raw=json.loads(manual[0].get('output',''))
+        except (TypeError,json.JSONDecodeError):require(False,'manual_observation_invalid')
+        from .rhel_manual import compile_evidence
+        evidence=compile_evidence(run,result,summary,raw)
+        summary['manual_evidence_complete']=evidence['all_required_manual_evidence_complete']
+        summary['manual_counts']=dict(Counter(row['disposition'] for row in evidence['objective_results'].values()))
     atomic_json(Path(run) / 'assessment.json', summary)
     title='RHEL 10 installation-hardened assessment (ComplianceAsCode 0.1.82, V1R2)' if hardened else 'RHEL 10 DVD vendor-STIG baseline (draft 0.1.76)'
     (Path(run) / 'assessment.txt').write_text(title+'\n'

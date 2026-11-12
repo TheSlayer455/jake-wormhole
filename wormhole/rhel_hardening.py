@@ -146,6 +146,9 @@ test "$(stat -c %U /home/lab.service/.ssh/authorized_keys)" = lab.service
 test "$(stat -c %a /home/lab.service)" = 700
 test "$(stat -c %a /home/lab.service/.ssh)" = 700
 test "$(stat -c %a /home/lab.service/.ssh/authorized_keys)" = 600
+expiry=$(getent shadow lab.service | cut -d: -f8)
+today=$(( $(date -u +%s) / 86400 ))
+test -n "$expiry" && test "$expiry" -gt "$today" && test "$expiry" -le $((today + 3))
 test "$(stat -c %a /var/lib/wormhole)" = 755
 test -s /etc/wormhole-lab-ca.crt
 grep -Eq '^[[:space:]]*set superusers="wormhole_boot_admin"$' /boot/grub2/grub.cfg
@@ -156,6 +159,12 @@ semanage login -l | awk '$1 == "lab.service" { found=1; if ($2 != "staff_u") exi
 NetworkManager --print-config | grep -qx 'dns=none'
 awk '$1 == "hosts:" { found=1; for (i=2; i<=NF; i++) if ($i == "dns") exit 1 } END { if (!found) exit 1 }' /etc/nsswitch.conf
 test ! -s /etc/resolv.conf
+test "$(firewall-cmd --get-default-zone)" = drop
+test "$(firewall-cmd --get-active-zones | awk '/^[^ ]/ { print $1 }')" = drop
+test -n "$(firewall-cmd --zone=drop --list-interfaces)"
+test "$(firewall-cmd --zone=drop --get-target)" = DROP
+test "$(firewall-cmd --zone=drop --list-services)" = ssh
+test -z "$(firewall-cmd --zone=drop --list-ports)"
 if ! test -f /etc/ssh/ssh_host_rsa_key; then
     ssh-keygen -q -t rsa -b 3072 -N '' -f /etc/ssh/ssh_host_rsa_key
 fi
@@ -211,12 +220,18 @@ grep -Fq 'password_pbkdf2 wormhole_boot_admin ${GRUB2_PASSWORD}' /boot/grub2/gru
 # Complete the declared final-account contract after profile remediation. This
 # is installation code, never an acceptance-time repair or passwordless bypass.
 usermod -Z staff_u lab.service
+chage -E "$(date -u -d '+2 days' +%F)" lab.service
 chown -R lab.service:lab.service /home/lab.service
 chmod 0700 /home/lab.service /home/lab.service/.ssh
 chmod 0600 /home/lab.service/.ssh/authorized_keys
 printf '%s\n' '%wheel ALL=(ALL) TYPE=sysadm_t ROLE=sysadm_r ALL' 'Defaults:lab.service timestamp_timeout=0' > /etc/sudoers.d/wormhole-lab
 chmod 0440 /etc/sudoers.d/wormhole-lab
 visudo -c
+# The pinned manual control requires literal DROP, not firewalld's `default`
+# target. Keep SSH as the only declared exception for the controller path.
+firewall-offline-cmd --set-default-zone=drop
+firewall-offline-cmd --zone=drop --set-target=DROP
+firewall-offline-cmd --zone=drop --add-service=ssh
 cat > /etc/ssh/sshd_config.d/00-wormhole.conf <<'SSH'
 PermitRootLogin no
 PasswordAuthentication no
@@ -364,7 +379,7 @@ rootpw --lock
 firstboot --disable
 skipx
 selinux --enforcing
-firewall --enabled --service=ssh
+firewall --enabled
 services --disabled=debug-shell,autofs,kdump --enabled=rsyslog,systemd-journald,firewalld,fapolicyd,chronyd,sshd,usbguard,auditd
 network --device={mac} --bindto=mac --bootproto=static --ip={address.ip} --netmask={address.netmask} --nodefroute --noipv6 --onboot=yes --activate --hostname=vm-{identifier[:8]}
 ignoredisk --only-use=vda
