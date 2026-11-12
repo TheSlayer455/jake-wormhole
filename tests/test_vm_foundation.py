@@ -417,6 +417,16 @@ class VMJournal(unittest.TestCase):
 
 @unittest.skipUnless(os.name=='posix','Linux supervisor process observations')
 class VMExecution(unittest.TestCase):
+    def test_finished_journal_terminalization_preserves_unknown_outcome_and_blocks_pending_checks(self):
+        from wormhole import ubuntu_recovery as recovery
+        value={'outcome':'running','checks':{'ready':'pass','validation':'pending'},'cleanup':'pending'}
+        observed=recovery.terminalize_reconciled(value)
+        self.assertEqual(observed['outcome'],'unknown')
+        self.assertEqual(observed['first_failure'],'supervisor_interrupted_without_terminal_result')
+        self.assertEqual(observed['checks'],{'ready':'pass','validation':'blocked'})
+        self.assertEqual(observed['cleanup'],'verified-absent-inputs-retained')
+        self.assertEqual(observed['recovery']['original_outcome'],'running')
+
     def test_hardened_recovery_recognizes_only_the_run_owned_support_service(self):
         from contextlib import nullcontext
         from subprocess import CompletedProcess
