@@ -58,7 +58,7 @@ if active['returncode']==0:
   if line and not line[0].isspace():current=line.strip();zones[current]={'interfaces':[]}
   elif current and line.strip().startswith('interfaces:'):zones[current]['interfaces']=line.split(':',1)[1].split()
 for zone in zones:
- zones[zone].update(target=run('firewall-cmd','--zone='+zone,'--get-target'),
+ zones[zone].update(target=run('firewall-cmd','--permanent','--zone='+zone,'--get-target'),
   services=run('firewall-cmd','--zone='+zone,'--list-services'),
   ports=run('firewall-cmd','--zone='+zone,'--list-ports'),
   protocols=run('firewall-cmd','--zone='+zone,'--list-protocols'),

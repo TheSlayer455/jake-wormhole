@@ -143,6 +143,8 @@ class RHELAssessment(unittest.TestCase):
         import base64,hashlib,io,tarfile
         from wormhole import rhel_hardening as h, rhel_manual as rm
         compile(rm.CODE,'<rhel-manual-observer>','exec')
+        self.assertIn("run('firewall-cmd','--permanent','--zone='+zone,'--get-target')", rm.CODE)
+        self.assertNotIn("run('firewall-cmd','--zone='+zone,'--get-target')", rm.CODE)
         result,receipt,inventory=RHELSVD().fixture();target='vm-'+result['run_id'][:8]
         manual_rules=''.join('<Rule id="'+rule+'"/>' for rule in rm.MANUAL_RULES)
         content=('<Benchmark xmlns="'+ra.X[1:-1]+'"><version>0.1.82</version><Profile id="'+ra.PROFILE+'">'

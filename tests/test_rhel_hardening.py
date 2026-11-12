@@ -106,7 +106,8 @@ class HardenedInputs(unittest.TestCase):
                         'firewall-offline-cmd --zone=drop --add-service=ssh'):
             self.assertIn(command, h.FINALIZE)
             self.assertLess(h.FINALIZE.index('oscap xccdf eval --remediate'), h.FINALIZE.index(command))
-        self.assertIn('firewall-cmd --zone=drop --get-target', h.READY)
+        self.assertIn('firewall-cmd --permanent --zone=drop --get-target', h.READY)
+        self.assertNotIn('firewall-cmd --zone=drop --get-target', h.READY)
         self.assertIn('firewall-cmd --zone=drop --list-services', h.READY)
         for stage in ('default-zone', 'active-zone', 'interface', 'target', 'services', 'ports'):
             self.assertIn('failure_stage=firewall-' + stage, h.READY)
