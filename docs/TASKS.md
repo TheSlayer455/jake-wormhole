@@ -86,6 +86,14 @@ helper requires both the unprivileged `staff_r:staff_t` login context and the
 privileged `sysadm_r:sysadm_t` execution context. Fourteen focused cases pass.
 Production +12/-2; tests +16/-3. Fresh installation proof remains required.
 
+Runtime source `3f128cb81d0139ac2584b86898753d79a8bd5ed4` completed that fresh
+installation in 527.472 seconds. Actual SSH entered `staff_r:staff_t` and
+password-backed sudo/Ansible entered `sysadm_r:sysadm_t`; the native SELinux
+rule now passes. All 11 hardened/six controller checks, 449-RPM SVD, full native
+accounting, read-only assessment and cleanup pass. Native totals are 433 pass/
+one fail/29 not applicable/ten not checked/600 not selected. Cleanup reclaimed
+405,504 transient allocated bytes; archive reconciliation is underway.
+
 Completed increment: `codex/WORM-001-terra-tool-decisions`,
 [PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55). Tested content at
 `205835d` adds the bounded tool-adoption decision to the existing single Terra

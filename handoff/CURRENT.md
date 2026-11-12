@@ -1,5 +1,21 @@
 # Current handoff
 
+## RHEL SELinux sudo-transition closure
+
+Runtime source `3f128cb81d0139ac2584b86898753d79a8bd5ed4` completed a fresh
+encrypted RHEL 10 installation in 527.472 seconds. The final administrator was
+mapped to `staff_u`; actual trusted SSH entered `staff_r:staff_t`, and the
+password-backed sudo/Ansible operation executed in `sysadm_r:sysadm_t`. This is
+behavioral evidence in addition to the native scanner result.
+
+`selinux_context_elevation_for_sudo` now passes. All 11 hardened and six
+controller checks, 449-RPM SVD, complete native accounting and read-only
+assessment pass. Native totals are 433 pass/one fail/29 not applicable/ten not
+checked/600 not selected; `sssd_enable_certmap` is the only selected failure.
+Terraform/support teardown passed, cleanup reclaimed 405,504 transient allocated
+bytes and the same 66 unrelated containers remain running. Archive reconciliation
+for this retained candidate/evidence set is pending.
+
 ## RHEL GRUB-administrator closure
 
 Runtime source `7bfa09def373c32d2177d223fcf6d97b35289d28` completed a fresh

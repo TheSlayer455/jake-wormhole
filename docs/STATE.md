@@ -155,6 +155,15 @@ home labels and verifies both pre-sudo and post-sudo contexts through actual
 SSH. Fourteen focused cases pass. No native-rule or access success is claimed
 until a fresh installation runs this input.
 
+Runtime source `3f128cb81d0139ac2584b86898753d79a8bd5ed4` then completed a
+fresh 527.472-second installation. Actual SSH entered `staff_r:staff_t`, the
+password-backed sudo/Ansible path entered `sysadm_r:sysadm_t`, and the native
+SELinux transition rule passed. All 11 hardened and six controller checks,
+449-RPM SVD, complete read-only assessment and exact teardown pass. Native totals
+are 433 pass, one fail, 29 not applicable, ten not checked and 600 not selected.
+Cleanup reclaimed 405,504 transient allocated bytes; only SSSD certificate-map
+applicability remains a selected finding. Archive reconciliation is underway.
+
 A preceding admission attempt correctly stopped before allocation when the
 candidate budget was exceeded. The existing recovery path now handles a missing
 terminal receipt whose immutable ownership journal was already finished: the
@@ -188,10 +197,11 @@ The [continuation](../handoff/CURRENT.md) and merged
 attempts, corrections and actual runtime attribution. The hardened run used
 different content and selected coverage from the older RHEL draft profile.
 
-The latest hardened RHEL audit records two selected failures covering SELinux
-sudo role elevation and SSSD certificate mapping. The
+The latest hardened RHEL audit records one selected failure covering SSSD
+certificate mapping. The
 historical chrony, kdump, SSH banner-path, declared banner-value,
-authorized-account, name-resolution and GRUB-administrator failures now pass
+authorized-account, name-resolution, GRUB-administrator and SELinux sudo
+transition failures now pass
 while time remains synchronized. Ten native checks need separate disposition.
 FIPS runtime mode passed, but module and operating-environment verification
 remains open. These conditions keep the lab release gate closed.
