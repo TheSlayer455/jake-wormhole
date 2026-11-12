@@ -65,12 +65,12 @@ print(json.dumps({'final_authentication':True,'ansible_ready':True,'catalog_star
 
 
 HARDENED_CHECKS = ('password-required-sudo', 'fips-runtime-mode', 'selinux-enforcing',
-    'selinux-sudo-transition',
+    'selinux-sudo-transition', 'non-pki-authentication-contract',
     'post-install-reboot', 'encrypted-filesystems', 'encrypted-swap', 'luks-pbkdf2',
     'audit-service', 'time-source-synchronized', 'logging-service')
 CRYPTO_OBSERVATIONS = ('openssl_providers', 'kernel_release', 'virtualization')
 HARDENED_PROBE = r'''
-import json,pathlib,resource,signal,subprocess,tempfile
+import json,pathlib,re,resource,signal,subprocess,tempfile
 def command(*args):
  return subprocess.run(args,capture_output=True,text=True,check=True,timeout=10).stdout.strip()
 def service_active(unit):
@@ -106,11 +106,15 @@ def swap():
  return bool(sources) and all(encrypted(source) for source in sources)
 def context(user,role,domain):
  return command('id','-Z').split(':')[:3]==[user,role,domain]
+def no_certmap(paths=None):
+ if paths is None:paths=[pathlib.Path('/etc/sssd/sssd.conf'),*pathlib.Path('/etc/sssd/conf.d').glob('*.conf')]
+ return not any(re.search(r'^\s*\[certmap/[^/]+/[^]]+\]\s*$',p.read_text(errors='replace'),re.MULTILINE) for p in paths if p.is_file())
 root=pathlib.Path('/var/lib/wormhole')
 observations={
  'fips-runtime-mode':lambda:pathlib.Path('/proc/sys/crypto/fips_enabled').read_text().strip()=='1' and command('update-crypto-policies','--show').split(':')[0]=='FIPS',
  'selinux-enforcing':lambda:command('getenforce')=='Enforcing',
  'selinux-sudo-transition':lambda:context('staff_u','sysadm_r','sysadm_t'),
+ 'non-pki-authentication-contract':no_certmap,
  'post-install-reboot':lambda:bool((root/'installation-boot-id').read_text().strip()) and (root/'installation-boot-id').read_text().strip()!=pathlib.Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
  'encrypted-filesystems':filesystems,'encrypted-swap':swap,
  'luks-pbkdf2':lambda:'pbkdf2' in command('cryptsetup','luksDump','/dev/vda3').lower(),

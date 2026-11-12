@@ -175,7 +175,7 @@ class RHELAssessment(unittest.TestCase):
             summary=ra.collect(Path(directory),result,rows)
             self.assertEqual(summary['native_counts'],{'pass':1,'fail':1,'notselected':1})
             self.assertEqual(summary['content_version'],'0.1.82');self.assertEqual(summary['benchmark'],'RHEL 10 STIG V1R2')
-            self.assertEqual(summary['functional_counts'],{'pass':10,'fail':1})
+            self.assertEqual(summary['functional_counts'],{'pass':11,'fail':1})
             self.assertFalse(summary['all_functional_checks_pass']);self.assertFalse(summary['lab_iso_qualified'])
             self.assertEqual(summary['crypto_runtime'],{**crypto,'kernel_release':{'status':'missing'}})
             self.assertIn('synthetic provider version',(Path(directory)/'assessment.txt').read_text())
@@ -209,6 +209,16 @@ class RHELAssessment(unittest.TestCase):
             self.assertFalse(service_active('auditd'))
             run.return_value=subprocess.CompletedProcess([],1,stdout='')
             with self.assertRaises(subprocess.CalledProcessError):service_active('auditd')
+
+    def test_hardened_probe_observes_the_declared_non_pki_contract(self):
+        namespace={}
+        exec(ra.HARDENED_PROBE.split('\nroot=',1)[0],namespace)
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);plain=root/'plain.conf';certmap=root/'certmap.conf'
+            plain.write_text('[sssd]\nservices = nss, pam\n')
+            certmap.write_text('[certmap/example.test/rule]\nmatchrule = <SAN>.*\n')
+            self.assertTrue(namespace['no_certmap']([plain]))
+            self.assertFalse(namespace['no_certmap']([plain,certmap]))
 
     def test_hardened_helper_preserves_failed_checks_collects_scan_and_never_puts_password_in_argv(self):
         import contextlib,io,subprocess,sys,time
