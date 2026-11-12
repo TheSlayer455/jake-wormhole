@@ -340,29 +340,39 @@ failure source or more maintained custom code than it introduces.
 | --- | --- | --- | --- |
 | Native libvirt serial/VNC | Use now | Extend the existing early installer observation so one collector preserves Anaconda and boot evidence before SSH | Keep one reader and the current controller. Prove that capture starts early, is durable and feeds the existing receipt. |
 | Cockpit Machines | Inspect conditionally | Give an authorized operator a graphical or serial view of the same libvirt guest when visual state answers a question the retained console cannot | Use only if the web console, VM plug-in, access and network exposure are already approved. Do not enable a new management listener, change host policy or make Cockpit another execution authority. |
+| libguestfs / guestfs-tools | High-value focused experiment | Inspect a preserved failed disk with `virt-inspector`, `virt-log` and narrowly selected file reads when SSH never became available | Use a powered-off owned disk or proper point-in-time snapshot with explicit read-only attachment. Verify disk identity before and after. A live filesystem can be inconsistent, later-added disks are not implicitly read-only, and no tool can recover state that was never written. Deliver encrypted-disk keys through the existing protected input path, never arguments or portable evidence. |
+| Release-matched preflight checks | Use before provisioning | Run target-release pyKickstart / `ksvalidator`, the matching Subiquity autoinstall validator, exact-repository DNF `repoclosure`, and focused ShellCheck/Ruff against rendered helpers | Pin tools to the actual installer/input release and validate staged artifacts, exact target architecture and approved repository set. Syntax, schema, static and metadata closure checks do not execute installer scripts or prove real installation. Unrelated enabled host repositories must not hide missing dependencies. |
+| Standalone os-autoinst / `isotovideo` | Conditional bounded pilot | Boot unchanged customer media and drive the documented interactive installation while retaining screenshots, video, serial output and structured results | Pilot only if customer-installer interaction remains the demonstrated gap after native evidence and cheap preflight improve. Let its QEMU backend own one isolated experiment VM; Terraform must not manage the same guest. Keep candidate bytes and the installation contract fixed, and adopt only if it replaces more interaction code than it introduces. |
 | Goss | Bounded pilot after one stable installation | Express a handful of existing approved package, service, account, port, mount, file and command checks with structured JSON/JUnit output | Preserve stable product case IDs and the controller's exit decision. Keep Goss only if it replaces bespoke checks and reduces maintained code. It does not replace the product catalog, Ansible readiness, Evaluate-STIG or Nessus. |
 | Lorax `mkksiso` | Bounded source-build experiment | Test whether a pinned release can replace fragile custom Kickstart injection and boot-media edits | It creates modified media with a new digest. Use it only for an approved source build or clearly labeled diagnostic derivative. Match host/media architecture, verify privilege requirements and exercise the actual BIOS/EFI paths before claiming an advantage. Never alter a completed customer ISO and attribute the result to the original. |
+| xorriso / diffoscope | On-demand diagnostics | Inspect original ISO boot equipment and explain recursive differences between two approved build outputs | Keep completed-media inspection read-only. Construction creates different bytes and belongs to the approved build path. Difference reports cannot decide functional equivalence, harmlessness or qualification and should be resource-bounded. |
 | KVM Pilot | Optional read-only research | Inspect physical-server console, firmware, boot and BMC state when a real host boundary is otherwise opaque | Upstream is write-capable across KVM, BMC and SSH. A trial must use its explicit read-only mode and withhold power, keyboard, virtual-media and mutating SSH access. It does not replace libvirt guest-console capture or authorize agent control of the physical host. |
 | S3-compatible artifact storage | Evaluate later | Retain immutable candidate references, completed evidence and readback after the installation lifecycle is reliable | S3 is not inherently immutable. Require digest identity, versioning or approved retention controls, partial-object isolation, completion-last publication, exact readback and scoped credentials. Keep active state, seeds and live guest disks out of artifact storage. |
-| Packer QEMU | Defer | Reconsider only for a separately required preinstalled VM-disk deliverable | Its normal QEMU result is a qcow2 or raw disk image. That path would not replace Forge or prove that the customer installer ISO boots and installs correctly. |
-| openQA | Defer | Reconsider only if graphical installer interaction or screen regression becomes a measured requirement that serial/VNC evidence cannot meet | It introduces a web UI, workers and maintained test/needle assets. Do not add that platform for the current unattended installer repair. |
+| Packer QEMU | Defer | Reconsider for a required preinstalled VM-disk deliverable or a measured lifecycle-replacement experiment | Packer can boot unchanged ISO bytes and automate a real installation, but its normal deliverable is a VM disk and it overlaps the existing Terraform/libvirt ownership path. Keep it only if one controlled comparison removes substantial code or proves a separate image requirement. |
+| Full openQA platform | Defer | Reconsider only after a standalone os-autoinst pilot proves durable value and distributed scheduling or result management becomes a measured need | The full platform adds a web UI, database, scheduler, workers and maintained test/needle assets. Upstream worker sizing is starting guidance, not measured Lightspeed capacity. Do not add it for the current focused repair. |
 
 The fastest current sequence is:
 
 1. Improve the existing serial/VNC evidence and complete the console-marker
    component proof.
-2. Inspect Cockpit only when it is already available and authorized; otherwise
-   continue with native console evidence.
-3. Complete one focused existing-candidate installation through installed boot,
+2. Inspect one preserved failed disk with explicit read-only libguestfs tooling
+   when retained on-disk evidence can answer the next question. Use Cockpit only
+   when already available and authorized.
+3. Run release-matched installer/configuration validation and exact-repository
+   dependency closure before provisioning. Keep real installation as the
+   acceptance boundary.
+4. Complete one focused existing-candidate installation through installed boot,
    trusted SSH, Ansible, attributable evidence and exact cleanup.
-4. Populate the authoritative product catalog from tests the team already owns.
-5. Pilot Goss against a small set of those existing cases only if it can delete
+5. Pilot standalone `isotovideo` only if unchanged customer-installer interaction
+   remains the demonstrated gap.
+6. Populate the authoritative product catalog from tests the team already owns.
+   Pilot Goss against a small set of those cases only if it can delete
    bespoke implementation.
-6. Evaluate `mkksiso` against one approved source-build operation, keeping the
-   current customer candidate and installation inputs unchanged.
-7. Evaluate S3 after the lifecycle and release bundle are reliable.
-8. Use KVM Pilot only for a proven physical-host/BMC visibility gap. Keep Packer
-   and openQA deferred until their separate deliverables exist.
+7. Evaluate `mkksiso` only inside an approved source-build operation; use xorriso
+   and diffoscope as bounded diagnostics without altering an accepted candidate.
+8. Evaluate S3 only after the lifecycle/release bundle is reliable, and KVM
+   Pilot only for a proven physical-host visibility gap. Keep Packer and full
+   openQA out of the critical path.
 
 Every optional-tool experiment must name the defect or custom code it would
 remove, verify the supported interface and least required privileges, freeze the
