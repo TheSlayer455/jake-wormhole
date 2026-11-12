@@ -12,6 +12,10 @@ candidate, VM run or qualification claim. Focused portable tests and repository
 hygiene passed. Clean-checkout repository/matrix checks, 1,017 source tests with
 12 skips and all 17 parity cases passed at `5d58869`. Independent review found
 no blocking issue; its wording/status corrections are applied.
+[PR 55](https://github.com/TheSlayer455/jake-wormhole/pull/55) merged the
+portable decision as `b8c1c1469febf809eaf9da5906e7d9f37457568a`, and
+[post-merge main CI](https://github.com/TheSlayer455/jake-wormhole/actions/runs/43151556957)
+passed. Runtime evidence remains attributed to its original revisions.
 
 ## Self-contained Terra handoff
 
