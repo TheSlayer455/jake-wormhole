@@ -1,6 +1,7 @@
 """Focused portable-document hygiene; synthetic values are never credentials."""
 import importlib.util
 from pathlib import Path
+import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -8,11 +9,59 @@ SPEC = importlib.util.spec_from_file_location('repository_hygiene', ROOT / 'scri
 CHECK = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(CHECK)
 NAME = 'handoff/WORMHOLE-SANITIZED-REFERENCE.md'
+PRIMARY = 'handoff/LIGHTSPEED-CROSS-REFERENCE.md'
 REPO = 'https://github.com/TheSlayer455/jake-wormhole'
 REVISION = 'a' * 40
 
 
 class PortableHandoff(unittest.TestCase):
+    def test_primary_brief_is_self_contained_and_source_pinned(self):
+        document = (ROOT / PRIMARY).read_text()
+        for revision in (
+            '21fb946831a451a93c970346855e2c2aec781fb0',
+            '31093e4c556081f4654af9e8d28b65255b33fe98',
+            '59fb4392e187efa08509abc6492bfe800564680e',
+        ):
+            self.assertIn(revision, document)
+        for heading in (
+            '## Embedded Wormhole implementation capsule',
+            '## Native outcomes and unresolved qualification',
+            '## Terra\'s required comparison and response',
+            '## Portable-sharing checklist',
+        ):
+            self.assertIn(heading, document)
+        lowered = document.lower()
+        for phrase in ('follow-up paste', 'ask the owner for one relevant excerpt',
+                       'request the next excerpt'):
+            self.assertNotIn(phrase, lowered)
+        local_links = re.findall(r'\[[^]]+\]\((?!https://github\.com/TheSlayer455/jake-wormhole)[^)]+\)', document)
+        self.assertEqual(local_links, [])
+
+    def test_primary_brief_contains_required_terra_contract(self):
+        document = (ROOT / PRIMARY).read_text()
+        required = (
+            '## Current owner directive for Lightspeed',
+            '## Verify one change before running the pipeline',
+            '## Current case: the missing console marker',
+            '## Time budget and failure behavior',
+            '## Live GitLab output is required',
+            '### Candidate, installation and readiness contracts',
+            '### Complete results and cascading-failure containment',
+            '### Intake, recovery, cleanup and storage',
+            '### Assessment and SVD',
+            '### Exact current RHEL qualification blockers',
+            '### Exact current Ubuntu qualification blockers',
+            '### Current cleanup and retained-storage state',
+            '### I. Next executable chat step',
+            '### J. Sanitized external update',
+        )
+        for value in required:
+            self.assertIn(value, document)
+        self.assertIn('20 minutes total', document)
+        self.assertIn('primary failure', document)
+        self.assertIn('blocked', document)
+        self.assertEqual(CHECK.portable_errors(PRIMARY, document), [])
+
     def test_generic_facts_and_public_pinned_references_are_allowed(self):
         document = '\n'.join([
             '# Ubuntu 22.04 and RHEL 10',
