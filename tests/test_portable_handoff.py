@@ -66,6 +66,23 @@ class PortableHandoff(unittest.TestCase):
         self.assertIn('blocked', document)
         self.assertEqual(CHECK.portable_errors(PRIMARY, document), [])
 
+    def test_optional_tool_decisions_stay_bounded(self):
+        document = (ROOT / PRIMARY).read_text()
+        normalized = ' '.join(document.split())
+        for value in (
+            '## Tool adoption decisions for Lightspeed',
+            'Native libvirt serial/VNC',
+            'Cockpit Machines',
+            'Goss',
+            'Lorax `mkksiso`',
+            'KVM Pilot',
+            'S3-compatible artifact storage',
+            'Packer QEMU',
+            'openQA',
+            'No optional tool is a prerequisite for the current focused installation.',
+        ):
+            self.assertIn(value, normalized)
+
     def test_generic_facts_and_public_pinned_references_are_allowed(self):
         document = '\n'.join([
             '# Ubuntu 22.04 and RHEL 10',

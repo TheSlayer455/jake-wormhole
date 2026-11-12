@@ -316,6 +316,51 @@ The transferable Wormhole behavior is causal state and complete accounting.
 Its home topology, exact checks and local release authority are not replacements
 for the receiving system's distributed controls or product requirements.
 
+## Tool adoption decisions for Lightspeed
+
+These are bounded investigation decisions, not verified Wormhole runtime
+evidence and not new Lightspeed prerequisites. Keep Terraform/libvirt, the
+existing controller, approved build behavior, GitLab and Ansible. Adopt another
+tool only when one measured experiment shows that it removes a demonstrated
+failure source or more maintained custom code than it introduces.
+
+| Technology | Decision | Bounded purpose | Adoption boundary |
+| --- | --- | --- | --- |
+| Native libvirt serial/VNC | Use now | Extend the existing early installer observation so one collector preserves Anaconda and boot evidence before SSH | Keep one reader and the current controller. Prove that capture starts early, is durable and feeds the existing receipt. |
+| Cockpit Machines | Inspect conditionally | Give an authorized operator a graphical or serial view of the same libvirt guest when visual state answers a question the retained console cannot | Use only if the web console, VM plug-in, access and network exposure are already approved. Do not enable a new management listener, change host policy or make Cockpit another execution authority. |
+| Goss | Bounded pilot after one stable installation | Express a handful of existing approved package, service, account, port, mount, file and command checks with structured JSON/JUnit output | Preserve stable product case IDs and the controller's exit decision. Keep Goss only if it replaces bespoke checks and reduces maintained code. It does not replace the product catalog, Ansible readiness, Evaluate-STIG or Nessus. |
+| Lorax `mkksiso` | Bounded source-build experiment | Test whether a pinned release can replace fragile custom Kickstart injection and boot-media edits | It creates modified media with a new digest. Use it only for an approved source build or clearly labeled diagnostic derivative. Match host/media architecture, verify privilege requirements and exercise the actual BIOS/EFI paths before claiming an advantage. Never alter a completed customer ISO and attribute the result to the original. |
+| KVM Pilot | Optional read-only research | Inspect physical-server console, firmware, boot and BMC state when a real host boundary is otherwise opaque | Upstream is beta and write-capable across KVM, BMC and SSH. A trial must explicitly disable power, keyboard, virtual-media and mutating SSH actions. It does not replace libvirt guest-console capture or authorize agent control of the physical host. |
+| S3-compatible artifact storage | Evaluate later | Retain immutable candidate references, completed evidence and readback after the installation lifecycle is reliable | S3 is not inherently immutable. Require digest identity, versioning or approved retention controls, partial-object isolation, completion-last publication, exact readback and scoped credentials. Keep active state, seeds and live guest disks out of artifact storage. |
+| Packer QEMU | Defer | Reconsider only for a separately required preinstalled VM-disk deliverable | Its normal QEMU result is a qcow2 or raw disk image. That path would not replace Forge or prove that the customer installer ISO boots and installs correctly. |
+| openQA | Defer | Reconsider only if graphical installer interaction or screen regression becomes a measured requirement that serial/VNC evidence cannot meet | It introduces a web UI, workers and maintained test/needle assets. Do not add that platform for the current unattended installer repair. |
+
+The fastest current sequence is:
+
+1. Improve the existing serial/VNC evidence and complete the console-marker
+   component proof.
+2. Inspect Cockpit only when it is already available and authorized; otherwise
+   continue with native console evidence.
+3. Complete one focused existing-candidate installation through installed boot,
+   trusted SSH, Ansible, attributable evidence and exact cleanup.
+4. Populate the authoritative product catalog from tests the team already owns.
+5. Pilot Goss against a small set of those existing cases only if it can delete
+   bespoke implementation.
+6. Evaluate `mkksiso` against one approved source-build operation, keeping the
+   current customer candidate and installation inputs unchanged.
+7. Evaluate S3 after the lifecycle and release bundle are reliable.
+8. Use KVM Pilot only for a proven physical-host/BMC visibility gap. Keep Packer
+   and openQA deferred until their separate deliverables exist.
+
+Every optional-tool experiment must name the defect or custom code it would
+remove, verify the supported interface and least required privileges, freeze the
+existing candidate and contracts, and compare one old/new case. It must preserve
+first-failure accounting, live evidence, cancellation, ownership and cleanup.
+Delete superseded code only after the replacement is proven. Reject a tool that
+adds another execution authority, duplicates an existing path or fails to reduce
+maintained complexity. **No optional tool is a prerequisite for the current
+focused installation.**
+
 ## Embedded Wormhole implementation capsule
 
 This capsule is the source context Terra needs for the first comparison. It is a
